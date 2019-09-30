@@ -1,0 +1,4 @@
+API/
+node_modules/
+package.json
+dist/

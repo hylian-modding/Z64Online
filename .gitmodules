@@ -1,0 +1,3 @@
+[submodule "ModLoader64"]
+	path = ModLoader64
+	url = https://github.com/hylian-modding/ModLoader64
