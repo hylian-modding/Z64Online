@@ -1,0 +1,11 @@
+{
+  "name": "ootonline",
+  "version": "2.0.9",
+  "description": "",
+  "main": "OotOnline.js",
+  "author": "Team-Ooto",
+  "credits": "Ideka, glank",
+  "license": "GPL-3.0",
+  "core": "OcarinaofTime",
+  "updateUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/update.json"
+}

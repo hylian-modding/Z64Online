@@ -1,0 +1,10 @@
+{
+  "name": "ootdebugger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "OotDebugger.js",
+  "author": "denoflions",
+  "credits": "",
+  "license": "GPL-3.0",
+  "core": "OcarinaofTime"
+}

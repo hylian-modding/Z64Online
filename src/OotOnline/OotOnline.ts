@@ -149,7 +149,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.ModLoader
     );
     this.actorHooks.onPostInit();
-    this.ModLoader.gui.openWindow(700, 400, path.resolve(path.join(__dirname, "gui", "map.html")));
+    this.ModLoader.gui.openWindow(700, 450, path.resolve(path.join(__dirname, "gui", "map.html")));
   }
 
   @EventHandler(OotOnlineEvents.GHOST_MODE)

@@ -5,14 +5,6 @@
 </head>
 
 <body>
-    <script>
-        function getCanvasWidth() {
-            return 1375 / 2;
-        }
-        function getCanvasHeight() {
-            return 777 / 2;
-        }
-    </script>
     <canvas id="viewport" width="687" height="388"></canvas>
     <script>
         var coords = {
@@ -124,8 +116,6 @@
             player1.pos.y = coords[scene].y;
             player1.user.uuid = "THIS IS ME";
             player1.user.nickname = "Me";
-            redrawMap();
-            drawPlayers();
         }
         hooks.onSceneChange_Network = function (packet) {
             console.log(packet);
@@ -150,8 +140,6 @@
                     break;
                 }
             }
-            redrawMap();
-            drawPlayers();
         }
         hooks.onPlayerLeft = function (packet) {
             let index = -1;
@@ -246,6 +234,11 @@
 
         redrawMap();
         drawPlayers();
+
+        setInterval(()=>{
+            redrawMap();
+            drawPlayers();
+        }, 1000);
     </script>
 </body>
 

@@ -700,8 +700,7 @@ export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
     save.heartPieces = incoming.heartPieces;
   } else if (
     incoming.heartPieces === 0 &&
-    save.heartPieces === 3 &&
-    incoming.heart_containers > save.heart_containers
+    save.heartPieces === 3
   ) {
     save.heartPieces = 0;
   }
