@@ -263,9 +263,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     ) {
       if (!this.core.helper.isPaused()) {
         this.overlord.onTick();
-        if (this.LobbyConfig.data_syncing) {
-          this.autosaveSceneData();
-        }
         if (this.LobbyConfig.actor_syncing) {
           this.actorHooks.onTick();
         }
@@ -281,6 +278,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       } else if (state === LinkState.STANDING && this.needs_update && this.LobbyConfig.data_syncing) {
         this.updateInventory();
         this.updateFlags();
+        this.autosaveSceneData();
       }
     }
   }
@@ -434,6 +432,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_PuppetPacket')
   onPuppetData_client(packet: Ooto_PuppetPacket) {
+    if (this.core.helper.isTitleScreen() || this.core.helper.isPaused() || this.core.link.state === LinkState.LOADING_ZONE){
+      return;
+    }
     this.overlord.processPuppetPacket(packet);
   }
 

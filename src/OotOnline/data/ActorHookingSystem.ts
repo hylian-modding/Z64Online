@@ -1,6 +1,6 @@
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { EventHandler } from 'modloader64_api/EventHandler';
-import { OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, IOOTCore, LinkState } from 'modloader64_api/OOT/OOTAPI';
 import {
   ActorHookBase,
   ActorHookProcessor,
@@ -172,7 +172,7 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_ActorPacket')
   onActorPacket(packet: Ooto_ActorPacket) {
-    if (packet.scene !== this.core.global.scene || packet.room !== this.core.global.room){
+    if (packet.scene !== this.core.global.scene || packet.room !== this.core.global.room || this.core.link.state === LinkState.LOADING_ZONE){
       return;
     }
     if (this.actorHookTicks.has(packet.actorData.actor.actorUUID)) {
