@@ -5,7 +5,7 @@ import { PuppetData, IPuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { ICommandBuffer, Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus } from 'modloader64_api/EventHandler';
-import { OotOnlineEvents } from '../../api/OotoAPI';
+import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 
 export class Puppet {
   player: INetworkPlayer;

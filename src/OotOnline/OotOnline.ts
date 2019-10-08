@@ -31,7 +31,7 @@ import {
   IOotOnlineHelpers,
   OotOnlineEvents,
   OotOnline_PlayerScene,
-} from './api/OotoAPI';
+} from './OotoAPI/OotoAPI';
 import { ActorHookingManager } from './data/ActorHookingSystem';
 import { EquestrianOverlord } from './data/eponaPuppet/EquestrianOverlord';
 import {

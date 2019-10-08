@@ -16,7 +16,7 @@ import {
   IOotOnlineHelpers,
   OotOnlineEvents,
   OotOnline_PlayerScene,
-} from '../../api/OotoAPI';
+} from '../../OotoAPI/OotoAPI';
 import {
   Ooto_EquestrianPuppetListPacket,
   Ooto_EquestrianRegisterPacket,

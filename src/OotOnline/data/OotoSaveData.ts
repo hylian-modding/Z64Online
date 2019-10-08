@@ -16,7 +16,7 @@ import {
   UpgradeCountLookup,
 } from 'modloader64_api/OOT/OOTAPI';
 import { bus } from 'modloader64_api/EventHandler';
-import { OotOnlineEvents } from '../api/OotoAPI';
+import { OotOnlineEvents } from '../OotoAPI/OotoAPI';
 
 export function isAdultTradeItem(item: InventoryItem) {
   return (

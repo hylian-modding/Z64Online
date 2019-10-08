@@ -20,7 +20,7 @@ import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHan
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import {v4} from 'uuid';
-import { IOotOnlineHelpers } from '../api/OotoAPI';
+import { IOotOnlineHelpers } from '../OotoAPI/OotoAPI';
 
 // Actor Hooking Stuff
 
