@@ -27,7 +27,6 @@ import {
   OotEvents,
   AmmoUpgrade,
 } from 'modloader64_api/OOT/OOTAPI';
-import zlib from 'zlib';
 import {
   IOotOnlineHelpers,
   OotOnlineEvents,
@@ -95,7 +94,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   ModLoader!: ModLoader.IModLoaderAPI;
   @InjectCore()
   core!: IOOTCore;
-  LobbyConfig!: IOotOnlineLobbyConfig;
+  LobbyConfig: IOotOnlineLobbyConfig = {} as IOotOnlineLobbyConfig;
 
   @LobbyVariable('OotOnline')
   storage: OotOnlineStorage = new OotOnlineStorage();
@@ -150,7 +149,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.ModLoader
     );
     this.actorHooks.onPostInit();
-    this.ModLoader.gui.openWindow(687, 388, path.resolve(path.join(__dirname, "gui", "map.html")));
+    this.ModLoader.gui.openWindow(700, 400, path.resolve(path.join(__dirname, "gui", "map.html")));
   }
 
   @EventHandler(OotOnlineEvents.GHOST_MODE)
@@ -298,7 +297,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(EventsClient.ON_LOBBY_JOIN)
   onJoinedLobby(lobby: LobbyData): void {
-    this.LobbyConfig = lobby.data as IOotOnlineLobbyConfig;
+    this.LobbyConfig.actor_syncing = lobby.data['OotOnline:actor_syncing'];
+    this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
   }
 
@@ -454,11 +454,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             this.storage.questStorage
           ),
           new Ooto_ServerFlagUpdate(
-            zlib.deflateSync(this.storage.sceneStorage),
-            zlib.deflateSync(this.storage.eventStorage),
-            zlib.deflateSync(this.storage.itemFlagStorage),
-            zlib.deflateSync(this.storage.infStorage),
-            zlib.deflateSync(this.storage.skulltulaStorage)
+            this.storage.sceneStorage,
+            this.storage.eventStorage,
+            this.storage.itemFlagStorage,
+            this.storage.infStorage,
+            this.storage.skulltulaStorage
           )
         ),
         packet.player
@@ -484,17 +484,17 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.save
     ) as EquipmentSave;
     let quest: QuestSave = createQuestSaveFromContext(this.core.save);
-    mergeInventoryData(packet.subscreen.inventory, inventory);
-    mergeEquipmentData(packet.subscreen.equipment, equipment);
-    mergeQuestSaveData(packet.subscreen.quest, quest);
+    mergeInventoryData(inventory, packet.subscreen.inventory);
+    mergeEquipmentData(equipment, packet.subscreen.equipment);
+    mergeQuestSaveData(quest, packet.subscreen.quest);
     applyInventoryToContext(inventory, this.core.save);
     applyEquipmentToContext(equipment, this.core.save);
     applyQuestSaveToContext(quest, this.core.save);
-    this.core.save.permSceneData = zlib.inflateSync(packet.flags.scenes);
-    this.core.save.eventFlags = zlib.inflateSync(packet.flags.events);
-    this.core.save.itemFlags = zlib.inflateSync(packet.flags.items);
-    this.core.save.infTable = zlib.inflateSync(packet.flags.inf);
-    this.core.save.skulltulaFlags = zlib.inflateSync(packet.flags.skulltulas);
+    this.core.save.permSceneData = packet.flags.scenes;
+    this.core.save.eventFlags = packet.flags.events;
+    this.core.save.itemFlags = packet.flags.items;
+    this.core.save.infTable = packet.flags.inf;
+    this.core.save.skulltulaFlags = packet.flags.skulltulas;
     this.first_time_sync = false;
   }
 
@@ -523,6 +523,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_SubscreenSyncPacket')
   onItemSync_client(packet: Ooto_SubscreenSyncPacket) {
+    if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()){
+      return;
+    }
     let inventory: InventorySave = createInventoryFromContext(
       this.core.save
     ) as InventorySave;
@@ -593,28 +596,31 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     });
     this.ModLoader.serverSide.sendPacket(
       new Ooto_ServerFlagUpdate(
-        zlib.deflateSync(this.storage.sceneStorage),
-        zlib.deflateSync(this.storage.eventStorage),
-        zlib.deflateSync(this.storage.itemFlagStorage),
-        zlib.deflateSync(this.storage.infStorage),
-        zlib.deflateSync(this.storage.skulltulaStorage)
+        this.storage.sceneStorage,
+        this.storage.eventStorage,
+        this.storage.itemFlagStorage,
+        this.storage.infStorage,
+        this.storage.skulltulaStorage
       )
     );
   }
 
   @NetworkHandler('Ooto_ServerFlagUpdate')
   onSceneFlagSync_client(packet: Ooto_ServerFlagUpdate) {
+    if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()){
+      return;
+    }
     let scenes: Buffer = this.core.save.permSceneData;
     let events: Buffer = this.core.save.eventFlags;
     let items: Buffer = this.core.save.itemFlags;
     let inf: Buffer = this.core.save.infTable;
     let skulltulas: Buffer = this.core.save.skulltulaFlags;
 
-    let incoming_scenes: Buffer = zlib.inflateSync(packet.scenes);
-    let incoming_events: Buffer = zlib.inflateSync(packet.events);
-    let incoming_items: Buffer = zlib.inflateSync(packet.items);
-    let incoming_inf: Buffer = zlib.inflateSync(packet.inf);
-    let incoming_skulltulas: Buffer = zlib.inflateSync(packet.skulltulas);
+    let incoming_scenes: Buffer = packet.scenes;
+    let incoming_events: Buffer = packet.events;
+    let incoming_items: Buffer = packet.items;
+    let incoming_inf: Buffer = packet.inf;
+    let incoming_skulltulas: Buffer = packet.skulltulas;
 
     let scene_arr: any = this.parseFlagChanges(incoming_scenes, scenes);
     let event_arr: any = this.parseFlagChanges(incoming_events, events);
@@ -650,6 +656,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_ClientSceneContextUpdate')
   onSceneContextSync_client(packet: Ooto_ClientSceneContextUpdate) {
+    if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()){
+      return;
+    }
     let buf1: Buffer = this.core.global.liveSceneData_chests;
     if (Object.keys(this.parseFlagChanges(packet.chests, buf1) > 0)) {
       this.core.global.liveSceneData_chests = buf1;
