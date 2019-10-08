@@ -1,0 +1,32 @@
+<html>
+    <head>
+        
+    </head>
+    <body>
+        Current Scene: <span id="scene"></span><br/>
+        Current Room: <span id="room"></span><br/>
+        <br/>
+        Live data:<br/>
+        <span id="live"></span>
+        <br/>
+        Save data:<br/>
+        <span id="save"></span>
+
+        <script>
+            
+            let hooks = require("./gui.js");
+            hooks.onSceneChange = function(scene){
+                document.getElementById("scene").textContent = scene;
+            }
+            hooks.onRoomChange = function(room){
+                document.getElementById("room").textContext = room;
+            }
+            hooks.onLiveChange = function(data){
+                document.getElementById("live").textContent = data;
+            }
+            hooks.onSaveChange = function(data){
+                document.getElementById("save").textContent = data;
+            }
+        </script>
+    </body>
+</html>

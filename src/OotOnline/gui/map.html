@@ -1,0 +1,252 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <script>
+        function getCanvasWidth() {
+            return 1375 / 2;
+        }
+        function getCanvasHeight() {
+            return 777 / 2;
+        }
+    </script>
+    <canvas id="viewport" width="687" height="388"></canvas>
+    <script>
+        var coords = {
+            0x0000: { x: 607, y: 224 }, // The Great Deku Tree
+            0x0001: { x: 407, y: 50 }, // Dodongo's Cavern
+            0x0002: { x: 623, y: 81 }, // Inside Jabu Jabu's Belly
+            0x0003: { x: 537, y: 153 }, // Forest Temple
+            0x0004: { x: 445, y: 4 }, // Fire Temple
+            0x0005: { x: 259, y: 345 }, // Water Temple
+            0x0006: { x: 25, y: 83 }, // Spirit Temple
+            0x0007: { x: 526, y: 88 }, // Shadow Temple
+            0x0008: { x: 468, y: 96 }, // Bottom of the Well
+            0x0009: { x: 621, y: 72 }, // Ice Cavern
+            0x000A: { x: 359, y: 38 }, // Ganon's Tower
+            0x000B: { x: 120, y: 55 }, // Gerudo Training Grounds
+            0x000C: { x: 120, y: 55 }, // Thieves' Hideout
+            0x000D: { x: 359, y: 38 }, // Inside Ganon's Tower
+            0x000E: { x: 359, y: 38 }, // Ganon's Tower (Collapse)
+            0x000F: { x: 359, y: 38 }, // Inside Ganon's Tower (Collapse)
+            0x0010: { x: 351, y: 89 }, // Treasure Box Shop
+            0x0011: { x: 607, y: 224 }, // The Great Deku Tree (Gohma's Lair)
+            0x0012: { x: 407, y: 50 }, // Dodongo's Cavern (King Dodongo's Lair)
+            0x0013: { x: 623, y: 81 }, // Inside Jabu Jabu's Belly (Barinade's Lair)
+            0x0014: { x: 537, y: 153 }, // Forest Temple (Phantom Ganon's Lair)
+            0x0015: { x: 445, y: 4 }, // Fire Temple (Volvagia's Lair)
+            0x0016: { x: 259, y: 345 }, // Water Temple (Morpha's Lair)
+            0x0017: { x: 25, y: 83 }, // Spirit Temple (Twinrova's Lair & Nabooru's Mini-Boss Room)
+            0x0018: { x: 526, y: 88 }, // Shadow Temple (Bongo Bongo's Lair)
+            0x0019: { x: 359, y: 38 }, // Inside Ganon's Tower (Ganondorf's Lair)
+            0x001A: { x: 359, y: 38 }, // Tower Collapse Exterior
+            0x001B: { x: 361, y: 83 }, // Market Town (Day)
+            0x001C: { x: 361, y: 83 }, // Market Town (Night)
+            0x001D: { x: 361, y: 83 }, // Market Town (Ruins)
+            0x001E: { x: 345, y: 79 }, // Back Alley (Day)
+            0x001F: { x: 345, y: 79 }, // Back Alley (Night)
+            0x0020: { x: 361, y: 83 }, // Market Town (Day?)
+            0x0021: { x: 361, y: 83 }, // Market Town (Night?)
+            0x0022: { x: 361, y: 83 }, // Market Town (Ruins?)
+            0x0023: { x: 380, y: 73 }, // Temple of Time Exterior (Day)
+            0x0024: { x: 380, y: 73 }, // Temple of Time Exterior (Night)
+            0x0025: { x: 380, y: 73 }, // Temple of Time Exterior (Ruins)
+            0x0026: { x: 522, y: 237 }, // Know it all Brother's House
+            0x0027: { x: 564, y: 242 }, // House of Twins
+            0x0028: { x: 531, y: 227 }, // Mido's House
+            0x0029: { x: 554, y: 240 }, // Saria's House
+            0x002A: { x: 449, y: 94 }, // Carpenter Boss's House
+            0x002B: { x: 345, y: 79 }, // Back Alley House (Man in Green)
+            0x002C: { x: 361, y: 83 }, // Bazaar
+            0x002D: { x: 551, y: 231 }, // Kokiri Shop
+            0x002E: { x: 415, y: 25 }, // Goron Shop
+            0x002F: { x: 655, y: 120 }, // Zora Shop
+            0x0030: { x: 459, y: 83 }, // Kakariko Potion Shop
+            0x0031: { x: 361, y: 83 }, // Market Potion Shop
+            0x0032: { x: 345, y: 79 }, // Bombchu Shop
+            0x0033: { x: 363, y: 76 }, // Happy Mask Shop
+            0x0034: { x: 540, y: 240 }, // Link's House
+            0x0035: { x: 345, y: 79 }, // Dog Lady House
+            0x0036: { x: 328, y: 149 }, // Stable
+            0x0037: { x: 460, y: 100 }, // Impa's House
+            0x0038: { x: 240, y: 300 }, // Lakeside Lab
+            0x0039: { x: 154, y: 139 }, // Carpenter's Tent
+            0x003A: { x: 503, y: 91 }, // Dampe's Hut
+            0x003B: { x: 0, y: 0 }, // Fairy Fountain (Upgrades) (Refine this later...)
+            0x003C: { x: 0, y: 0 }, // Fairy Fountain (actual faries...) (Refine this later...)
+            0x003D: { x: 0, y: 0 }, // Fairy Fountain (Spells) (Refine this later...)
+            0x003E: { x: 0, y: 0 }, // Grottos (Refine this later...)
+            0x003F: { x: 511, y: 90 }, // Redead Grave
+            0x0040: { x: 511, y: 90 }, // Fairy Fountain Grave
+            0x0041: { x: 516, y: 88 }, // Royal Family Tomb
+            0x0042: { x: 0, y: 0 }, // Shooting Gallery (Refine this later...)
+            0x0043: { x: 381, y: 74 }, // Temple of Time
+            0x0044: { x: 0, y: 0 }, // Chamber of Sages
+            0x0045: { x: 359, y: 38 }, // Hedge Maze (Day)
+            0x0046: { x: 359, y: 38 }, // Hedge Maze (Night)
+            0x0047: { x: 0, y: 0 }, // Cutscene Map
+            0x0048: { x: 473, y: 93 }, // Windmill
+            0x0049: { x: 314, y: 305 }, // Fishing Pond
+            0x004A: { x: 359, y: 38 }, // Castle Courtyard
+            0x004B: { x: 361, y: 83 }, // Bombchu Bowling
+            0x004C: { x: 323, y: 158 }, // Lon Lon Buildings
+            0x004D: { x: 336, y: 93 }, // Guard House
+            0x004E: { x: 457, y: 87 }, // Granny's Potion Shop
+            0x004F: { x: 359, y: 38 }, // Ganon Battle Arena
+            0x0050: { x: 455, y: 100 }, // House of Skulltula
+            0x0051: { x: 362, y: 127 }, // Hyrule Field
+            0x0052: { x: 448, y: 96 }, // Kakariko Village
+            0x0053: { x: 507, y: 90 }, // Graveyard
+            0x0054: { x: 490, y: 134 }, // Zora's River
+            0x0055: { x: 542, y: 239 }, // Kokiri Forest
+            0x0056: { x: 545, y: 169 }, // Sacred Forest Meadow
+            0x0057: { x: 260, y: 300 }, // Lake Hylia
+            0x0058: { x: 637, y: 123 }, // Zora's Domain
+            0x0059: { x: 628, y: 79 }, // Zora's Fountain
+            0x005A: { x: 142, y: 142 }, // Gerudo Valley
+            0x005B: { x: 534, y: 196 }, // Lost Woods
+            0x005C: { x: 48, y: 77 }, // Desert Collosus
+            0x005D: { x: 120, y: 55 }, // Gerudo Fortress
+            0x005E: { x: 113, y: 96 }, // Haunted Wasteland
+            0x005F: { x: 359, y: 38 }, // Hyrule Castle
+            0x0060: { x: 435, y: 60 }, // Death Mountain Trail
+            0x0061: { x: 448, y: 6 }, // Death Mountain Crater
+            0x0062: { x: 416, y: 26 }, // Goron 
+            0x0063: { x: 324, y: 159 }, // Lon Lon Ranch
+            0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
+        };
+        var hooks = require('./map.js');
+        hooks.onSceneChange = function (scene) {
+            player1.pos.x = coords[scene].x;
+            player1.pos.y = coords[scene].y;
+            player1.user.uuid = "THIS IS ME";
+            player1.user.nickname = "Me";
+            redrawMap();
+            drawPlayers();
+        }
+        hooks.onSceneChange_Network = function (packet) {
+            console.log(packet);
+            let player = packet.data.player.uuid;
+            let found = false;
+            for (let i = 0; i < otherPlayers.length; i++) {
+                if (otherPlayers[i].user.uuid === player) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                let n = makePlayerMarker();
+                n.user.uuid = player;
+                n.user.nickname = packet.data.player.nickname;
+                otherPlayers.push(n);
+            }
+            for (let i = 0; i < otherPlayers.length; i++) {
+                if (otherPlayers[i].user.uuid === player) {
+                    otherPlayers[i].pos.x = coords[packet.data.scene].x;
+                    otherPlayers[i].pos.y = coords[packet.data.scene].y;
+                    break;
+                }
+            }
+            redrawMap();
+            drawPlayers();
+        }
+        hooks.onPlayerLeft = function (packet) {
+            let index = -1;
+            for (let i = 0; i < otherPlayers.length; i++) {
+                if (otherPlayers[i].user.uuid === player) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index > -1) {
+                otherPlayers.splice(index, 1);
+            }
+        }
+        var canvas = document.getElementById('viewport'), context = canvas.getContext('2d');
+
+        function make_base() {
+            var base_image = new Image();
+            base_image.src = './map.jpg';
+            base_image.onload = function () {
+                context.drawImage(base_image, 0, 0, base_image.width, base_image.height, 0, 0, canvas.width, canvas.height);
+            }
+            return base_image;
+        }
+
+        function makePlayerMarker() {
+            var marker = {};
+            marker["icon"] = new Image();
+            marker.icon.src = "./link.png";
+            marker["pos"] = {};
+            marker.pos["x"] = 0;
+            marker.pos["y"] = 0;
+            marker["user"] = { uuid: "", nickname: "" };
+            marker.icon.onload = function () {
+                context.drawImage(marker.icon, marker.pos.x, marker.pos.y, marker.icon.width, marker.icon.height);
+            }
+            return marker;
+        }
+
+        function writeMessage(canvas, message) {
+            context.font = '18pt Calibri';
+            context.fillStyle = 'black';
+            context.fillText(message, 10, 25);
+        }
+
+        function getMousePos(canvas, evt) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+
+        function redrawMap() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(map, 0, 0, map.width, map.height, 0, 0, canvas.width, canvas.height);
+        }
+
+        function drawPlayers() {
+            context.drawImage(player1.icon, player1.pos.x, player1.pos.y, player1.icon.width, player1.icon.height);
+            for (let i = 0; i < otherPlayers.length; i++) {
+                let p = otherPlayers[i];
+                context.drawImage(p.icon, p.pos.x, p.pos.y, p.icon.width, p.icon.height);
+            }
+        }
+
+        function isBetween(a, b, c) {
+            var min = Math.min.apply(Math, [a, b]),
+                max = Math.max.apply(Math, [a, b]);
+            return c > min && c < max;
+        };
+
+        canvas.addEventListener('mousemove', function (evt) {
+            var mousePos = getMousePos(canvas, evt);
+            var x = mousePos.x;
+            var y = mousePos.y;
+            var x_m = x - 16;
+            var y_m = y - 16;
+            var users = [];
+            for (let i = 0; i < otherPlayers.length; i++) {
+                let p = otherPlayers[i];
+                if (isBetween(x, x_m, p.pos.x) && isBetween(y, y_m, p.pos.y)) {
+                    users.push(p.user.nickname);
+                }
+            }
+            var message = users.toString();
+            writeMessage(canvas, message);
+        }, false);
+
+        var map = make_base();
+        var player1 = makePlayerMarker();
+        var otherPlayers = [];
+
+        redrawMap();
+        drawPlayers();
+    </script>
+</body>
+
+</html>
