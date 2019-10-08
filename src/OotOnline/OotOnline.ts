@@ -218,7 +218,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   autosaveSceneData() {
     if (
-      this.core.link.state !== LinkState.LOADING_ZONE &&
+      this.core.helper.isLinkEnteringLoadingZone() &&
       this.core.global.scene_framecount > 10
     ) {
       let live_scene_chests: Buffer = this.core.global.liveSceneData_chests;
@@ -312,6 +312,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   @EventHandler(EventsClient.ON_PLAYER_LEAVE)
   onPlayerLeft(player: INetworkPlayer) {
     this.overlord.unregisterPuppet(player);
+    this.ModLoader.gui.tunnel.send("OotOnline:onPlayerLeft", new GUITunnelPacket("OotOnline", "OotOnline:onPlayerLeft", player));
   }
 
   @EventHandler(EventsServer.ON_LOBBY_JOIN)
@@ -333,7 +334,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     ).data['OotOnline'].storage as OotOnlineStorage;
     delete storage.players[evt.player.uuid];
     delete storage.networkPlayerInstances[evt.player.uuid];
-    this.ModLoader.gui.tunnel.send("OotOnline:onPlayerLeft", new GUITunnelPacket("OotOnline", "OotOnline:onPlayerLeft", evt));
   }
 
   //------------------------------
@@ -432,7 +432,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_PuppetPacket')
   onPuppetData_client(packet: Ooto_PuppetPacket) {
-    if (this.core.helper.isTitleScreen() || this.core.helper.isPaused() || this.core.link.state === LinkState.LOADING_ZONE){
+    if (this.core.helper.isTitleScreen() || this.core.helper.isPaused() || this.core.helper.isLinkEnteringLoadingZone()){
       return;
     }
     this.overlord.processPuppetPacket(packet);

@@ -112,7 +112,7 @@ export function mergeInventoryData(
     save.childTradeItem = InventoryItem.WEIRD_EGG;
   } else if (
     incoming.childTradeItem === InventoryItem.CHILD_CUCCO &&
-    save.childTradeItem === InventoryItem.POCKET_EGG
+    save.childTradeItem === InventoryItem.WEIRD_EGG
   ) {
     save.childTradeItem = InventoryItem.CHILD_CUCCO;
   } else if (
