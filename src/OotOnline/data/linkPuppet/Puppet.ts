@@ -102,6 +102,7 @@ export class Puppet {
         this.emulator.rdramWrite32(this.data.pointer + 0x134, 0x0);
       }
       this.isSpawned = false;
+      this.isShoveled = false;
       console.log('Puppet ' + this.id + ' despawned.');
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED, this);
     }

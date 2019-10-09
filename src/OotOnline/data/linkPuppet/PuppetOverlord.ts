@@ -143,7 +143,7 @@ export class PuppetOverlord {
   }
 
   processAwaitingSpawns() {
-    if (!this.core.helper.isLinkEnteringLoadingZone()) {
+    if (!this.core.helper.isLinkEnteringLoadingZone() && this.core.global.scene_framecount > 10) {
       if (this.awaiting_spawn.length > 0) {
         while (this.awaiting_spawn.length > 0) {
           let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;

@@ -10,10 +10,6 @@ import {
 } from 'modloader64_api/EventHandler';
 import * as ModLoader from 'modloader64_api/IModLoaderAPI';
 import {
-  LobbyVariable,
-  setupLobbyVariable,
-} from 'modloader64_api/LobbyVariable';
-import {
   INetworkPlayer,
   IPacketHeader,
   LobbyData,
@@ -64,30 +60,17 @@ import {
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
 import fs from 'fs';
+import { OotOnlineStorage } from './OotOnlineStorage';
 
-const SCENE_ARR_SIZE = 0xb0c;
-const EVENT_ARR_SIZE = 0x1c;
-const ITEM_FLAG_ARR_SIZE = 0x8;
-const INF_ARR_SIZE = 0x3c;
-const SKULLTULA_ARR_SIZE = 0x18;
+export const SCENE_ARR_SIZE = 0xb0c;
+export const EVENT_ARR_SIZE = 0x1c;
+export const ITEM_FLAG_ARR_SIZE = 0x8;
+export const INF_ARR_SIZE = 0x3c;
+export const SKULLTULA_ARR_SIZE = 0x18;
 
 interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
   actor_syncing: boolean;
-}
-
-class OotOnlineStorage {
-  networkPlayerInstances: any = {};
-  players: any = {};
-  inventoryStorage: InventorySave = new InventorySave();
-  equipmentStorage: EquipmentSave = new EquipmentSave();
-  questStorage: QuestSave = new QuestSave();
-  sceneStorage: Buffer = Buffer.alloc(SCENE_ARR_SIZE);
-  saveGameSetup = false;
-  eventStorage: Buffer = Buffer.alloc(EVENT_ARR_SIZE);
-  itemFlagStorage: Buffer = Buffer.alloc(ITEM_FLAG_ARR_SIZE);
-  infStorage: Buffer = Buffer.alloc(INF_ARR_SIZE);
-  skulltulaStorage: Buffer = Buffer.alloc(SKULLTULA_ARR_SIZE);
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
@@ -95,9 +78,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   @InjectCore()
   core!: IOOTCore;
   LobbyConfig: IOotOnlineLobbyConfig = {} as IOotOnlineLobbyConfig;
-
-  @LobbyVariable('OotOnline')
-  storage: OotOnlineStorage = new OotOnlineStorage();
 
   // Client variables
   overlord!: PuppetOverlord;
@@ -136,7 +116,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
     setupEventHandlers(this.EquestrianCenter);
     setupNetworkHandlers(this.EquestrianCenter);
-    setupLobbyVariable(this.EquestrianCenter);
   }
 
   init(): void { }
@@ -218,7 +197,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   autosaveSceneData() {
     if (
-      this.core.helper.isLinkEnteringLoadingZone() &&
+      !this.core.helper.isLinkEnteringLoadingZone() &&
       this.core.global.scene_framecount > 10
     ) {
       let live_scene_chests: Buffer = this.core.global.liveSceneData_chests;
@@ -267,6 +246,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           this.actorHooks.onTick();
         }
         this.EquestrianCenter.onTick();
+        if (this.LobbyConfig.data_syncing){
+          this.autosaveSceneData();
+        }
       }
       let state = this.core.link.state;
       if (
@@ -278,7 +260,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       } else if (state === LinkState.STANDING && this.needs_update && this.LobbyConfig.data_syncing) {
         this.updateInventory();
         this.updateFlags();
-        this.autosaveSceneData();
       }
     }
   }
@@ -304,6 +285,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Deal with player connections.
   //------------------------------
 
+  @EventHandler(EventsServer.ON_LOBBY_CREATE)
+  onLobbyCreated(lobby: string){
+    this.ModLoader.lobbyManager.createLobbyStorage(lobby, this, new OotOnlineStorage());
+  }
+
   @EventHandler(EventsClient.ON_PLAYER_JOIN)
   onPlayerJoin(player: INetworkPlayer) {
     this.overlord.registerPuppet(player);
@@ -317,21 +303,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(EventsServer.ON_LOBBY_JOIN)
   onPlayerJoin_server(evt: EventServerJoined) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      evt.lobby
-    ).data['OotOnline'].storage as OotOnlineStorage;
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(evt.lobby, this) as OotOnlineStorage;
     storage.players[evt.player.uuid] = -1;
     storage.networkPlayerInstances[evt.player.uuid] = evt.player;
   }
 
   @EventHandler(EventsServer.ON_LOBBY_LEAVE)
   onPlayerLeft_server(evt: EventServerLeft) {
-    if (this.ModLoader.lobbyManager.getLobbyStorage(evt.lobby) === null) {
-      return;
-    }
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      evt.lobby
-    ).data['OotOnline'].storage as OotOnlineStorage;
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(evt.lobby, this) as OotOnlineStorage;
     delete storage.players[evt.player.uuid];
     delete storage.networkPlayerInstances[evt.player.uuid];
   }
@@ -362,7 +341,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @ServerNetworkHandler('Ooto_ScenePacket')
   onSceneChange_server(packet: Ooto_ScenePacket) {
-    this.storage.players[packet.player.uuid] = packet.scene;
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, this) as OotOnlineStorage;
+    storage.players[packet.player.uuid] = packet.scene;
     this.ModLoader.logger.info(
       'Server: Player ' +
       packet.player.nickname +
@@ -372,7 +352,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     );
     bus.emit(
       OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
-      new OotOnline_PlayerScene(packet.player, packet.scene)
+      new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
     );
   }
 
@@ -388,7 +368,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
       OotOnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
-      new OotOnline_PlayerScene(packet.player, packet.scene)
+      new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
     );
     this.ModLoader.gui.tunnel.send("OotOnline:onSceneChanged_Network", new GUITunnelPacket("OotOnline", "OotOnline:onSceneChanged_Network", packet));
   }
@@ -409,16 +389,17 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   //------------------------------
 
   sendPacketToPlayersInScene(packet: IPacketHeader) {
-    Object.keys(this.storage.players).forEach((key: string) => {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, this) as OotOnlineStorage;
+    Object.keys(storage.players).forEach((key: string) => {
       if (
-        this.storage.players[key] === this.storage.players[packet.player.uuid]
+        storage.players[key] === storage.players[packet.player.uuid]
       ) {
         if (
-          this.storage.networkPlayerInstances[key].uuid !== packet.player.uuid
+          storage.networkPlayerInstances[key].uuid !== packet.player.uuid
         ) {
           this.ModLoader.serverSide.sendPacketToSpecificPlayer(
             packet,
-            this.storage.networkPlayerInstances[key]
+            storage.networkPlayerInstances[key]
           );
         }
       }
@@ -445,28 +426,29 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Client is logging in and wants to know how to proceed.
   @ServerNetworkHandler('Ooto_DownloadRequestPacket')
   onDownloadPacket_server(packet: Ooto_DownloadRequestPacket) {
-    if (this.storage.saveGameSetup) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, this) as OotOnlineStorage;
+    if (storage.saveGameSetup) {
       // Game is running, get data.
       this.ModLoader.serverSide.sendPacketToSpecificPlayer(
         new Ooto_DownloadResponsePacket(
           new Ooto_SubscreenSyncPacket(
-            this.storage.inventoryStorage,
-            this.storage.equipmentStorage,
-            this.storage.questStorage
+            storage.inventoryStorage,
+            storage.equipmentStorage,
+            storage.questStorage
           ),
           new Ooto_ServerFlagUpdate(
-            this.storage.sceneStorage,
-            this.storage.eventStorage,
-            this.storage.itemFlagStorage,
-            this.storage.infStorage,
-            this.storage.skulltulaStorage
+            storage.sceneStorage,
+            storage.eventStorage,
+            storage.itemFlagStorage,
+            storage.infStorage,
+            storage.skulltulaStorage
           )
         ),
         packet.player
       );
     } else {
       // Game is not running, give me your data.
-      this.storage.saveGameSetup = true;
+      storage.saveGameSetup = true;
       this.ModLoader.serverSide.sendPacketToSpecificPlayer(
         new Ooto_DownloadResponsePacket2(),
         packet.player
@@ -510,14 +492,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @ServerNetworkHandler('Ooto_SubscreenSyncPacket')
   onItemSync_server(packet: Ooto_SubscreenSyncPacket) {
-    mergeInventoryData(this.storage.inventoryStorage, packet.inventory);
-    mergeEquipmentData(this.storage.equipmentStorage, packet.equipment);
-    mergeQuestSaveData(this.storage.questStorage, packet.quest);
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, this) as OotOnlineStorage;
+    mergeInventoryData(storage.inventoryStorage, packet.inventory);
+    mergeEquipmentData(storage.equipmentStorage, packet.equipment);
+    mergeQuestSaveData(storage.questStorage, packet.quest);
     this.ModLoader.serverSide.sendPacket(
       new Ooto_SubscreenSyncPacket(
-        this.storage.inventoryStorage,
-        this.storage.equipmentStorage,
-        this.storage.questStorage
+        storage.inventoryStorage,
+        storage.equipmentStorage,
+        storage.questStorage
       )
     );
   }
@@ -560,48 +543,49 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @ServerNetworkHandler('Ooto_ClientFlagUpdate')
   onSceneFlagSync_server(packet: Ooto_ClientFlagUpdate) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, this) as OotOnlineStorage;
     Object.keys(packet.scenes).forEach((key: string) => {
       let k = parseInt(key);
       let value = packet.scenes[k];
-      if (this.storage.sceneStorage[k] !== value) {
-        this.storage.sceneStorage[k] |= value;
+      if (storage.sceneStorage[k] !== value) {
+        storage.sceneStorage[k] |= value;
       }
     });
     Object.keys(packet.events).forEach((key: string) => {
       let k = parseInt(key);
       let value = packet.events[k];
-      if (this.storage.eventStorage[k] !== value) {
-        this.storage.eventStorage[k] |= value;
+      if (storage.eventStorage[k] !== value) {
+        storage.eventStorage[k] |= value;
       }
     });
     Object.keys(packet.items).forEach((key: string) => {
       let k = parseInt(key);
       let value = packet.items[k];
-      if (this.storage.itemFlagStorage[k] !== value) {
-        this.storage.itemFlagStorage[k] |= value;
+      if (storage.itemFlagStorage[k] !== value) {
+        storage.itemFlagStorage[k] |= value;
       }
     });
     Object.keys(packet.inf).forEach((key: string) => {
       let k = parseInt(key);
       let value = packet.inf[k];
-      if (this.storage.infStorage[k] !== value) {
-        this.storage.infStorage[k] |= value;
+      if (storage.infStorage[k] !== value) {
+        storage.infStorage[k] |= value;
       }
     });
     Object.keys(packet.skulltulas).forEach((key: string) => {
       let k = parseInt(key);
       let value = packet.skulltulas[k];
-      if (this.storage.skulltulaStorage[k] !== value) {
-        this.storage.skulltulaStorage[k] |= value;
+      if (storage.skulltulaStorage[k] !== value) {
+        storage.skulltulaStorage[k] |= value;
       }
     });
     this.ModLoader.serverSide.sendPacket(
       new Ooto_ServerFlagUpdate(
-        this.storage.sceneStorage,
-        this.storage.eventStorage,
-        this.storage.itemFlagStorage,
-        this.storage.infStorage,
-        this.storage.skulltulaStorage
+        storage.sceneStorage,
+        storage.eventStorage,
+        storage.itemFlagStorage,
+        storage.infStorage,
+        storage.skulltulaStorage
       )
     );
   }

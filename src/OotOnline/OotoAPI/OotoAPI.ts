@@ -13,11 +13,13 @@ export enum OotOnlineEvents {
 
 export class OotOnline_PlayerScene {
   player: INetworkPlayer;
+  lobby: string;
   scene: number;
 
-  constructor(player: INetworkPlayer, scene: number) {
+  constructor(player: INetworkPlayer, lobby: string, scene: number) {
     this.player = player;
     this.scene = scene;
+    this.lobby = lobby;
   }
 }
 
