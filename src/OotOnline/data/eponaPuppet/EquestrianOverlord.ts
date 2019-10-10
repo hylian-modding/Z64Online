@@ -99,7 +99,7 @@ export class EquestrianOverlord {
       );
     }
     this.ModLoader.serverSide.sendPacket(
-      new Ooto_EquestrianPuppetListPacket(storage.horses.horseData)
+      new Ooto_EquestrianPuppetListPacket(storage.horses.horseData, this.ModLoader.clientLobby)
     );
   }
 
@@ -112,7 +112,8 @@ export class EquestrianOverlord {
           new Ooto_EquestrianRegisterPacket(
             this.core.global.scene,
             actor.position,
-            actor.rotation
+            actor.rotation,
+            this.ModLoader.clientLobby
           )
         );
       }, 1000);
@@ -175,7 +176,7 @@ export class EquestrianOverlord {
     let horse_key: string = storage.horses.playersWithHorses[evt.player.uuid];
     delete storage.horses.playersWithHorses[evt.player.uuid];
     delete storage.horses.horseData[horse_key];
-    this.ModLoader.serverSide.sendPacket(new Ooto_EquestrianNukeServerPacket(horse_key));
+    this.ModLoader.serverSide.sendPacket(new Ooto_EquestrianNukeServerPacket(horse_key, this.ModLoader.clientLobby));
   }
 
   @NetworkHandler("Ooto_EquestrianNukeServerPacket")
@@ -306,7 +307,7 @@ export class EquestrianOverlord {
     // Send player horses.
     let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(player.lobby, (this.parent as unknown as IPlugin)) as OotOnlineStorage;
     this.ModLoader.serverSide.sendPacketToSpecificPlayer(
-      new Ooto_EquestrianPuppetListPacket(storage.horses.horseData),
+      new Ooto_EquestrianPuppetListPacket(storage.horses.horseData, this.ModLoader.clientLobby),
       player.player
     );
   }
@@ -329,7 +330,7 @@ export class EquestrianOverlord {
       horse.rot = packet.edata.actor.rotation;
       horse.anim = packet.edata.anim;
       horse.speed = packet.edata.speed;
-      let p = new Ooto_EquestrianTickServerPacket(horse);
+      let p = new Ooto_EquestrianTickServerPacket(horse, this.ModLoader.clientLobby);
       packetHelper.cloneDestination(packet, p);
       this.parent.sendPacketToPlayersInScene(p);
     }
@@ -338,7 +339,7 @@ export class EquestrianOverlord {
   onTick() {
     if (this.epona !== undefined) {
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_EquestrianTickPacket(new EponaData(this.epona))
+        new Ooto_EquestrianTickPacket(new EponaData(this.epona), this.ModLoader.clientLobby)
       );
     }
   }

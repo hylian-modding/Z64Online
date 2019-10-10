@@ -84,7 +84,7 @@ export class ActorHookProcessor extends JSONTemplate {
       this.lastFrameCache = this.toJSON();
       if (this.last_inbound_frame === 0) {
         this.modloader.clientSide.sendPacket(
-          new Ooto_ActorPacket(this.lastFrameCache as ActorPacketData, this.core.global.scene, this.core.global.room)
+          new Ooto_ActorPacket(this.lastFrameCache as ActorPacketData, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
         );
       }
     }

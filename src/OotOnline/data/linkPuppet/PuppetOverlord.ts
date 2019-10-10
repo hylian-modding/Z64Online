@@ -138,7 +138,7 @@ export class PuppetOverlord {
           this.puppets.get(player.uuid)!.id +
           '.'
       );
-      this.mapi.clientSide.sendPacket(new Ooto_SceneRequestPacket());
+      this.mapi.clientSide.sendPacket(new Ooto_SceneRequestPacket(this.mapi.clientLobby));
     }
   }
 
@@ -165,8 +165,11 @@ export class PuppetOverlord {
   }
 
   sendPuppetPacket() {
+    if (this.core.helper.isPaused()){
+      return;
+    }
     this.mapi.clientSide.sendPacket(
-      new Ooto_PuppetPacket(this.fakeClientPuppet.data)
+      new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.mapi.clientLobby)
     );
   }
 

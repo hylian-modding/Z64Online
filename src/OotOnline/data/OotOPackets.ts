@@ -15,8 +15,8 @@ import { EponaData } from './eponaPuppet/EponaData';
 export class Ooto_PuppetPacket extends UDPPacket {
   data: IPuppetData;
 
-  constructor(puppetData: PuppetData) {
-    super('Ooto_PuppetPacket', 'OotOnline', false);
+  constructor(puppetData: PuppetData, lobby: string) {
+    super('Ooto_PuppetPacket', 'OotOnline', lobby, false);
     this.data = puppetData;
   }
 }
@@ -25,16 +25,16 @@ export class Ooto_ScenePacket extends Packet {
   scene: number;
   age: Age;
 
-  constructor(scene: number, age: Age) {
-    super('Ooto_ScenePacket', 'OotOnline', true);
+  constructor(lobby: string, scene: number, age: Age) {
+    super('Ooto_ScenePacket', 'OotOnline', lobby, true);
     this.scene = scene;
     this.age = age;
   }
 }
 
 export class Ooto_SceneRequestPacket extends Packet {
-  constructor() {
-    super('Ooto_SceneRequestPacket', 'OotOnline', true);
+  constructor(lobby: string) {
+    super('Ooto_SceneRequestPacket', 'OotOnline', lobby, true);
   }
 }
 
@@ -46,9 +46,10 @@ export class Ooto_SubscreenSyncPacket extends Packet {
   constructor(
     save: IInventoryFields,
     equipment: IEquipmentSave,
-    quest: IQuestSave
+    quest: IQuestSave,
+    lobby: string
   ) {
-    super('Ooto_SubscreenSyncPacket', 'OotOnline', false);
+    super('Ooto_SubscreenSyncPacket', 'OotOnline', lobby, false);
     this.inventory = save;
     this.equipment = equipment;
     this.quest = quest;
@@ -61,9 +62,10 @@ export class Ooto_DownloadResponsePacket extends Packet {
 
   constructor(
     subscreen: Ooto_SubscreenSyncPacket,
-    scenes: Ooto_ServerFlagUpdate
+    scenes: Ooto_ServerFlagUpdate,
+    lobby: string
   ) {
-    super('Ooto_DownloadResponsePacket', 'OotOnline', false);
+    super('Ooto_DownloadResponsePacket', 'OotOnline', lobby, false);
     this.subscreen = subscreen;
     this.flags = scenes;
     packetHelper.cloneDestination(this, this.flags);
@@ -72,14 +74,14 @@ export class Ooto_DownloadResponsePacket extends Packet {
 }
 
 export class Ooto_DownloadResponsePacket2 extends Packet {
-  constructor() {
-    super('Ooto_DownloadResponsePacket2', 'OotOnline', false);
+  constructor(lobby: string) {
+    super('Ooto_DownloadResponsePacket2', 'OotOnline', lobby, false);
   }
 }
 
 export class Ooto_DownloadRequestPacket extends Packet {
-  constructor() {
-    super('Ooto_DownloadRequestPacket', 'OotOnline', false);
+  constructor(lobby: string) {
+    super('Ooto_DownloadRequestPacket', 'OotOnline', lobby, false);
   }
 }
 
@@ -90,8 +92,8 @@ export class Ooto_ClientFlagUpdate extends Packet {
   inf: any;
   skulltulas: any;
 
-  constructor(scenes: any, events: any, items: any, inf: any, skulltulas: any) {
-    super('Ooto_ClientFlagUpdate', 'OotOnline', false);
+  constructor(scenes: any, events: any, items: any, inf: any, skulltulas: any, lobby: string) {
+    super('Ooto_ClientFlagUpdate', 'OotOnline',lobby, false);
     this.scenes = scenes;
     this.events = events;
     this.items = items;
@@ -107,8 +109,8 @@ export class Ooto_ServerFlagUpdate extends Packet {
   inf: Buffer;
   skulltulas: Buffer;
 
-  constructor(scenes: Buffer, events: Buffer, items: Buffer, inf: Buffer, skulltulas: Buffer) {
-    super('Ooto_ServerFlagUpdate', 'OotOnline', false);
+  constructor(scenes: Buffer, events: Buffer, items: Buffer, inf: Buffer, skulltulas: Buffer, lobby: string) {
+    super('Ooto_ServerFlagUpdate', 'OotOnline', lobby, false);
     this.scenes = scenes;
     this.events = events;
     this.items = items;
@@ -129,9 +131,10 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     switches: Buffer,
     collect: Buffer,
     clear: Buffer,
-    temp: Buffer
+    temp: Buffer,
+    lobby: string
   ) {
-    super('Ooto_ClientSceneContextUpdate', 'OotOnline', false);
+    super('Ooto_ClientSceneContextUpdate', 'OotOnline', lobby, false);
     this.chests = chests;
     this.switches = switches;
     this.collect = collect;
@@ -145,8 +148,8 @@ export class Ooto_ActorPacket extends Packet {
   scene: number;
   room: number;
 
-  constructor(data: ActorPacketData, scene: number, room: number) {
-    super('Ooto_ActorPacket', 'OotOnline', true);
+  constructor(data: ActorPacketData, scene: number, room: number, lobby: string) {
+    super('Ooto_ActorPacket', 'OotOnline', lobby, true);
     this.actorData = data;
     this.scene = scene;
     this.room = room;
@@ -158,8 +161,8 @@ export class Ooto_ActorDeadPacket extends Packet {
   scene: number;
   room: number;
 
-  constructor(aid: string, scene: number, room: number) {
-    super('Ooto_ActorDeadPacket', 'OotOnline', true);
+  constructor(aid: string, scene: number, room: number, lobby: string) {
+    super('Ooto_ActorDeadPacket', 'OotOnline', lobby, true);
     this.actorUUID = aid;
     this.scene = scene;
     this.room = room;
@@ -171,8 +174,8 @@ export class Ooto_EquestrianRegisterPacket extends Packet {
   pos: IPosition;
   rot: IRotation;
 
-  constructor(scene: number, pos: IPosition, rot: IRotation) {
-    super('Ooto_EquestrianRegisterPacket', 'OotOnline', false);
+  constructor(scene: number, pos: IPosition, rot: IRotation, lobby: string) {
+    super('Ooto_EquestrianRegisterPacket', 'OotOnline', lobby, false);
     this.scene = scene;
     this.pos = pos;
     this.rot = rot;
@@ -182,8 +185,8 @@ export class Ooto_EquestrianRegisterPacket extends Packet {
 export class Ooto_EquestrianPuppetListPacket extends Packet {
   data: any;
 
-  constructor(d: any) {
-    super('Ooto_EquestrianPuppetListPacket', 'OotOnline', false);
+  constructor(d: any, lobby: string) {
+    super('Ooto_EquestrianPuppetListPacket', 'OotOnline', lobby, false);
     this.data = d;
   }
 }
@@ -191,8 +194,8 @@ export class Ooto_EquestrianPuppetListPacket extends Packet {
 export class Ooto_EquestrianTickPacket extends UDPPacket {
   edata: EponaData;
 
-  constructor(edata: EponaData) {
-    super('Ooto_EquestrianTickPacket', 'OotOnline', false);
+  constructor(edata: EponaData, lobby: string) {
+    super('Ooto_EquestrianTickPacket', 'OotOnline', lobby, false);
     this.edata = edata;
   }
 }
@@ -200,8 +203,8 @@ export class Ooto_EquestrianTickPacket extends UDPPacket {
 export class Ooto_EquestrianTickServerPacket extends Packet {
   data: EquestrianData;
 
-  constructor(data: EquestrianData) {
-    super('Ooto_EquestrianTickServerPacket', 'OotOnline', false);
+  constructor(data: EquestrianData, lobby: string) {
+    super('Ooto_EquestrianTickServerPacket', 'OotOnline', lobby, false);
     this.data = data;
   }
 }
@@ -209,8 +212,8 @@ export class Ooto_EquestrianTickServerPacket extends Packet {
 export class Ooto_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
   scene: number;
-  constructor(data: ActorPacketData, scene: number) {
-    super('Ooto_SpawnActorPacket', 'OotOnline', true);
+  constructor(data: ActorPacketData, scene: number, lobby: string) {
+    super('Ooto_SpawnActorPacket', 'OotOnline', lobby, true);
     this.actorData = data;
     this.scene = scene;
   }
@@ -219,8 +222,8 @@ export class Ooto_SpawnActorPacket extends Packet {
 export class Ooto_EquestrianNukeServerPacket extends Packet{
   horse_to_remove: string;
 
-  constructor(horse_to_remove: string){
-    super("Ooto_EquestrianNukeServerPacket", 'OotOnline', false);
+  constructor(horse_to_remove: string, lobby: string){
+    super("Ooto_EquestrianNukeServerPacket", 'OotOnline', lobby, false);
     this.horse_to_remove = horse_to_remove;
   }
 }

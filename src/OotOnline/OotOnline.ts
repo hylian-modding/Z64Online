@@ -153,14 +153,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           new Ooto_SubscreenSyncPacket(
             createInventoryFromContext(this.core.save),
             createEquipmentFromContext(this.core.save),
-            createQuestSaveFromContext(this.core.save)
+            createQuestSaveFromContext(this.core.save),
+            this.ModLoader.clientLobby
           )
         );
         this.needs_update = false;
       }
     } else {
       if (!this.sent_download_request) {
-        this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket());
+        this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby));
         this.sent_download_request = true;
       }
     }
@@ -189,7 +190,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       ) {
         this.ModLoader.logger.info("updateFlags()");
         this.ModLoader.clientSide.sendPacket(
-          new Ooto_ClientFlagUpdate(scenes, events, items, inf, skulltulas)
+          new Ooto_ClientFlagUpdate(scenes, events, items, inf, skulltulas, this.ModLoader.clientLobby)
         );
       }
     }
@@ -231,7 +232,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
       this.core.global.writeSaveDataForCurrentScene(save_scene_data);
 
-      this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp));
+      this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby));
     }
   }
 
@@ -328,7 +329,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneChange(scene: number) {
     this.overlord.localPlayerChangingScenes(scene, this.core.save.age);
     this.ModLoader.clientSide.sendPacket(
-      new Ooto_ScenePacket(scene, this.core.save.age)
+      new Ooto_ScenePacket(this.ModLoader.clientLobby, scene, this.core.save.age)
     );
     this.ModLoader.logger.info('client: I moved to scene ' + scene + '.');
     this.ModLoader.gui.tunnel.send("OotOnline:onSceneChanged", new GUITunnelPacket("OotOnline", "OotOnline:onSceneChanged", scene));
@@ -378,7 +379,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneRequest_client(packet: Ooto_SceneRequestPacket) {
     if (this.core.save !== undefined) {
       this.ModLoader.clientSide.sendPacketToSpecificPlayer(
-        new Ooto_ScenePacket(this.core.global.scene, this.core.save.age),
+        new Ooto_ScenePacket(this.ModLoader.clientLobby, this.core.global.scene, this.core.save.age),
         packet.player
       );
     }
@@ -434,15 +435,18 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           new Ooto_SubscreenSyncPacket(
             storage.inventoryStorage,
             storage.equipmentStorage,
-            storage.questStorage
+            storage.questStorage,
+            packet.lobby
           ),
           new Ooto_ServerFlagUpdate(
             storage.sceneStorage,
             storage.eventStorage,
             storage.itemFlagStorage,
             storage.infStorage,
-            storage.skulltulaStorage
-          )
+            storage.skulltulaStorage,
+            packet.lobby
+          ),
+          packet.lobby
         ),
         packet.player
       );
@@ -450,7 +454,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       // Game is not running, give me your data.
       storage.saveGameSetup = true;
       this.ModLoader.serverSide.sendPacketToSpecificPlayer(
-        new Ooto_DownloadResponsePacket2(),
+        new Ooto_DownloadResponsePacket2(packet.lobby),
         packet.player
       );
     }
@@ -492,6 +496,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @ServerNetworkHandler('Ooto_SubscreenSyncPacket')
   onItemSync_server(packet: Ooto_SubscreenSyncPacket) {
+    this.ModLoader.logger.info(JSON.stringify(packet));
     let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, this) as OotOnlineStorage;
     mergeInventoryData(storage.inventoryStorage, packet.inventory);
     mergeEquipmentData(storage.equipmentStorage, packet.equipment);
@@ -500,16 +505,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       new Ooto_SubscreenSyncPacket(
         storage.inventoryStorage,
         storage.equipmentStorage,
-        storage.questStorage
+        storage.questStorage,
+        packet.lobby
       )
     );
   }
 
   @NetworkHandler('Ooto_SubscreenSyncPacket')
   onItemSync_client(packet: Ooto_SubscreenSyncPacket) {
-    if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()){
-      return;
-    }
+    this.ModLoader.logger.info(JSON.stringify(packet));
     let inventory: InventorySave = createInventoryFromContext(
       this.core.save
     ) as InventorySave;
@@ -585,16 +589,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         storage.eventStorage,
         storage.itemFlagStorage,
         storage.infStorage,
-        storage.skulltulaStorage
+        storage.skulltulaStorage,
+        packet.lobby
       )
     );
   }
 
   @NetworkHandler('Ooto_ServerFlagUpdate')
   onSceneFlagSync_client(packet: Ooto_ServerFlagUpdate) {
-    if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()){
-      return;
-    }
     let scenes: Buffer = this.core.save.permSceneData;
     let events: Buffer = this.core.save.eventFlags;
     let items: Buffer = this.core.save.itemFlags;

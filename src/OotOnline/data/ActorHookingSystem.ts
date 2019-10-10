@@ -95,14 +95,14 @@ export class ActorHookingManager {
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.bombsLocal.set(actor.actorUUID, actor);
       this.modloader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(actorData, this.core.global.scene)
+        new Ooto_SpawnActorPacket(actorData, this.core.global.scene, this.modloader.clientLobby)
       );
     }else if (actor.actorID === BOMBCHU_ID){
       actor.actorUUID = v4();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.chusLocal.set(actor.actorUUID, actor);
       this.modloader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(actorData, this.core.global.scene)
+        new Ooto_SpawnActorPacket(actorData, this.core.global.scene, this.modloader.clientLobby)
       );
     }
   }
@@ -112,19 +112,19 @@ export class ActorHookingManager {
     if (this.actorHookTicks.has(actor.actorUUID)) {
       console.log('Deleting hook for actor ' + actor.actorUUID + '.');
       this.modloader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room)
+        new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
       );
       this.actorHookTicks.delete(actor.actorUUID);
     } else if (actor.actorID === BOMB_ID) {
       if (this.bombsLocal.has(actor.actorUUID)){
         this.modloader.clientSide.sendPacket(
-          new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room)
+          new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
         );
         this.bombsLocal.delete(actor.actorUUID);
       }
     } else if (actor.actorID === BOMBCHU_ID){
       this.modloader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room)
+        new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
       );
       this.chusLocal.delete(actor.actorUUID);
     }
