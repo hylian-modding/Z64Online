@@ -8,7 +8,8 @@ export enum OotOnlineEvents {
   CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'OotOnline:onRemotePlayerChangedScenes',
   GHOST_MODE = "OotOnline:EnableGhostMode",
   GAINED_HEART_CONTAINER = "OotOnline:GainedHeartContainer",
-  GAINED_PIECE_OF_HEART = "OotOnline:GainedPieceOfHeart"
+  GAINED_PIECE_OF_HEART = "OotOnline:GainedPieceOfHeart",
+  MAGIC_METER_INCREASED = "OotOnline:GainedMagicMeter"
 }
 
 export class OotOnline_PlayerScene {

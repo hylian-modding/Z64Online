@@ -14,6 +14,7 @@ import {
   ZoraScale,
   Strength,
   UpgradeCountLookup,
+  Magic,
 } from 'modloader64_api/OOT/OOTAPI';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '../OotoAPI/OotoAPI';
@@ -520,6 +521,7 @@ export class EquipmentSave implements IEquipmentSave {
 // Add heart containers here, it makes sense to put them with the heart pieces.
 export interface IQuestSave extends IQuestStatus {
   heart_containers: number;
+  magic_meter_size: Magic;
 }
 
 export class QuestSave implements IQuestSave {
@@ -550,6 +552,7 @@ export class QuestSave implements IQuestSave {
   goldSkulltulas = 0;
   displayGoldSkulltulas = false;
   heartPieces = 0;
+  magic_meter_size: Magic = Magic.NONE;
 }
 
 export function createQuestSaveFromContext(save: ISaveContext): IQuestSave {
@@ -581,6 +584,7 @@ export function createQuestSaveFromContext(save: ISaveContext): IQuestSave {
   data.displayGoldSkulltulas = save.questStatus.displayGoldSkulltulas;
   data.heartPieces = save.questStatus.heartPieces;
   data.heart_containers = save.heart_containers;
+  data.magic_meter_size = save.magic_meter_size;
   return data;
 }
 
@@ -619,6 +623,11 @@ export function applyQuestSaveToContext(data: IQuestSave, save: ISaveContext) {
   save.heart_containers = data.heart_containers;
   if (lastKnownHC < data.heart_containers){
     bus.emit(OotOnlineEvents.GAINED_HEART_CONTAINER, data.heart_containers);
+  }
+  let lastKnownMagic: Magic = save.magic_meter_size;
+  save.magic_meter_size = data.magic_meter_size;
+  if (lastKnownMagic < data.magic_meter_size){
+    bus.emit(OotOnlineEvents.MAGIC_METER_INCREASED, data.magic_meter_size);
   }
 }
 
@@ -706,5 +715,8 @@ export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
   }
   if (incoming.heart_containers > save.heart_containers) {
     save.heart_containers = incoming.heart_containers;
+  }
+  if (incoming.magic_meter_size > save.magic_meter_size){
+    save.magic_meter_size = incoming.magic_meter_size;
   }
 }
