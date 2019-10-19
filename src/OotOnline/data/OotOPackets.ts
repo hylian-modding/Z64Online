@@ -5,7 +5,7 @@ import {
 } from 'modloader64_api/ModLoaderDefaultImpls';
 import { IPuppetData, PuppetData } from './linkPuppet/PuppetData';
 import { Age, IInventoryFields } from 'modloader64_api/OOT/OOTAPI';
-import { IEquipmentSave, IQuestSave } from './OotoSaveData';
+import { IEquipmentSave, IQuestSave, IDungeonItemSave, IKeySaveContainer } from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
 import { IPosition } from 'modloader64_api/OOT/IPosition';
 import { IRotation } from 'modloader64_api/OOT/IRotation';
@@ -42,17 +42,23 @@ export class Ooto_SubscreenSyncPacket extends Packet {
   inventory: IInventoryFields;
   equipment: IEquipmentSave;
   quest: IQuestSave;
+  dungeonItems: IDungeonItemSave;
+  smallKeys: IKeySaveContainer;
 
   constructor(
     save: IInventoryFields,
     equipment: IEquipmentSave,
     quest: IQuestSave,
+    dungeonItems: IDungeonItemSave,
+    smallKeys: IKeySaveContainer,
     lobby: string
   ) {
     super('Ooto_SubscreenSyncPacket', 'OotOnline', lobby, false);
     this.inventory = save;
     this.equipment = equipment;
     this.quest = quest;
+    this.dungeonItems = dungeonItems;
+    this.smallKeys = smallKeys;
   }
 }
 

@@ -76,6 +76,9 @@ export class ActorHookingManager {
 
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)
   onActorSpawned(actor: IActor) {
+    if (!(this.parent as any).LobbyConfig.actor_syncing) {
+      return;
+    }
     if (this.actorHookMap.has(actor.actorID)) {
       console.log('Setting up hook for actor ' + actor.actorUUID + '.');
       this.actorHookTicks.set(
@@ -109,6 +112,9 @@ export class ActorHookingManager {
 
   @EventHandler(OotEvents.ON_ACTOR_DESPAWN)
   onActorDespawned(actor: IActor) {
+    if (!(this.parent as any).LobbyConfig.actor_syncing) {
+      return;
+    }
     if (this.actorHookTicks.has(actor.actorUUID)) {
       console.log('Deleting hook for actor ' + actor.actorUUID + '.');
       this.modloader.clientSide.sendPacket(
@@ -281,7 +287,7 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_ActorDeadPacket')
   onActorDead(packet: Ooto_ActorDeadPacket) {
-    if (packet.scene !== this.core.global.scene || packet.room !== this.core.global.room){
+    if (packet.scene !== this.core.global.scene || packet.room !== this.core.global.room || this.core.helper.isLinkEnteringLoadingZone()){
       return;
     }
     if (this.actorHookTicks.has(packet.actorUUID)) {
@@ -297,7 +303,7 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_SpawnActorPacket')
   onActorSpawnRequest(packet: Ooto_SpawnActorPacket) {
-    if (packet.scene !== this.core.global.scene){
+    if (packet.scene !== this.core.global.scene || this.core.helper.isLinkEnteringLoadingZone()){
       return;
     }
     let spawn_param: number = 0;

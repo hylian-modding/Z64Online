@@ -24,6 +24,7 @@ import {
   AmmoUpgrade,
   Magic,
   InventoryItem,
+  MagicQuantities,
 } from 'modloader64_api/OOT/OOTAPI';
 import {
   IOotOnlineHelpers,
@@ -45,6 +46,15 @@ import {
   mergeInventoryData,
   mergeQuestSaveData,
   QuestSave,
+  createDungeonItemDataFromContext,
+  applyDungeonItemDataToContext,
+  mergeDungeonItemData,
+  OotoDungeonItemContext,
+  IDungeonItemSave,
+  createSmallKeyDataFromContext,
+  mergeSmallKeyData,
+  IKeySaveContainer,
+  applySmallKeyDataToContext,
 } from './data/OotoSaveData';
 import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
 import {
@@ -101,6 +111,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.core.save.inventory.bombchuCount = 20;
   }
 
+  debuggingMagic(){
+    this.core.save.magic_meter_size = Magic.NORMAL;
+    this.core.save.magic_current = MagicQuantities.NORMAL;
+  }
+
   preinit(): void {
     this.overlord = new PuppetOverlord(this.ModLoader.logger);
     this.actorHooks = new ActorHookingManager(this.ModLoader, this.core, this);
@@ -152,21 +167,12 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             createInventoryFromContext(this.core.save),
             createEquipmentFromContext(this.core.save),
             createQuestSaveFromContext(this.core.save),
+            createDungeonItemDataFromContext(this.core.save.dungeonItemManager),
+            createSmallKeyDataFromContext(this.core.save),
             this.ModLoader.clientLobby
           )
         );
         this.clientStorage.needs_update = false;
-      }
-      if (this.clientStorage.lastKnownSkullCount < this.core.save.questStatus.goldSkulltulas){
-        this.clientStorage.needs_update = true;
-        this.clientStorage.lastKnownSkullCount = this.core.save.questStatus.goldSkulltulas;
-        this.ModLoader.logger.info("Skulltula update.");
-      }
-      let bottles: Array<InventoryItem> = [this.core.save.inventory.bottle_1, this.core.save.inventory.bottle_2, this.core.save.inventory.bottle_3, this.core.save.inventory.bottle_4];
-      if (!deep(bottles, this.clientStorage.bottleCache)){
-        this.clientStorage.needs_update = true;
-        this.clientStorage.bottleCache = bottles;
-        this.ModLoader.logger.info("Bottle update.");
       }
     } else {
       if (!this.clientStorage.sent_download_request) {
@@ -257,6 +263,17 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         this.EquestrianCenter.onTick();
         if (this.LobbyConfig.data_syncing) {
           this.autosaveSceneData();
+          if (this.clientStorage.lastKnownSkullCount < this.core.save.questStatus.goldSkulltulas) {
+            this.clientStorage.needs_update = true;
+            this.clientStorage.lastKnownSkullCount = this.core.save.questStatus.goldSkulltulas;
+            this.ModLoader.logger.info("Skulltula update.");
+          }
+          let bottles: Array<InventoryItem> = [this.core.save.inventory.bottle_1, this.core.save.inventory.bottle_2, this.core.save.inventory.bottle_3, this.core.save.inventory.bottle_4];
+          if (!deep(bottles, this.clientStorage.bottleCache)) {
+            this.clientStorage.needs_update = true;
+            this.clientStorage.bottleCache = bottles;
+            this.ModLoader.logger.info("Bottle update.");
+          }
         }
       }
       let state = this.core.link.state;
@@ -447,6 +464,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             storage.inventoryStorage,
             storage.equipmentStorage,
             storage.questStorage,
+            storage.dungeonItemStorage,
+            storage.smallKeyStorage,
             packet.lobby
           ),
           new Ooto_ServerFlagUpdate(
@@ -478,6 +497,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     applyInventoryToContext(packet.subscreen.inventory, this.core.save);
     applyEquipmentToContext(packet.subscreen.equipment, this.core.save);
     applyQuestSaveToContext(packet.subscreen.quest, this.core.save);
+    applyDungeonItemDataToContext(packet.subscreen.dungeonItems, this.core.save.dungeonItemManager);
     this.core.save.permSceneData = packet.flags.scenes;
     this.core.save.eventFlags = packet.flags.events;
     this.core.save.itemFlags = packet.flags.items;
@@ -501,11 +521,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     mergeInventoryData(storage.inventoryStorage, packet.inventory);
     mergeEquipmentData(storage.equipmentStorage, packet.equipment);
     mergeQuestSaveData(storage.questStorage, packet.quest);
+    mergeDungeonItemData(storage.dungeonItemStorage, packet.dungeonItems);
+    mergeSmallKeyData(storage.smallKeyStorage, packet.smallKeys);
     this.ModLoader.serverSide.sendPacket(
       new Ooto_SubscreenSyncPacket(
         storage.inventoryStorage,
         storage.equipmentStorage,
         storage.questStorage,
+        storage.dungeonItemStorage,
+        storage.smallKeyStorage,
         packet.lobby
       )
     );
@@ -520,12 +544,19 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.save
     ) as EquipmentSave;
     let quest: QuestSave = createQuestSaveFromContext(this.core.save);
+    let dungeonItems: OotoDungeonItemContext = createDungeonItemDataFromContext(this.core.save.dungeonItemManager) as IDungeonItemSave;
+    let smallKeys: IKeySaveContainer = createSmallKeyDataFromContext(this.core.save);
     mergeInventoryData(inventory, packet.inventory);
     mergeEquipmentData(equipment, packet.equipment);
     mergeQuestSaveData(quest, packet.quest);
+    mergeDungeonItemData(dungeonItems, packet.dungeonItems);
+    mergeSmallKeyData(smallKeys, packet.smallKeys);
     applyInventoryToContext(inventory, this.core.save);
     applyEquipmentToContext(equipment, this.core.save);
     applyQuestSaveToContext(quest, this.core.save);
+    applyDungeonItemDataToContext(dungeonItems, this.core.save.dungeonItemManager);
+    applySmallKeyDataToContext(smallKeys, this.core.save);
+    console.log(smallKeys);
   }
 
   //------------------------------

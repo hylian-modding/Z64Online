@@ -62,7 +62,7 @@ export class PuppetData implements IPuppetData {
   }
 
   get pos(): Buffer {
-    return this.link.pos;
+    return this.link.position.getRawPos();
   }
 
   set pos(pos: Buffer) {
@@ -78,7 +78,7 @@ export class PuppetData implements IPuppetData {
   }
 
   get rot(): Buffer {
-    return this.link.rot;
+    return this.link.rotation.getRawRot();
   }
 
   set rot(rot: Buffer) {
