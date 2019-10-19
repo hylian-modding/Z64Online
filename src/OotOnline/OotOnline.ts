@@ -556,7 +556,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     applyQuestSaveToContext(quest, this.core.save);
     applyDungeonItemDataToContext(dungeonItems, this.core.save.dungeonItemManager);
     applySmallKeyDataToContext(smallKeys, this.core.save);
-    console.log(smallKeys);
   }
 
   //------------------------------

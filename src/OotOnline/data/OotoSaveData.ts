@@ -755,6 +755,7 @@ export class EquipmentSave implements IEquipmentSave {
 export interface IQuestSave extends IQuestStatus {
   heart_containers: number;
   magic_meter_size: Magic;
+  double_defense: number;
 }
 
 export class QuestSave implements IQuestSave {
@@ -786,6 +787,7 @@ export class QuestSave implements IQuestSave {
   displayGoldSkulltulas = false;
   heartPieces = 0;
   magic_meter_size: Magic = Magic.NONE;
+  double_defense: number = 0;
 }
 
 export function createQuestSaveFromContext(save: ISaveContext): IQuestSave {
@@ -818,6 +820,7 @@ export function createQuestSaveFromContext(save: ISaveContext): IQuestSave {
   data.heartPieces = save.questStatus.heartPieces;
   data.heart_containers = save.heart_containers;
   data.magic_meter_size = save.magic_meter_size;
+  data.double_defense = save.double_defense;
   return data;
 }
 
@@ -861,6 +864,11 @@ export function applyQuestSaveToContext(data: IQuestSave, save: ISaveContext) {
   save.magic_meter_size = data.magic_meter_size;
   if (lastKnownMagic < data.magic_meter_size) {
     bus.emit(OotOnlineEvents.MAGIC_METER_INCREASED, data.magic_meter_size);
+  }
+  let lastKnownDD: number = save.double_defense;
+  save.double_defense = data.double_defense;
+  if (lastKnownDD < data.double_defense) {
+    bus.emit(OotOnlineEvents.GAINED_HEART_CONTAINER, data.double_defense);
   }
 }
 
@@ -955,6 +963,9 @@ export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
   if (incoming.magic_meter_size > save.magic_meter_size) {
     save.magic_meter_size = incoming.magic_meter_size;
   }
+  if (incoming.double_defense > save.double_defense) {
+    save.double_defense = incoming.double_defense;
+  }
 }
 
 export interface IKeySave {
@@ -1023,7 +1034,7 @@ export function mergeSmallKeyData(storage: IKeySaveContainer, incoming: IKeySave
   storage.GANONS_CASTLE.count = incoming.GANONS_CASTLE.count;
 }
 
-export function applySmallKeyDataToContext(incoming: IKeySaveContainer, save: ISaveContext){
+export function applySmallKeyDataToContext(incoming: IKeySaveContainer, save: ISaveContext) {
   save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.FOREST_TEMPLE, incoming.FOREST_TEMPLE.count);
   save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.FIRE_TEMPLE, incoming.FIRE_TEMPLE.count);
   save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.WATER_TEMPLE, incoming.WATER_TEMPLE.count);
