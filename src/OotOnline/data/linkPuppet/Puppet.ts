@@ -1,7 +1,7 @@
 import uuid from 'uuid';
 import { ILink, ISaveContext, Age } from 'modloader64_api/OOT/OOTAPI';
 import IMemory from 'modloader64_api/IMemory';
-import { PuppetData, IPuppetData } from './PuppetData';
+import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { ICommandBuffer, Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus } from 'modloader64_api/EventHandler';
@@ -48,36 +48,41 @@ export class Puppet {
   }
 
   spawn() {
-    if (this.isShoveled){
+    if (this.isShoveled) {
       this.isShoveled = false;
-      console.log("Puppet resurrected.");
+      console.log('Puppet resurrected.');
       return;
     }
     if (!this.isSpawned && !this.isSpawning) {
       this.isSpawning = true;
       this.data.pointer = 0x0;
+      bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.commandBuffer.runCommand(
         Command.SPAWN_ACTOR,
         0x80600140,
         (success: boolean, result: number) => {
           if (success) {
             console.log(result.toString(16));
-            this.data.pointer = result & 0x00FFFFFF;
+            this.data.pointer = result & 0x00ffffff;
             console.log('Puppet spawned!');
             console.log(this.data.pointer.toString(16));
             this.isSpawned = true;
             this.isSpawning = false;
             bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
-            this.void = this.emulator.rdramReadBuffer(this.data.pointer + 0x24, 0xC);
+            this.void = this.emulator.rdramReadBuffer(
+              this.data.pointer + 0x24,
+              0xc
+            );
+            this.debug_movePuppetToPlayer();
           }
         }
       );
-    }else{
-      console.log("Puppet already exists or is currently spawning.");
+    } else {
+      console.log('Puppet already exists or is currently spawning.');
     }
   }
 
-  processIncomingPuppetData(data: IPuppetData) {
+  processIncomingPuppetData(data: PuppetData) {
     if (this.isSpawned && !this.isShoveled) {
       Object.keys(data).forEach((key: string) => {
         (this.data as any)[key] = (data as any)[key];
@@ -85,11 +90,11 @@ export class Puppet {
     }
   }
 
-  shovel(){
-    if (this.isSpawned){
-      if (this.data.pointer > 0){
+  shovel() {
+    if (this.isSpawned) {
+      if (this.data.pointer > 0) {
         this.emulator.rdramWriteBuffer(this.data.pointer + 0x24, this.void);
-        console.log("Puppet " + this.id + " shoveled.");
+        console.log('Puppet ' + this.id + ' shoveled.');
         this.isShoveled = true;
       }
     }

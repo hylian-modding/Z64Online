@@ -34,13 +34,12 @@ export function isAdultTradeItem(item: InventoryItem) {
   );
 }
 
-export interface IDungeonItemSave extends IDungeonItemManager {
-}
+export interface IDungeonItemSave extends IDungeonItemManager {}
 
 export class OotoDungeonItemContainer implements IDungeonItemContainer {
-  bossKey: boolean = false;
-  compass: boolean = false;
-  map: boolean = false;
+  bossKey = false;
+  compass = false;
+  map = false;
 }
 
 export class OotoDungeonItemContext implements IDungeonItemSave {
@@ -57,7 +56,9 @@ export class OotoDungeonItemContext implements IDungeonItemSave {
   GANONS_CASTLE: IDungeonItemContainer = new OotoDungeonItemContainer();
 }
 
-export function createDungeonItemDataFromContext(context: IDungeonItemManager): IDungeonItemSave {
+export function createDungeonItemDataFromContext(
+  context: IDungeonItemManager
+): IDungeonItemSave {
   let m: IDungeonItemSave = new OotoDungeonItemContext();
   m.DEKU_TREE.bossKey = context.DEKU_TREE.bossKey;
   m.DEKU_TREE.compass = context.DEKU_TREE.compass;
@@ -106,7 +107,10 @@ export function createDungeonItemDataFromContext(context: IDungeonItemManager): 
   return m;
 }
 
-export function mergeDungeonItemData(storage: IDungeonItemManager, incoming: IDungeonItemSave) {
+export function mergeDungeonItemData(
+  storage: IDungeonItemManager,
+  incoming: IDungeonItemSave
+) {
   if (incoming.DEKU_TREE.bossKey && !storage.DEKU_TREE.bossKey) {
     storage.DEKU_TREE.bossKey = incoming.DEKU_TREE.bossKey;
   }
@@ -187,10 +191,16 @@ export function mergeDungeonItemData(storage: IDungeonItemManager, incoming: IDu
     storage.SHADOW_TEMPLE.map = incoming.SHADOW_TEMPLE.map;
   }
 
-  if (incoming.BOTTOM_OF_THE_WELL.bossKey && !storage.BOTTOM_OF_THE_WELL.bossKey) {
+  if (
+    incoming.BOTTOM_OF_THE_WELL.bossKey &&
+    !storage.BOTTOM_OF_THE_WELL.bossKey
+  ) {
     storage.BOTTOM_OF_THE_WELL.bossKey = incoming.BOTTOM_OF_THE_WELL.bossKey;
   }
-  if (incoming.BOTTOM_OF_THE_WELL.compass && !storage.BOTTOM_OF_THE_WELL.compass) {
+  if (
+    incoming.BOTTOM_OF_THE_WELL.compass &&
+    !storage.BOTTOM_OF_THE_WELL.compass
+  ) {
     storage.BOTTOM_OF_THE_WELL.compass = incoming.BOTTOM_OF_THE_WELL.compass;
   }
   if (incoming.BOTTOM_OF_THE_WELL.map && !storage.BOTTOM_OF_THE_WELL.map) {
@@ -218,7 +228,10 @@ export function mergeDungeonItemData(storage: IDungeonItemManager, incoming: IDu
   }
 }
 
-export function applyDungeonItemDataToContext(incoming: IDungeonItemSave, context: IDungeonItemManager) {
+export function applyDungeonItemDataToContext(
+  incoming: IDungeonItemSave,
+  context: IDungeonItemManager
+) {
   context.DEKU_TREE.bossKey = incoming.DEKU_TREE.bossKey;
   context.DEKU_TREE.compass = incoming.DEKU_TREE.compass;
   context.DEKU_TREE.map = incoming.DEKU_TREE.map;
@@ -541,7 +554,8 @@ export function applyInventoryToContext(
   save.inventory.dekuNuts = data.dekuNuts;
   save.inventory.bombs = data.bombs;
   if (!save.inventory.bombchus && data.bombchus) {
-    save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.NONE) / 4;
+    save.inventory.bombchuCount =
+      UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE) / 4;
   }
   save.inventory.bombchus = data.bombchus;
   save.inventory.magicBeans = data.magicBeans;
@@ -566,16 +580,25 @@ export function applyInventoryToContext(
   save.inventory.bottle_4 = data.bottle_4;
   save.inventory.wallet = data.wallet;
   if (data.quiver > save.inventory.quiver) {
-    save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, data.quiver);
+    save.inventory.arrows = UpgradeCountLookup(
+      InventoryItem.FAIRY_BOW,
+      data.quiver
+    );
   }
   save.inventory.quiver = data.quiver;
   if (data.bombBag > save.inventory.bombBag) {
-    save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, data.bombBag);
+    save.inventory.bombsCount = UpgradeCountLookup(
+      InventoryItem.BOMB,
+      data.bombBag
+    );
   }
   save.inventory.bombBag = data.bombBag;
   if (data.dekuNutsCapacity > save.inventory.dekuNutsCapacity) {
     if (data.dekuNutsCapacity > 1) {
-      save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, data.dekuNutsCapacity);
+      save.inventory.dekuNutsCount = UpgradeCountLookup(
+        InventoryItem.DEKU_NUT,
+        data.dekuNutsCapacity
+      );
     } else {
       if (data.dekuNutsCapacity === 1) {
         save.inventory.dekuNutsCount = 5;
@@ -585,7 +608,10 @@ export function applyInventoryToContext(
   save.inventory.dekuNutsCapacity = data.dekuNutsCapacity;
   if (data.dekuSticksCapacity > save.inventory.dekuSticksCapacity) {
     if (data.dekuSticksCapacity > 1) {
-      save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, data.dekuSticksCapacity);
+      save.inventory.dekuSticksCount = UpgradeCountLookup(
+        InventoryItem.DEKU_STICK,
+        data.dekuSticksCapacity
+      );
     } else {
       if (data.dekuSticksCapacity === 1) {
         save.inventory.dekuSticksCount = 1;
@@ -595,7 +621,10 @@ export function applyInventoryToContext(
   save.inventory.dekuSticksCapacity = data.dekuSticksCapacity;
   save.inventory.swimming = data.swimming;
   if (data.bulletBag > save.inventory.bulletBag) {
-    save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, data.bulletBag);
+    save.inventory.dekuSeeds = UpgradeCountLookup(
+      InventoryItem.FAIRY_SLINGSHOT,
+      data.bulletBag
+    );
   }
   save.inventory.bulletBag = data.bulletBag;
   save.inventory.strength = data.strength;
@@ -733,7 +762,7 @@ export function applyEquipmentToContext(
 }
 
 // Combine the four API interfaces into one.
-export interface IEquipmentSave extends ISwords, IShields, ITunics, IBoots { }
+export interface IEquipmentSave extends ISwords, IShields, ITunics, IBoots {}
 
 export class EquipmentSave implements IEquipmentSave {
   kokiriSword = false;
@@ -787,7 +816,7 @@ export class QuestSave implements IQuestSave {
   displayGoldSkulltulas = false;
   heartPieces = 0;
   magic_meter_size: Magic = Magic.NONE;
-  double_defense: number = 0;
+  double_defense = 0;
 }
 
 export function createQuestSaveFromContext(save: ISaveContext): IQuestSave {
@@ -951,10 +980,7 @@ export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
   // No idea if this logic is correct. Needs testing.
   if (incoming.heartPieces > save.heartPieces) {
     save.heartPieces = incoming.heartPieces;
-  } else if (
-    incoming.heartPieces === 0 &&
-    save.heartPieces === 3
-  ) {
+  } else if (incoming.heartPieces === 0 && save.heartPieces === 3) {
     save.heartPieces = 0;
   }
   if (incoming.heart_containers > save.heart_containers) {
@@ -993,36 +1019,92 @@ export class KeySave implements IKeySave {
     this.index = index;
     this.count = count;
   }
-
 }
 
 export class KeySaveContainer implements IKeySaveContainer {
-  FOREST_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.FOREST_TEMPLE, 0xFF);
-  FIRE_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.FIRE_TEMPLE, 0xFF);
-  WATER_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.WATER_TEMPLE, 0xFF);
-  SPIRIT_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.SPIRIT_TEMPLE, 0xFF);
-  SHADOW_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.SHADOW_TEMPLE, 0xFF);
-  BOTTOM_OF_THE_WELL: IKeySave = new KeySave(VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL, 0xFF);
-  GERUDO_TRAINING_GROUND: IKeySave = new KeySave(VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND, 0xFF);
-  GERUDO_FORTRESS: IKeySave = new KeySave(VANILLA_KEY_INDEXES.GERUDO_FORTRESS, 0xFF);
-  GANONS_CASTLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.GANONS_CASTLE, 0xFF);
+  FOREST_TEMPLE: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.FOREST_TEMPLE,
+    0xff
+  );
+  FIRE_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.FIRE_TEMPLE, 0xff);
+  WATER_TEMPLE: IKeySave = new KeySave(VANILLA_KEY_INDEXES.WATER_TEMPLE, 0xff);
+  SPIRIT_TEMPLE: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.SPIRIT_TEMPLE,
+    0xff
+  );
+  SHADOW_TEMPLE: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.SHADOW_TEMPLE,
+    0xff
+  );
+  BOTTOM_OF_THE_WELL: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL,
+    0xff
+  );
+  GERUDO_TRAINING_GROUND: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND,
+    0xff
+  );
+  GERUDO_FORTRESS: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.GERUDO_FORTRESS,
+    0xff
+  );
+  GANONS_CASTLE: IKeySave = new KeySave(
+    VANILLA_KEY_INDEXES.GANONS_CASTLE,
+    0xff
+  );
 }
 
-export function createSmallKeyDataFromContext(context: ISaveContext): IKeySaveContainer {
+export function createSmallKeyDataFromContext(
+  context: ISaveContext
+): IKeySaveContainer {
   let m: IKeySaveContainer = new KeySaveContainer();
-  m.FOREST_TEMPLE = new KeySave(VANILLA_KEY_INDEXES.FOREST_TEMPLE, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.FOREST_TEMPLE));
-  m.FIRE_TEMPLE = new KeySave(VANILLA_KEY_INDEXES.FIRE_TEMPLE, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.FIRE_TEMPLE));
-  m.WATER_TEMPLE = new KeySave(VANILLA_KEY_INDEXES.WATER_TEMPLE, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.WATER_TEMPLE));
-  m.SPIRIT_TEMPLE = new KeySave(VANILLA_KEY_INDEXES.SPIRIT_TEMPLE, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.SPIRIT_TEMPLE));
-  m.SHADOW_TEMPLE = new KeySave(VANILLA_KEY_INDEXES.SHADOW_TEMPLE, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.SHADOW_TEMPLE));
-  m.BOTTOM_OF_THE_WELL = new KeySave(VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL));
-  m.GERUDO_TRAINING_GROUND = new KeySave(VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND));
-  m.GERUDO_FORTRESS = new KeySave(VANILLA_KEY_INDEXES.GERUDO_FORTRESS, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.GERUDO_FORTRESS));
-  m.GANONS_CASTLE = new KeySave(VANILLA_KEY_INDEXES.GANONS_CASTLE, context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.GANONS_CASTLE));
+  m.FOREST_TEMPLE = new KeySave(
+    VANILLA_KEY_INDEXES.FOREST_TEMPLE,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.FOREST_TEMPLE)
+  );
+  m.FIRE_TEMPLE = new KeySave(
+    VANILLA_KEY_INDEXES.FIRE_TEMPLE,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.FIRE_TEMPLE)
+  );
+  m.WATER_TEMPLE = new KeySave(
+    VANILLA_KEY_INDEXES.WATER_TEMPLE,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.WATER_TEMPLE)
+  );
+  m.SPIRIT_TEMPLE = new KeySave(
+    VANILLA_KEY_INDEXES.SPIRIT_TEMPLE,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.SPIRIT_TEMPLE)
+  );
+  m.SHADOW_TEMPLE = new KeySave(
+    VANILLA_KEY_INDEXES.SHADOW_TEMPLE,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.SHADOW_TEMPLE)
+  );
+  m.BOTTOM_OF_THE_WELL = new KeySave(
+    VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL,
+    context.keyManager.getKeyCountForIndex(
+      VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL
+    )
+  );
+  m.GERUDO_TRAINING_GROUND = new KeySave(
+    VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND,
+    context.keyManager.getKeyCountForIndex(
+      VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND
+    )
+  );
+  m.GERUDO_FORTRESS = new KeySave(
+    VANILLA_KEY_INDEXES.GERUDO_FORTRESS,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.GERUDO_FORTRESS)
+  );
+  m.GANONS_CASTLE = new KeySave(
+    VANILLA_KEY_INDEXES.GANONS_CASTLE,
+    context.keyManager.getKeyCountForIndex(VANILLA_KEY_INDEXES.GANONS_CASTLE)
+  );
   return m;
 }
 
-export function mergeSmallKeyData(storage: IKeySaveContainer, incoming: IKeySaveContainer) {
+export function mergeSmallKeyData(
+  storage: IKeySaveContainer,
+  incoming: IKeySaveContainer
+) {
   storage.FOREST_TEMPLE.count = incoming.FOREST_TEMPLE.count;
   storage.FIRE_TEMPLE.count = incoming.FIRE_TEMPLE.count;
   storage.WATER_TEMPLE.count = incoming.WATER_TEMPLE.count;
@@ -1034,14 +1116,44 @@ export function mergeSmallKeyData(storage: IKeySaveContainer, incoming: IKeySave
   storage.GANONS_CASTLE.count = incoming.GANONS_CASTLE.count;
 }
 
-export function applySmallKeyDataToContext(incoming: IKeySaveContainer, save: ISaveContext) {
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.FOREST_TEMPLE, incoming.FOREST_TEMPLE.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.FIRE_TEMPLE, incoming.FIRE_TEMPLE.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.WATER_TEMPLE, incoming.WATER_TEMPLE.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.SPIRIT_TEMPLE, incoming.SPIRIT_TEMPLE.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.SHADOW_TEMPLE, incoming.SHADOW_TEMPLE.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL, incoming.BOTTOM_OF_THE_WELL.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND, incoming.GERUDO_TRAINING_GROUND.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.GERUDO_FORTRESS, incoming.GERUDO_FORTRESS.count);
-  save.keyManager.setKeyCountByIndex(VANILLA_KEY_INDEXES.GANONS_CASTLE, incoming.GANONS_CASTLE.count);
+export function applySmallKeyDataToContext(
+  incoming: IKeySaveContainer,
+  save: ISaveContext
+) {
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.FOREST_TEMPLE,
+    incoming.FOREST_TEMPLE.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.FIRE_TEMPLE,
+    incoming.FIRE_TEMPLE.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.WATER_TEMPLE,
+    incoming.WATER_TEMPLE.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.SPIRIT_TEMPLE,
+    incoming.SPIRIT_TEMPLE.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.SHADOW_TEMPLE,
+    incoming.SHADOW_TEMPLE.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL,
+    incoming.BOTTOM_OF_THE_WELL.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND,
+    incoming.GERUDO_TRAINING_GROUND.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.GERUDO_FORTRESS,
+    incoming.GERUDO_FORTRESS.count
+  );
+  save.keyManager.setKeyCountByIndex(
+    VANILLA_KEY_INDEXES.GANONS_CASTLE,
+    incoming.GANONS_CASTLE.count
+  );
 }

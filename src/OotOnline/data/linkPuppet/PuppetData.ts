@@ -1,31 +1,15 @@
 import IMemory from 'modloader64_api/IMemory';
-import { ILink, Tunic, Age } from 'modloader64_api/OOT/OOTAPI';
+import {
+  ILink,
+  Tunic,
+  Age,
+  Shield,
+  Sword,
+  Strength,
+} from 'modloader64_api/OOT/OOTAPI';
 import { ISaveContext } from 'modloader64_api/OOT/OOTAPI';
 
-// The idea here is the getters will get the real Link's data and set will set the puppet that the player owns.
-
-export interface IPuppetData {
-  pointer: number;
-  pos: Buffer;
-  anim: Buffer;
-  rot: Buffer;
-  unknown_0x140: Buffer;
-  unknown_0x14C: Buffer;
-  tunicColor: Buffer;
-  unknown_0x159: number;
-  unknown_0x15A: number;
-  unknown_0x160: number;
-  unknown_0x164: number;
-  unknown_0x15B: number;
-  unknown_0x16C: number;
-  unknown_0x171: number;
-  unknown_0x172: number;
-  gauntlets: number;
-  unknown_0x174: number;
-  shadow: Buffer;
-}
-
-export class PuppetData implements IPuppetData {
+export class PuppetData {
   pointer: number;
   emulator: IMemory;
   link: ILink;
@@ -45,20 +29,15 @@ export class PuppetData implements IPuppetData {
     this.copyFields.push('pos');
     this.copyFields.push('rot');
     this.copyFields.push('anim');
-    this.copyFields.push('unknown_0x140');
-    this.copyFields.push('unknown_0x14C');
-    this.copyFields.push('unknown_0x159');
-    this.copyFields.push('unknown_0x15A');
-    this.copyFields.push('unknown_0x160');
-    this.copyFields.push('unknown_0x164');
-    this.copyFields.push('unknown_0x15B');
-    this.copyFields.push('unknown_0x16C');
-    this.copyFields.push('unknown_0x171');
-    this.copyFields.push('unknown_0x172');
-    this.copyFields.push('unknown_0x174');
-    this.copyFields.push('shadow');
-    this.copyFields.push('gauntlets');
+    this.copyFields.push('left_hand');
+    this.copyFields.push('right_hand');
+    this.copyFields.push('back_item');
     this.copyFields.push('sound');
+    this.copyFields.push('tunic_color');
+    this.copyFields.push('strength_upgrade');
+    this.copyFields.push('gauntlet_color');
+    this.copyFields.push('areHandsClosed');
+    this.copyFields.push('current_mask');
   }
 
   get pos(): Buffer {
@@ -74,7 +53,7 @@ export class PuppetData implements IPuppetData {
   }
 
   set anim(anim: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x1e0, anim);
+    this.emulator.rdramWriteBuffer(this.pointer + 0x13c, anim);
   }
 
   get rot(): Buffer {
@@ -85,121 +64,8 @@ export class PuppetData implements IPuppetData {
     this.emulator.rdramWriteBuffer(this.pointer + 0xb4, rot);
   }
 
-  get unknown_0x140(): Buffer {
-    return this.link.rdramReadBuffer(0x150, 0xc);
-  }
-
-  set unknown_0x140(uk: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x140, uk);
-  }
-
-  get unknown_0x14C(): Buffer {
-    return this.link.rdramReadBuffer(0x14c, 0x3);
-  }
-
-  set unknown_0x14C(uk: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x14c, uk);
-  }
-
-  get tunic(): Tunic {
-    return this.link.tunic;
-  }
-
-  set tunicColor(buf: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x154, buf);
-  }
-
-  get unknown_0x159(): number {
-    return this.link.rdramRead8(0x1d9);
-  }
-
-  set unknown_0x159(data: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x159, data);
-  }
-
-  get unknown_0x15A(): number {
-    return this.link.rdramRead8(0x37);
-  }
-
-  set unknown_0x15A(data: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x15a, data);
-  }
-
-  get unknown_0x160(): number {
-    return this.link.rdramRead32(0x84c);
-  }
-
-  set unknown_0x160(data: number) {
-    this.emulator.rdramWrite32(this.pointer + 0x160, data);
-  }
-
-  get unknown_0x164(): number {
-    return this.link.rdramRead32(0x6b4);
-  }
-
-  set unknown_0x164(data: number) {
-    this.emulator.rdramWrite32(this.pointer + 0x164, data);
-  }
-
-  get unknown_0x15B(): number {
-    return this.link.rdramRead8(0x144);
-  }
-
-  set unknown_0x15B(data: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x15b, data);
-  }
-
-  get unknown_0x16C(): number {
-    return this.link.rdramRead32(0x68);
-  }
-
-  set unknown_0x16C(data: number) {
-    this.emulator.rdramWrite32(this.pointer + 0x16c, data);
-  }
-
-  get unknown_0x171(): number {
-    return this.link.rdramRead8(0x13f);
-  }
-
-  set unknown_0x171(data: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x171, data);
-  }
-
-  get unknown_0x172(): number {
-    return this.link.rdramRead8(0x14f);
-  }
-
-  set unknown_0x172(data: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x172, data);
-  }
-
-  get gauntlets(): number {
-    // Bypassing abstraction for this. We need the raw value.
-    return this.emulator.rdramRead8(global.ModLoader.save_context + 0xa3);
-  }
-
-  set gauntlets(data: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x173, data);
-  }
-
-  get unknown_0x174(): number {
-    return this.link.rdramRead16(0x13d);
-  }
-
-  set unknown_0x174(data: number) {
-    this.emulator.rdramWrite16(this.pointer + 0x174, data);
-  }
-
   get age(): Age {
     return this.save.age;
-  }
-
-  get shadow(): Buffer {
-    return this.link.rdramReadBuffer(0xc0, 0x40);
-  }
-
-  set shadow(buf: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0xc0, buf);
   }
 
   get sound(): number {
@@ -209,7 +75,261 @@ export class PuppetData implements IPuppetData {
   }
 
   set sound(s: number) {
-    this.emulator.rdramWrite16(this.pointer + 0x266, s);
+    this.emulator.rdramWrite16(this.pointer + 0x27e, s);
+  }
+
+  get tunic_color(): Buffer {
+    let addr = 0x000f7ad8 + this.link.tunic * 3;
+    return this.emulator.rdramReadBuffer(addr, 0x3);
+  }
+
+  set tunic_color(buf: Buffer) {
+    this.emulator.rdramWriteBuffer(this.pointer + 0x252, buf);
+  }
+
+  get strength_upgrade(): number {
+    let id = 0;
+    if (this.age === 0) {
+      if (this.save.inventory.strength > Strength.GORON_BRACELET) {
+        id = this.save.inventory.strength;
+      }
+    } else {
+      if (this.save.inventory.strength >= Strength.GORON_BRACELET) {
+        id = this.save.inventory.strength;
+      }
+    }
+    return id;
+  }
+
+  set strength_upgrade(num: number) {
+    this.emulator.rdramWrite8(this.pointer + 0x251, num);
+  }
+
+  get gauntlet_color(): Buffer {
+    let addr: number = 0x0f7ae4 + 3 * (this.save.inventory.strength - 2);
+    return this.emulator.rdramReadBuffer(addr, 0x3);
+  }
+
+  set gauntlet_color(buf: Buffer) {
+    this.emulator.rdramWriteBuffer(this.pointer + 0x256, buf);
+  }
+
+  get areHandsClosed(): boolean {
+    return this.link.rdramRead32(0x68) > 0;
+  }
+
+  set areHandsClosed(bool: boolean) {
+    this.emulator.rdramWrite8(this.pointer + 0x278, bool ? 1 : 0);
+  }
+
+  get current_mask(): number {
+    return this.link.rdramRead8(0x014f);
+  }
+
+  set current_mask(num: number) {
+    this.emulator.rdramWrite8(this.pointer + 0x27c, num);
+  }
+
+  get left_hand(): number {
+    let num: number = this.link.rdramRead8(0x144);
+    let num2: number = this.link.rdramRead8(0x148);
+    let id = 0;
+    if (this.age === 0) {
+      switch (num) {
+        case 0:
+          id = 0; // Nothing
+          break;
+        case 3:
+          id = 1; // Master Sword
+          break;
+        case 5:
+          id = this.save.swords.biggoronSword ? 2 : 3; // Biggoron.
+          break;
+        case 7:
+          id = 7; // Megaton Hammer.
+          break;
+        case 0x1e:
+          id = 5; // Bottle.
+          break;
+        case 0xff:
+          if (num2 === 0x02) {
+            id = 1;
+          } else if (num2 === 0x0b) {
+            id = 7;
+          }
+          break;
+        default:
+          break;
+      }
+    } else {
+      switch (num) {
+        case 0:
+          break;
+        case 4:
+          id = 4;
+          break;
+        case 0x1e:
+          id = 5;
+          break;
+        case 6:
+          break;
+        case 0xff:
+          if (num2 === 0x02) {
+            id = 4;
+          } else if (num2 === 0x0a) {
+            id = 0;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    return id;
+  }
+
+  set left_hand(num: number) {
+    this.emulator.rdramWrite8(this.pointer + 0x279, num);
+  }
+
+  set right_hand(num: number) {
+    this.emulator.rdramWrite8(this.pointer + 0x27a, num);
+  }
+
+  get right_hand(): number {
+    let id = 0;
+    let shield: Shield = this.link.shield;
+    let num: number = this.link.rdramRead8(0x144);
+    let left_hand: number = this.left_hand;
+    if (this.age === 0) {
+      switch (num) {
+        case 0:
+          break;
+        case 0x1d:
+          id = 5;
+          break;
+        case 0x11:
+          id = 7;
+          break;
+        case 0x10:
+          id = 7;
+          break;
+        case 0x08:
+          id = 8;
+          break;
+        default:
+          break;
+      }
+      if (id === 0) {
+        if (
+          left_hand === 3 ||
+          left_hand === 2 ||
+          left_hand === 1 ||
+          num === 0xff
+        ) {
+          switch (shield) {
+            case 0:
+              break;
+            case Shield.HYLIAN:
+              id = 1;
+              break;
+            case Shield.MIRROR:
+              id = 2;
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    } else {
+      switch (num) {
+        case 0:
+          break;
+        case 0x1c:
+          id = 4;
+          break;
+        case 0x1d:
+          id = 5;
+          break;
+        case 0x0f:
+          id = 9;
+          break;
+        default:
+          break;
+      }
+      if (id === 0) {
+        if (left_hand === 4 || num === 0xff) {
+          switch (shield) {
+            case 0:
+              break;
+            case Shield.DEKU:
+              id = 3;
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    }
+    return id;
+  }
+
+  get back_item(): number {
+    let id = 0;
+    let sword: boolean = this.link.sword !== Sword.NONE;
+    let _sword: Sword = this.link.sword;
+    let shield: Shield = this.link.shield;
+    let left_hand: number = this.left_hand;
+    let right_hand: number = this.right_hand;
+    if (this.age === 0) {
+      if (!sword && shield === Shield.NONE) {
+        id = 7;
+      } else if (sword && shield === Shield.HYLIAN) {
+        if (left_hand === 1) {
+          id = 9;
+        } else {
+          if (right_hand === 1) {
+            id = 7;
+          } else {
+            id = 1;
+          }
+        }
+      } else if (sword && shield === Shield.MIRROR) {
+        if (left_hand === 1) {
+          id = 9;
+        } else {
+          if (right_hand === 2) {
+            id = 7;
+          } else {
+            id = 2;
+          }
+        }
+      }
+    } else {
+      if (!sword && shield === Shield.NONE) {
+        id = 0;
+      } else if (shield !== Shield.NONE && sword && _sword === Sword.KOKIRI) {
+        if (left_hand === 4) {
+          id = 10;
+        } else {
+          if (right_hand === 3) {
+            id = 4;
+          } else {
+            id = 3;
+          }
+        }
+      } else {
+        if (left_hand === 4) {
+          id = 10;
+        } else {
+          id = 4;
+        }
+      }
+    }
+    return id;
+  }
+
+  set back_item(num: number) {
+    this.emulator.rdramWrite8(this.pointer + 0x27b, num);
   }
 
   toJSON() {
@@ -218,11 +338,6 @@ export class PuppetData implements IPuppetData {
     for (let i = 0; i < this.copyFields.length; i++) {
       jsonObj[this.copyFields[i]] = (this as any)[this.copyFields[i]];
     }
-
-    // Tunic color is a pain.
-    let addr = 0x000f7ad8 + this.tunic * 3;
-    jsonObj['tunicColor'] = this.emulator.rdramReadBuffer(addr, 0x3);
-
     return jsonObj;
   }
 }

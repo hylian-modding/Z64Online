@@ -1,4 +1,8 @@
-import { EventHandler, EventsServer, EventServerLeft } from 'modloader64_api/EventHandler';
+import {
+  EventHandler,
+  EventsServer,
+  EventServerLeft,
+} from 'modloader64_api/EventHandler';
 import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
 import { packetHelper } from 'modloader64_api/ModLoaderDefaultImpls';
 import {
@@ -80,7 +84,10 @@ export class EquestrianOverlord {
     pos: IPosition,
     rot: IRotation
   ) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(lobby, (this.parent as unknown as IPlugin)) as OotOnlineStorage;
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      lobby,
+      (this.parent as unknown) as IPlugin
+    ) as OotOnlineStorage;
     if (!storage.horses.playersWithHorses.hasOwnProperty(player.uuid)) {
       this.ModLoader.logger.info(
         'Registering new horse for player ' + player.nickname + '.'
@@ -99,14 +106,17 @@ export class EquestrianOverlord {
       );
     }
     this.ModLoader.serverSide.sendPacket(
-      new Ooto_EquestrianPuppetListPacket(storage.horses.horseData, this.ModLoader.clientLobby)
+      new Ooto_EquestrianPuppetListPacket(
+        storage.horses.horseData,
+        this.ModLoader.clientLobby
+      )
     );
   }
 
   // Client side events.
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)
   onActorSpawned(actor: IActor) {
-    if (actor.actorID === 0x0014) {
+    if (actor.actorID === 0x0014 && !this.core.helper.isTitleScreen()) {
       setTimeout(() => {
         this.ModLoader.clientSide.sendPacket(
           new Ooto_EquestrianRegisterPacket(
@@ -172,16 +182,23 @@ export class EquestrianOverlord {
 
   @EventHandler(EventsServer.ON_LOBBY_LEAVE)
   onServerPlayerLeft(evt: EventServerLeft) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(evt.lobby, (this.parent as unknown as IPlugin)) as OotOnlineStorage;
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      evt.lobby,
+      (this.parent as unknown) as IPlugin
+    ) as OotOnlineStorage;
     let horse_key: string = storage.horses.playersWithHorses[evt.player.uuid];
     delete storage.horses.playersWithHorses[evt.player.uuid];
     delete storage.horses.horseData[horse_key];
-    this.ModLoader.serverSide.sendPacket(new Ooto_EquestrianNukeServerPacket(horse_key, this.ModLoader.clientLobby));
+    this.ModLoader.serverSide.sendPacket(
+      new Ooto_EquestrianNukeServerPacket(horse_key, this.ModLoader.clientLobby)
+    );
   }
 
-  @NetworkHandler("Ooto_EquestrianNukeServerPacket")
+  @NetworkHandler('Ooto_EquestrianNukeServerPacket')
   onHorseGlueFactory(packet: Ooto_EquestrianNukeServerPacket) {
-    if (this.clientStorage.currentHorses.hasOwnProperty(packet.horse_to_remove)) {
+    if (
+      this.clientStorage.currentHorses.hasOwnProperty(packet.horse_to_remove)
+    ) {
       let horse: EquestrianData_Impl = this.clientStorage.currentHorses[
         packet.horse_to_remove
       ] as EquestrianData_Impl;
@@ -193,7 +210,9 @@ export class EquestrianOverlord {
         }
       }
       delete this.clientStorage.currentHorses[packet.horse_to_remove];
-      this.ModLoader.logger.info("Sending horse " + packet.horse_to_remove + " to the glue factory.");
+      this.ModLoader.logger.info(
+        'Sending horse ' + packet.horse_to_remove + ' to the glue factory.'
+      );
     }
   }
 
@@ -235,11 +254,11 @@ export class EquestrianOverlord {
           0x80600150,
           (success: boolean, result: number) => {
             if (success) {
-              let pointer: number = result & 0x00FFFFFF;
+              let pointer: number = result & 0x00ffffff;
               let actor: IActor = this.core.actorManager.createIActorFromPointer(
                 pointer
               );
-              this.void = actor.rdramReadBuffer(0x24, 0xC);
+              this.void = actor.rdramReadBuffer(0x24, 0xc);
               // Got our horse.
               horse.isSpawned = true;
               horse.isSpawning = false;
@@ -264,7 +283,9 @@ export class EquestrianOverlord {
         horse.isShoveled
       ) {
         horse.isShoveled = false;
-        this.ModLoader.logger.info("Resurrecting horse puppet " + horse.uuid + ".");
+        this.ModLoader.logger.info(
+          'Resurrecting horse puppet ' + horse.uuid + '.'
+        );
       }
       if (horse.scene !== this.core.global.scene && horse.isSpawned) {
         horse.isShoveled = true;
@@ -305,9 +326,15 @@ export class EquestrianOverlord {
   @EventHandler(OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES)
   onServerSceneChange(player: OotOnline_PlayerScene) {
     // Send player horses.
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(player.lobby, (this.parent as unknown as IPlugin)) as OotOnlineStorage;
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      player.lobby,
+      (this.parent as unknown) as IPlugin
+    ) as OotOnlineStorage;
     this.ModLoader.serverSide.sendPacketToSpecificPlayer(
-      new Ooto_EquestrianPuppetListPacket(storage.horses.horseData, this.ModLoader.clientLobby),
+      new Ooto_EquestrianPuppetListPacket(
+        storage.horses.horseData,
+        this.ModLoader.clientLobby
+      ),
       player.player
     );
   }
@@ -315,31 +342,47 @@ export class EquestrianOverlord {
   // Server side packets
   @ServerNetworkHandler('Ooto_EquestrianRegisterPacket')
   onEponaSpawned(packet: Ooto_EquestrianRegisterPacket) {
-    this.registerHorse(packet.player, packet.lobby, packet.scene, packet.pos, packet.rot);
+    this.registerHorse(
+      packet.player,
+      packet.lobby,
+      packet.scene,
+      packet.pos,
+      packet.rot
+    );
   }
 
   @ServerNetworkHandler('Ooto_EquestrianTickPacket')
   onEponaUpdate(packet: Ooto_EquestrianTickPacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(packet.lobby, (this.parent as unknown as IPlugin)) as OotOnlineStorage;
-    if (storage.horses.playersWithHorses.hasOwnProperty(packet.player.uuid)) {
-      let horse_uuid: string = storage.horses.playersWithHorses[
-        packet.player.uuid
-      ];
-      let horse: EquestrianData_Impl = storage.horses.horseData[horse_uuid];
-      horse.pos = packet.edata.actor.position;
-      horse.rot = packet.edata.actor.rotation;
-      horse.anim = packet.edata.anim;
-      horse.speed = packet.edata.speed;
-      let p = new Ooto_EquestrianTickServerPacket(horse, this.ModLoader.clientLobby);
-      packetHelper.cloneDestination(packet, p);
-      this.parent.sendPacketToPlayersInScene(p);
-    }
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      (this.parent as unknown) as IPlugin
+    ) as OotOnlineStorage;
+    try {
+      if (storage.horses.playersWithHorses.hasOwnProperty(packet.player.uuid)) {
+        let horse_uuid: string =
+          storage.horses.playersWithHorses[packet.player.uuid];
+        let horse: EquestrianData_Impl = storage.horses.horseData[horse_uuid];
+        horse.pos = packet.edata.actor.position;
+        horse.rot = packet.edata.actor.rotation;
+        horse.anim = packet.edata.anim;
+        horse.speed = packet.edata.speed;
+        let p = new Ooto_EquestrianTickServerPacket(
+          horse,
+          this.ModLoader.clientLobby
+        );
+        packetHelper.cloneDestination(packet, p);
+        this.parent.sendPacketToPlayersInScene(p);
+      }
+    } catch (err) {}
   }
 
   onTick() {
     if (this.epona !== undefined) {
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_EquestrianTickPacket(new EponaData(this.epona), this.ModLoader.clientLobby)
+        new Ooto_EquestrianTickPacket(
+          new EponaData(this.epona),
+          this.ModLoader.clientLobby
+        )
       );
     }
   }

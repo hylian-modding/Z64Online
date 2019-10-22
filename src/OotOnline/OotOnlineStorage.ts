@@ -1,8 +1,14 @@
-import { EquipmentSave, InventorySave, QuestSave, IDungeonItemSave, OotoDungeonItemContext, IKeySaveContainer, KeySaveContainer } from './data/OotoSaveData';
+import {
+  EquipmentSave,
+  InventorySave,
+  QuestSave,
+  IDungeonItemSave,
+  OotoDungeonItemContext,
+} from './data/OotoSaveData';
 import { EquestrianStorage } from './data/eponaPuppet/EquestrianStorage';
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 
-export class OotOnlineStorage extends OotOnlineStorageBase{
+export class OotOnlineStorage extends OotOnlineStorageBase {
   networkPlayerInstances: any = {};
   players: any = {};
   inventoryStorage: InventorySave = new InventorySave();
@@ -11,5 +17,4 @@ export class OotOnlineStorage extends OotOnlineStorageBase{
   saveGameSetup = false;
   horses: EquestrianStorage = new EquestrianStorage();
   dungeonItemStorage: IDungeonItemSave = new OotoDungeonItemContext();
-  smallKeyStorage: IKeySaveContainer = new KeySaveContainer();
 }

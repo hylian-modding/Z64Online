@@ -61,7 +61,10 @@ export class PuppetOverlord {
     this.fakeClientPuppet.age = age;
     this.puppets.forEach(
       (value: Puppet, key: string, map: Map<string, Puppet>) => {
-        if (value.scene === this.fakeClientPuppet.scene && value.age === this.fakeClientPuppet.age) {
+        if (
+          value.scene === this.fakeClientPuppet.scene &&
+          value.age === this.fakeClientPuppet.age
+        ) {
           this.awaiting_spawn.push(value);
         }
       }
@@ -138,18 +141,22 @@ export class PuppetOverlord {
           this.puppets.get(player.uuid)!.id +
           '.'
       );
-      this.mapi.clientSide.sendPacket(new Ooto_SceneRequestPacket(this.mapi.clientLobby));
+      this.mapi.clientSide.sendPacket(
+        new Ooto_SceneRequestPacket(this.mapi.clientLobby)
+      );
     }
   }
 
   processAwaitingSpawns() {
-    if (!this.core.helper.isLinkEnteringLoadingZone() && this.core.global.scene_framecount > 10) {
+    if (
+      !this.core.helper.isLinkEnteringLoadingZone() &&
+      this.core.global.scene_framecount > 10 &&
+      !this.core.helper.isPaused()
+    ) {
       if (this.awaiting_spawn.length > 0) {
-        while (this.awaiting_spawn.length > 0) {
-          let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
-          this.logger.info('TRYING SPAWN');
-          puppet.spawn();
-        }
+        let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
+        this.logger.info('TRYING SPAWN');
+        puppet.spawn();
       }
     }
   }
@@ -157,7 +164,11 @@ export class PuppetOverlord {
   lookForStrandedPuppets() {
     this.puppets.forEach(
       (value: Puppet, key: string, map: Map<string, Puppet>) => {
-        if (value.scene !== this.fakeClientPuppet.scene && value.isSpawned && !value.isShoveled) {
+        if (
+          value.scene !== this.fakeClientPuppet.scene &&
+          value.isSpawned &&
+          !value.isShoveled
+        ) {
           value.shovel();
         }
       }
@@ -165,7 +176,7 @@ export class PuppetOverlord {
   }
 
   sendPuppetPacket() {
-    if (this.core.helper.isPaused()){
+    if (this.core.helper.isPaused()) {
       return;
     }
     this.mapi.clientSide.sendPacket(
@@ -174,7 +185,7 @@ export class PuppetOverlord {
   }
 
   processPuppetPacket(packet: Ooto_PuppetPacket) {
-    if (this.puppets.has(packet.player.uuid)) {
+    if (this.puppets.has(packet.player.uuid) && !this.core.helper.isPaused()) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       puppet.processIncomingPuppetData(packet.data);
     }

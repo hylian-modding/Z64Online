@@ -69,9 +69,14 @@ export class ActorHookProcessor extends JSONTemplate {
   change_target_count = 0;
   lastFrameCache: any = {};
   modloader: IModLoaderAPI;
-  core: IOOTCore
+  core: IOOTCore;
 
-  constructor(actor: IActor, hooks: ActorHookBase, modloader: IModLoaderAPI, core: IOOTCore) {
+  constructor(
+    actor: IActor,
+    hooks: ActorHookBase,
+    modloader: IModLoaderAPI,
+    core: IOOTCore
+  ) {
     super();
     this.actor = actor;
     this.hookBase = hooks;
@@ -84,7 +89,12 @@ export class ActorHookProcessor extends JSONTemplate {
       this.lastFrameCache = this.toJSON();
       if (this.last_inbound_frame === 0) {
         this.modloader.clientSide.sendPacket(
-          new Ooto_ActorPacket(this.lastFrameCache as ActorPacketData, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
+          new Ooto_ActorPacket(
+            this.lastFrameCache as ActorPacketData,
+            this.core.global.scene,
+            this.core.global.room,
+            this.modloader.clientLobby
+          )
         );
       }
     }

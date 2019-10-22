@@ -16,16 +16,19 @@ import {
   Ooto_ActorDeadPacket,
   Ooto_SpawnActorPacket,
 } from './OotOPackets';
-import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
+import {
+  NetworkHandler,
+  ServerNetworkHandler,
+} from 'modloader64_api/NetworkHandler';
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import {v4} from 'uuid';
+import { v4 } from 'uuid';
 import { IOotOnlineHelpers } from '../OotoAPI/OotoAPI';
 
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
-const BOMBCHU_ID = 0x00DA;
+const BOMBCHU_ID = 0x00da;
 
 export class ActorHookingManager {
   actorHookMap: Map<number, ActorHookBase> = new Map<number, ActorHookBase>();
@@ -45,7 +48,11 @@ export class ActorHookingManager {
   core: IOOTCore;
   parent: IOotOnlineHelpers;
 
-  constructor(modloader: IModLoaderAPI, core: IOOTCore, parent: IOotOnlineHelpers) {
+  constructor(
+    modloader: IModLoaderAPI,
+    core: IOOTCore,
+    parent: IOotOnlineHelpers
+  ) {
     this.modloader = modloader;
     let dir = path.join(__dirname, 'actors');
     fs.readdirSync(dir).forEach((file: string) => {
@@ -60,18 +67,28 @@ export class ActorHookingManager {
     this.parent = parent;
   }
 
-  onPostInit(){
+  onPostInit() {
     let bombs = new ActorHookBase();
     bombs.actorID = BOMB_ID;
-    bombs.hooks.push(new HookInfo(0x1E8, 0x4));
+    bombs.hooks.push(new HookInfo(0x1e8, 0x4));
     bombs.hooks.push(new HookInfo(0x118, 0x4));
-    this.bombProcessor = new ActorHookProcessor(this.core.actorManager.createIActorFromPointer(0x0), bombs, this.modloader, this.core);
+    this.bombProcessor = new ActorHookProcessor(
+      this.core.actorManager.createIActorFromPointer(0x0),
+      bombs,
+      this.modloader,
+      this.core
+    );
 
     let chus = new ActorHookBase();
     chus.actorID = BOMBCHU_ID;
     chus.hooks.push(new HookInfo(0x118, 0x4));
     chus.hooks.push(new HookInfo(0x140, 0x4));
-    this.chuProcessor = new ActorHookProcessor(this.core.actorManager.createIActorFromPointer(0x0), chus, this.modloader, this.core);
+    this.chuProcessor = new ActorHookProcessor(
+      this.core.actorManager.createIActorFromPointer(0x0),
+      chus,
+      this.modloader,
+      this.core
+    );
   }
 
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)
@@ -91,21 +108,29 @@ export class ActorHookingManager {
         )
       );
     } else if (actor.actorID === BOMB_ID) {
-      if (actor.rdramRead32(0x1E8) <= 10){
+      if (actor.rdramRead32(0x1e8) <= 10) {
         return;
       }
       actor.actorUUID = v4();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.bombsLocal.set(actor.actorUUID, actor);
       this.modloader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(actorData, this.core.global.scene, this.modloader.clientLobby)
+        new Ooto_SpawnActorPacket(
+          actorData,
+          this.core.global.scene,
+          this.modloader.clientLobby
+        )
       );
-    }else if (actor.actorID === BOMBCHU_ID){
+    } else if (actor.actorID === BOMBCHU_ID) {
       actor.actorUUID = v4();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.chusLocal.set(actor.actorUUID, actor);
       this.modloader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(actorData, this.core.global.scene, this.modloader.clientLobby)
+        new Ooto_SpawnActorPacket(
+          actorData,
+          this.core.global.scene,
+          this.modloader.clientLobby
+        )
       );
     }
   }
@@ -118,26 +143,41 @@ export class ActorHookingManager {
     if (this.actorHookTicks.has(actor.actorUUID)) {
       console.log('Deleting hook for actor ' + actor.actorUUID + '.');
       this.modloader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
+        new Ooto_ActorDeadPacket(
+          actor.actorUUID,
+          this.core.global.scene,
+          this.core.global.room,
+          this.modloader.clientLobby
+        )
       );
       this.actorHookTicks.delete(actor.actorUUID);
     } else if (actor.actorID === BOMB_ID) {
-      if (this.bombsLocal.has(actor.actorUUID)){
+      if (this.bombsLocal.has(actor.actorUUID)) {
         this.modloader.clientSide.sendPacket(
-          new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
+          new Ooto_ActorDeadPacket(
+            actor.actorUUID,
+            this.core.global.scene,
+            this.core.global.room,
+            this.modloader.clientLobby
+          )
         );
         this.bombsLocal.delete(actor.actorUUID);
       }
-    } else if (actor.actorID === BOMBCHU_ID){
+    } else if (actor.actorID === BOMBCHU_ID) {
       this.modloader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(actor.actorUUID, this.core.global.scene, this.core.global.room, this.modloader.clientLobby)
+        new Ooto_ActorDeadPacket(
+          actor.actorUUID,
+          this.core.global.scene,
+          this.core.global.room,
+          this.modloader.clientLobby
+        )
       );
       this.chusLocal.delete(actor.actorUUID);
     }
   }
 
   @EventHandler(OotEvents.ON_LOADING_ZONE)
-  onLoadingZone(evt: any){
+  onLoadingZone(evt: any) {
     this.bombsLocal.clear();
     this.bombsRemote.clear();
     this.chusLocal.clear();
@@ -146,7 +186,7 @@ export class ActorHookingManager {
   }
 
   @EventHandler(OotEvents.ON_ROOM_CHANGE_PRE)
-  onRoomChange(evt: any){
+  onRoomChange(evt: any) {
     this.actorHookTicks.clear();
   }
 
@@ -165,14 +205,18 @@ export class ActorHookingManager {
     actor.rdramWrite32(offset, behavior_result + 0x80000000);
   }
 
-  @ServerNetworkHandler("Ooto_ActorPacket")
-  onActorPacketServer(packet: Ooto_ActorPacket){
+  @ServerNetworkHandler('Ooto_ActorPacket')
+  onActorPacketServer(packet: Ooto_ActorPacket) {
     this.parent.sendPacketToPlayersInScene(packet);
   }
 
   @NetworkHandler('Ooto_ActorPacket')
   onActorPacket(packet: Ooto_ActorPacket) {
-    if (packet.scene !== this.core.global.scene || packet.room !== this.core.global.room || this.core.helper.isLinkEnteringLoadingZone()){
+    if (
+      packet.scene !== this.core.global.scene ||
+      packet.room !== this.core.global.room ||
+      this.core.helper.isLinkEnteringLoadingZone()
+    ) {
       return;
     }
     if (this.actorHookTicks.has(packet.actorData.actor.actorUUID)) {
@@ -189,7 +233,9 @@ export class ActorHookingManager {
         }
       }*/
 
-      this.actorHookTicks.get(packet.actorData.actor.actorUUID)!.last_inbound_frame = 50;
+      this.actorHookTicks.get(
+        packet.actorData.actor.actorUUID
+      )!.last_inbound_frame = 50;
 
       let actor: IActor = this.actorHookTicks.get(
         packet.actorData.actor.actorUUID
@@ -221,7 +267,7 @@ export class ActorHookingManager {
           );
         }
       }
-    }else if (this.bombsRemote.has(packet.actorData.actor.actorUUID)){
+    } else if (this.bombsRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.bombsRemote.get(
         packet.actorData.actor.actorUUID
       )!;
@@ -250,8 +296,7 @@ export class ActorHookingManager {
           );
         }
       }
-    }else if (this.chusRemote.has(packet.actorData.actor.actorUUID)){
-
+    } else if (this.chusRemote.has(packet.actorData.actor.actorUUID)) {
       console.log(JSON.stringify(packet, null, 2));
 
       let actor: IActor = this.chusRemote.get(
@@ -287,15 +332,19 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_ActorDeadPacket')
   onActorDead(packet: Ooto_ActorDeadPacket) {
-    if (packet.scene !== this.core.global.scene || packet.room !== this.core.global.room || this.core.helper.isLinkEnteringLoadingZone()){
+    if (
+      packet.scene !== this.core.global.scene ||
+      packet.room !== this.core.global.room ||
+      this.core.helper.isLinkEnteringLoadingZone()
+    ) {
       return;
     }
     if (this.actorHookTicks.has(packet.actorUUID)) {
       let actor: IActor = this.actorHookTicks.get(packet.actorUUID)!.actor;
-      actor.destroy();
-    }else if (this.bombsRemote.has(packet.actorUUID)){
+      //actor.destroy();
+    } else if (this.bombsRemote.has(packet.actorUUID)) {
       this.bombsRemote.delete(packet.actorUUID);
-    }else if (this.chusRemote.has(packet.actorUUID)){
+    } else if (this.chusRemote.has(packet.actorUUID)) {
       let chu: IActor = this.chusRemote.get(packet.actorUUID)!;
       this.chusRemote.delete(packet.actorUUID);
     }
@@ -303,22 +352,25 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_SpawnActorPacket')
   onActorSpawnRequest(packet: Ooto_SpawnActorPacket) {
-    if (packet.scene !== this.core.global.scene || this.core.helper.isLinkEnteringLoadingZone()){
+    if (
+      packet.scene !== this.core.global.scene ||
+      this.core.helper.isLinkEnteringLoadingZone()
+    ) {
       return;
     }
-    let spawn_param: number = 0;
-    let spawn_param_: number = 0;
-    switch(packet.actorData.actor.actorID){
-      case BOMB_ID: 
+    let spawn_param = 0;
+    let spawn_param_ = 0;
+    switch (packet.actorData.actor.actorID) {
+      case BOMB_ID:
         spawn_param = 0x80600160;
         spawn_param_ = 0x600160;
-        console.log("bomb");
-        break
+        console.log('bomb');
+        break;
       case BOMBCHU_ID:
         spawn_param = 0x80600170;
         spawn_param_ = 0x600170;
-        console.log("bombchu");
-        this.modloader.emulator.rdramWrite16(0x600174, 0xC500);
+        console.log('bombchu');
+        this.modloader.emulator.rdramWrite16(0x600174, 0xc500);
         this.modloader.emulator.rdramWrite16(0x600176, 0x4605);
         break;
     }
@@ -327,7 +379,7 @@ export class ActorHookingManager {
       spawn_param,
       (success: boolean, result: number) => {
         if (success) {
-          let dref: number = result & 0x00FFFFFF;// - 0x80000000;
+          let dref: number = result & 0x00ffffff; // - 0x80000000;
           console.log(dref.toString(16));
           let actor: IActor = this.core.actorManager.createIActorFromPointer(
             dref
@@ -339,12 +391,12 @@ export class ActorHookingManager {
           actor.rotation.x = packet.actorData.actor.rotation.x;
           actor.rotation.y = packet.actorData.actor.rotation.y;
           actor.rotation.z = packet.actorData.actor.rotation.z;
-          if (packet.actorData.actor.actorID === BOMB_ID){
-            actor.rdramWrite32(0x6C, 0x0);
+          if (packet.actorData.actor.actorID === BOMB_ID) {
+            actor.rdramWrite32(0x6c, 0x0);
             actor.rdramWrite32(0x70, 0x0);
             actor.rdramWrite8(0x118, 0x80);
             this.bombsRemote.set(actor.actorUUID, actor);
-          }else if (packet.actorData.actor.actorID === BOMBCHU_ID){
+          } else if (packet.actorData.actor.actorID === BOMBCHU_ID) {
             actor.rdramWrite8(0x118, 0x80);
             actor.redeadFreeze = 0x10;
             this.chusRemote.set(actor.actorUUID, actor);
@@ -356,13 +408,13 @@ export class ActorHookingManager {
 
   onTick() {
     this.actorHookTicks.forEach((value: ActorHookProcessor, key: string) => {
-      value.onTick();
+      //value.onTick();
     });
-    this.bombsLocal.forEach((value: IActor, key: string)=>{
+    this.bombsLocal.forEach((value: IActor, key: string) => {
       this.bombProcessor.actor = value;
       this.bombProcessor.onTick();
     });
-    this.chusLocal.forEach((value: IActor, key: string)=>{
+    this.chusLocal.forEach((value: IActor, key: string) => {
       this.chuProcessor.actor = value;
       this.chuProcessor.onTick();
     });
