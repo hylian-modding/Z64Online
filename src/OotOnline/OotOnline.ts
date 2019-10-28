@@ -771,7 +771,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onItemSync_client(packet: Ooto_SubscreenSyncPacket) {
     if (
       this.core.helper.isTitleScreen() &&
-      !this.core.helper.isSceneNumberValid()
+      !this.core.helper.isSceneNumberValid() &&
+      this.core.helper.isInterfaceShown()
     ) {
       return;
     }

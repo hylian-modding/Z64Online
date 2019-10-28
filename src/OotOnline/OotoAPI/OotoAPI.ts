@@ -36,3 +36,13 @@ export interface IOotOnlineHelpers {
 export function OotOnlineAPI_EnableGhostMode() {
   bus.emit(OotOnlineEvents.GHOST_MODE, {});
 }
+
+export class Ooto_CustomModelMetadata {
+  model: string;
+  repoints: string;
+
+  constructor(model: string, repoints: string) {
+    this.model = model;
+    this.repoints = repoints;
+  }
+}

@@ -24,7 +24,11 @@ import {
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
 import { OotOnlineStorage } from '../../OotOnlineStorage';
-import { IOotOnlineHelpers, OotOnlineEvents } from '../../OotoAPI/OotoAPI';
+import {
+  IOotOnlineHelpers,
+  OotOnlineEvents,
+  Ooto_CustomModelMetadata,
+} from '../../OotoAPI/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -41,6 +45,8 @@ export class ModelManager {
   customModelFileAdult = '';
   customModelFileChild = '';
   customModelFileAnims = '';
+  customModelRepointsAdult = '';
+  customModelRepointsChild = '';
 
   constructor(
     ModLoader: IModLoaderAPI,
@@ -54,13 +60,17 @@ export class ModelManager {
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
-  onCustomModel(file: string) {
-    this.customModelFileAdult = file;
+  onCustomModel(evt: Ooto_CustomModelMetadata) {
+    this.customModelFileAdult = evt.model;
+    this.customModelRepointsAdult = evt.repoints;
+    console.log(evt);
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
-  onCustomModel2(file: string) {
-    this.customModelFileChild = file;
+  onCustomModel2(evt: Ooto_CustomModelMetadata) {
+    this.customModelFileChild = evt.model;
+    this.customModelRepointsChild = evt.repoints;
+    console.log(evt);
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS)
@@ -104,8 +114,9 @@ export class ModelManager {
           let start: number = rom.readUInt32BE(dma + link + 0x8);
 
           let a: any[] = JSON.parse(
-            fs.readFileSync(__dirname + '/adult.json').toString()
+            fs.readFileSync(this.customModelRepointsAdult).toString()
           );
+
           for (let i = 0; i < a.length; i++) {
             rom.writeUInt8(a[i].value, a[i].addr);
           }
@@ -124,7 +135,7 @@ export class ModelManager {
           let start: number = rom.readUInt32BE(dma + link + 0x8);
 
           let a: any[] = JSON.parse(
-            fs.readFileSync(__dirname + '/child.json').toString()
+            fs.readFileSync(this.customModelRepointsChild).toString()
           );
           for (let i = 0; i < a.length; i++) {
             rom.writeUInt8(a[i].value, a[i].addr);
