@@ -40,6 +40,7 @@ export class ModelManager {
   allocationManager: ModelAllocationManager;
   customModelFileAdult = '';
   customModelFileChild = '';
+  customModelFileAnims = '';
 
   constructor(
     ModLoader: IModLoaderAPI,
@@ -60,6 +61,11 @@ export class ModelManager {
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
   onCustomModel2(file: string) {
     this.customModelFileChild = file;
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS)
+  onCustomModel3(file: string) {
+    this.customModelFileAnims = file;
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
@@ -128,6 +134,16 @@ export class ModelManager {
 
           evt.rom = rom;
         })();
+      }
+      if (this.customModelFileAnims !== '') {
+        let rom: Buffer = evt.rom as Buffer;
+        let dma = 0x7430;
+        let link: number = 7 * 0x10;
+        let start: number = rom.readUInt32BE(dma + link + 0x8);
+
+        fs.readFileSync(this.customModelFileAnims).copy(rom, start);
+
+        evt.rom = rom;
       }
       if (
         this.customModelFileChild !== '' ||

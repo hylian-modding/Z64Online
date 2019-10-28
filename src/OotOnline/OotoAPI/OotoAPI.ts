@@ -13,6 +13,7 @@ export enum OotOnlineEvents {
   MAGIC_METER_INCREASED = 'OotOnline:GainedMagicMeter',
   CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult',
   CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild',
+  CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims',
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
 }
 
