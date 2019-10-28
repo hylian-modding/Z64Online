@@ -168,7 +168,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   updateInventory() {
     if (
-      this.core.helper.isTitleScreen() &&
+      this.core.helper.isTitleScreen() ||
       !this.core.helper.isSceneNumberValid()
     ) {
       return;
