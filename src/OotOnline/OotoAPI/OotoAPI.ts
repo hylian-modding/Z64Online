@@ -13,6 +13,7 @@ export enum OotOnlineEvents {
   MAGIC_METER_INCREASED = 'OotOnline:GainedMagicMeter',
   CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult',
   CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild',
+  ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
 }
 
 export class OotOnline_PlayerScene {

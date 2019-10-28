@@ -47,6 +47,10 @@ export class Puppet {
     });
   }
 
+  doNotDespawnMe() {
+    this.emulator.rdramWrite8(this.data.pointer + 0x3, 0xff);
+  }
+
   spawn() {
     if (this.isShoveled) {
       this.isShoveled = false;
@@ -73,12 +77,10 @@ export class Puppet {
               this.data.pointer + 0x24,
               0xc
             );
-            this.debug_movePuppetToPlayer();
+            this.doNotDespawnMe();
           }
         }
       );
-    } else {
-      console.log('Puppet already exists or is currently spawning.');
     }
   }
 

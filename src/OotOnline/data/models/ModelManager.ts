@@ -64,12 +64,96 @@ export class ModelManager {
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
-    let temp: string = path.resolve(__dirname + '/temp.z64');
-    let temp2: string = path.resolve(__dirname + '/ZOOTDEC.z64');
-    let temp3: string = path.resolve(__dirname + '/complete.z64');
-    let rom: Buffer = evt.rom as Buffer;
-    if (this.customModelFileChild !== '' || this.customModelFileAdult !== '') {
-      fs.writeFileSync(temp, rom);
+    try {
+      let temp: string = path.resolve(__dirname + '/temp.z64');
+      let temp2: string = path.resolve(__dirname + '/ZOOTDEC.z64');
+      let temp3: string = path.resolve(__dirname + '/complete.z64');
+      let rom: Buffer = evt.rom as Buffer;
+      if (
+        this.customModelFileChild !== '' ||
+        this.customModelFileAdult !== ''
+      ) {
+        fs.writeFileSync(temp, rom);
+        if (process.platform === 'win32') {
+          spawnSync(
+            path.resolve(__dirname + '/Decompress.exe'),
+            [temp, temp2],
+            {
+              cwd: __dirname,
+            }
+          );
+        } else {
+          spawnSync(path.resolve(__dirname + '/Decompress'), [temp, temp2], {
+            cwd: __dirname,
+          });
+        }
+        evt.rom = fs.readFileSync(temp2);
+      }
+      if (this.customModelFileAdult !== '') {
+        console.log('Setting up adult model...');
+        (() => {
+          let rom: Buffer = evt.rom as Buffer;
+          let dma = 0x7430;
+          let link: number = 502 * 0x10;
+          let start: number = rom.readUInt32BE(dma + link + 0x8);
+
+          let a: any[] = JSON.parse(
+            fs.readFileSync(__dirname + '/adult.json').toString()
+          );
+          for (let i = 0; i < a.length; i++) {
+            rom.writeUInt8(a[i].value, a[i].addr);
+          }
+
+          fs.readFileSync(this.customModelFileAdult).copy(rom, start);
+
+          evt.rom = rom;
+        })();
+      }
+      if (this.customModelFileChild !== '') {
+        console.log('Setting up child model...');
+        (() => {
+          let rom: Buffer = evt.rom as Buffer;
+          let dma = 0x7430;
+          let link: number = 503 * 0x10;
+          let start: number = rom.readUInt32BE(dma + link + 0x8);
+
+          let a: any[] = JSON.parse(
+            fs.readFileSync(__dirname + '/child.json').toString()
+          );
+          for (let i = 0; i < a.length; i++) {
+            rom.writeUInt8(a[i].value, a[i].addr);
+          }
+
+          fs.readFileSync(this.customModelFileChild).copy(rom, start);
+
+          evt.rom = rom;
+        })();
+      }
+      if (
+        this.customModelFileChild !== '' ||
+        this.customModelFileAdult !== ''
+      ) {
+        if (fs.existsSync('./ARCHIVE.bin')) {
+          fs.copyFileSync('./ARCHIVE.bin', __dirname + '/ARCHIVE.bin');
+        }
+        fs.writeFileSync(temp2, evt.rom);
+        if (process.platform === 'win32') {
+          spawnSync(path.resolve(__dirname + '/Compress.exe'), [temp2, temp3], {
+            cwd: __dirname,
+          });
+        } else {
+          spawnSync(path.resolve(__dirname + '/Compress'), [temp2, temp3], {
+            cwd: __dirname,
+          });
+        }
+        if (fs.existsSync(__dirname + '/ARCHIVE.bin')) {
+          fs.copyFileSync(__dirname + '/ARCHIVE.bin', './ARCHIVE.bin');
+        }
+        evt.rom = fs.readFileSync(temp3);
+      }
+      let adult: Buffer = Buffer.alloc(1);
+      let child: Buffer = Buffer.alloc(1);
+      fs.writeFileSync(temp, evt.rom);
       if (process.platform === 'win32') {
         spawnSync(path.resolve(__dirname + '/Decompress.exe'), [temp, temp2], {
           cwd: __dirname,
@@ -79,132 +163,72 @@ export class ModelManager {
           cwd: __dirname,
         });
       }
-      evt.rom = fs.readFileSync(temp2);
-    }
-    if (this.customModelFileAdult !== '') {
-      console.log('Setting up adult model...');
       (() => {
-        let rom: Buffer = evt.rom as Buffer;
+        let rom: Buffer = fs.readFileSync(temp2);
         let dma = 0x7430;
         let link: number = 502 * 0x10;
         let start: number = rom.readUInt32BE(dma + link + 0x8);
-
-        let a: any[] = JSON.parse(
-          fs.readFileSync(__dirname + '/adult.json').toString()
-        );
-        for (let i = 0; i < a.length; i++) {
-          rom.writeUInt8(a[i].value, a[i].addr);
+        let end: number = rom.readUInt32BE(dma + link + 0xc);
+        let size: number = end - start;
+        let isRomCompressed = true;
+        if (end === 0) {
+          isRomCompressed = false;
+          size =
+            rom.readUInt32BE(dma + link + 0x4) - rom.readUInt32BE(dma + link);
+          end = start + size;
         }
-
-        fs.readFileSync(this.customModelFileAdult).copy(rom, start);
-
-        evt.rom = rom;
+        let code = 0x00a87000;
+        let offset = 0xe65a0;
+        let skele: number = rom.readUInt32BE(code + offset);
+        let buf: Buffer = Buffer.alloc(size);
+        rom.copy(buf, 0, start, end);
+        if (isRomCompressed) {
+          this.ModLoader.logger.info('Decompressing yaz0 file...');
+          buf = this.ModLoader.utils.yaz0Decode(buf);
+        } else {
+          console.log('Rom is decompressed.');
+        }
+        if (new Zobj(buf).isModLoaderZobj()) {
+          buf.writeUInt32BE(skele, 0x500c);
+          adult = buf;
+          this.clientStorage.adultModel = adult;
+        }
       })();
-    }
-    if (this.customModelFileChild !== '') {
-      console.log('Setting up child model...');
       (() => {
-        let rom: Buffer = evt.rom as Buffer;
+        let rom: Buffer = fs.readFileSync(temp2);
         let dma = 0x7430;
         let link: number = 503 * 0x10;
         let start: number = rom.readUInt32BE(dma + link + 0x8);
-
-        let a: any[] = JSON.parse(
-          fs.readFileSync(__dirname + '/child.json').toString()
-        );
-        for (let i = 0; i < a.length; i++) {
-          rom.writeUInt8(a[i].value, a[i].addr);
+        let end: number = rom.readUInt32BE(dma + link + 0xc);
+        let size: number = end - start;
+        let isRomCompressed = true;
+        if (end === 0) {
+          isRomCompressed = false;
+          size =
+            rom.readUInt32BE(dma + link + 0x4) - rom.readUInt32BE(dma + link);
+          end = start + size;
         }
-
-        fs.readFileSync(this.customModelFileChild).copy(rom, start);
-
-        evt.rom = rom;
+        let code = 0x00a87000;
+        let offset = 0xe65a4;
+        let skele: number = rom.readUInt32BE(code + offset);
+        let buf: Buffer = Buffer.alloc(size);
+        rom.copy(buf, 0, start, end);
+        if (isRomCompressed) {
+          this.ModLoader.logger.info('Decompressing yaz0 file...');
+          buf = this.ModLoader.utils.yaz0Decode(buf);
+        } else {
+          console.log('Rom is decompressed.');
+        }
+        if (new Zobj(buf).isModLoaderZobj()) {
+          buf.writeUInt32BE(skele, 0x500c);
+          child = buf;
+          this.clientStorage.childModel = child;
+        }
       })();
+    } catch (err) {
+      console.log(err);
+      return;
     }
-    if (this.customModelFileChild !== '' || this.customModelFileAdult !== '') {
-      if (fs.existsSync('./ARCHIVE.bin')) {
-        fs.copyFileSync('./ARCHIVE.bin', __dirname + '/ARCHIVE.bin');
-      }
-      fs.writeFileSync(temp2, evt.rom);
-      if (process.platform === 'win32') {
-        spawnSync(path.resolve(__dirname + '/Compress.exe'), [temp2, temp3], {
-          cwd: __dirname,
-        });
-      } else {
-        spawnSync(path.resolve(__dirname + '/Compress'), [temp2, temp3], {
-          cwd: __dirname,
-        });
-      }
-
-      if (fs.existsSync(__dirname + '/ARCHIVE.bin')) {
-        fs.copyFileSync(__dirname + '/ARCHIVE.bin', './ARCHIVE.bin');
-      }
-      evt.rom = fs.readFileSync(temp3);
-    }
-    let adult: Buffer = Buffer.alloc(1);
-    let child: Buffer = Buffer.alloc(1);
-    (() => {
-      let rom: Buffer = evt.rom as Buffer;
-      let dma = 0x7430;
-      let link: number = 502 * 0x10;
-      let start: number = rom.readUInt32BE(dma + link + 0x8);
-      let end: number = rom.readUInt32BE(dma + link + 0xc);
-      let size: number = end - start;
-      let isRomCompressed = true;
-      if (end === 0) {
-        isRomCompressed = false;
-        size =
-          rom.readUInt32BE(dma + link + 0x4) - rom.readUInt32BE(dma + link);
-        end = start + size;
-      }
-      let code = 0x00a87000;
-      let offset = 0xe65a0;
-      let skele: number = rom.readUInt32BE(code + offset);
-      let buf: Buffer = Buffer.alloc(size);
-      rom.copy(buf, 0, start, end);
-      if (isRomCompressed) {
-        this.ModLoader.logger.info('Decompressing yaz0 file...');
-        buf = this.ModLoader.utils.yaz0Decode(buf);
-      } else {
-        console.log('Rom is decompressed.');
-      }
-      if (new Zobj(buf).isModLoaderZobj()) {
-        buf.writeUInt32BE(skele, 0x500c);
-        adult = buf;
-        this.clientStorage.adultModel = adult;
-      }
-    })();
-    (() => {
-      let rom: Buffer = evt.rom as Buffer;
-      let dma = 0x7430;
-      let link: number = 503 * 0x10;
-      let start: number = rom.readUInt32BE(dma + link + 0x8);
-      let end: number = rom.readUInt32BE(dma + link + 0xc);
-      let size: number = end - start;
-      let isRomCompressed = true;
-      if (end === 0) {
-        isRomCompressed = false;
-        size =
-          rom.readUInt32BE(dma + link + 0x4) - rom.readUInt32BE(dma + link);
-        end = start + size;
-      }
-      let code = 0x00a87000;
-      let offset = 0xe65a4;
-      let skele: number = rom.readUInt32BE(code + offset);
-      let buf: Buffer = Buffer.alloc(size);
-      rom.copy(buf, 0, start, end);
-      if (isRomCompressed) {
-        this.ModLoader.logger.info('Decompressing yaz0 file...');
-        buf = this.ModLoader.utils.yaz0Decode(buf);
-      } else {
-        console.log('Rom is decompressed.');
-      }
-      if (new Zobj(buf).isModLoaderZobj()) {
-        buf.writeUInt32BE(skele, 0x500c);
-        child = buf;
-        this.clientStorage.childModel = child;
-      }
-    })();
   }
 
   onPostInit() {
@@ -356,10 +380,14 @@ export class ModelManager {
       puppet.player
     );
     let index: number = this.allocationManager.getModelIndex(model);
+    if (model.model.loadedModel === (puppet.age as number)) {
+      this.ModLoader.emulator.rdramWrite16(0x60014e, index);
+      return;
+    }
     let allocation_size = 0x37800;
     let addr: number = 0x800000 + allocation_size * index;
     console.log(index + ' ' + addr.toString(16));
-    if (puppet.age === Age.ADULT) {
+    if (puppet.age === Age.ADULT && model.model.adult !== undefined) {
       let buf: Buffer = Buffer.alloc(model.model.adult.byteLength);
       model.model.adult.copy(buf);
       this.ModLoader.emulator.rdramWriteBuffer(
@@ -367,7 +395,7 @@ export class ModelManager {
         new zzstatic().doRepoint(buf, index)
       );
     }
-    if (puppet.age === Age.CHILD) {
+    if (puppet.age === Age.CHILD && model.model.child !== undefined) {
       let buf: Buffer = Buffer.alloc(model.model.child.byteLength);
       model.model.child.copy(buf);
       this.ModLoader.emulator.rdramWriteBuffer(

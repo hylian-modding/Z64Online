@@ -1,6 +1,5 @@
 import { JSONTemplate } from 'modloader64_api/JSONTemplate';
 import { IActor } from 'modloader64_api/OOT/IActor';
-import deep from 'deep-equal';
 import IMemory from 'modloader64_api/IMemory';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_ActorPacket } from './OotOPackets';
@@ -67,7 +66,7 @@ export class ActorHookProcessor extends JSONTemplate {
   hookBase: ActorHookBase;
   last_inbound_frame = 0;
   change_target_count = 0;
-  lastFrameCache: any = {};
+  lastFrameCache = '';
   modloader: IModLoaderAPI;
   core: IOOTCore;
 
@@ -85,12 +84,12 @@ export class ActorHookProcessor extends JSONTemplate {
   }
 
   onTick() {
-    if (!deep(this.lastFrameCache, this.toJSON())) {
-      this.lastFrameCache = this.toJSON();
+    if (this.lastFrameCache !== JSON.stringify(this.toJSON())) {
+      this.lastFrameCache = JSON.stringify(this.toJSON());
       if (this.last_inbound_frame === 0) {
         this.modloader.clientSide.sendPacket(
           new Ooto_ActorPacket(
-            this.lastFrameCache as ActorPacketData,
+            JSON.parse(this.lastFrameCache) as ActorPacketData,
             this.core.global.scene,
             this.core.global.room,
             this.modloader.clientLobby

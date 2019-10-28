@@ -163,6 +163,12 @@ export class EquestrianOverlord {
 
   @EventHandler(OotOnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES)
   onRemotePlayerSceneChange(evt: OotOnline_PlayerScene) {
+    if (
+      this.core.helper.isTitleScreen() ||
+      !this.core.helper.isSceneNumberValid()
+    ) {
+      return;
+    }
     Object.keys(this.clientStorage.currentHorses).forEach((uuid: string) => {
       let horse: EquestrianData_Impl = this.clientStorage.currentHorses[
         uuid

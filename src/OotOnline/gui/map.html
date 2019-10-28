@@ -1,11 +1,31 @@
 <html>
-
-<head>
-
-</head>
-
-<body>
-    <canvas id="viewport" width="687" height="388"></canvas>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <style>
+        body{
+            background-color: dimgrey;
+        }
+        .doesNotHave {
+            image-rendering: -moz-crisp-edges;        
+            image-rendering:   -o-crisp-edges;      
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
+            -webkit-filter: grayscale(1);
+            /* Google Chrome, Safari 6+ & Opera 15+ */
+            filter: grayscale(1);
+            /* Microsoft Edge and Firefox 35+ */
+        }
+		.doesHave {
+            image-rendering: -moz-crisp-edges;        
+            image-rendering:   -o-crisp-edges;      
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+    </style>
+  </head>
+  <body> <span style="line-height: 150%"> <canvas id="viewport" width="687" height="388"></canvas>
     <script>
         var coords = {
             0x0000: { x: 607, y: 224 }, // The Great Deku Tree
@@ -58,11 +78,11 @@
             0x002F: { x: 655, y: 120 }, // Zora Shop
             0x0030: { x: 459, y: 83 }, // Kakariko Potion Shop
             0x0031: { x: 361, y: 83 }, // Market Potion Shop
-            0x0032: { x: 345, y: 79 }, // Bombchu Shop
+            0x0050: { x: 345, y: 79 }, // Bombchu Shop
             0x0033: { x: 363, y: 76 }, // Happy Mask Shop
             0x0034: { x: 540, y: 240 }, // Link's House
             0x0035: { x: 345, y: 79 }, // Dog Lady House
-            0x0036: { x: 328, y: 149 }, // Stable
+            0x0036: { x: 508, y: 149 }, // Stable
             0x0037: { x: 460, y: 100 }, // Impa's House
             0x0038: { x: 240, y: 300 }, // Lakeside Lab
             0x0039: { x: 154, y: 139 }, // Carpenter's Tent
@@ -84,7 +104,7 @@
             0x0049: { x: 314, y: 305 }, // Fishing Pond
             0x004A: { x: 359, y: 38 }, // Castle Courtyard
             0x004B: { x: 361, y: 83 }, // Bombchu Bowling
-            0x004C: { x: 323, y: 158 }, // Lon Lon Buildings
+            0x004C: { x: 503, y: 158 }, // Lon Lon Buildings
             0x004D: { x: 336, y: 93 }, // Guard House
             0x004E: { x: 457, y: 87 }, // Granny's Potion Shop
             0x004F: { x: 359, y: 38 }, // Ganon Battle Arena
@@ -107,10 +127,15 @@
             0x0060: { x: 435, y: 60 }, // Death Mountain Trail
             0x0061: { x: 448, y: 6 }, // Death Mountain Crater
             0x0062: { x: 416, y: 26 }, // Goron 
-            0x0063: { x: 324, y: 159 }, // Lon Lon Ranch
+            0x0063: { x: 504, y: 159 }, // Lon Lon Ranch
             0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
         };
         var hooks = require('./map.js');
+/*         const hooks = {
+            onSceneChange: (scene) => { },
+            onSceneChange_Network: (packet) => { },
+            onPlayerLeft: (packet) => { },
+        }; */
         hooks.onSceneChange = function (scene) {
             player1.pos.x = coords[scene].x;
             player1.pos.y = coords[scene].y;
@@ -154,6 +179,7 @@
             }
         }
         var canvas = document.getElementById('viewport'), context = canvas.getContext('2d');
+        var message = "";
 
         function make_base() {
             var base_image = new Image();
@@ -167,7 +193,9 @@
         function makePlayerMarker() {
             var marker = {};
             marker["icon"] = new Image();
-            marker.icon.src = "./link.png";
+            marker.icon.src = "./sprites/tile381.png";
+            marker.icon.width = 24;
+            marker.icon.height = 24;
             marker["pos"] = {};
             marker.pos["x"] = 0;
             marker.pos["y"] = 0;
@@ -178,10 +206,12 @@
             return marker;
         }
 
-        function writeMessage(canvas, message) {
-            context.font = '18pt Calibri';
-            context.fillStyle = 'black';
-            context.fillText(message, 10, 25);
+        function writeMessage(canvas, msg) {
+            message = msg;
+            if (message !== "") {
+                redrawMap();
+                drawPlayers();
+            }
         }
 
         function getMousePos(canvas, evt) {
@@ -203,6 +233,9 @@
                 let p = otherPlayers[i];
                 context.drawImage(p.icon, p.pos.x, p.pos.y, p.icon.width, p.icon.height);
             }
+            context.font = '18pt Calibri';
+            context.fillStyle = 'black';
+            context.fillText(message, 10, 25);
         }
 
         function isBetween(a, b, c) {
@@ -210,6 +243,11 @@
                 max = Math.max.apply(Math, [a, b]);
             return c > min && c < max;
         };
+
+        setInterval(() => {
+            redrawMap();
+            drawPlayers();
+        }, 1000);
 
         canvas.addEventListener('mousemove', function (evt) {
             var mousePos = getMousePos(canvas, evt);
@@ -231,10 +269,105 @@
         var map = make_base();
         var player1 = makePlayerMarker();
         var otherPlayers = [];
+        otherPlayers.push(player1);
 
-        redrawMap();
-        drawPlayers();
-    </script>
-</body>
-
+        var wallet_icons = ["./sprites/tile240.png", "./sprites/tile241.png", "./sprites/tile242.png"];
+        var quiver_icons = ["./sprites/tile249.png", "./sprites/tile250.png", "./sprites/tile251.png"];
+        var bombbag_icons = ["./sprites/tile246.png", "./sprites/tile247.png", "./sprites/tile248.png"]
+        var swimming_icons = ["./sprites/tile300.png", "./sprites/tile301.png"];
+        var bulletBag_icons = ["./sprites/tile243.png", "./sprites/tile244.png", "./sprites/tile245.png"];
+        var strength_icons = ["./sprites/tile302.png", "./sprites/tile303.png", "./sprites/tile304.png"];
+        var ocarina_icons = ["./sprites/tile100.png", "./sprites/tile101.png"];
+        var hookshot_icons = ["./sprites/tile090.png", "./sprites/tile091.png"];
+        var childTrade_icons = { 321: "./sprites/tile321.png", 322: "./sprites/tile322.png", 320: "./sprites/tile320.png"};
+        var adultTrade_icons = { 321: "./sprites/tile321.png", 322: "./sprites/tile322.png", 323: "./sprites/tile323.png", 
+        324: "./sprites/tile324.png", 325: "./sprites/tile325.png", 326: "./sprites/tile326.png", 327: "./sprites/tile327.png", 
+        328: "./sprites/tile328.png", 329: "./sprites/tile329.png", 330: "./sprites/tile330.png", 331: "./sprites/tile331.png", 
+        332: "./sprites/tile332.png"};
+        var magic_icons = { 270: "./sprites/tile270.png", 263: "./sprites/263.png"};
+    </script></span>
+    <br>
+    <span style="line-height: 250%">
+    <img class="doesNotHave" id="kokiriEmerald" src="./sprites/tile160.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="goronRuby" src="./sprites/tile161.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="zoraSaphire" src="./sprites/tile162.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="lightMedallion" src="./sprites/tile163.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="forestMedallion" src="./sprites/tile164.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="fireMedallion" src="./sprites/tile165.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="waterMedallion" src="./sprites/tile166.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="spiritMedallion" src="./sprites/tile167.png" width="50" height="50" style="padding-right: 25.5px;">
+    <img class="doesNotHave" id="shadowMedallion" src="./sprites/tile168.png" width="50" height="50">
+    </span>
+    <br>
+    <img class="doesNotHave" id="dekuSticks" src="./sprites/tile080.png" width="50" height="50">
+    <img class="doesNotHave" id="dekuNuts" src="./sprites/tile081.png" width="50" height="50">
+    <img class="doesNotHave" id="bombs" src="./sprites/tile085.png" width="50" height="50">
+    <img class="doesNotHave" id="fairyBow" src="./sprites/tile120.png" width="50" height="50">
+    <img class="doesNotHave" id="fireArrows" src="./sprites/tile122.png" width="50" height="50">
+    <img class="doesNotHave" id="dinsFire" src="./sprites/tile260.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="kokiriSword" src="./sprites/tile060.png" width="50" height="50"> 
+    <img class="doesNotHave" id="masterSword" src="./sprites/tile061.png" width="50" height="50">
+    <img class="doesNotHave" id="biggoronSword" src="./sprites/tile062.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="bulletBag" src="./sprites/tile243.png" width="50" height="50"> 
+    <img class="doesNotHave" id="quiver" src="./sprites/tile249.png" width="50" height="50">
+    <br>
+    <img class="doesNotHave" id="fairySlingshot" src="./sprites/tile083.png" width="50" height="50">
+    <img class="doesNotHave" id="ocarina" src="./sprites/tile100.png" width="50" height="50">
+    <img class="doesNotHave" id="bombchus" src="./sprites/tile086.png" width="50" height="50">
+    <img class="doesNotHave" id="hookshot" src="./sprites/tile090.png" width="50" height="50">
+    <img class="doesNotHave" id="iceArrows" src="./sprites/tile123.png" width="50" height="50">
+    <img class="doesNotHave" id="faroresWind" src="./sprites/tile261.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="dekuShield" src="./sprites/tile020.png" width="50" height="50">     
+    <img class="doesNotHave" id="hylianShield" src="./sprites/tile021.png" width="50" height="50">
+    <img class="doesNotHave" id="mirrorShield" src="./sprites/tile022.png" width="50" height="50" style="padding-right: 48px;"> 
+    <img class="doesNotHave" id="bombBag" src="./sprites/tile246.png" width="50" height="50">
+    <img class="doesNotHave" id="wallet" src="./sprites/tile240.png" width="50" height="50">
+    <br>
+    <img class="doesNotHave" id="boomerang" src="./sprites/tile087.png" width="50" height="50">
+    <img class="doesNotHave" id="lensOfTruth" src="./sprites/tile088.png" width="50" height="50">
+    <img class="doesNotHave" id="magicBeans" src="./sprites/tile089.png" width="50" height="50">
+    <img class="doesNotHave" id="megatonHammer" src="./sprites/tile092.png" width="50" height="50">
+    <img class="doesNotHave" id="lightArrows" src="./sprites/tile124.png" width="50" height="50">
+    <img class="doesNotHave" id="nayrusLove" src="./sprites/tile262.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="kokiriTunic" src="./sprites/tile000.png" width="50" height="50">
+    <img class="doesNotHave" id="goronTunic" src="./sprites/tile001.png" width="50" height="50">
+    <img class="doesNotHave" id="zoraTunic" src="./sprites/tile002.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="strength" src="./sprites/tile302.png" width="50" height="50">
+    <img class="doesNotHave" id="magic" src="./sprites/tile270.png" width="50" height="50">
+    <br>
+    <img class="doesNotHave" id="bottleOne" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="bottleTwo" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="bottleThree" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="bottleFour" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="adultTradeItem" src="./sprites/tile321.png" width="50" height="50">
+    <img class="doesNotHave" id="childTradeItem" src="./sprites/tile321.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="kokiriBoots" src="./sprites/tile040.png" width="50" height="50">
+    <img class="doesNotHave" id="ironBoots" src="./sprites/tile041.png" width="50" height="50">
+    <img class="doesNotHave" id="hoverBoots" src="./sprites/tile042.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="swimming" src="./sprites/tile300.png" width="50" height="50">
+    <img class="doesNotHave" id="gerudoCard" src="./sprites/tile104.png" width="50" height="50">
+    <br>
+    <span style="line-height: 250%">
+    <img class="doesNotHave" id="doubleDefense" src="./sprites/tile264.png" width="50" height="50" style="padding-right: 53px;">
+    <img class="doesNotHave" id="heartContainers" src="./sprites/tile266.png" width="50" height="50" style="padding-right: 53px;">
+    <img class="doesNotHave" id="heartPieces" src="./sprites/tile265.png" width="50" height="50" style="padding-right: 53px;">
+    <img class="doesNotHave" id="goldSkulltulas" src="./sprites/tile420.png" width="50" height="50" style="padding-right: 53px;">
+    <img class="doesNotHave" id="stageCheckSkull" src="./sprites/tile223.png" width="50" height="50" style="padding-right: 53px;">
+    <img class="doesNotHave" id="stageCheckTruth" src="./sprites/tile227.png" width="50" height="50" style="padding-right: 53px;">
+    <img class="doesNotHave" id="stoneOfAgony" src="./sprites/tile268.png" width="50" height="50">
+    </span>
+    <br>
+    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="sariasSong" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="eponasSong" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="sunsSong" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="songOfTime" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="songOfStorms" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="minuetOfForest" src="./sprites/tile141.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="boleroOfFire" src="./sprites/tile142.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="serenadeOfWater" src="./sprites/tile143.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="requiemOfSpirit" src="./sprites/tile144.png" width="50" height="50" style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="nocturnOfShadow" src="./sprites/tile145.png" width="50" height="50" style="padding-right: 3.3px;">
+    <img class="doesNotHave" id="preludeOfLight" src="./sprites/tile140.png" width="50" height="50">
+  </body>
 </html>

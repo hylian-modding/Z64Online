@@ -5,7 +5,6 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
   needs_update = false;
   first_time_sync = true;
-  sent_download_request = false;
   lastKnownSkullCount = -1;
   bottleCache: InventoryItem[] = [
     InventoryItem.NONE,
@@ -15,4 +14,7 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   ];
   childModel: Buffer = Buffer.alloc(1);
   adultModel: Buffer = Buffer.alloc(1);
+
+  keys_need_update = false;
+  force_overwrite = false;
 }

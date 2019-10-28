@@ -307,7 +307,7 @@ export class PuppetData {
     } else {
       if (!sword && shield === Shield.NONE) {
         id = 0;
-      } else if (shield !== Shield.NONE && sword && _sword === Sword.KOKIRI) {
+      } else if (shield !== Shield.NONE && sword && _sword === 0x11) {
         if (left_hand === 4) {
           id = 10;
         } else {
@@ -338,6 +338,7 @@ export class PuppetData {
     for (let i = 0; i < this.copyFields.length; i++) {
       jsonObj[this.copyFields[i]] = (this as any)[this.copyFields[i]];
     }
+    //console.log(JSON.stringify(jsonObj, null, 2));
     return jsonObj;
   }
 }

@@ -55,7 +55,7 @@ export class zzstatic {
       .digest('hex');
 
     if (ZZSTATIC_CACHE_DATA.has(hash)) {
-      return ZZSTATIC_CACHE_DATA.get(hash)!.doRepoint(index);
+      //return ZZSTATIC_CACHE_DATA.get(hash)!.doRepoint(index);
     }
 
     if (zobj.isModLoaderZobj()) {

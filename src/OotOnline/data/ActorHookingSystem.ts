@@ -44,6 +44,7 @@ export class ActorHookingManager {
   chusLocal: Map<string, IActor> = new Map<string, IActor>();
   chusRemote: Map<string, IActor> = new Map<string, IActor>();
   chuProcessor!: ActorHookProcessor;
+
   modloader: IModLoaderAPI;
   core: IOOTCore;
   parent: IOotOnlineHelpers;
@@ -220,19 +221,6 @@ export class ActorHookingManager {
       return;
     }
     if (this.actorHookTicks.has(packet.actorData.actor.actorUUID)) {
-      /*let d: ActorHookProcessor = this.actorHookTicks.get(
-        packet.actorData.actor.actorUUID
-      )!;
-      if (d.last_inbound_frame === 0) {
-        if (d.change_target_count > 0) {
-          d.last_inbound_frame = Math.floor(Math.random() * 200) + 200;
-          d.change_target_count = 0;
-        } else {
-          d.change_target_count++;
-          return;
-        }
-      }*/
-
       this.actorHookTicks.get(
         packet.actorData.actor.actorUUID
       )!.last_inbound_frame = 50;
@@ -369,10 +357,15 @@ export class ActorHookingManager {
       case BOMBCHU_ID:
         spawn_param = 0x80600170;
         spawn_param_ = 0x600170;
+        let pos = this.core.link.position.getRawPos();
+        this.modloader.emulator.rdramWrite8(0x600172, pos[0]);
+        this.modloader.emulator.rdramWrite8(0x600173, pos[1]);
+        this.modloader.emulator.rdramWrite8(0x600174, pos[4] + 100);
+        this.modloader.emulator.rdramWrite8(0x600175, pos[5] + 100);
+        this.modloader.emulator.rdramWrite8(0x600176, pos[8]);
+        this.modloader.emulator.rdramWrite8(0x600177, pos[9]);
         console.log('bombchu');
-        this.modloader.emulator.rdramWrite16(0x600174, 0xc500);
-        this.modloader.emulator.rdramWrite16(0x600176, 0x4605);
-        break;
+        return;
     }
     this.core.commandBuffer.runCommand(
       Command.SPAWN_ACTOR,

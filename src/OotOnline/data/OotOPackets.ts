@@ -4,18 +4,24 @@ import {
   UDPPacket,
 } from 'modloader64_api/ModLoaderDefaultImpls';
 import { PuppetData } from './linkPuppet/PuppetData';
-import { Age, IInventoryFields } from 'modloader64_api/OOT/OOTAPI';
+import {
+  Age,
+  IInventoryFields,
+  InventoryItem,
+} from 'modloader64_api/OOT/OOTAPI';
 import {
   IEquipmentSave,
   IQuestSave,
   IDungeonItemSave,
-  IKeySaveContainer,
+  IKeySave,
+  InventorySave,
 } from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
 import { IPosition } from 'modloader64_api/OOT/IPosition';
 import { IRotation } from 'modloader64_api/OOT/IRotation';
 import { EquestrianData } from './eponaPuppet/EquestrianData';
 import { EponaData } from './eponaPuppet/EponaData';
+import { OotOnlineStorage } from '../OotOnlineStorage';
 
 export class Ooto_PuppetPacket extends UDPPacket {
   data: PuppetData;
@@ -44,13 +50,13 @@ export class Ooto_SceneRequestPacket extends Packet {
 }
 
 export class Ooto_SubscreenSyncPacket extends Packet {
-  inventory: IInventoryFields;
+  inventory: InventorySave;
   equipment: IEquipmentSave;
   quest: IQuestSave;
   dungeonItems: IDungeonItemSave;
 
   constructor(
-    save: IInventoryFields,
+    save: InventorySave,
     equipment: IEquipmentSave,
     quest: IQuestSave,
     dungeonItems: IDungeonItemSave,
@@ -64,39 +70,14 @@ export class Ooto_SubscreenSyncPacket extends Packet {
   }
 }
 
-export class Ooto_SmallKeyPacket extends Packet {
-  smallKeys: IKeySaveContainer;
+export class Ooto_DownloadServerContextPacket extends Packet {
+  storage: OotOnlineStorage;
+  overwrite: boolean;
 
-  constructor(smallKeys: IKeySaveContainer, lobby: string) {
-    super('Ooto_SmallKeyPacket', 'OotOnline', lobby, false);
-    this.smallKeys = smallKeys;
-  }
-}
-
-export class Ooto_DownloadResponsePacket extends Packet {
-  subscreen: Ooto_SubscreenSyncPacket;
-  flags: Ooto_ServerFlagUpdate;
-  keys: Ooto_SmallKeyPacket;
-
-  constructor(
-    subscreen: Ooto_SubscreenSyncPacket,
-    scenes: Ooto_ServerFlagUpdate,
-    keys: Ooto_SmallKeyPacket,
-    lobby: string
-  ) {
-    super('Ooto_DownloadResponsePacket', 'OotOnline', lobby, false);
-    this.subscreen = subscreen;
-    this.flags = scenes;
-    this.keys = keys;
-    packetHelper.cloneDestination(this, this.flags);
-    packetHelper.cloneDestination(this, this.subscreen);
-    packetHelper.cloneDestination(this, this.keys);
-  }
-}
-
-export class Ooto_DownloadResponsePacket2 extends Packet {
-  constructor(lobby: string) {
-    super('Ooto_DownloadResponsePacket2', 'OotOnline', lobby, false);
+  constructor(lobby: string, storage: OotOnlineStorage, overwrite: boolean) {
+    super('Ooto_DownloadServerContextPacket', 'OotOnline', lobby, false);
+    this.storage = storage;
+    this.overwrite = overwrite;
   }
 }
 
@@ -285,5 +266,34 @@ export class Ooto_DownloadAllModelsPacket extends Packet {
   constructor(models: any, lobby: string) {
     super('Ooto_DownloadAllModelsPacket', 'OotOnline', lobby, false);
     this.models = models;
+  }
+}
+
+export class Ooto_BottleUpdatePacket extends Packet {
+  slot: number;
+  contents: InventoryItem;
+
+  constructor(slot: number, contents: InventoryItem, lobby: string) {
+    super('Ooto_BottleUpdatePacket', 'OotOnline', lobby, true);
+    this.slot = slot;
+    this.contents = contents;
+  }
+}
+
+export class Ooto_AllKeysPacket extends Packet {
+  keyCache: IKeySave[];
+
+  constructor(keyCache: IKeySave[], lobby: string) {
+    super('Ooto_AllKeysPacket', 'OotOnline', lobby, false);
+    this.keyCache = keyCache;
+  }
+}
+
+export class Ooto_KeyPacket extends Packet {
+  key: IKeySave;
+
+  constructor(key: IKeySave, lobby: string) {
+    super('Ooto_KeyPacket', 'OotOnline', lobby, true);
+    this.key = key;
   }
 }

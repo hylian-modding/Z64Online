@@ -12,6 +12,7 @@ export class PuppetOverlord {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
   private awaiting_spawn: Puppet[] = new Array<Puppet>();
   fakeClientPuppet!: Puppet;
+  private amIAlone = true;
   private playersAwaitingPuppets: INetworkPlayer[] = new Array<
     INetworkPlayer
   >();
@@ -59,16 +60,6 @@ export class PuppetOverlord {
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
     this.fakeClientPuppet.scene = entering_scene;
     this.fakeClientPuppet.age = age;
-    this.puppets.forEach(
-      (value: Puppet, key: string, map: Map<string, Puppet>) => {
-        if (
-          value.scene === this.fakeClientPuppet.scene &&
-          value.age === this.fakeClientPuppet.age
-        ) {
-          this.awaiting_spawn.push(value);
-        }
-      }
-    );
   }
 
   registerPuppet(player: INetworkPlayer) {
@@ -102,14 +93,14 @@ export class PuppetOverlord {
     if (this.puppets.has(player.uuid)) {
       let puppet = this.puppets.get(player.uuid)!;
       puppet.scene = entering_scene;
+      if (puppet.age !== age && puppet.isSpawned) {
+        puppet.despawn();
+      }
       puppet.age = age;
       this.logger.info(
         'Puppet ' + puppet.id + ' moved to scene ' + puppet.scene
       );
-      if (
-        this.fakeClientPuppet.scene === puppet.scene &&
-        this.fakeClientPuppet.age === puppet.age
-      ) {
+      if (this.fakeClientPuppet.scene === puppet.scene) {
         this.logger.info(
           'Queueing puppet ' + puppet.id + ' for immediate spawning.'
         );
@@ -148,16 +139,9 @@ export class PuppetOverlord {
   }
 
   processAwaitingSpawns() {
-    if (
-      !this.core.helper.isLinkEnteringLoadingZone() &&
-      this.core.global.scene_framecount > 10 &&
-      !this.core.helper.isPaused()
-    ) {
-      if (this.awaiting_spawn.length > 0) {
-        let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
-        this.logger.info('TRYING SPAWN');
-        puppet.spawn();
-      }
+    if (this.awaiting_spawn.length > 0) {
+      let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
+      puppet.spawn();
     }
   }
 
@@ -175,26 +159,57 @@ export class PuppetOverlord {
     );
   }
 
-  sendPuppetPacket() {
-    if (this.core.helper.isPaused()) {
-      return;
-    }
-    this.mapi.clientSide.sendPacket(
-      new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.mapi.clientLobby)
+  lookForMissingPuppets() {
+    let check = false;
+    this.puppets.forEach(
+      (value: Puppet, key: string, map: Map<string, Puppet>) => {
+        if (value.scene === this.fakeClientPuppet.scene) {
+          if (!value.isSpawned) {
+            this.awaiting_spawn.push(value);
+          }
+          check = true;
+        }
+      }
     );
+    if (check) {
+      this.amIAlone = false;
+    } else {
+      this.amIAlone = true;
+    }
+  }
+
+  sendPuppetPacket() {
+    if (!this.amIAlone) {
+      this.mapi.clientSide.sendPacket(
+        new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.mapi.clientLobby)
+      );
+    }
   }
 
   processPuppetPacket(packet: Ooto_PuppetPacket) {
-    if (this.puppets.has(packet.player.uuid) && !this.core.helper.isPaused()) {
+    if (
+      this.puppets.has(packet.player.uuid) &&
+      !this.core.helper.isPaused() &&
+      this.core.link.state !== LinkState.BUSY
+    ) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
+      puppet.doNotDespawnMe();
       puppet.processIncomingPuppetData(packet.data);
     }
   }
 
   onTick() {
-    this.processNewPlayers();
-    this.processAwaitingSpawns();
-    this.lookForStrandedPuppets();
-    this.sendPuppetPacket();
+    if (!this.core.helper.isPaused()) {
+      if (
+        !this.core.helper.isLinkEnteringLoadingZone() &&
+        this.core.helper.isInterfaceShown()
+      ) {
+        this.processNewPlayers();
+        this.processAwaitingSpawns();
+        this.lookForStrandedPuppets();
+        this.lookForMissingPuppets();
+      }
+      this.sendPuppetPacket();
+    }
   }
 }
