@@ -102,7 +102,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
 
-  constructor() {}
+  constructor() { }
 
   debuggingBombs() {
     this.core.save.inventory.bombBag = AmmoUpgrade.BASE;
@@ -141,7 +141,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     setupNetworkHandlers(this.modelManager);
   }
 
-  init(): void {}
+  init(): void { }
 
   postinit(): void {
     //this.ModLoader.emulator.memoryDebugLogger(true);
@@ -154,8 +154,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.actorHooks.onPostInit();
     this.modelManager.onPostInit();
     this.ModLoader.gui.openWindow(
-      795,
       698,
+      795,
       path.resolve(path.join(__dirname, 'gui', 'map.html'))
     );
   }
@@ -168,9 +168,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   updateInventory() {
     if (
-      this.core.helper.isTitleScreen() ||
-      !this.core.helper.isSceneNumberValid()
-    ) {
+      (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()) && this.core.helper.isInterfaceShown()) {
       return;
     }
     if (!this.clientStorage.first_time_sync) {
@@ -392,11 +390,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     if (this.clientStorage.force_overwrite) {
       this.overwrite_everything();
     }
-    if (
-      !this.core.helper.isTitleScreen() &&
-      this.core.helper.isSceneNumberValid() &&
-      this.core.helper.isInterfaceShown()
-    ) {
+    if (!this.core.helper.isTitleScreen() || this.core.helper.isSceneNumberValid()) {
       if (!this.core.helper.isPaused()) {
         this.clientStorage.force_overwrite = false;
         this.overlord.onTick();
@@ -539,10 +533,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     storage.players[packet.player.uuid] = packet.scene;
     this.ModLoader.logger.info(
       'Server: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      packet.scene +
+      '.'
     );
     bus.emit(
       OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
@@ -554,10 +548,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneChange_client(packet: Ooto_ScenePacket) {
     this.ModLoader.logger.info(
       'client receive: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      packet.scene +
+      '.'
     );
     this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
@@ -609,7 +603,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           }
         }
       });
-    } catch (err) {}
+    } catch (err) { }
   }
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
@@ -672,12 +666,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_BottleUpdatePacket')
   onBottle_client(packet: Ooto_BottleUpdatePacket) {
-    if (
-      this.core.helper.isTitleScreen() &&
-      !this.core.helper.isSceneNumberValid()
-    ) {
-      return;
-    }
     this.clientStorage.bottleCache[packet.slot] = packet.contents;
     let inventory2: InventorySave = createInventoryFromContext(
       this.core.save
@@ -770,8 +758,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   @NetworkHandler('Ooto_SubscreenSyncPacket')
   onItemSync_client(packet: Ooto_SubscreenSyncPacket) {
     if (
-      this.core.helper.isTitleScreen() &&
-      !this.core.helper.isSceneNumberValid() &&
+      (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()) &&
       this.core.helper.isInterfaceShown()
     ) {
       return;
@@ -999,12 +986,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(OotOnlineEvents.MAGIC_METER_INCREASED)
   onNeedsMagic(size: Magic) {
-    if (
-      this.core.helper.isTitleScreen() &&
-      !this.core.helper.isSceneNumberValid()
-    ) {
-      return;
-    }
     switch (size) {
       case Magic.NONE:
         this.core.save.magic_current = MagicQuantities.NONE;
@@ -1031,12 +1012,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(OotOnlineEvents.ON_INVENTORY_UPDATE)
   onInventoryUpdate(inventory: IInventory) {
-    if (
-      this.core.helper.isTitleScreen() ||
-      !this.core.helper.isSceneNumberValid()
-    ) {
-      return;
-    }
     let addr: number = global.ModLoader.save_context + 0x0068;
     let buf: Buffer = this.ModLoader.emulator.rdramReadBuffer(addr, 0x7);
     let addr2: number = global.ModLoader.save_context + 0x0074;
@@ -1053,7 +1028,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000001,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1065,7 +1040,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000002,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1077,7 +1052,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000003,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
   }

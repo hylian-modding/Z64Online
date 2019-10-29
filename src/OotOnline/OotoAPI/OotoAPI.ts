@@ -2,7 +2,7 @@ import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
 
 export enum OotOnlineEvents {
-  PLAYER_PUPPET_PRESPAWN = '',
+  PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
   PLAYER_PUPPET_SPAWNED = 'OotOnline:onPlayerPuppetSpawned',
   PLAYER_PUPPET_DESPAWNED = 'OotOnline:onPlayerPuppetDespawned',
   SERVER_PLAYER_CHANGED_SCENES = 'OotOnline:onServerPlayerChangedScenes',
