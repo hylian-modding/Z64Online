@@ -70,14 +70,26 @@ export class Ooto_SubscreenSyncPacket extends Packet {
   }
 }
 
-export class Ooto_DownloadServerContextPacket extends Packet {
-  storage: OotOnlineStorage;
-  overwrite: boolean;
+export class Ooto_DownloadResponsePacket extends Packet {
+  subscreen: Ooto_SubscreenSyncPacket;
+  flags: Ooto_ServerFlagUpdate;
 
-  constructor(lobby: string, storage: OotOnlineStorage, overwrite: boolean) {
-    super('Ooto_DownloadServerContextPacket', 'OotOnline', lobby, false);
-    this.storage = storage;
-    this.overwrite = overwrite;
+  constructor(
+    subscreen: Ooto_SubscreenSyncPacket,
+    scenes: Ooto_ServerFlagUpdate,
+    lobby: string
+  ) {
+    super('Ooto_DownloadResponsePacket', 'OotOnline', lobby, false);
+    this.subscreen = subscreen;
+    this.flags = scenes;
+    packetHelper.cloneDestination(this, this.flags);
+    packetHelper.cloneDestination(this, this.flags);
+  }
+}
+
+export class Ooto_DownloadResponsePacket2 extends Packet {
+  constructor(lobby: string) {
+    super('Ooto_DownloadResponsePacket2', 'OotOnline', lobby, false);
   }
 }
 

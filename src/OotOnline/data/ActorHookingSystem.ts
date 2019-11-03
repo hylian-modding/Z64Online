@@ -329,7 +329,7 @@ export class ActorHookingManager {
     }
     if (this.actorHookTicks.has(packet.actorUUID)) {
       let actor: IActor = this.actorHookTicks.get(packet.actorUUID)!.actor;
-      //actor.destroy();
+      actor.destroy();
     } else if (this.bombsRemote.has(packet.actorUUID)) {
       this.bombsRemote.delete(packet.actorUUID);
     } else if (this.chusRemote.has(packet.actorUUID)) {
@@ -401,7 +401,7 @@ export class ActorHookingManager {
 
   onTick() {
     this.actorHookTicks.forEach((value: ActorHookProcessor, key: string) => {
-      //value.onTick();
+      value.onTick();
     });
     this.bombsLocal.forEach((value: IActor, key: string) => {
       this.bombProcessor.actor = value;

@@ -4,7 +4,6 @@ import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
   needs_update = false;
-  first_time_sync = true;
   lastKnownSkullCount = -1;
   bottleCache: InventoryItem[] = [
     InventoryItem.NONE,
@@ -14,7 +13,7 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   ];
   childModel: Buffer = Buffer.alloc(1);
   adultModel: Buffer = Buffer.alloc(1);
-
-  keys_need_update = false;
-  force_overwrite = false;
+  localization: any;
+  scene_keys: any;
+  first_time_sync = false;
 }
