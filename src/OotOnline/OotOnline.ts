@@ -362,14 +362,18 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   onTick(): void {
-    if (!this.clientStorage.first_time_sync) {
-      return;
-    }
     if (
       !this.core.helper.isTitleScreen() &&
       this.core.helper.isSceneNumberValid()
     ) {
       if (!this.core.helper.isPaused()) {
+        if (!this.clientStorage.download_request_sent){
+          this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby));
+          this.clientStorage.download_request_sent = true;
+        }
+        if (!this.clientStorage.first_time_sync) {
+          return;
+        }
         this.overlord.onTick();
         if (this.LobbyConfig.actor_syncing) {
           this.actorHooks.onTick();
