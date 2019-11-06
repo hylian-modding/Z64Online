@@ -103,7 +103,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
 
-  constructor() {}
+  constructor() { }
 
   debuggingBombs() {
     this.core.save.inventory.bombBag = AmmoUpgrade.BASE;
@@ -142,7 +142,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     setupNetworkHandlers(this.modelManager);
   }
 
-  init(): void {}
+  init(): void { }
 
   postinit(): void {
     //this.ModLoader.emulator.memoryDebugLogger(true);
@@ -358,12 +358,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.helper.isSceneNumberValid()
     ) {
       if (!this.core.helper.isPaused()) {
-        if (!this.clientStorage.download_request_sent) {
-          this.ModLoader.clientSide.sendPacket(
-            new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
-          );
-          this.clientStorage.download_request_sent = true;
-        }
         if (!this.clientStorage.first_time_sync) {
           return;
         }
@@ -396,6 +390,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         }
       }
     }
+  }
+
+  @EventHandler(OotEvents.ON_SAVE_LOADED)
+  onSaveLoaded(evt: any) {
+    setTimeout(() => {
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
+      );
+    }, 1000);
   }
 
   //------------------------------
@@ -495,9 +498,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         new DiscordStatus(
           'Playing OotOnline',
           'In ' +
-            this.clientStorage.localization[
-              this.clientStorage.scene_keys[scene]
-            ]
+          this.clientStorage.localization[
+          this.clientStorage.scene_keys[scene]
+          ]
         )
       );
     }
@@ -520,10 +523,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     storage.players[packet.player.uuid] = packet.scene;
     this.ModLoader.logger.info(
       'Server: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      packet.scene +
+      '.'
     );
     bus.emit(
       OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
@@ -535,10 +538,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneChange_client(packet: Ooto_ScenePacket) {
     this.ModLoader.logger.info(
       'client receive: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      packet.scene +
+      '.'
     );
     this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
@@ -590,7 +593,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           }
         }
       });
-    } catch (err) {}
+    } catch (err) { }
   }
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
@@ -743,9 +746,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onDownPacket2_client(packet: Ooto_DownloadResponsePacket2) {
     this.clientStorage.first_time_sync = true;
     this.ModLoader.logger.info('The lobby is mine!');
-    this.updateInventory();
-    this.updateFlags();
-    this.updateBottles();
+    this.clientStorage.needs_update = true;
   }
 
   @ServerNetworkHandler('Ooto_SubscreenSyncPacket')
@@ -1025,7 +1026,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000001,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1037,7 +1038,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000002,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1049,7 +1050,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000003,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
   }
