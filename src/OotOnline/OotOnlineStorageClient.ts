@@ -16,5 +16,5 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   localization: any;
   scene_keys: any;
   first_time_sync = false;
-  download_request_sent: boolean = false;
+  download_request_sent = false;
 }

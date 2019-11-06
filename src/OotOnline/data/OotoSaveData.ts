@@ -351,6 +351,11 @@ export function mergeInventoryData(
     save.childTradeItem = incoming.childTradeItem;
   }
 
+  if (save.childTradeItem === InventoryItem.DEKU_STICK) {
+    // I don't understand why this is necessary, but Deku Sticks will not stop getting into this slot for some reason.
+    save.childTradeItem = InventoryItem.NONE;
+  }
+
   // Logic
   if (
     incoming.childTradeItem === InventoryItem.WEIRD_EGG &&
@@ -416,10 +421,20 @@ export function mergeInventoryData(
     save.adultTradeItem = incoming.adultTradeItem;
   }
 
+  if (save.adultTradeItem === InventoryItem.DEKU_STICK) {
+    // I don't understand why this is necessary, but Deku Sticks will not stop getting into this slot for some reason.
+    save.adultTradeItem = InventoryItem.NONE;
+  }
+
   // Logic
   if (
+    save.adultTradeItem === InventoryItem.NONE &&
+    incoming.adultTradeItem === InventoryItem.POCKET_EGG
+  ) {
+    save.adultTradeItem = InventoryItem.POCKET_EGG;
+  } else if (
     incoming.adultTradeItem === InventoryItem.POCKET_CUCCO &&
-    save.adultTradeItem === InventoryItem.NONE
+    save.adultTradeItem === InventoryItem.POCKET_EGG
   ) {
     save.adultTradeItem = InventoryItem.POCKET_CUCCO;
   } else if (

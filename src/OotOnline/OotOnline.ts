@@ -183,36 +183,27 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   updateInventory() {
-    if (
-      !this.clientStorage.needs_update &&
-      this.core.link.state === LinkState.BUSY
-    ) {
-      this.clientStorage.needs_update = true;
-    } else if (
-      this.clientStorage.needs_update &&
-      this.core.link.state === LinkState.STANDING
-    ) {
-      this.ModLoader.logger.info('updateInventory()');
-      let inventory = createInventoryFromContext(this.core.save);
-      let equipment = createEquipmentFromContext(this.core.save);
-      let quest = createQuestSaveFromContext(this.core.save);
-      let di = createDungeonItemDataFromContext(
-        this.core.save.dungeonItemManager
-      );
-      mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-      mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
-      mergeQuestSaveData(this.clientStorage.questStorage, quest);
-      mergeDungeonItemData(this.clientStorage.dungeonItemStorage, di);
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_SubscreenSyncPacket(
-          this.clientStorage.inventoryStorage,
-          this.clientStorage.equipmentStorage,
-          this.clientStorage.questStorage,
-          this.clientStorage.dungeonItemStorage,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
+    this.ModLoader.logger.info('updateInventory()');
+    let inventory = createInventoryFromContext(this.core.save);
+    let equipment = createEquipmentFromContext(this.core.save);
+    let quest = createQuestSaveFromContext(this.core.save);
+    let di = createDungeonItemDataFromContext(
+      this.core.save.dungeonItemManager
+    );
+    mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+    mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
+    mergeQuestSaveData(this.clientStorage.questStorage, quest);
+    mergeDungeonItemData(this.clientStorage.dungeonItemStorage, di);
+    this.ModLoader.clientSide.sendPacket(
+      new Ooto_SubscreenSyncPacket(
+        this.clientStorage.inventoryStorage,
+        this.clientStorage.equipmentStorage,
+        this.clientStorage.questStorage,
+        this.clientStorage.dungeonItemStorage,
+        this.ModLoader.clientLobby
+      )
+    );
+    this.clientStorage.needs_update = false;
   }
 
   updateFlags() {
@@ -323,7 +314,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     ];
     for (let i = 0; i < bottles.length; i++) {
       if (bottles[i] !== this.clientStorage.bottleCache[i]) {
-        this.clientStorage.bottleCache = bottles;
+        this.clientStorage.bottleCache[i] = bottles[i];
         this.ModLoader.logger.info('Bottle update.');
         this.ModLoader.clientSide.sendPacket(
           new Ooto_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby)
@@ -367,8 +358,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.helper.isSceneNumberValid()
     ) {
       if (!this.core.helper.isPaused()) {
-        if (!this.clientStorage.download_request_sent){
-          this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby));
+        if (!this.clientStorage.download_request_sent) {
+          this.ModLoader.clientSide.sendPacket(
+            new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
+          );
           this.clientStorage.download_request_sent = true;
         }
         if (!this.clientStorage.first_time_sync) {
@@ -384,22 +377,23 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           this.updateBottles();
           this.updateSkulltulas();
           //this.updateKeys();
+          let state = this.core.link.state;
+          if (
+            state === LinkState.BUSY ||
+            state === LinkState.GETTING_ITEM ||
+            state === LinkState.TALKING
+          ) {
+            this.clientStorage.needs_update = true;
+          } else if (
+            state === LinkState.STANDING &&
+            this.clientStorage.needs_update &&
+            this.LobbyConfig.data_syncing
+          ) {
+            this.updateInventory();
+            this.updateFlags();
+            this.clientStorage.needs_update = false;
+          }
         }
-      }
-      let state = this.core.link.state;
-      if (
-        state === LinkState.BUSY ||
-        state === LinkState.GETTING_ITEM ||
-        state === LinkState.TALKING
-      ) {
-        this.clientStorage.needs_update = true;
-      } else if (
-        state === LinkState.STANDING &&
-        this.clientStorage.needs_update &&
-        this.LobbyConfig.data_syncing
-      ) {
-        this.updateInventory();
-        this.updateFlags();
       }
     }
   }
@@ -419,9 +413,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.LobbyConfig.actor_syncing = lobby.data['OotOnline:actor_syncing'];
     this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
-    this.ModLoader.clientSide.sendPacket(
-      new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
-    );
   }
 
   //------------------------------
@@ -680,6 +671,52 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         break;
     }
     mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+    applyInventoryToContext(
+      this.clientStorage.inventoryStorage,
+      this.core.save,
+      true
+    );
+    bus.emit(OotOnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
+  }
+
+  // Client is logging in and wants to know how to proceed.
+  @ServerNetworkHandler('Ooto_DownloadRequestPacket')
+  onDownloadPacket_server(packet: Ooto_DownloadRequestPacket) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      this
+    ) as OotOnlineStorage;
+    if (storage.saveGameSetup) {
+      // Game is running, get data.
+      this.ModLoader.serverSide.sendPacketToSpecificPlayer(
+        new Ooto_DownloadResponsePacket(
+          new Ooto_SubscreenSyncPacket(
+            storage.inventoryStorage,
+            storage.equipmentStorage,
+            storage.questStorage,
+            storage.dungeonItemStorage,
+            packet.lobby
+          ),
+          new Ooto_ServerFlagUpdate(
+            storage.sceneStorage,
+            storage.eventStorage,
+            storage.itemFlagStorage,
+            storage.infStorage,
+            storage.skulltulaStorage,
+            packet.lobby
+          ),
+          packet.lobby
+        ),
+        packet.player
+      );
+    } else {
+      // Game is not running, give me your data.
+      storage.saveGameSetup = true;
+      this.ModLoader.serverSide.sendPacketToSpecificPlayer(
+        new Ooto_DownloadResponsePacket2(packet.lobby),
+        packet.player
+      );
+    }
   }
 
   // The server is giving me data.
@@ -698,13 +735,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.core.save.itemFlags = packet.flags.items;
     this.core.save.infTable = packet.flags.inf;
     this.core.save.skulltulaFlags = packet.flags.skulltulas;
-    this.clientStorage.first_time_sync = false;
+    this.clientStorage.first_time_sync = true;
   }
 
   // I am giving the server data.
   @NetworkHandler('Ooto_DownloadResponsePacket2')
   onDownPacket2_client(packet: Ooto_DownloadResponsePacket2) {
-    this.clientStorage.first_time_sync = false;
+    this.clientStorage.first_time_sync = true;
     this.ModLoader.logger.info('The lobby is mine!');
     this.updateInventory();
     this.updateFlags();
@@ -744,17 +781,34 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     let dungeonItems: OotoDungeonItemContext = createDungeonItemDataFromContext(
       this.core.save.dungeonItemManager
     ) as IDungeonItemSave;
-    mergeInventoryData(inventory, packet.inventory);
-    mergeEquipmentData(equipment, packet.equipment);
-    mergeQuestSaveData(quest, packet.quest);
-    mergeDungeonItemData(dungeonItems, packet.dungeonItems);
-    applyInventoryToContext(inventory, this.core.save);
-    applyEquipmentToContext(equipment, this.core.save);
-    applyQuestSaveToContext(quest, this.core.save);
+
+    mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+    mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
+    mergeQuestSaveData(this.clientStorage.questStorage, quest);
+    mergeDungeonItemData(this.clientStorage.dungeonItemStorage, dungeonItems);
+
+    mergeInventoryData(this.clientStorage.inventoryStorage, packet.inventory);
+    mergeEquipmentData(this.clientStorage.equipmentStorage, packet.equipment);
+    mergeQuestSaveData(this.clientStorage.questStorage, packet.quest);
+    mergeDungeonItemData(
+      this.clientStorage.dungeonItemStorage,
+      packet.dungeonItems
+    );
+
+    applyInventoryToContext(
+      this.clientStorage.inventoryStorage,
+      this.core.save
+    );
+    applyEquipmentToContext(
+      this.clientStorage.equipmentStorage,
+      this.core.save
+    );
+    applyQuestSaveToContext(this.clientStorage.questStorage, this.core.save);
     applyDungeonItemDataToContext(
-      dungeonItems,
+      this.clientStorage.dungeonItemStorage,
       this.core.save.dungeonItemManager
     );
+    console.log(packet);
   }
 
   //------------------------------
