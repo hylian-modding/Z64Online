@@ -13,20 +13,16 @@ const ZZSTATIC_CACHE_DATA: Map<string, zzstatic_cache> = new Map<
 
 export class zzstatic_cache {
   cache: Display_List_Command[] = new Array<Display_List_Command>();
-  zobj: Zobj;
+  skeleton!: Skeleton; 
+  hash!: string;
 
-  constructor(zobj: Zobj) {
-    this.zobj = new Zobj(zobj.cloneBuffer());
-  }
-
-  doRepoint(index: number): Buffer {
+  doRepoint(index: number, buf: Buffer): Buffer {
     console.log('Loading ' + this.cache.length + ' repoints from cache.');
-    let copy: Buffer = this.zobj.cloneBuffer();
     let rebase = 0x80800000;
     rebase += index * 0x37800;
     for (let i = 0; i < this.cache.length; i++) {
       try {
-        copy.writeUInt32BE(
+        buf.writeUInt32BE(
           rebase + this.cache[i].address,
           this.cache[i].actualFileOffsetAddress
         );
@@ -35,27 +31,56 @@ export class zzstatic_cache {
         continue;
       }
     }
-    return copy;
+    let pointer_to_skeleton_pointer: number = buf.readUInt32BE(0x500c) - 0x06000000;
+    let pointer_to_skeleton: number = buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
+    buf.writeUInt32BE(
+      pointer_to_skeleton + rebase,
+      pointer_to_skeleton_pointer
+    );
+    buf.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
+    for (let i = 0; i < this.skeleton.bones.length; i++){
+      buf.writeUInt32BE(
+        this.skeleton.bones[i].pointer + rebase,
+        this.skeleton.bones[i].actualFileOffset
+      );
+    }
+    console.log("Repoint done");
+    return buf;
   }
 }
 
 export class zzstatic {
   constructor() {}
 
+  addToCache(c: zzstatic_cache){
+    let cache = new zzstatic_cache();
+    cache.cache = c.cache;
+    cache.skeleton = c.skeleton;
+    ZZSTATIC_CACHE_DATA.set(c.hash, cache);
+  }
+
+  generateCache(buf: Buffer): zzstatic_cache{
+    let hash: string = crypto.createHash('md5').update(buf).digest('hex');
+    this.doRepoint(buf, 0);
+    return ZZSTATIC_CACHE_DATA.get(hash) as zzstatic_cache;
+  }
+
   doRepoint(buf: Buffer, index: number): Buffer {
+    let copy: Buffer = Buffer.alloc(buf.byteLength);
+    buf.copy(copy);
     let zobj: Zobj = new Zobj(buf);
     let rebase = 0x80800000;
     rebase += index * 0x37800;
 
-    let zzCache: zzstatic_cache = new zzstatic_cache(zobj);
+    let zzCache: zzstatic_cache = new zzstatic_cache();
 
     let hash: string = crypto
       .createHash('md5')
-      .update(zzCache.zobj.buf)
+      .update(buf)
       .digest('hex');
 
     if (ZZSTATIC_CACHE_DATA.has(hash)) {
-      return ZZSTATIC_CACHE_DATA.get(hash)!.doRepoint(index);
+      return ZZSTATIC_CACHE_DATA.get(hash)!.doRepoint(index, buf);
     }
 
     if (zobj.isModLoaderZobj()) {
@@ -211,7 +236,6 @@ export class zzstatic {
         .toString(16)
         .toUpperCase();
       cur += 0x10;
-      //console.log("Looking at limb at position " + dl.actualFileOffsetAddress.toString(16) + ".");
       while (lookingForFF !== 'FF') {
         let dl: Display_List_Command = new Display_List_Command(
           0xdeadbeef,
@@ -234,9 +258,7 @@ export class zzstatic {
           .toString(16)
           .toUpperCase();
         cur += 0x10;
-        //console.log("Looking at limb at position " + dl2.actualFileOffsetAddress.toString(16) + ".");
       }
-      //console.log("Stopping due to finding 0xFF as next limb.");
       zobj.buf.writeUInt32BE(
         spooky_scary.bones[i].pointer + rebase,
         spooky_scary.bones[i].actualFileOffset
@@ -258,13 +280,10 @@ export class zzstatic {
       console.log('Found ' + repoints.length + ' things in need of a repoint.');
       for (let i = 0; i < repoints.length; i++) {
         try {
-          let before: string = repoints[i].addressAsString;
           zobj.buf.writeUInt32BE(
             rebase + repoints[i].address,
             repoints[i].actualFileOffsetAddress
           );
-          let after: string = (rebase + repoints[i].address).toString(16);
-          //console.log(repoints[i].code + " | " + before + " -> " + after);
           zzCache.cache.push(repoints[i]);
         } catch (err) {
           console.log('Recorded an error!');
@@ -299,8 +318,11 @@ export class zzstatic {
 
     hash = crypto
       .createHash('md5')
-      .update(zzCache.zobj.buf)
+      .update(copy)
       .digest('hex');
+
+    zzCache.hash = hash;
+    zzCache.skeleton = spooky_scary;
 
     ZZSTATIC_CACHE_DATA.set(hash, zzCache);
 

@@ -193,7 +193,6 @@ export class PuppetOverlord {
       this.core.link.state !== LinkState.BUSY
     ) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
-      puppet.doNotDespawnMe();
       puppet.processIncomingPuppetData(packet.data);
     }
   }

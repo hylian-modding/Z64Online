@@ -36,6 +36,7 @@ import { Zobj } from './zzstatic/src/data/zobj';
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { ModelThread } from './ModelThread';
 
 export class ModelManager {
   ModLoader: IModLoaderAPI;
@@ -332,6 +333,8 @@ export class ModelManager {
       this.clientStorage.playerModelCache[
         packet.player.uuid
       ].model.child = zlib.inflateSync(packet.model);
+      let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.child, this.ModLoader);
+      thread.startThread();
       console.log(
         'client: Saving custom child model for player ' +
           packet.player.nickname +
@@ -341,6 +344,8 @@ export class ModelManager {
       this.clientStorage.playerModelCache[
         packet.player.uuid
       ].model.adult = zlib.inflateSync(packet.model);
+      let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.adult, this.ModLoader);
+      thread.startThread();
       console.log(
         'client: Saving custom adult model for player ' +
           packet.player.nickname +
@@ -386,8 +391,15 @@ export class ModelManager {
   onModelDownload(packet: Ooto_DownloadAllModelsPacket) {
     Object.keys(packet.models).forEach((key: string) => {
       this.clientStorage.playerModelCache[key] = packet.models[key];
+      if (this.clientStorage.playerModelCache[packet.player.uuid].model.adult !== undefined){
+        let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.adult, this.ModLoader);
+        thread.startThread();
+      }
+      if (this.clientStorage.playerModelCache[packet.player.uuid].model.child !== undefined){
+        let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.child, this.ModLoader);
+        thread.startThread();
+      }
     });
-    console.log(this.clientStorage.playerModelCache);
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)

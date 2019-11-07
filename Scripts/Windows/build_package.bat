@@ -16,7 +16,7 @@ call build_no_run.bat
 cd ..\
 
 :: Run packager
-rmdir /s /q .\dist
+echo rmdir /s /q .\dist
 mkdir .\dist
 robocopy ModLoader64\build\mods dist /s /e
 cd .\dist\

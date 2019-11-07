@@ -655,6 +655,12 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_BottleUpdatePacket')
   onBottle_client(packet: Ooto_BottleUpdatePacket) {
+    if (
+      this.core.helper.isTitleScreen() ||
+      !this.core.helper.isSceneNumberValid()
+    ) {
+      return;
+    }
     this.clientStorage.bottleCache[packet.slot] = packet.contents;
     let inventory: InventorySave = createInventoryFromContext(
       this.core.save
@@ -772,6 +778,12 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_SubscreenSyncPacket')
   onItemSync_client(packet: Ooto_SubscreenSyncPacket) {
+    if (
+      this.core.helper.isTitleScreen() ||
+      !this.core.helper.isSceneNumberValid()
+    ) {
+      return;
+    }
     let inventory: InventorySave = createInventoryFromContext(
       this.core.save
     ) as InventorySave;
