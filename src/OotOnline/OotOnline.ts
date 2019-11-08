@@ -103,7 +103,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
 
-  constructor() { }
+  constructor() {}
 
   debuggingBombs() {
     this.core.save.inventory.bombBag = AmmoUpgrade.BASE;
@@ -142,7 +142,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     setupNetworkHandlers(this.modelManager);
   }
 
-  init(): void { }
+  init(): void {}
 
   postinit(): void {
     //this.ModLoader.emulator.memoryDebugLogger(true);
@@ -331,6 +331,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.clientStorage.needs_update = true;
       this.clientStorage.lastKnownSkullCount = this.core.save.questStatus.goldSkulltulas;
       this.ModLoader.logger.info('Skulltula update.');
+      this.updateFlags();
     }
   }
 
@@ -498,9 +499,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         new DiscordStatus(
           'Playing OotOnline',
           'In ' +
-          this.clientStorage.localization[
-          this.clientStorage.scene_keys[scene]
-          ]
+            this.clientStorage.localization[
+              this.clientStorage.scene_keys[scene]
+            ]
         )
       );
     }
@@ -523,10 +524,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     storage.players[packet.player.uuid] = packet.scene;
     this.ModLoader.logger.info(
       'Server: Player ' +
-      packet.player.nickname +
-      ' moved to scene ' +
-      packet.scene +
-      '.'
+        packet.player.nickname +
+        ' moved to scene ' +
+        packet.scene +
+        '.'
     );
     bus.emit(
       OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
@@ -538,10 +539,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneChange_client(packet: Ooto_ScenePacket) {
     this.ModLoader.logger.info(
       'client receive: Player ' +
-      packet.player.nickname +
-      ' moved to scene ' +
-      packet.scene +
-      '.'
+        packet.player.nickname +
+        ' moved to scene ' +
+        packet.scene +
+        '.'
     );
     this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
@@ -593,7 +594,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           }
         }
       });
-    } catch (err) { }
+    } catch (err) {}
   }
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
@@ -895,42 +896,75 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_ServerFlagUpdate')
   onSceneFlagSync_client(packet: Ooto_ServerFlagUpdate) {
+    let scenes: Buffer = this.core.save.permSceneData;
+    let events: Buffer = this.core.save.eventFlags;
+    let items: Buffer = this.core.save.itemFlags;
+    let inf: Buffer = this.core.save.infTable;
+    let skulltulas: Buffer = this.core.save.skulltulaFlags;
+
     let incoming_scenes: Buffer = packet.scenes;
     let incoming_events: Buffer = packet.events;
     let incoming_items: Buffer = packet.items;
     let incoming_inf: Buffer = packet.inf;
     let incoming_skulltulas: Buffer = packet.skulltulas;
 
-    this.clientStorage.sceneStorage = this.core.save.permSceneData;
-    this.clientStorage.eventStorage = this.core.save.eventFlags;
-    this.clientStorage.itemFlagStorage = this.core.save.itemFlags;
-    this.clientStorage.infStorage = this.core.save.infTable;
-
     let scene_arr: any = this.parseFlagChanges(
-      incoming_scenes,
+      scenes,
       this.clientStorage.sceneStorage
     );
     let event_arr: any = this.parseFlagChanges(
-      incoming_events,
+      events,
       this.clientStorage.eventStorage
     );
     let items_arr: any = this.parseFlagChanges(
-      incoming_items,
+      items,
       this.clientStorage.itemFlagStorage
     );
     let inf_arr: any = this.parseFlagChanges(
-      incoming_inf,
+      inf,
       this.clientStorage.infStorage
     );
     let skulltulas_arr: any = this.parseFlagChanges(
+      skulltulas,
+      this.clientStorage.skulltulaStorage
+    );
+
+    scene_arr = this.parseFlagChanges(
+      incoming_scenes,
+      this.clientStorage.sceneStorage
+    );
+    event_arr = this.parseFlagChanges(
+      incoming_events,
+      this.clientStorage.eventStorage
+    );
+    items_arr = this.parseFlagChanges(
+      incoming_items,
+      this.clientStorage.itemFlagStorage
+    );
+    inf_arr = this.parseFlagChanges(
+      incoming_inf,
+      this.clientStorage.infStorage
+    );
+    skulltulas_arr = this.parseFlagChanges(
       incoming_skulltulas,
       this.clientStorage.skulltulaStorage
     );
 
-    this.core.save.permSceneData = this.clientStorage.sceneStorage;
-    this.core.save.eventFlags = this.clientStorage.eventStorage;
-    this.core.save.itemFlags = this.clientStorage.itemFlagStorage;
-    this.core.save.infTable = this.clientStorage.infStorage;
+    if (Object.keys(scene_arr).length > 0) {
+      this.core.save.permSceneData = this.clientStorage.sceneStorage;
+    }
+    if (Object.keys(event_arr).length > 0) {
+      this.core.save.eventFlags = this.clientStorage.eventStorage;
+    }
+    if (Object.keys(items_arr).length > 0) {
+      this.core.save.itemFlags = this.clientStorage.itemFlagStorage;
+    }
+    if (Object.keys(inf_arr).length > 0) {
+      this.core.save.infTable = this.clientStorage.infStorage;
+    }
+    if (Object.keys(skulltulas_arr).length > 0) {
+      this.core.save.skulltulaFlags = this.clientStorage.skulltulaStorage;
+    }
   }
 
   //------------------------------
@@ -944,6 +978,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @NetworkHandler('Ooto_ClientSceneContextUpdate')
   onSceneContextSync_client(packet: Ooto_ClientSceneContextUpdate) {
+    if (
+      this.core.helper.isTitleScreen() ||
+      !this.core.helper.isSceneNumberValid()
+    ) {
+      return;
+    }
+
     let buf1: Buffer = this.core.global.liveSceneData_chests;
     if (Object.keys(this.parseFlagChanges(packet.chests, buf1) > 0)) {
       this.core.global.liveSceneData_chests = buf1;
@@ -973,7 +1014,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Healing
   healPlayer() {
     if (
-      this.core.helper.isTitleScreen() &&
+      this.core.helper.isTitleScreen() ||
       !this.core.helper.isSceneNumberValid()
     ) {
       return;
@@ -1012,7 +1053,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   @EventHandler(OotEvents.ON_AGE_CHANGE)
   onAgeChange(age: Age) {
     if (
-      this.core.helper.isTitleScreen() &&
+      this.core.helper.isTitleScreen() ||
       !this.core.helper.isSceneNumberValid()
     ) {
       return;
@@ -1022,6 +1063,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(OotOnlineEvents.ON_INVENTORY_UPDATE)
   onInventoryUpdate(inventory: IInventory) {
+    if (
+      this.core.helper.isTitleScreen() ||
+      !this.core.helper.isSceneNumberValid()
+    ) {
+      return;
+    }
+
     let addr: number = global.ModLoader.save_context + 0x0068;
     let buf: Buffer = this.ModLoader.emulator.rdramReadBuffer(addr, 0x7);
     let addr2: number = global.ModLoader.save_context + 0x0074;
@@ -1038,7 +1086,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000001,
-        (success: boolean, result: number) => { }
+        (success: boolean, result: number) => {}
       );
     }
     if (
@@ -1050,7 +1098,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000002,
-        (success: boolean, result: number) => { }
+        (success: boolean, result: number) => {}
       );
     }
     if (
@@ -1062,7 +1110,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000003,
-        (success: boolean, result: number) => { }
+        (success: boolean, result: number) => {}
       );
     }
   }

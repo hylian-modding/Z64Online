@@ -13,7 +13,7 @@ const ZZSTATIC_CACHE_DATA: Map<string, zzstatic_cache> = new Map<
 
 export class zzstatic_cache {
   cache: Display_List_Command[] = new Array<Display_List_Command>();
-  skeleton!: Skeleton; 
+  skeleton!: Skeleton;
   hash!: string;
 
   doRepoint(index: number, buf: Buffer): Buffer {
@@ -31,20 +31,22 @@ export class zzstatic_cache {
         continue;
       }
     }
-    let pointer_to_skeleton_pointer: number = buf.readUInt32BE(0x500c) - 0x06000000;
-    let pointer_to_skeleton: number = buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
+    let pointer_to_skeleton_pointer: number =
+      buf.readUInt32BE(0x500c) - 0x06000000;
+    let pointer_to_skeleton: number =
+      buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
     buf.writeUInt32BE(
       pointer_to_skeleton + rebase,
       pointer_to_skeleton_pointer
     );
     buf.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
-    for (let i = 0; i < this.skeleton.bones.length; i++){
+    for (let i = 0; i < this.skeleton.bones.length; i++) {
       buf.writeUInt32BE(
         this.skeleton.bones[i].pointer + rebase,
         this.skeleton.bones[i].actualFileOffset
       );
     }
-    console.log("Repoint done");
+    console.log('Repoint done');
     return buf;
   }
 }
@@ -52,15 +54,18 @@ export class zzstatic_cache {
 export class zzstatic {
   constructor() {}
 
-  addToCache(c: zzstatic_cache){
+  addToCache(c: zzstatic_cache) {
     let cache = new zzstatic_cache();
     cache.cache = c.cache;
     cache.skeleton = c.skeleton;
     ZZSTATIC_CACHE_DATA.set(c.hash, cache);
   }
 
-  generateCache(buf: Buffer): zzstatic_cache{
-    let hash: string = crypto.createHash('md5').update(buf).digest('hex');
+  generateCache(buf: Buffer): zzstatic_cache {
+    let hash: string = crypto
+      .createHash('md5')
+      .update(buf)
+      .digest('hex');
     this.doRepoint(buf, 0);
     return ZZSTATIC_CACHE_DATA.get(hash) as zzstatic_cache;
   }

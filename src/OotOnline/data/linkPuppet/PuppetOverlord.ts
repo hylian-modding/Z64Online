@@ -39,7 +39,8 @@ export class PuppetOverlord {
       emulator,
       // The pointer here points to blank space, so should be fine.
       0x6011e8,
-      core.commandBuffer
+      core.commandBuffer,
+      this.mapi
     );
   }
 
@@ -122,7 +123,8 @@ export class PuppetOverlord {
           this.core.save,
           this.emulator,
           0x0,
-          this.core.commandBuffer
+          this.core.commandBuffer,
+          this.mapi
         )
       );
       this.logger.info(
@@ -164,7 +166,7 @@ export class PuppetOverlord {
     this.puppets.forEach(
       (value: Puppet, key: string, map: Map<string, Puppet>) => {
         if (value.scene === this.fakeClientPuppet.scene) {
-          if (!value.isSpawned) {
+          if (!value.isSpawned && this.awaiting_spawn.indexOf(value) === -1) {
             this.awaiting_spawn.push(value);
           }
           check = true;
@@ -201,7 +203,8 @@ export class PuppetOverlord {
     if (!this.core.helper.isPaused()) {
       if (
         !this.core.helper.isLinkEnteringLoadingZone() &&
-        this.core.helper.isInterfaceShown()
+        this.core.helper.isInterfaceShown() &&
+        this.core.global.scene_framecount > 50
       ) {
         this.processNewPlayers();
         this.processAwaitingSpawns();

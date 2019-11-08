@@ -29,7 +29,6 @@ import {
 } from '../OotOPackets';
 import { EponaData } from './EponaData';
 import { EquestrianData_Impl } from './EquestrianData';
-import { EquestrianStorage } from './EquestrianStorage';
 import { OotOnlineStorage } from '../../OotOnlineStorage';
 
 export function convertObjPointerToId(pointer: number): number {
@@ -240,9 +239,6 @@ export class EquestrianOverlord {
         horse.scene = source.scene;
       }
     });
-    if (this.core.save.age === Age.CHILD) {
-      return;
-    }
     Object.keys(this.clientStorage.currentHorses).forEach((uuid: string) => {
       let horse: EquestrianData_Impl = this.clientStorage.currentHorses[
         uuid

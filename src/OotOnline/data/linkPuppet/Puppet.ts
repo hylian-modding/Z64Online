@@ -6,6 +6,7 @@ import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { ICommandBuffer, Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 
 export class Puppet {
   player: INetworkPlayer;
@@ -20,6 +21,7 @@ export class Puppet {
   age: Age;
   link: ILink;
   void!: Buffer;
+  ModLoader: IModLoaderAPI;
 
   constructor(
     player: INetworkPlayer,
@@ -27,7 +29,8 @@ export class Puppet {
     save: ISaveContext,
     emulator: IMemory,
     pointer: number,
-    commandBuffer: ICommandBuffer
+    commandBuffer: ICommandBuffer,
+    ModLoader: IModLoaderAPI
   ) {
     this.player = player;
     this.id = uuid.v4();
@@ -37,6 +40,7 @@ export class Puppet {
     this.scene = 81;
     this.age = 1;
     this.link = link;
+    this.ModLoader = ModLoader;
   }
 
   debug_movePuppetToPlayer() {
@@ -75,10 +79,8 @@ export class Puppet {
               this.data.pointer + 0x24,
               0xc
             );
-            setTimeout(() => {
-              this.isSpawned = true;
-              this.isSpawning = false;
-            }, 1000);
+            this.isSpawned = true;
+            this.isSpawning = false;
           }
         }
       );
