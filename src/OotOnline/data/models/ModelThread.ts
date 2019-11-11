@@ -29,7 +29,7 @@ export class ModelThread {
       [filename],
       options as ForkOptions
     );
-    this.child.on('exit', () => {
+    this.child.on('exit', (code: any, signal: any) => {
       let dest: string = path.join(
         __dirname,
         path.parse(filename).name + '.zzcache'

@@ -12,7 +12,7 @@ import {
 } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '../../OotOnlineStorageClient';
 import { zzstatic } from './zzstatic/src/zzstatic';
-import zlib from 'zlib';
+import zlib, { deflateRaw } from 'zlib';
 import {
   Ooto_AllocateModelPacket,
   Ooto_DownloadAllModelsPacket,
@@ -38,6 +38,27 @@ import fs from 'fs';
 import path from 'path';
 import { ModelThread } from './ModelThread';
 
+export class FilePatch {
+  offset: number;
+  value: number;
+
+  constructor(offset: number, value: number) {
+    this.offset = offset;
+    this.value = value;
+  }
+}
+
+export class RomPatch {
+  index: number;
+  data: Array<FilePatch> = new Array<FilePatch>();
+  hashOriginal!: string;
+  hash!: string;
+
+  constructor(index: number) {
+    this.index = index;
+  }
+}
+
 export class ModelManager {
   ModLoader: IModLoaderAPI;
   clientStorage: OotOnlineStorageClient;
@@ -46,8 +67,8 @@ export class ModelManager {
   customModelFileAdult = '';
   customModelFileChild = '';
   customModelFileAnims = '';
-  customModelRepointsAdult = '';
-  customModelRepointsChild = '';
+  customModelRepointsAdult = __dirname + "/zobjs/adult_patch.zobj";
+  customModelRepointsChild = __dirname + "/zobjs/child_patch.zobj";
 
   constructor(
     ModLoader: IModLoaderAPI,
@@ -63,14 +84,12 @@ export class ModelManager {
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
   onCustomModel(evt: Ooto_CustomModelMetadata) {
     this.customModelFileAdult = evt.model;
-    this.customModelRepointsAdult = evt.repoints;
     console.log(evt);
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
   onCustomModel2(evt: Ooto_CustomModelMetadata) {
     this.customModelFileChild = evt.model;
-    this.customModelRepointsChild = evt.repoints;
     console.log(evt);
   }
 
@@ -79,195 +98,111 @@ export class ModelManager {
     this.customModelFileAnims = file;
   }
 
-  @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
-  onRomPatched(evt: any) {
-    try {
-      let temp: string = path.resolve(__dirname + '/temp.z64');
-      let temp2: string = path.resolve(__dirname + '/ZOOTDEC.z64');
-      let temp3: string = path.resolve(__dirname + '/complete.z64');
-      let rom: Buffer = evt.rom as Buffer;
-      if (
-        this.customModelFileChild !== '' ||
-        this.customModelFileAdult !== ''
-      ) {
-        fs.writeFileSync(temp, rom);
-        if (process.platform === 'win32') {
-          spawnSync(
-            path.resolve(__dirname + '/Decompress.exe'),
-            [temp, temp2],
-            {
-              cwd: __dirname,
-            }
-          );
-        } else {
-          spawnSync(path.resolve(__dirname + '/Decompress'), [temp, temp2], {
-            cwd: __dirname,
-          });
-        }
-        evt.rom = fs.readFileSync(temp2);
-      }
-      if (this.customModelFileAdult !== '') {
-        console.log('Setting up adult model...');
-        (() => {
-          let rom: Buffer = evt.rom as Buffer;
-          let dma = 0x7430;
-          let link: number = 502 * 0x10;
-          let start: number = rom.readUInt32BE(dma + link + 0x8);
-
-          let a: any[] = JSON.parse(
-            fs.readFileSync(this.customModelRepointsAdult).toString()
-          );
-
-          for (let i = 0; i < a.length; i++) {
-            rom.writeUInt8(a[i].value, a[i].addr);
-          }
-
-          fs.readFileSync(this.customModelFileAdult).copy(rom, start);
-
-          evt.rom = rom;
-        })();
-      }
-      if (this.customModelFileChild !== '') {
-        console.log('Setting up child model...');
-        (() => {
-          let rom: Buffer = evt.rom as Buffer;
-          let dma = 0x7430;
-          let link: number = 503 * 0x10;
-          let start: number = rom.readUInt32BE(dma + link + 0x8);
-
-          let a: any[] = JSON.parse(
-            fs.readFileSync(this.customModelRepointsChild).toString()
-          );
-          for (let i = 0; i < a.length; i++) {
-            rom.writeUInt8(a[i].value, a[i].addr);
-          }
-
-          fs.readFileSync(this.customModelFileChild).copy(rom, start);
-
-          evt.rom = rom;
-        })();
-      }
-      if (this.customModelFileAnims !== '') {
-        let rom: Buffer = evt.rom as Buffer;
-        let dma = 0x7430;
-        let link: number = 7 * 0x10;
-        let start: number = rom.readUInt32BE(dma + link + 0x8);
-
-        fs.readFileSync(this.customModelFileAnims).copy(rom, start);
-
-        evt.rom = rom;
-      }
-      if (
-        this.customModelFileChild !== '' ||
-        this.customModelFileAdult !== ''
-      ) {
-        if (fs.existsSync('./ARCHIVE.bin')) {
-          fs.copyFileSync('./ARCHIVE.bin', __dirname + '/ARCHIVE.bin');
-        }
-        fs.writeFileSync(temp2, evt.rom);
-        if (process.platform === 'win32') {
-          spawnSync(path.resolve(__dirname + '/Compress.exe'), [temp2, temp3], {
-            cwd: __dirname,
-          });
-        } else {
-          spawnSync(path.resolve(__dirname + '/Compress'), [temp2, temp3], {
-            cwd: __dirname,
-          });
-        }
-        if (fs.existsSync(__dirname + '/ARCHIVE.bin')) {
-          fs.copyFileSync(__dirname + '/ARCHIVE.bin', './ARCHIVE.bin');
-        }
-        evt.rom = fs.readFileSync(temp3);
-      }
-      let adult: Buffer = Buffer.alloc(1);
-      let child: Buffer = Buffer.alloc(1);
-      fs.writeFileSync(temp, evt.rom);
-      if (process.platform === 'win32') {
-        spawnSync(path.resolve(__dirname + '/Decompress.exe'), [temp, temp2], {
-          cwd: __dirname,
-        });
-      } else {
-        spawnSync(path.resolve(__dirname + '/Decompress'), [temp, temp2], {
-          cwd: __dirname,
-        });
-      }
-      (() => {
-        let rom: Buffer = fs.readFileSync(temp2);
-        let dma = 0x7430;
-        let link: number = 502 * 0x10;
-        let start: number = rom.readUInt32BE(dma + link + 0x8);
-        let end: number = rom.readUInt32BE(dma + link + 0xc);
-        let size: number = end - start;
-        let isRomCompressed = true;
-        if (end === 0) {
-          isRomCompressed = false;
-          size =
-            rom.readUInt32BE(dma + link + 0x4) - rom.readUInt32BE(dma + link);
-          end = start + size;
-        }
-        let code = 0x00a87000;
-        let offset = 0xe65a0;
-        let skele: number = rom.readUInt32BE(code + offset);
-        let buf: Buffer = Buffer.alloc(size);
-        rom.copy(buf, 0, start, end);
-        if (isRomCompressed) {
-          this.ModLoader.logger.info('Decompressing yaz0 file...');
-          buf = this.ModLoader.utils.yaz0Decode(buf);
-        } else {
-          console.log('Rom is decompressed.');
-        }
-        if (new Zobj(buf).isModLoaderZobj()) {
-          buf.writeUInt32BE(skele, 0x500c);
-          adult = buf;
-          this.clientStorage.adultModel = adult;
-        }
-      })();
-      (() => {
-        let rom: Buffer = fs.readFileSync(temp2);
-        let dma = 0x7430;
-        let link: number = 503 * 0x10;
-        let start: number = rom.readUInt32BE(dma + link + 0x8);
-        let end: number = rom.readUInt32BE(dma + link + 0xc);
-        let size: number = end - start;
-        let isRomCompressed = true;
-        if (end === 0) {
-          isRomCompressed = false;
-          size =
-            rom.readUInt32BE(dma + link + 0x4) - rom.readUInt32BE(dma + link);
-          end = start + size;
-        }
-        let code = 0x00a87000;
-        let offset = 0xe65a4;
-        let skele: number = rom.readUInt32BE(code + offset);
-        let buf: Buffer = Buffer.alloc(size);
-        rom.copy(buf, 0, start, end);
-        if (isRomCompressed) {
-          this.ModLoader.logger.info('Decompressing yaz0 file...');
-          buf = this.ModLoader.utils.yaz0Decode(buf);
-        } else {
-          console.log('Rom is decompressed.');
-        }
-        if (new Zobj(buf).isModLoaderZobj()) {
-          buf.writeUInt32BE(skele, 0x500c);
-          child = buf;
-          this.clientStorage.childModel = child;
-        }
-      })();
-    } catch (err) {
-      console.log(err);
-      return;
-    }
+  injectRawFileToRom(rom: Buffer, index: number, file: Buffer) {
+    let dma: number = 0x7430;
+    let offset: number = index * 0x10;
+    let start: number = rom.readUInt32BE(dma + offset + 0x8);
+    file.copy(rom, start);
   }
 
-  onPostInit() {
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x800000,
-      this.allocationManager.models[0].model.adult
-    );
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x837800,
-      this.allocationManager.models[1].model.child
-    );
+  getRawFileFromRom(rom: Buffer, index: number): Buffer {
+    let dma: number = 0x7430;
+    let offset: number = index * 0x10;
+    let start: number = rom.readUInt32BE(dma + offset + 0x8);
+    let end: number = rom.readUInt32BE(dma + offset + 0xc);
+    let size: number = end - start;
+    let buf: Buffer = Buffer.alloc(size);
+    rom.copy(buf, 0, start, end);
+    return buf;
+  }
+
+  decompressFileFromRom(rom: Buffer, index: number): Buffer {
+    let dma: number = 0x7430;
+    let offset: number = index * 0x10;
+    let start: number = rom.readUInt32BE(dma + offset + 0x8);
+    let end: number = rom.readUInt32BE(dma + offset + 0xc);
+    let size: number = end - start;
+    let isFileCompressed = true;
+    if (end === 0) {
+      isFileCompressed = false;
+      size = rom.readUInt32BE(dma + offset + 0x4) - rom.readUInt32BE(dma + offset);
+      end = start + size;
+    }
+    let buf: Buffer = Buffer.alloc(size);
+    rom.copy(buf, 0, start, end);
+    if (isFileCompressed) {
+      buf = this.ModLoader.utils.yaz0Decode(buf);
+    }
+    return buf;
+  }
+
+  recompressFileIntoRom(rom: Buffer, index: number, file: Buffer) {
+    let dma: number = 0x7430;
+    let offset: number = index * 0x10;
+    let start: number = rom.readUInt32BE(dma + offset + 0x8);
+    let buf: Buffer = this.ModLoader.utils.yaz0Encode(file);
+    buf.copy(rom, start);
+  }
+
+  @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
+  onRomPatched(evt: any) {
+    if (this.customModelFileChild === '' && this.customModelFileAdult === '') {
+      return;
+    }
+    console.log("Starting custom model setup...");
+    let adult: number = 502;
+    let child: number = 503;
+    let code: number = 27;
+    let offset: number = 0xe65a0;
+
+    if (this.customModelFileAdult !== '') {
+      console.log("Loading new Link model (Adult)...");
+      let adult_model: Buffer = fs.readFileSync(this.customModelFileAdult);
+      let _adult_model = this.ModLoader.utils.yaz0Encode(adult_model);
+      let adult_zobj = this.getRawFileFromRom(evt.rom, adult);
+      _adult_model.copy(adult_zobj);
+      this.injectRawFileToRom(evt.rom, adult, adult_zobj);
+
+      let patch: Array<RomPatch> = new Array<RomPatch>();
+      patch = JSON.parse(this.ModLoader.utils.yaz0Decode(fs.readFileSync(this.customModelRepointsAdult)).toString());
+      for (let i = 0; i < patch.length; i++) {
+        let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
+        for (let j = 0; j < patch[i].data.length; j++) {
+          buf[patch[i].data[j].offset] = patch[i].data[j].value;
+        }
+        this.recompressFileIntoRom(evt.rom, patch[i].index, buf);
+      }
+
+      let code_file: Buffer = this.decompressFileFromRom(evt.rom, code);
+      adult_model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500C);
+
+      this.clientStorage.adultModel = adult_model;
+    }
+
+    if (this.customModelFileChild !== '') {
+      console.log("Loading new Link model (Child)...");
+      let child_model: Buffer = fs.readFileSync(this.customModelFileChild);
+      let _child_model = this.ModLoader.utils.yaz0Encode(child_model);
+      let child_zobj = this.getRawFileFromRom(evt.rom, child);
+      _child_model.copy(child_zobj);
+      this.injectRawFileToRom(evt.rom, child, child_zobj);
+
+      let patch: Array<RomPatch> = new Array<RomPatch>();
+      patch = JSON.parse(this.ModLoader.utils.yaz0Decode(fs.readFileSync(this.customModelRepointsChild)).toString());
+      for (let i = 0; i < patch.length; i++) {
+        let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
+        for (let j = 0; j < patch[i].data.length; j++) {
+          buf[patch[i].data[j].offset] = patch[i].data[j].value;
+        }
+        this.recompressFileIntoRom(evt.rom, patch[i].index, buf);
+      }
+
+      let code_file: Buffer = this.decompressFileFromRom(evt.rom, code);
+      child_model.writeUInt32BE(code_file.readUInt32BE(offset + 0x4), 0x500C);
+
+      this.clientStorage.childModel = child_model;
+    }
+
     if (this.clientStorage.adultModel.byteLength > 1) {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_AllocateModelPacket(
@@ -286,6 +221,19 @@ export class ModelManager {
         )
       );
     }
+
+    console.log("Done.");
+  }
+
+  onPostInit() {
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.models[0].model.adult
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.models[1].model.child
+    );
   }
 
   @ServerNetworkHandler('Ooto_AllocateModelPacket')
@@ -305,8 +253,8 @@ export class ModelManager {
       ].model.child = zlib.inflateSync(packet.model);
       console.log(
         'server: Saving custom child model for player ' +
-          packet.player.nickname +
-          '.'
+        packet.player.nickname +
+        '.'
       );
     } else if (packet.age === Age.ADULT) {
       storage.playerModelCache[
@@ -314,8 +262,8 @@ export class ModelManager {
       ].model.adult = zlib.inflateSync(packet.model);
       console.log(
         'server: Saving custom adult model for player ' +
-          packet.player.nickname +
-          '.'
+        packet.player.nickname +
+        '.'
       );
     }
   }
@@ -333,23 +281,29 @@ export class ModelManager {
       this.clientStorage.playerModelCache[
         packet.player.uuid
       ].model.child = zlib.inflateSync(packet.model);
-      let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.child, this.ModLoader);
+      let thread: ModelThread = new ModelThread(
+        this.clientStorage.playerModelCache[packet.player.uuid].model.child,
+        this.ModLoader
+      );
       thread.startThread();
       console.log(
         'client: Saving custom child model for player ' +
-          packet.player.nickname +
-          '.'
+        packet.player.nickname +
+        '.'
       );
     } else if (packet.age === Age.ADULT) {
       this.clientStorage.playerModelCache[
         packet.player.uuid
       ].model.adult = zlib.inflateSync(packet.model);
-      let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.adult, this.ModLoader);
+      let thread: ModelThread = new ModelThread(
+        this.clientStorage.playerModelCache[packet.player.uuid].model.adult,
+        this.ModLoader
+      );
       thread.startThread();
       console.log(
         'client: Saving custom adult model for player ' +
-          packet.player.nickname +
-          '.'
+        packet.player.nickname +
+        '.'
       );
     }
   }
@@ -391,12 +345,18 @@ export class ModelManager {
   onModelDownload(packet: Ooto_DownloadAllModelsPacket) {
     Object.keys(packet.models).forEach((key: string) => {
       this.clientStorage.playerModelCache[key] = packet.models[key];
-      if (this.clientStorage.playerModelCache[packet.player.uuid].model.adult !== undefined){
-        let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.adult, this.ModLoader);
+      if (this.clientStorage.playerModelCache[key].model.adult !== undefined) {
+        let thread: ModelThread = new ModelThread(
+          this.clientStorage.playerModelCache[key].model.adult,
+          this.ModLoader
+        );
         thread.startThread();
       }
-      if (this.clientStorage.playerModelCache[packet.player.uuid].model.child !== undefined){
-        let thread: ModelThread = new ModelThread(this.clientStorage.playerModelCache[packet.player.uuid].model.child, this.ModLoader);
+      if (this.clientStorage.playerModelCache[key].model.child !== undefined) {
+        let thread: ModelThread = new ModelThread(
+          this.clientStorage.playerModelCache[key].model.child,
+          this.ModLoader
+        );
         thread.startThread();
       }
     });
@@ -446,5 +406,5 @@ export class ModelManager {
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)
-  onPuppetDespawn(puppet: Puppet) {}
+  onPuppetDespawn(puppet: Puppet) { }
 }

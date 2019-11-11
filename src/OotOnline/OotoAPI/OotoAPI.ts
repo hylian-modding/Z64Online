@@ -39,10 +39,8 @@ export function OotOnlineAPI_EnableGhostMode() {
 
 export class Ooto_CustomModelMetadata {
   model: string;
-  repoints: string;
 
   constructor(model: string, repoints: string) {
     this.model = model;
-    this.repoints = repoints;
   }
 }
