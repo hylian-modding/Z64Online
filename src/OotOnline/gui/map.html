@@ -1,8 +1,9 @@
 <html>
-  <head>
+
+<head>
     <meta http-equiv="content-type" content="text/html; charset=windows-1252">
     <style>
-        body{
+        body {
             position: fixed;
             overflow-y: scroll;
             overflow: hidden;
@@ -11,370 +12,736 @@
             margin: 0;
             padding: 0;
             background-color: dimgrey;
-        }
-        .doesNotHave {
-            image-rendering: -moz-crisp-edges;        
-            image-rendering:   -o-crisp-edges;      
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -o-crisp-edges;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: pixelated;
             -ms-interpolation-mode: nearest-neighbor;
+        }
+
+        .doesNotHave {
             -webkit-filter: grayscale(1);
             /* Google Chrome, Safari 6+ & Opera 15+ */
             filter: grayscale(1);
             /* Microsoft Edge and Firefox 35+ */
         }
-		.doesHave {
-            image-rendering: -moz-crisp-edges;        
-            image-rendering:   -o-crisp-edges;      
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: pixelated;
-            -ms-interpolation-mode: nearest-neighbor;
+
+        .doesHave {
+            -webkit-transform: rotateY(360deg);
+            transform: rotateY(360deg);
+            transition-duration: 1.5s;
+        }
+
+        .doesHave1 {
+            -webkit-transform: rotateY(0deg);
+            transform: rotateY(0deg);
+            transition-duration: 1.5s;
         }
     </style>
-  </head>
-  <body> <span style="line-height: 150%"> <canvas id="viewport" width="698" height="394"></canvas>
-    <script>
-        var coords = {
-            0x0000: { x: 607, y: 224 }, // The Great Deku Tree
-            0x0001: { x: 407, y: 50 }, // Dodongo's Cavern
-            0x0002: { x: 623, y: 81 }, // Inside Jabu Jabu's Belly
-            0x0003: { x: 537, y: 153 }, // Forest Temple
-            0x0004: { x: 445, y: 4 }, // Fire Temple
-            0x0005: { x: 259, y: 345 }, // Water Temple
-            0x0006: { x: 25, y: 83 }, // Spirit Temple
-            0x0007: { x: 526, y: 88 }, // Shadow Temple
-            0x0008: { x: 468, y: 96 }, // Bottom of the Well
-            0x0009: { x: 621, y: 72 }, // Ice Cavern
-            0x000A: { x: 359, y: 38 }, // Ganon's Tower
-            0x000B: { x: 120, y: 55 }, // Gerudo Training Grounds
-            0x000C: { x: 120, y: 55 }, // Thieves' Hideout
-            0x000D: { x: 359, y: 38 }, // Inside Ganon's Tower
-            0x000E: { x: 359, y: 38 }, // Ganon's Tower (Collapse)
-            0x000F: { x: 359, y: 38 }, // Inside Ganon's Tower (Collapse)
-            0x0010: { x: 351, y: 89 }, // Treasure Box Shop
-            0x0011: { x: 607, y: 224 }, // The Great Deku Tree (Gohma's Lair)
-            0x0012: { x: 407, y: 50 }, // Dodongo's Cavern (King Dodongo's Lair)
-            0x0013: { x: 623, y: 81 }, // Inside Jabu Jabu's Belly (Barinade's Lair)
-            0x0014: { x: 537, y: 153 }, // Forest Temple (Phantom Ganon's Lair)
-            0x0015: { x: 445, y: 4 }, // Fire Temple (Volvagia's Lair)
-            0x0016: { x: 259, y: 345 }, // Water Temple (Morpha's Lair)
-            0x0017: { x: 25, y: 83 }, // Spirit Temple (Twinrova's Lair & Nabooru's Mini-Boss Room)
-            0x0018: { x: 526, y: 88 }, // Shadow Temple (Bongo Bongo's Lair)
-            0x0019: { x: 359, y: 38 }, // Inside Ganon's Tower (Ganondorf's Lair)
-            0x001A: { x: 359, y: 38 }, // Tower Collapse Exterior
-            0x001B: { x: 361, y: 83 }, // Market Town (Day)
-            0x001C: { x: 361, y: 83 }, // Market Town (Night)
-            0x001D: { x: 361, y: 83 }, // Market Town (Ruins)
-            0x001E: { x: 345, y: 79 }, // Back Alley (Day)
-            0x001F: { x: 345, y: 79 }, // Back Alley (Night)
-            0x0020: { x: 361, y: 83 }, // Market Town (Day?)
-            0x0021: { x: 361, y: 83 }, // Market Town (Night?)
-            0x0022: { x: 361, y: 83 }, // Market Town (Ruins?)
-            0x0023: { x: 380, y: 73 }, // Temple of Time Exterior (Day)
-            0x0024: { x: 380, y: 73 }, // Temple of Time Exterior (Night)
-            0x0025: { x: 380, y: 73 }, // Temple of Time Exterior (Ruins)
-            0x0026: { x: 522, y: 237 }, // Know it all Brother's House
-            0x0027: { x: 564, y: 242 }, // House of Twins
-            0x0028: { x: 531, y: 227 }, // Mido's House
-            0x0029: { x: 554, y: 240 }, // Saria's House
-            0x002A: { x: 449, y: 94 }, // Carpenter Boss's House
-            0x002B: { x: 345, y: 79 }, // Back Alley House (Man in Green)
-            0x002C: { x: 361, y: 83 }, // Bazaar
-            0x002D: { x: 551, y: 231 }, // Kokiri Shop
-            0x002E: { x: 415, y: 25 }, // Goron Shop
-            0x002F: { x: 655, y: 120 }, // Zora Shop
-            0x0030: { x: 459, y: 83 }, // Kakariko Potion Shop
-            0x0031: { x: 361, y: 83 }, // Market Potion Shop
-            0x0050: { x: 345, y: 79 }, // Bombchu Shop
-            0x0033: { x: 363, y: 76 }, // Happy Mask Shop
-            0x0034: { x: 540, y: 240 }, // Link's House
-            0x0035: { x: 345, y: 79 }, // Dog Lady House
-            0x0036: { x: 508, y: 149 }, // Stable
-            0x0037: { x: 460, y: 100 }, // Impa's House
-            0x0038: { x: 240, y: 300 }, // Lakeside Lab
-            0x0039: { x: 154, y: 139 }, // Carpenter's Tent
-            0x003A: { x: 503, y: 91 }, // Dampe's Hut
-            0x003B: { x: 0, y: 0 }, // Fairy Fountain (Upgrades) (Refine this later...)
-            0x003C: { x: 0, y: 0 }, // Fairy Fountain (actual faries...) (Refine this later...)
-            0x003D: { x: 0, y: 0 }, // Fairy Fountain (Spells) (Refine this later...)
-            0x003E: { x: 0, y: 0 }, // Grottos (Refine this later...)
-            0x003F: { x: 511, y: 90 }, // Redead Grave
-            0x0040: { x: 511, y: 90 }, // Fairy Fountain Grave
-            0x0041: { x: 516, y: 88 }, // Royal Family Tomb
-            0x0042: { x: 0, y: 0 }, // Shooting Gallery (Refine this later...)
-            0x0043: { x: 381, y: 74 }, // Temple of Time
-            0x0044: { x: 0, y: 0 }, // Chamber of Sages
-            0x0045: { x: 359, y: 38 }, // Hedge Maze (Day)
-            0x0046: { x: 359, y: 38 }, // Hedge Maze (Night)
-            0x0047: { x: 0, y: 0 }, // Cutscene Map
-            0x0048: { x: 473, y: 93 }, // Windmill
-            0x0049: { x: 314, y: 305 }, // Fishing Pond
-            0x004A: { x: 359, y: 38 }, // Castle Courtyard
-            0x004B: { x: 361, y: 83 }, // Bombchu Bowling
-            0x004C: { x: 503, y: 158 }, // Lon Lon Buildings
-            0x004D: { x: 336, y: 93 }, // Guard House
-            0x004E: { x: 457, y: 87 }, // Granny's Potion Shop
-            0x004F: { x: 359, y: 38 }, // Ganon Battle Arena
-            0x0050: { x: 455, y: 100 }, // House of Skulltula
-            0x0051: { x: 362, y: 127 }, // Hyrule Field
-            0x0052: { x: 448, y: 96 }, // Kakariko Village
-            0x0053: { x: 507, y: 90 }, // Graveyard
-            0x0054: { x: 490, y: 134 }, // Zora's River
-            0x0055: { x: 542, y: 239 }, // Kokiri Forest
-            0x0056: { x: 545, y: 169 }, // Sacred Forest Meadow
-            0x0057: { x: 260, y: 300 }, // Lake Hylia
-            0x0058: { x: 637, y: 123 }, // Zora's Domain
-            0x0059: { x: 628, y: 79 }, // Zora's Fountain
-            0x005A: { x: 142, y: 142 }, // Gerudo Valley
-            0x005B: { x: 534, y: 196 }, // Lost Woods
-            0x005C: { x: 48, y: 77 }, // Desert Collosus
-            0x005D: { x: 120, y: 55 }, // Gerudo Fortress
-            0x005E: { x: 113, y: 96 }, // Haunted Wasteland
-            0x005F: { x: 359, y: 38 }, // Hyrule Castle
-            0x0060: { x: 435, y: 60 }, // Death Mountain Trail
-            0x0061: { x: 448, y: 6 }, // Death Mountain Crater
-            0x0062: { x: 416, y: 26 }, // Goron 
-            0x0063: { x: 504, y: 159 }, // Lon Lon Ranch
-            0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
-        };
-        var hooks = require('./map.js');
-/*         const hooks = {
-            onSceneChange: (scene) => { },
-            onSceneChange_Network: (packet) => { },
-            onPlayerLeft: (packet) => { },
-        }; */
-        hooks.onSceneChange = function (scene) {
-            player1.pos.x = coords[scene].x;
-            player1.pos.y = coords[scene].y;
-            player1.user.uuid = "THIS IS ME";
-            player1.user.nickname = "Me";
-        }
-        hooks.onSceneChange_Network = function (packet) {
-            console.log(packet);
-            let player = packet.data.player.uuid;
-            let found = false;
-            for (let i = 0; i < otherPlayers.length; i++) {
-                if (otherPlayers[i].user.uuid === player) {
-                    found = true;
-                    break;
+</head>
+
+<body> <span style="line-height: 150%"> <canvas id="viewport" width="698" height="394"></canvas>
+        <script>
+            var coords = {
+                0x0000: { x: 607, y: 224 }, // The Great Deku Tree
+                0x0001: { x: 407, y: 50 }, // Dodongo's Cavern
+                0x0002: { x: 623, y: 81 }, // Inside Jabu Jabu's Belly
+                0x0003: { x: 537, y: 153 }, // Forest Temple
+                0x0004: { x: 445, y: 4 }, // Fire Temple
+                0x0005: { x: 259, y: 345 }, // Water Temple
+                0x0006: { x: 25, y: 83 }, // Spirit Temple
+                0x0007: { x: 526, y: 88 }, // Shadow Temple
+                0x0008: { x: 468, y: 96 }, // Bottom of the Well
+                0x0009: { x: 621, y: 72 }, // Ice Cavern
+                0x000A: { x: 359, y: 38 }, // Ganon's Tower
+                0x000B: { x: 120, y: 55 }, // Gerudo Training Grounds
+                0x000C: { x: 120, y: 55 }, // Thieves' Hideout
+                0x000D: { x: 359, y: 38 }, // Inside Ganon's Tower
+                0x000E: { x: 359, y: 38 }, // Ganon's Tower (Collapse)
+                0x000F: { x: 359, y: 38 }, // Inside Ganon's Tower (Collapse)
+                0x0010: { x: 351, y: 89 }, // Treasure Box Shop
+                0x0011: { x: 607, y: 224 }, // The Great Deku Tree (Gohma's Lair)
+                0x0012: { x: 407, y: 50 }, // Dodongo's Cavern (King Dodongo's Lair)
+                0x0013: { x: 623, y: 81 }, // Inside Jabu Jabu's Belly (Barinade's Lair)
+                0x0014: { x: 537, y: 153 }, // Forest Temple (Phantom Ganon's Lair)
+                0x0015: { x: 445, y: 4 }, // Fire Temple (Volvagia's Lair)
+                0x0016: { x: 259, y: 345 }, // Water Temple (Morpha's Lair)
+                0x0017: { x: 25, y: 83 }, // Spirit Temple (Twinrova's Lair & Nabooru's Mini-Boss Room)
+                0x0018: { x: 526, y: 88 }, // Shadow Temple (Bongo Bongo's Lair)
+                0x0019: { x: 359, y: 38 }, // Inside Ganon's Tower (Ganondorf's Lair)
+                0x001A: { x: 359, y: 38 }, // Tower Collapse Exterior
+                0x001B: { x: 361, y: 83 }, // Market Town (Day)
+                0x001C: { x: 361, y: 83 }, // Market Town (Night)
+                0x001D: { x: 361, y: 83 }, // Market Town (Ruins)
+                0x001E: { x: 345, y: 79 }, // Back Alley (Day)
+                0x001F: { x: 345, y: 79 }, // Back Alley (Night)
+                0x0020: { x: 361, y: 83 }, // Market Town (Day?)
+                0x0021: { x: 361, y: 83 }, // Market Town (Night?)
+                0x0022: { x: 361, y: 83 }, // Market Town (Ruins?)
+                0x0023: { x: 380, y: 73 }, // Temple of Time Exterior (Day)
+                0x0024: { x: 380, y: 73 }, // Temple of Time Exterior (Night)
+                0x0025: { x: 380, y: 73 }, // Temple of Time Exterior (Ruins)
+                0x0026: { x: 522, y: 237 }, // Know it all Brother's House
+                0x0027: { x: 564, y: 242 }, // House of Twins
+                0x0028: { x: 531, y: 227 }, // Mido's House
+                0x0029: { x: 554, y: 240 }, // Saria's House
+                0x002A: { x: 449, y: 94 }, // Carpenter Boss's House
+                0x002B: { x: 345, y: 79 }, // Back Alley House (Man in Green)
+                0x002C: { x: 361, y: 83 }, // Bazaar
+                0x002D: { x: 551, y: 231 }, // Kokiri Shop
+                0x002E: { x: 415, y: 25 }, // Goron Shop
+                0x002F: { x: 655, y: 120 }, // Zora Shop
+                0x0030: { x: 459, y: 83 }, // Kakariko Potion Shop
+                0x0031: { x: 361, y: 83 }, // Market Potion Shop
+                0x0050: { x: 345, y: 79 }, // Bombchu Shop
+                0x0033: { x: 363, y: 76 }, // Happy Mask Shop
+                0x0034: { x: 540, y: 240 }, // Link's House
+                0x0035: { x: 345, y: 79 }, // Dog Lady House
+                0x0036: { x: 508, y: 149 }, // Stable
+                0x0037: { x: 460, y: 100 }, // Impa's House
+                0x0038: { x: 240, y: 300 }, // Lakeside Lab
+                0x0039: { x: 154, y: 139 }, // Carpenter's Tent
+                0x003A: { x: 503, y: 91 }, // Dampe's Hut
+                0x003B: { x: 0, y: 0 }, // Fairy Fountain (Upgrades) (Refine this later...)
+                0x003C: { x: 0, y: 0 }, // Fairy Fountain (actual faries...) (Refine this later...)
+                0x003D: { x: 0, y: 0 }, // Fairy Fountain (Spells) (Refine this later...)
+                0x003E: { x: 0, y: 0 }, // Grottos (Refine this later...)
+                0x003F: { x: 511, y: 90 }, // Redead Grave
+                0x0040: { x: 511, y: 90 }, // Fairy Fountain Grave
+                0x0041: { x: 516, y: 88 }, // Royal Family Tomb
+                0x0042: { x: 0, y: 0 }, // Shooting Gallery (Refine this later...)
+                0x0043: { x: 381, y: 74 }, // Temple of Time
+                0x0044: { x: 0, y: 0 }, // Chamber of Sages
+                0x0045: { x: 359, y: 38 }, // Hedge Maze (Day)
+                0x0046: { x: 359, y: 38 }, // Hedge Maze (Night)
+                0x0047: { x: 0, y: 0 }, // Cutscene Map
+                0x0048: { x: 473, y: 93 }, // Windmill
+                0x0049: { x: 314, y: 305 }, // Fishing Pond
+                0x004A: { x: 359, y: 38 }, // Castle Courtyard
+                0x004B: { x: 361, y: 83 }, // Bombchu Bowling
+                0x004C: { x: 503, y: 158 }, // Lon Lon Buildings
+                0x004D: { x: 336, y: 93 }, // Guard House
+                0x004E: { x: 457, y: 87 }, // Granny's Potion Shop
+                0x004F: { x: 359, y: 38 }, // Ganon Battle Arena
+                0x0050: { x: 455, y: 100 }, // House of Skulltula
+                0x0051: { x: 362, y: 127 }, // Hyrule Field
+                0x0052: { x: 448, y: 96 }, // Kakariko Village
+                0x0053: { x: 507, y: 90 }, // Graveyard
+                0x0054: { x: 490, y: 134 }, // Zora's River
+                0x0055: { x: 542, y: 239 }, // Kokiri Forest
+                0x0056: { x: 545, y: 169 }, // Sacred Forest Meadow
+                0x0057: { x: 260, y: 300 }, // Lake Hylia
+                0x0058: { x: 637, y: 123 }, // Zora's Domain
+                0x0059: { x: 628, y: 79 }, // Zora's Fountain
+                0x005A: { x: 142, y: 142 }, // Gerudo Valley
+                0x005B: { x: 534, y: 196 }, // Lost Woods
+                0x005C: { x: 48, y: 77 }, // Desert Collosus
+                0x005D: { x: 120, y: 55 }, // Gerudo Fortress
+                0x005E: { x: 113, y: 96 }, // Haunted Wasteland
+                0x005F: { x: 359, y: 38 }, // Hyrule Castle
+                0x0060: { x: 435, y: 60 }, // Death Mountain Trail
+                0x0061: { x: 448, y: 6 }, // Death Mountain Crater
+                0x0062: { x: 416, y: 26 }, // Goron 
+                0x0063: { x: 504, y: 159 }, // Lon Lon Ranch
+                0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
+            };
+            var hooks = require('./map.js');
+/*             const hooks = {
+                onSceneChange: (scene) => { },
+                onSceneChange_Network: (packet) => { },
+                onPlayerLeft: (packet) => { },
+                onData: (packet) => { }
+            }; */
+            hooks.onSceneChange = function (scene) {
+                player1.pos.x = coords[scene].x;
+                player1.pos.y = coords[scene].y;
+                player1.user.uuid = "THIS IS ME";
+                player1.user.nickname = "Me";
+            }
+            hooks.onSceneChange_Network = function (packet) {
+                console.log(packet);
+                let player = packet.data.player.uuid;
+                let found = false;
+                for (let i = 0; i < otherPlayers.length; i++) {
+                    if (otherPlayers[i].user.uuid === player) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    let n = makePlayerMarker();
+                    n.user.uuid = player;
+                    n.user.nickname = packet.data.player.nickname;
+                    otherPlayers.push(n);
+                }
+                for (let i = 0; i < otherPlayers.length; i++) {
+                    if (otherPlayers[i].user.uuid === player) {
+                        otherPlayers[i].pos.x = coords[packet.data.scene].x;
+                        otherPlayers[i].pos.y = coords[packet.data.scene].y;
+                        break;
+                    }
                 }
             }
-            if (!found) {
-                let n = makePlayerMarker();
-                n.user.uuid = player;
-                n.user.nickname = packet.data.player.nickname;
-                otherPlayers.push(n);
-            }
-            for (let i = 0; i < otherPlayers.length; i++) {
-                if (otherPlayers[i].user.uuid === player) {
-                    otherPlayers[i].pos.x = coords[packet.data.scene].x;
-                    otherPlayers[i].pos.y = coords[packet.data.scene].y;
-                    break;
+            hooks.onPlayerLeft = function (packet) {
+                let index = -1;
+                for (let i = 0; i < otherPlayers.length; i++) {
+                    if (otherPlayers[i].user.uuid === packet.data.uuid) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index > -1) {
+                    otherPlayers.splice(index, 1);
                 }
             }
-        }
-        hooks.onPlayerLeft = function (packet) {
-            let index = -1;
-            for (let i = 0; i < otherPlayers.length; i++) {
-                if (otherPlayers[i].user.uuid === player) {
-                    index = i;
-                    break;
+            var canvas = document.getElementById('viewport'), context = canvas.getContext('2d');
+            var message = "";
+
+            function make_base() {
+                var base_image = new Image();
+                base_image.src = './map.jpg';
+                base_image.onload = function () {
+                    context.drawImage(base_image, 0, 0, base_image.width, base_image.height, 0, 0, canvas.width, canvas.height);
+                }
+                return base_image;
+            }
+
+            function makePlayerMarker() {
+                var marker = {};
+                marker["icon"] = new Image();
+                marker.icon.src = "./sprites/tile381.png";
+                marker.icon.width = 24;
+                marker.icon.height = 24;
+                marker["pos"] = {};
+                marker.pos["x"] = 0;
+                marker.pos["y"] = 0;
+                marker["user"] = { uuid: "", nickname: "" };
+                marker.icon.onload = function () {
+                    context.drawImage(marker.icon, marker.pos.x, marker.pos.y, marker.icon.width, marker.icon.height);
+                }
+                return marker;
+            }
+
+            function writeMessage(canvas, msg) {
+                message = msg;
+                if (message !== "") {
+                    redrawMap();
+                    drawPlayers();
                 }
             }
-            if (index > -1) {
-                otherPlayers.splice(index, 1);
-            }
-        }
-        var canvas = document.getElementById('viewport'), context = canvas.getContext('2d');
-        var message = "";
 
-        function make_base() {
-            var base_image = new Image();
-            base_image.src = './map.jpg';
-            base_image.onload = function () {
-                context.drawImage(base_image, 0, 0, base_image.width, base_image.height, 0, 0, canvas.width, canvas.height);
+            function getMousePos(canvas, evt) {
+                var rect = canvas.getBoundingClientRect();
+                return {
+                    x: evt.clientX - rect.left,
+                    y: evt.clientY - rect.top
+                };
             }
-            return base_image;
-        }
 
-        function makePlayerMarker() {
-            var marker = {};
-            marker["icon"] = new Image();
-            marker.icon.src = "./sprites/tile381.png";
-            marker.icon.width = 24;
-            marker.icon.height = 24;
-            marker["pos"] = {};
-            marker.pos["x"] = 0;
-            marker.pos["y"] = 0;
-            marker["user"] = { uuid: "", nickname: "" };
-            marker.icon.onload = function () {
-                context.drawImage(marker.icon, marker.pos.x, marker.pos.y, marker.icon.width, marker.icon.height);
+            function redrawMap() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(map, 0, 0, map.width, map.height, 0, 0, canvas.width, canvas.height);
             }
-            return marker;
-        }
 
-        function writeMessage(canvas, msg) {
-            message = msg;
-            if (message !== "") {
+            function drawPlayers() {
+                context.drawImage(player1.icon, player1.pos.x, player1.pos.y, player1.icon.width, player1.icon.height);
+                for (let i = 0; i < otherPlayers.length; i++) {
+                    let p = otherPlayers[i];
+                    context.drawImage(p.icon, p.pos.x, p.pos.y, p.icon.width, p.icon.height);
+                }
+                context.font = '18pt Calibri';
+                context.fillStyle = 'black';
+                context.fillText(message, 10, 25);
+            }
+
+            function isBetween(a, b, c) {
+                var min = Math.min.apply(Math, [a, b]),
+                    max = Math.max.apply(Math, [a, b]);
+                return c > min && c < max;
+            };
+
+            setInterval(() => {
                 redrawMap();
                 drawPlayers();
-            }
-        }
+            }, 1000);
 
-        function getMousePos(canvas, evt) {
-            var rect = canvas.getBoundingClientRect();
-            return {
-                x: evt.clientX - rect.left,
-                y: evt.clientY - rect.top
-            };
-        }
-
-        function redrawMap() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(map, 0, 0, map.width, map.height, 0, 0, canvas.width, canvas.height);
-        }
-
-        function drawPlayers() {
-            context.drawImage(player1.icon, player1.pos.x, player1.pos.y, player1.icon.width, player1.icon.height);
-            for (let i = 0; i < otherPlayers.length; i++) {
-                let p = otherPlayers[i];
-                context.drawImage(p.icon, p.pos.x, p.pos.y, p.icon.width, p.icon.height);
-            }
-            context.font = '18pt Calibri';
-            context.fillStyle = 'black';
-            context.fillText(message, 10, 25);
-        }
-
-        function isBetween(a, b, c) {
-            var min = Math.min.apply(Math, [a, b]),
-                max = Math.max.apply(Math, [a, b]);
-            return c > min && c < max;
-        };
-
-        setInterval(() => {
-            redrawMap();
-            drawPlayers();
-        }, 1000);
-
-        canvas.addEventListener('mousemove', function (evt) {
-            var mousePos = getMousePos(canvas, evt);
-            var x = mousePos.x;
-            var y = mousePos.y;
-            var x_m = x - 16;
-            var y_m = y - 16;
-            var users = [];
-            for (let i = 0; i < otherPlayers.length; i++) {
-                let p = otherPlayers[i];
-                if (isBetween(x, x_m, p.pos.x) && isBetween(y, y_m, p.pos.y)) {
-                    users.push(p.user.nickname);
+            canvas.addEventListener('mousemove', function (evt) {
+                var mousePos = getMousePos(canvas, evt);
+                var x = mousePos.x;
+                var y = mousePos.y;
+                var x_m = x - 16;
+                var y_m = y - 16;
+                var users = [];
+                for (let i = 0; i < otherPlayers.length; i++) {
+                    let p = otherPlayers[i];
+                    if (isBetween(x, x_m, p.pos.x) && isBetween(y, y_m, p.pos.y)) {
+                        users.push(p.user.nickname);
+                    }
                 }
+                var message = users.toString();
+                writeMessage(canvas, message);
+            }, false);
+
+            var map = make_base();
+            var player1 = makePlayerMarker();
+            var otherPlayers = [];
+            otherPlayers.push(player1);
+
+            var wallet_icons = { 1: "./sprites/tile240.png", 2: "./sprites/tile241.png", 3: "./sprites/tile242.png" };
+            var quiver_icons = { 1: "./sprites/tile249.png", 2: "./sprites/tile250.png", 3: "./sprites/tile251.png" };
+            var bombbag_icons = { 1: "./sprites/tile246.png", 2: "./sprites/tile247.png", 3: "./sprites/tile248.png" };
+            var swimming_icons = { 1: "./sprites/tile300.png", 2: "./sprites/tile301.png" };
+            var bulletBag_icons = { 1: "./sprites/tile243.png", 2: "./sprites/tile244.png", 3: "./sprites/tile245.png" };
+            var strength_icons = { 1: "./sprites/tile302.png", 2: "./sprites/tile303.png", 3: "./sprites/tile304.png" };
+            var ocarina_icons = { 1: "./sprites/tile100.png", 2: "./sprites/tile101.png" };
+            var hookshot_icons = { 1: "./sprites/tile090.png", 2: "./sprites/tile091.png" };
+            var childTrade_icons = { 0x0021: "./sprites/tile321.png", 0x0022: "./sprites/tile322.png", 0x0023: "./sprites/tile320.png", 0x0024: "./sprites/tile221.png", 0x0025: "./sprites/tile223.png", 0x0026: "./sprites/tile222.png", 0x0027: "./sprites/tile220.png", 0x002B: "./sprites/tile227.png" };
+            var adultTrade_icons = {
+                0x002D: "./sprites/tile321.png", 0x002E: "./sprites/tile322.png", 0x002F: "./sprites/tile323.png", 0x0030: "./sprites/tile324.png",
+                0x0031: "./sprites/tile325.png", 0x0032: "./sprites/tile326.png", 0x0033: "./sprites/tile327.png", 0x0034: "./sprites/tile328.png",
+                0x0035: "./sprites/tile329.png", 0x0036: "./sprites/tile330.png", 0x0037: "./sprites/tile331.png", 0x0038: "./sprites/tile332.png"
+            };
+            var magic_icons = { 1: "./sprites/tile270.png", 2: "./sprites/263.png" };
+            var bottle_icons = {
+                0x0014: "./sprites/tile180.png", 0x0015: "./sprites/tile181.png", 0x0016: "./sprites/tile182.png", 0x0017: "./sprites/tile183.png", 0x0018: "./sprites/tile186.png",
+                0x0019: "./sprites/tile188.png", 0x001A: "./sprites/tile184.png", 0x001B: "./sprites/tile190.png", 0x001C: "./sprites/tile189.png", 0x001D: "./sprites/tile187.png", 0x001E: "./sprites/tile192.png",
+                0x001F: "./sprites/tile185.png", 0x0020: "./sprites/tile191.png"
             }
-            var message = users.toString();
-            writeMessage(canvas, message);
-        }, false);
+            //var dekuStick_icons = { 0: "./sprites/tile08110.png", 1: "./sprites/tile08120.png", 2: "./sprites/tile08130.png" };
+           // var dekuNut_icons = { 0: "./sprites/tile08020.png", 1: "./sprites/tile08030.png", 2: "./sprites/tile08040.png" };
+            var bottle_alts = {
+                0x0014: "Empty Bottle", 0x0015: "Red Potion", 0x0016: "Green Potion", 0x0017: "Blue Potion", 0x0018: "Bottled Fairy", 0x0019: "Fish",
+                0x001A: "Lon Lon Milk", 0x001B: "Ruto's Letter", 0x001C: "Blue Fire", 0x001D: "Bugs", 0x001E: "Big Poe", 0x001F: "Lon Lon Milk (Half)", 0x0020: "Poe"
+            };
 
-        var map = make_base();
-        var player1 = makePlayerMarker();
-        var otherPlayers = [];
-        otherPlayers.push(player1);
+            //demo  var bottle_alts = {0: "Empty Bottle", 1: "Red Potion", 2: "Green Potion", 3: "Blue Potion", 4: "Bottled Fairy", 5: "Fish",
+            //demo      6: "Lon Lon Milk", 7: "Ruto's Letter", 8: "Blue Fire", 9: "Bugs", 10: "Big Poe", 11: "Lon Lon Milk (Half)", 12: "Poe"};
 
-        var wallet_icons = ["./sprites/tile240.png", "./sprites/tile241.png", "./sprites/tile242.png"];
-        var quiver_icons = ["./sprites/tile249.png", "./sprites/tile250.png", "./sprites/tile251.png"];
-        var bombbag_icons = ["./sprites/tile246.png", "./sprites/tile247.png", "./sprites/tile248.png"]
-        var swimming_icons = ["./sprites/tile300.png", "./sprites/tile301.png"];
-        var bulletBag_icons = ["./sprites/tile243.png", "./sprites/tile244.png", "./sprites/tile245.png"];
-        var strength_icons = ["./sprites/tile302.png", "./sprites/tile303.png", "./sprites/tile304.png"];
-        var ocarina_icons = ["./sprites/tile100.png", "./sprites/tile101.png"];
-        var hookshot_icons = ["./sprites/tile090.png", "./sprites/tile091.png"];
-        var childTrade_icons = { 321: "./sprites/tile321.png", 322: "./sprites/tile322.png", 320: "./sprites/tile320.png"};
-        var adultTrade_icons = { 321: "./sprites/tile321.png", 322: "./sprites/tile322.png", 323: "./sprites/tile323.png", 
-        324: "./sprites/tile324.png", 325: "./sprites/tile325.png", 326: "./sprites/tile326.png", 327: "./sprites/tile327.png", 
-        328: "./sprites/tile328.png", 329: "./sprites/tile329.png", 330: "./sprites/tile330.png", 331: "./sprites/tile331.png", 
-        332: "./sprites/tile332.png"};
-        var magic_icons = { 270: "./sprites/tile270.png", 263: "./sprites/263.png"};
-    </script></span>
+            var numbers = {
+                0: "./sprites/0.png", 1: "./sprites/1.png", 2: "./sprites/2.png", 3: "./sprites/3.png", 4: "./sprites/4.png", 5: "./sprites/5.png",
+                6: "./sprites/6.png", 7: "./sprites/7.png", 8: "./sprites/8.png", 9: "./sprites/9.png"
+            }
+
+            var icon_index = {
+                "wallet": wallet_icons, "quiver": quiver_icons, "bombBag": bombbag_icons, "swimming": swimming_icons, "bulletBag": bulletBag_icons,
+                "strength": strength_icons, "ocarina": ocarina_icons, "hookshot": hookshot_icons, "childTradeItem": childTrade_icons, "adultTradeItem": adultTrade_icons,
+                "magic_meter_size": magic_icons, "bottle_1": bottle_icons, "bottle_2": bottle_icons, "bottle_3": bottle_icons, "bottle_4": bottle_icons, "heart_containers10": numbers,
+                "heart_containers1": numbers, "heartPieces10": numbers, "heartPieces1": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers, "dekuNuts": dekuNut_icons,
+                "dekuSticks": dekuStick_icons
+            }
+
+            var alt_index = {
+                "wallet": ["Adult Wallet", "Giant Wallet", "Tycoon Wallet"], "quiver": ["Quiver", "Bigger Quiver", "Biggest Quiver"],
+                "bombBag": ["Bomb Bag", "Bigger Bomb Bag", "Biggest Bomb Bag"], "swimming": ["Silver Scale", "Golden Scale"], "bulletBag": ["Bullet Bag", "Bigger Bullet Bag", "Biggest Bullet Bag"],
+                "strength": ["Goron Bracelet", "Silver Gauntlets", "Golden Gauntlets"], "ocarina": ["Fairy Ocarina", "Ocarina of Time"], "hookshot": ["Hookshot", "Longshot"],
+                "childTradeItem": { 0x0021: "Weird Egg", 0x0022: "Cucco", 0x0023: "Zelda's Letter", 0x0024: "Keaton Mask", 0x0025: "Skull Mask", 0x0026: "Spooky Mask", 0x0027: "Bunny Hood", 0x002B: "Mask of Truth" },
+                "adultTradeItem": {
+                    0x002D: "Pocket Egg", 0x002E: "Pocket Cucco", 0x002F: "Cojiro", 0x0030: "Odd Mushroom", 0x0031: "Odd Potion", 0x0032: "Poacher's Saw", 0x0033: "Goron's Sword (Broken)",
+                    0x0034: "Prescription", 0x0035: "Eye Ball Frog", 0x0036: "Eye Drops", 0x037: "Claim Check"
+                },
+                "magic_meter_size": ["Magic", "Extended Magic"], "bottle_1": bottle_alts, "bottle_2": bottle_alts, "bottle_3": bottle_alts, "bottle_4": bottle_alts, "heart_containers10": ["Heart Containers"],
+                "heart_containers1": ["Heart Containers"], "heartPieces10": ["Heart Pieces"], "heartPieces1": ["Heart Pieces"], "goldSkulltulas10": ["Gold Skulltulas"], "goldSkulltulas1": ["Gold Skulltulas"],
+                "dekuSticks": ["Deku Sticks"], "dekuNuts": ["Deku Nuts"]
+            };
+
+        </script></span>
     <br>
     <span style="line-height: 250%">
-    <img class="doesNotHave" id="kokiriEmerald" src="./sprites/tile160.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="goronRuby" src="./sprites/tile161.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="zoraSaphire" src="./sprites/tile162.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="lightMedallion" src="./sprites/tile163.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="forestMedallion" src="./sprites/tile164.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="fireMedallion" src="./sprites/tile165.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="waterMedallion" src="./sprites/tile166.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="spiritMedallion" src="./sprites/tile167.png" width="50" height="50" style="padding-right: 25.5px;">
-    <img class="doesNotHave" id="shadowMedallion" src="./sprites/tile168.png" width="50" height="50">
+        <img class="doesNotHave" id="kokiriEmerald" src="./sprites/tile160.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="goronRuby" src="./sprites/tile161.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="zoraSapphire" src="./sprites/tile162.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="lightMedallion" src="./sprites/tile163.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="forestMedallion" src="./sprites/tile164.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="fireMedallion" src="./sprites/tile165.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="waterMedallion" src="./sprites/tile166.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="shadowMedallion" src="./sprites/tile168.png" width="50" height="50">
+        <img src="./sprites/blank.png" width="21" height="50">
+        <img class="doesNotHave" id="spiritMedallion" src="./sprites/tile167.png" width="50" height="50">
     </span>
     <br>
-    <img class="doesNotHave" id="dekuSticks" src="./sprites/tile080.png" width="50" height="50">
-    <img class="doesNotHave" id="dekuNuts" src="./sprites/tile081.png" width="50" height="50">
+    <img class="doesNotHave" id="dekuNuts" src="./sprites/tile080.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="dekuSticks" src="./sprites/tile081.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="bombs" src="./sprites/tile085.png" width="50" height="50">
     <img class="doesNotHave" id="fairyBow" src="./sprites/tile120.png" width="50" height="50">
     <img class="doesNotHave" id="fireArrows" src="./sprites/tile122.png" width="50" height="50">
-    <img class="doesNotHave" id="dinsFire" src="./sprites/tile260.png" width="50" height="50" style="padding-right: 48px;">
-    <img class="doesNotHave" id="kokiriSword" src="./sprites/tile060.png" width="50" height="50"> 
+    <img class="doesNotHave" id="dinsFire" src="./sprites/tile260.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
+    <img class="doesNotHave" id="kokiriSword" src="./sprites/tile060.png" width="50" height="50">
     <img class="doesNotHave" id="masterSword" src="./sprites/tile061.png" width="50" height="50">
-    <img class="doesNotHave" id="biggoronSword" src="./sprites/tile062.png" width="50" height="50" style="padding-right: 48px;">
-    <img class="doesNotHave" id="bulletBag" src="./sprites/tile243.png" width="50" height="50"> 
-    <img class="doesNotHave" id="quiver" src="./sprites/tile249.png" width="50" height="50">
+    <img class="doesNotHave" id="biggoronSword" src="./sprites/tile062.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
+    <img class="doesNotHave" id="bulletBag" src="./sprites/tile243.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="quiver" src="./sprites/tile249.png" width="50" height="50" alt="">
     <br>
     <img class="doesNotHave" id="fairySlingshot" src="./sprites/tile083.png" width="50" height="50">
-    <img class="doesNotHave" id="ocarina" src="./sprites/tile100.png" width="50" height="50">
+    <img class="doesNotHave" id="ocarina" src="./sprites/tile100.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="bombchus" src="./sprites/tile086.png" width="50" height="50">
-    <img class="doesNotHave" id="hookshot" src="./sprites/tile090.png" width="50" height="50">
+    <img class="doesNotHave" id="hookshot" src="./sprites/tile090.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="iceArrows" src="./sprites/tile123.png" width="50" height="50">
-    <img class="doesNotHave" id="faroresWind" src="./sprites/tile261.png" width="50" height="50" style="padding-right: 48px;">
-    <img class="doesNotHave" id="dekuShield" src="./sprites/tile020.png" width="50" height="50">     
+    <img class="doesNotHave" id="faroresWind" src="./sprites/tile261.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
+    <img class="doesNotHave" id="dekuShield" src="./sprites/tile020.png" width="50" height="50">
     <img class="doesNotHave" id="hylianShield" src="./sprites/tile021.png" width="50" height="50">
-    <img class="doesNotHave" id="mirrorShield" src="./sprites/tile022.png" width="50" height="50" style="padding-right: 48px;"> 
-    <img class="doesNotHave" id="bombBag" src="./sprites/tile246.png" width="50" height="50">
-    <img class="doesNotHave" id="wallet" src="./sprites/tile240.png" width="50" height="50">
+    <img class="doesNotHave" id="mirrorShield" src="./sprites/tile022.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
+    <img class="doesNotHave" id="bombBag" src="./sprites/tile246.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="wallet" src="./sprites/tile240.png" width="50" height="50" alt="" />
     <br>
     <img class="doesNotHave" id="boomerang" src="./sprites/tile087.png" width="50" height="50">
     <img class="doesNotHave" id="lensOfTruth" src="./sprites/tile088.png" width="50" height="50">
     <img class="doesNotHave" id="magicBeans" src="./sprites/tile089.png" width="50" height="50">
     <img class="doesNotHave" id="megatonHammer" src="./sprites/tile092.png" width="50" height="50">
     <img class="doesNotHave" id="lightArrows" src="./sprites/tile124.png" width="50" height="50">
-    <img class="doesNotHave" id="nayrusLove" src="./sprites/tile262.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="nayrusLove" src="./sprites/tile262.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
     <img class="doesNotHave" id="kokiriTunic" src="./sprites/tile000.png" width="50" height="50">
     <img class="doesNotHave" id="goronTunic" src="./sprites/tile001.png" width="50" height="50">
-    <img class="doesNotHave" id="zoraTunic" src="./sprites/tile002.png" width="50" height="50" style="padding-right: 48px;">
-    <img class="doesNotHave" id="strength" src="./sprites/tile302.png" width="50" height="50">
-    <img class="doesNotHave" id="magic" src="./sprites/tile270.png" width="50" height="50">
+    <img class="doesNotHave" id="zoraTunic" src="./sprites/tile002.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
+    <img class="doesNotHave" id="strength" src="./sprites/tile302.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="magic_meter_size" src="./sprites/tile270.png" width="50" height="50" alt="">
     <br>
-    <img class="doesNotHave" id="bottleOne" src="./sprites/tile180.png" width="50" height="50">
-    <img class="doesNotHave" id="bottleTwo" src="./sprites/tile180.png" width="50" height="50">
-    <img class="doesNotHave" id="bottleThree" src="./sprites/tile180.png" width="50" height="50">
-    <img class="doesNotHave" id="bottleFour" src="./sprites/tile180.png" width="50" height="50">
-    <img class="doesNotHave" id="adultTradeItem" src="./sprites/tile321.png" width="50" height="50">
-    <img class="doesNotHave" id="childTradeItem" src="./sprites/tile321.png" width="50" height="50" style="padding-right: 48px;">
+    <img class="doesNotHave" id="bottle_1" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="bottle_2" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="bottle_3" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="bottle_4" src="./sprites/tile180.png" width="50" height="50">
+    <img class="doesNotHave" id="adultTradeItem" src="./sprites/tile321.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="childTradeItem" src="./sprites/tile321.png" width="50" height="50" alt="">
+    <img src="./sprites/blank.png" width="43" height="50">
     <img class="doesNotHave" id="kokiriBoots" src="./sprites/tile040.png" width="50" height="50">
     <img class="doesNotHave" id="ironBoots" src="./sprites/tile041.png" width="50" height="50">
-    <img class="doesNotHave" id="hoverBoots" src="./sprites/tile042.png" width="50" height="50" style="padding-right: 48px;">
-    <img class="doesNotHave" id="swimming" src="./sprites/tile300.png" width="50" height="50">
+    <img class="doesNotHave" id="hoverBoots" src="./sprites/tile042.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="43" height="50">
+    <img class="doesNotHave" id="swimming" src="./sprites/tile300.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="gerudoCard" src="./sprites/tile104.png" width="50" height="50">
     <br>
     <span style="line-height: 250%">
-    <img class="doesNotHave" id="doubleDefense" src="./sprites/tile264.png" width="50" height="50" style="padding-right: 53px;">
-    <img class="doesNotHave" id="heartContainers" src="./sprites/tile266.png" width="50" height="50" style="padding-right: 53px;">
-    <img class="doesNotHave" id="heartPieces" src="./sprites/tile265.png" width="50" height="50" style="padding-right: 53px;">
-    <img class="doesNotHave" id="goldSkulltulas" src="./sprites/tile420.png" width="50" height="50" style="padding-right: 53px;">
-    <img class="doesNotHave" id="stageCheckSkull" src="./sprites/tile223.png" width="50" height="50" style="padding-right: 53px;">
-    <img class="doesNotHave" id="stageCheckTruth" src="./sprites/tile227.png" width="50" height="50" style="padding-right: 53px;">
-    <img class="doesNotHave" id="stoneOfAgony" src="./sprites/tile268.png" width="50" height="50">
+        <img class="doesNotHave" id="double_Defense" src="./sprites/tile264.png" width="50" height="50"
+            style="padding-right: 41px;">
+        <img class="doesNotHave" id="heart_containers" src="./sprites/tile266.png" width="50" height="50"
+            style="padding-right: 3px;">
+        <img class="doesNotHave" id="heart_containers10" src="./sprites/0.png" height="50" width="25">
+        <img class="doesNotHave" id="heart_containers1" src="./sprites/0.png" height="50" width="25">
+        <img class="doesNotHave" id="heartPieces" src="./sprites/tile265.png" width="50" height="50"
+            style="padding-right: 3px;">
+        <img class="doesNotHave" id="heartPieces10" src="./sprites/0.png" height="50" width="25">
+        <img class="doesNotHave" id="heartPieces1" src="./sprites/0.png" height="50" width="25">
+        <img class="doesNotHave" id="goldSkulltulas" src="./sprites/tile420.png" width="50" height="50"
+            style="padding-right: 3px;">
+        <img class="doesNotHave" id="goldSkulltulas10" src="./sprites/0.png" height="50" width="25">
+        <img class="doesNotHave" id="goldSkulltulas1" src="./sprites/0.png" height="50" width="25">
+        <img class="doesNotHave" id="stageCheckSkull" src="./sprites/tile223.png" width="50" height="50"
+            style="padding-right: 41px;">
+        <img class="doesNotHave" id="stageCheckTruth" src="./sprites/tile227.png" width="50" height="50"
+            style="padding-right: 41px;">
+        <img class="doesNotHave" id="stoneOfAgony" src="./sprites/tile268.png" width="50" height="50">
     </span>
     <br>
-    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sariasSong" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="eponasSong" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sunsSong" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="songOfTime" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="songOfStorms" src="./sprites/tile146.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="minuetOfForest" src="./sprites/tile141.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="boleroOfFire" src="./sprites/tile142.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="serenadeOfWater" src="./sprites/tile143.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="requiemOfSpirit" src="./sprites/tile144.png" width="50" height="50" style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="nocturnOfShadow" src="./sprites/tile145.png" width="50" height="50" style="padding-right: 3.3px;">
+    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tile146.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="sariasSong" src="./sprites/tile146.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="eponasSong" src="./sprites/tile146.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="sunsSong" src="./sprites/tile146.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="songOfTime" src="./sprites/tile146.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="songOfStorms" src="./sprites/tile146.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="minuetOfForest" src="./sprites/tile141.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="boleroOfFire" src="./sprites/tile142.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="serenadeOfWater" src="./sprites/tile143.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="requiemOfSpirit" src="./sprites/tile144.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="nocturneOfShadow" src="./sprites/tile145.png" width="50" height="50"
+        style="padding-right: 3.3px;">
     <img class="doesNotHave" id="preludeOfLight" src="./sprites/tile140.png" width="50" height="50">
-  </body>
+    <script>
+        /*      
+                setTimeout(()=>{
+                    flipUpgrade("bottle_1", 1);
+                    flipUpgrade("bottle_2", 3);
+                    flipUpgrade("bottle_3", 5);
+                    flipUpgrade("bottle_4", 7);
+                }, 1 * 1000);
+        */
+        function flipUpgrade(id, level) {
+            try {
+                let icons = icon_index[id];
+                let alts = alt_index[id];
+                let _icon = icons[level];
+                let _alt = alts[level];
+                if (_icon === null || icons === undefined) {
+                    return;
+                }
+                if (_alt === null || _alt === undefined) {
+                    return;
+                }
+                let element = document.getElementById(id);
+                if (element.classList.contains("doesNotHave")) {
+                    element.classList.remove("doesNotHave");
+                    element.classList.add("doesHave");
+                }
+                else if (element.classList.contains("doesHave")) {
+                    element.classList.remove("doesHave");
+                    element.classList.add("doesHave1");
+                }
+                else {
+                    element.classList.remove("doesHave1");
+                    element.classList.add("doesHave");
+                    element.src = _icon[level];
+                }
+                element.src = _icon;
+                element.alt = _alt;
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }        
+        function collect(id) {
+            let toggle = document.getElementById(id);
+
+            if (!toggle.classList.contains("doesNotHave")) {
+                return;
+            }
+
+            toggle.classList.remove("doesNotHave");
+            toggle.classList.add("doesHave");
+        }
+
+        function increaseCount(id, level) {
+            let count = document.getElementById(id);
+            if (count.classList.contains("doesNotHave")) {
+                count.classList.remove("doesNotHave");
+                count.classList.add("doesHave");
+            }
+            if (count.classList.contains("doesHave")) {
+                count.classList.remove("doesHave");
+                count.classList.add("doesHave1");
+            }
+            else {
+                count.classList.remove("doesHave1");
+                count.classList.add("doesHave");
+            }
+            count.src = numbers[level];
+        }
+
+        var gsOnes = "0";
+        var gsTens = "0";
+        var hpOnes = "0";
+        var hpTens = "0";
+        var hcOnes = "0";
+        var hcTens = "0";
+        function splitCount(id) {
+            if (id === "goldSkulltulas") {
+                parseCountparseGoldSulltula();
+            } else if (id === "heartPieces") {
+                parseHeartPiece();
+            } else if (id === "heartContainers") {
+                parseHeartContainer();
+            }
+        }
+        function parseGoldSkulltula() {
+            var tag = "goldSkulltulas";
+            var tag1 = "goldSkulltulas1";
+            var tag10 = "goldSkulltulas10";
+            var split = packet.questStorage(tag);
+
+            if (split.substring.length > 1) {
+                var strOnes = split.substring(1, 2);
+                var strTens = split.substring(0, 1);
+
+                if (gsOnes !== ones) {
+                    increaseCount(tag1, tag, ones);
+                    gsOnes = ones;
+                }
+
+                if (gsTens !== tens) {
+                    increaseCount(tag10, tag, tens);
+                    gsTens = tens;
+                }
+            }
+            else {
+                var val = packet.questStorage(tag);
+                increaseCount(tag1, tag, val);
+            }
+        }
+        function parseHeartPiece() {
+            var tag = "heartPieces";
+            var tag1 = "heartPieces1";
+            var tag10 = "heartPieces10";
+            var split = packet.questStorage(tag);
+
+            if (split.substring.length > 1) {
+                var strOnes = split.substring(1, 2);
+                var strTens = split.substring(0, 1);
+
+                if (hpOnes !== ones) {
+                    increaseCount(tag1, tag, ones);
+                    hpOnes = ones;
+                }
+
+                if (hpTens !== tens) {
+                    increaseCount(tag10, tag, tens);
+                    hpTens = tens;
+                }
+            }
+            else {
+                var val = packet.questStorage(tag);
+                increaseCount(tag1, tag, val);
+            }
+        }
+        function parseHeartContainer() {
+            var tag = "heartContainers";
+            var tag1 = "heartContainers1";
+            var tag10 = "heartContainers10";
+            var split = packet.questStorage(tag);
+
+            if (split.substring.length > 1) {
+                var strOnes = split.substring(1, 2);
+                var strTens = split.substring(0, 1);
+
+                if (hcOnes !== ones) {
+                    increaseCount(tag1, tag, ones);
+                    hcOnes = ones;
+                }
+
+                if (hcTens !== tens) {
+                    increaseCount(tag10, tag, tens);
+                    hcTens = tens;
+                }
+            }
+            else {
+                var val = packet.questStorage(tag);
+                increaseCount(tag1, tag, val);
+            }
+        }
+
+
+        hooks.onData = (packet) => {
+            parsePacketInventory(packet.data.inventory);
+            parsePacketEquipment(packet.data.equipment);
+            parsePacketQuest(packet.data.quest);
+        };
+
+        function parsePacketInventory(inventory) {
+            if (inventory.dekuSticks) {collect("dekuSticks")};
+            if (inventory.dekuNuts) {collect("dekuNuts")};
+            if (inventory.bombs) {collect("bombs")};
+            if (inventory.bombchus) {collect("bombchus")};
+            if (inventory.magicBeans) {collect("magicBeans")};
+            if (inventory.fairySlingshot) {collect("fairySlingshot")};
+            if (inventory.fairyBow) {collect("fairyBow")};
+            if (inventory.fireArrows) {collect("fireArrows")};
+            if (inventory.iceArrows) {collect("iceArrows")};
+            if (inventory.lightArrows) {collect("lightArrows")};
+            if (inventory.dinsFire) {collect("dinsFire")};
+            if (inventory.faroresWind) {collect("faroresWind")};
+            if (inventory.nayrusLove) {collect("nayrusLove")};
+            if (inventory.ocarina === 1) {collect("ocarina")};
+            if (inventory.ocarina === 2) {flipUpgrade("ocarina", inventory.ocarina)};
+            if (inventory.hookshot === 1) {collect("hookshot")};
+            if (inventory.hookshot === 2) {flipUpgrade("hookshot", inventory.hookshot)};
+            if (inventory.boomerang) {collect("boomerang")};
+            if (inventory.lensOfTruth) {collect("lensOfTruth")};
+            if (inventory.megatonHammer) {collect("megatonHammer")};
+            if (inventory.childTradeItem >= 0x0021 && inventory.childTradeItem <= 0x002b){
+                flipUpgrade("childTradeItem", inventory.childTradeItem)
+            };
+            if (inventory.adultTradeItem >= 0x002d && inventory.adultTradeItem <= 0x0038){
+                flipUpgrade("adultTradeItem", inventory.adultTradeItem);
+            }
+            if (inventory.bottle_1 >= 0x0014 && inventory.bottle_1 <= 0x0020) {
+                flipUpgrade("bottle_1", inventory.bottle_1);
+            }
+            if (inventory.bottle_2 >= 0x0014 && inventory.bottle_2 <= 0x0020) {
+                flipUpgrade("bottle_2", inventory.bottle_2);
+            }
+            if (inventory.bottle_3 >= 0x0014 && inventory.bottle_3 <= 0x0020) {
+                flipUpgrade("bottle_3", inventory.bottle_3);
+            }
+            if (inventory.bottle_4 >= 0x0014 && inventory.bottle_4 <= 0x0020) {
+                flipUpgrade("bottle_4", inventory.bottle_4);
+            }
+            if (inventory.wallet > 0 && inventory.wallet < 4) {
+                flipUpgrade("wallet", inventory.wallet);
+            }
+            if (inventory.quiver > 0 && inventory.quiver < 4) {
+                flipUpgrade("quiver", inventory.quiver);
+            }
+            if (inventory.bulletBag > 0 && inventory.bulletBag < 4) {
+                flipUpgrade("bulletBag", inventory.bulletBag);
+            }
+            if (inventory.strength > 0 && inventory.strength < 4) {
+                flipUpgrade("strength", inventory.strength)
+            }
+            if (inventory.swimming > 0 && inventory.swimming < 3) {
+                flipUpgrade("swimming", inventory.swimming)
+            }
+            if (inventory.bombBag > 0 && inventory.bombBag < 4) {
+                flipUpgrade("bombBag", inventory.bombBag)
+            }
+            
+        }
+    
+        function parsePacketEquipment(equipment) {
+            if (equipment.kokiriSword) {collect("kokiriSword")};
+            if (equipment.masterSword) {collect("masterSword")};
+            if (equipment.biggoronSword) {collect("biggoronSword")};
+            if (equipment.dekuShield) {collect("dekuShield")};
+            if (equipment.hylianShield) {collect("hylianShield")};
+            if (equipment.mirrorShield) {collect("mirrorShield")};
+            if (equipment.kokiriTunic) {collect("kokiriTunic")};
+            if (equipment.goronTunic) {collect("goronTunic")};
+            if (equipment.zoraTunic) {collect("zoraTunic")};
+            if (equipment.kokiriBoots) {collect("kokiriBoots")};
+            if (equipment.ironBoots) {collect("ironBoots")};
+            if (equipment.hoverBoots) {collect("hoverBoots")};            
+        }
+
+        function parsePacketQuest(quest) {
+            if (quest.goldSkulltulas > 0) {parseGoldSkulltula()};
+            if (quest.heartPieces > 0) {parseHeartPiece()};
+            if (quest.heartContainers > 0) {parseHeartContainer()};
+            if (quest.magic_meter_size > 0 && quest.magic_meter_size < 3) {
+                flipUpgrade("magic_meter_size", quest.magic_meter_size);
+            }
+            if (quest.kokiriEmerald) {collect("kokiriEmerald")};
+            if (quest.goronRuby) {collect("goronRuby")};
+            if (quest.zoraSapphire) {collect("zoraSapphire")};
+            if (quest.lightMedallion) {collect("lightMedallion")};
+            if (quest.forestMedallion) {collect("forestMedallion")};
+            if (quest.fireMedallion) {collect("fireMedallion")};
+            if (quest.waterMedallion) {collect("waterMedallion")};
+            if (quest.shadowMedallion) {collect("shadowMedallion")};
+            if (quest.spiritMedallion) {collect("spiritMedallion")};
+            if (quest.zeldasLullaby) {collect("zeldasLullaby")};
+            if (quest.eponasSong) {collect("eponasSong")};
+            if (quest.sariasSong) {collect("sariasSong")};
+            if (quest.sunsSong) {collect("sunsSong")};
+            if (quest.songOfTime) {collect("songOfTime")};
+            if (quest.songOfStorms) {collect("songOfStorms")};
+            if (quest.preludeOfLight) {collect("preludeOfLight")};
+            if (quest.minuetOfForest) {collect("minuetOfForest")};
+            if (quest.boleroOfFire) {collect("boleroOfFire")};
+            if (quest.serenadeOfWater) {collect("serenadeOfWater")};
+            if (quest.nocturneOfShadow) {collect("nocturneOfShadow")};
+            if (quest.requiemOfSpirit) {collect("requiemOfSpirit")};
+            if (quest.gerudoMembershipCard) {collect("gerudoMembershipCard")};
+            if (quest.stoneOfAgony) {collect("stoneOfAgony")};
+            if (quest.double_defense) {collect("double_defense")};
+        }
+    </script>
+</body>
 </html>
