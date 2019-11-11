@@ -33,7 +33,7 @@ export function isAdultTradeItem(item: InventoryItem) {
   );
 }
 
-export interface IDungeonItemSave extends IDungeonItemManager { }
+export interface IDungeonItemSave extends IDungeonItemManager {}
 
 export class OotoDungeonItemContainer implements IDungeonItemContainer {
   bossKey = false;
@@ -472,7 +472,10 @@ export function mergeInventoryData(
     save.adultTradeItem === InventoryItem.PRESCRIPTION
   ) {
     save.adultTradeItem = InventoryItem.EYEBALL_FROG;
-  } else if (incoming.adultTradeItem === InventoryItem.EYE_DROPS && save.adultTradeItem === InventoryItem.PRESCRIPTION) {
+  } else if (
+    incoming.adultTradeItem === InventoryItem.EYE_DROPS &&
+    save.adultTradeItem === InventoryItem.PRESCRIPTION
+  ) {
     save.adultTradeItem = InventoryItem.EYE_DROPS;
   } else if (
     incoming.adultTradeItem === InventoryItem.CLAIM_CHECK &&
@@ -800,7 +803,7 @@ export function applyEquipmentToContext(
 }
 
 // Combine the four API interfaces into one.
-export interface IEquipmentSave extends ISwords, IShields, ITunics, IBoots { }
+export interface IEquipmentSave extends ISwords, IShields, ITunics, IBoots {}
 
 export class EquipmentSave implements IEquipmentSave {
   kokiriSword = false;

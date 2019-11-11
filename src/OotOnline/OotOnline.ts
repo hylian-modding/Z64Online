@@ -822,7 +822,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.clientStorage.dungeonItemStorage,
       this.core.save.dungeonItemManager
     );
-    console.log(packet);
+
+    this.ModLoader.gui.tunnel.send(
+      'OotOnline:onSubscreenPacket',
+      new GUITunnelPacket('OotOnline', 'OotOnline:onSubscreenPacket', packet)
+    );
   }
 
   //------------------------------
