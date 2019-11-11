@@ -11,6 +11,7 @@ const hooks = {
   onSceneChange: (scene: number) => {},
   onSceneChange_Network: (packet: GUITunnelPacket) => {},
   onPlayerLeft: (packet: GUITunnelPacket) => {},
+  onData: (packet: GUITunnelPacket) => {},
 };
 
 class MapMessageHandlers {
@@ -34,6 +35,11 @@ class MapMessageHandlers {
   @TunnelMessageHandler('OotOnline:onPlayerLeft')
   onPlayerLeft(evt: GUITunnelPacket) {
     hooks.onPlayerLeft(evt);
+  }
+
+  @TunnelMessageHandler('OotOnline:onSubscreenPacket')
+  onData(evt: GUITunnelPacket) {
+    hooks.onData(evt);
   }
 }
 
