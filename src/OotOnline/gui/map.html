@@ -146,12 +146,12 @@
                 0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
             };
             var hooks = require('./map.js');
-/*             const hooks = {
-                onSceneChange: (scene) => { },
-                onSceneChange_Network: (packet) => { },
-                onPlayerLeft: (packet) => { },
-                onData: (packet) => { }
-            }; */
+            /*             const hooks = {
+                            onSceneChange: (scene) => { },
+                            onSceneChange_Network: (packet) => { },
+                            onPlayerLeft: (packet) => { },
+                            onData: (packet) => { }
+                        }; */
             hooks.onSceneChange = function (scene) {
                 player1.pos.x = coords[scene].x;
                 player1.pos.y = coords[scene].y;
@@ -185,7 +185,7 @@
             hooks.onPlayerLeft = function (packet) {
                 let index = -1;
                 for (let i = 0; i < otherPlayers.length; i++) {
-                    if (otherPlayers[i].user.uuid === packet.data.uuid) {
+                    if (otherPlayers[i].user.uuid === player) {
                         index = i;
                         break;
                     }
@@ -295,52 +295,67 @@
             var strength_icons = { 1: "./sprites/tile302.png", 2: "./sprites/tile303.png", 3: "./sprites/tile304.png" };
             var ocarina_icons = { 1: "./sprites/tile100.png", 2: "./sprites/tile101.png" };
             var hookshot_icons = { 1: "./sprites/tile090.png", 2: "./sprites/tile091.png" };
-            var childTrade_icons = { 0x0021: "./sprites/tile321.png", 0x0022: "./sprites/tile322.png", 0x0023: "./sprites/tile320.png", 0x0024: "./sprites/tile221.png", 0x0025: "./sprites/tile223.png", 0x0026: "./sprites/tile222.png", 0x0027: "./sprites/tile220.png", 0x002B: "./sprites/tile227.png" };
+            var childTrade_icons = {
+                33: "./sprites/tile321.png", 34: "./sprites/tile322.png", 35: "./sprites/tile320.png", 36: "./sprites/tile221.png",
+                37: "./sprites/tile223.png", 38: "./sprites/tile222.png", 39: "./sprites/tile220.png", 40: "./sprites/tile224.png",
+                41: "./sprites/tile225.png", 42: "./sprites/tile226.png", 43: "./sprites/tile227.png"
+            };
             var adultTrade_icons = {
-                0x002D: "./sprites/tile321.png", 0x002E: "./sprites/tile322.png", 0x002F: "./sprites/tile323.png", 0x0030: "./sprites/tile324.png",
-                0x0031: "./sprites/tile325.png", 0x0032: "./sprites/tile326.png", 0x0033: "./sprites/tile327.png", 0x0034: "./sprites/tile328.png",
-                0x0035: "./sprites/tile329.png", 0x0036: "./sprites/tile330.png", 0x0037: "./sprites/tile331.png", 0x0038: "./sprites/tile332.png"
+                45: "./sprites/tile321.png", 46: "./sprites/tile322.png", 47: "./sprites/tile323.png", 48: "./sprites/tile324.png",
+                49: "./sprites/tile325.png", 50: "./sprites/tile326.png", 51: "./sprites/tile331.png", 52: "./sprites/tile327.png",
+                53: "./sprites/tile328.png", 54: "./sprites/tile329.png", 55: "./sprites/tile332.png"
             };
-            var magic_icons = { 1: "./sprites/tile270.png", 2: "./sprites/263.png" };
+            var magic_icons = { 1: "./sprites/tile270.png", 2: "./sprites/tile263.png" };
             var bottle_icons = {
-                0x0014: "./sprites/tile180.png", 0x0015: "./sprites/tile181.png", 0x0016: "./sprites/tile182.png", 0x0017: "./sprites/tile183.png", 0x0018: "./sprites/tile186.png",
-                0x0019: "./sprites/tile188.png", 0x001A: "./sprites/tile184.png", 0x001B: "./sprites/tile190.png", 0x001C: "./sprites/tile189.png", 0x001D: "./sprites/tile187.png", 0x001E: "./sprites/tile192.png",
-                0x001F: "./sprites/tile185.png", 0x0020: "./sprites/tile191.png"
+                20: "./sprites/tile180.png", 21: "./sprites/tile181.png", 22: "./sprites/tile182.png", 23: "./sprites/tile183.png",
+                24: "./sprites/tile186.png", 25: "./sprites/tile188.png", 26: "./sprites/tile184.png", 27: "./sprites/tile190.png",
+                28: "./sprites/tile189.png", 29: "./sprites/tile187.png", 30: "./sprites/tile192.png", 31: "./sprites/tile185.png",
+                32: "./sprites/tile191.png"
             }
-            //var dekuStick_icons = { 0: "./sprites/tile08110.png", 1: "./sprites/tile08120.png", 2: "./sprites/tile08130.png" };
-           // var dekuNut_icons = { 0: "./sprites/tile08020.png", 1: "./sprites/tile08030.png", 2: "./sprites/tile08040.png" };
-            var bottle_alts = {
-                0x0014: "Empty Bottle", 0x0015: "Red Potion", 0x0016: "Green Potion", 0x0017: "Blue Potion", 0x0018: "Bottled Fairy", 0x0019: "Fish",
-                0x001A: "Lon Lon Milk", 0x001B: "Ruto's Letter", 0x001C: "Blue Fire", 0x001D: "Bugs", 0x001E: "Big Poe", 0x001F: "Lon Lon Milk (Half)", 0x0020: "Poe"
-            };
 
-            //demo  var bottle_alts = {0: "Empty Bottle", 1: "Red Potion", 2: "Green Potion", 3: "Blue Potion", 4: "Bottled Fairy", 5: "Fish",
-            //demo      6: "Lon Lon Milk", 7: "Ruto's Letter", 8: "Blue Fire", 9: "Bugs", 10: "Big Poe", 11: "Lon Lon Milk (Half)", 12: "Poe"};
+            var bottle_alts = {
+                20: "Empty Bottle", 21: "Red Potion", 22: "Green Potion", 23: "Blue Potion", 24: "Bottled Fairy", 25: "Fish",
+                26: "Lon Lon Milk", 27: "Ruto's Letter", 28: "Blue Fire", 29: "Bugs", 30: "Big Poe", 31: "Lon Lon Milk (Half)", 32: "Poe"
+            };
 
             var numbers = {
                 0: "./sprites/0.png", 1: "./sprites/1.png", 2: "./sprites/2.png", 3: "./sprites/3.png", 4: "./sprites/4.png", 5: "./sprites/5.png",
-                6: "./sprites/6.png", 7: "./sprites/7.png", 8: "./sprites/8.png", 9: "./sprites/9.png"
+                6: "./sprites/6.png", 7: "./sprites/7.png", 8: "./sprites/8.png", 9: "./sprites/9.png", 10: "./sprites/blank.png", 11: "./sprites/100.png"
             }
 
             var icon_index = {
-                "wallet": wallet_icons, "quiver": quiver_icons, "bombBag": bombbag_icons, "swimming": swimming_icons, "bulletBag": bulletBag_icons,
-                "strength": strength_icons, "ocarina": ocarina_icons, "hookshot": hookshot_icons, "childTradeItem": childTrade_icons, "adultTradeItem": adultTrade_icons,
-                "magic_meter_size": magic_icons, "bottle_1": bottle_icons, "bottle_2": bottle_icons, "bottle_3": bottle_icons, "bottle_4": bottle_icons, "heart_containers10": numbers,
-                "heart_containers1": numbers, "heartPieces10": numbers, "heartPieces1": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers, "dekuNuts": dekuNut_icons,
-                "dekuSticks": dekuStick_icons
+                "wallet": wallet_icons, "quiver": quiver_icons, "bombBag": bombbag_icons, "swimming": swimming_icons,
+                "bulletBag": bulletBag_icons, "strength": strength_icons, "ocarina": ocarina_icons, "hookshot": hookshot_icons,
+                "childTradeItem": childTrade_icons, "adultTradeItem": adultTrade_icons, "magic_meter_size": magic_icons,
+                "bottle_1": bottle_icons, "bottle_2": bottle_icons, "bottle_3": bottle_icons, "bottle_4": bottle_icons,
+                "heart_containers10": numbers, "heart_containers1": numbers, "heartPieces10": numbers, "heartPieces1": numbers,
+                "goldSkulltulas100": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers
             }
 
             var alt_index = {
-                "wallet": ["Adult Wallet", "Giant Wallet", "Tycoon Wallet"], "quiver": ["Quiver", "Bigger Quiver", "Biggest Quiver"],
-                "bombBag": ["Bomb Bag", "Bigger Bomb Bag", "Biggest Bomb Bag"], "swimming": ["Silver Scale", "Golden Scale"], "bulletBag": ["Bullet Bag", "Bigger Bullet Bag", "Biggest Bullet Bag"],
-                "strength": ["Goron Bracelet", "Silver Gauntlets", "Golden Gauntlets"], "ocarina": ["Fairy Ocarina", "Ocarina of Time"], "hookshot": ["Hookshot", "Longshot"],
-                "childTradeItem": { 0x0021: "Weird Egg", 0x0022: "Cucco", 0x0023: "Zelda's Letter", 0x0024: "Keaton Mask", 0x0025: "Skull Mask", 0x0026: "Spooky Mask", 0x0027: "Bunny Hood", 0x002B: "Mask of Truth" },
-                "adultTradeItem": {
-                    0x002D: "Pocket Egg", 0x002E: "Pocket Cucco", 0x002F: "Cojiro", 0x0030: "Odd Mushroom", 0x0031: "Odd Potion", 0x0032: "Poacher's Saw", 0x0033: "Goron's Sword (Broken)",
-                    0x0034: "Prescription", 0x0035: "Eye Ball Frog", 0x0036: "Eye Drops", 0x037: "Claim Check"
+                "wallet": ["Child Wallet", "Adult Wallet", "Giant Wallet", "Tycoon Wallet"],
+                "quiver": ["None", "Quiver", "Bigger Quiver", "Biggest Quiver"],
+                "bombBag": ["None", "Bomb Bag", "Bigger Bomb Bag", "Biggest Bomb Bag"],
+                "swimming": ["None", "Silver Scale", "Golden Scale"],
+                "bulletBag": ["None", "Bullet Bag", "Bigger Bullet Bag", "Biggest Bullet Bag"],
+                "strength": ["None", "Goron Bracelet", "Silver Gauntlets", "Golden Gauntlets"],
+                "ocarina": ["None", "Fairy Ocarina", "Ocarina of Time"],
+                "hookshot": ["None", "Hookshot", "Longshot"],
+                "childTradeItem": {
+                    33: "Weird Egg", 34: "Cucco", 35: "Zelda's Letter", 36: "Keaton Mask",
+                    37: "Skull Mask", 38: "Spooky Mask", 39: "Bunny Hood", 40: "Goron Mask",
+                    41: "Zora Mask", 42: "Gerudo Mask", 43: "Mask of Truth"
                 },
-                "magic_meter_size": ["Magic", "Extended Magic"], "bottle_1": bottle_alts, "bottle_2": bottle_alts, "bottle_3": bottle_alts, "bottle_4": bottle_alts, "heart_containers10": ["Heart Containers"],
-                "heart_containers1": ["Heart Containers"], "heartPieces10": ["Heart Pieces"], "heartPieces1": ["Heart Pieces"], "goldSkulltulas10": ["Gold Skulltulas"], "goldSkulltulas1": ["Gold Skulltulas"],
+                "adultTradeItem": {
+                    45: "Pocket Egg", 46: "Pocket Cucco", 47: "Cojiro", 48: "Odd Mushroom",
+                    49: "Odd Potion", 50: "Poacher's Saw", 51: "Goron's Sword (Broken)", 52: "Prescription",
+                    53: "Eye Ball Frog", 54: "Eye Drops", 55: "Claim Check"
+                },
+                "magic_meter_size": ["None", "Magic", "Extended Magic"],
+                "bottle_1": bottle_alts, "bottle_2": bottle_alts, "bottle_3": bottle_alts, "bottle_4": bottle_alts,
+                "heart_containers10": ["Heart Containers"], "heart_containers1": ["Heart Containers"],
+                "heartPieces10": ["Heart Pieces"], "heartPieces1": ["Heart Pieces"],
+                "goldSkulltulas100": ["Gold Skulltulas"], "goldSkulltulas10": ["Gold Skulltulas"], "goldSkulltulas1": ["Gold Skulltulas"],
                 "dekuSticks": ["Deku Sticks"], "dekuNuts": ["Deku Nuts"]
             };
 
@@ -420,11 +435,10 @@
     <img class="doesNotHave" id="hoverBoots" src="./sprites/tile042.png" width="50" height="50">
     <img src="./sprites/blank.png" width="43" height="50">
     <img class="doesNotHave" id="swimming" src="./sprites/tile300.png" width="50" height="50" alt="">
-    <img class="doesNotHave" id="gerudoCard" src="./sprites/tile104.png" width="50" height="50">
+    <img class="doesNotHave" id="gerudoMembershipCard" src="./sprites/tile104.png" width="50" height="50">
     <br>
     <span style="line-height: 250%">
-        <img class="doesNotHave" id="double_Defense" src="./sprites/tile264.png" width="50" height="50"
-            style="padding-right: 41px;">
+        <img class="doesNotHave" id="double_defense" src="./sprites/tile264.png" width="50" height="50">
         <img class="doesNotHave" id="heart_containers" src="./sprites/tile266.png" width="50" height="50"
             style="padding-right: 3px;">
         <img class="doesNotHave" id="heart_containers10" src="./sprites/0.png" height="50" width="25">
@@ -437,24 +451,27 @@
             style="padding-right: 3px;">
         <img class="doesNotHave" id="goldSkulltulas10" src="./sprites/0.png" height="50" width="25">
         <img class="doesNotHave" id="goldSkulltulas1" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="stageCheckSkull" src="./sprites/tile223.png" width="50" height="50"
-            style="padding-right: 41px;">
-        <img class="doesNotHave" id="stageCheckTruth" src="./sprites/tile227.png" width="50" height="50"
-            style="padding-right: 41px;">
+        <img class="doesNotHave" id="smallKeyDummy" src="./sprites/blank.png" height="50" width="53">
+        <img class="doesNotHave" id="bossKey" src="./sprites/tile283.png" width="50" height="50">
+        <img class="doesNotHave" id="bossKeySpace" src="./sprites/blank.png" height="50" width="2">
+        <img class="doesNotHave" id="dungeonMap" src="./sprites/tile280.png" width="50" height="50">
+        <img class="doesNotHave" id="dungeonMapSpace" src="./sprites/blank.png" height="50" width="3">
+        <img class="doesNotHave" id="dungeonCompass" src="./sprites/tile281.png" width="50" height="50">
+        <img class="doesNotHave" id="dungeonCompassSpace" src="./sprites/blank.png" height="50" width="3">
         <img class="doesNotHave" id="stoneOfAgony" src="./sprites/tile268.png" width="50" height="50">
     </span>
     <br>
-    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tile146.png" width="50" height="50"
+    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tileZelda.png" width="50" height="50"
         style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sariasSong" src="./sprites/tile146.png" width="50" height="50"
+    <img class="doesNotHave" id="sariasSong" src="./sprites/tileSaria.png" width="50" height="50"
         style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="eponasSong" src="./sprites/tile146.png" width="50" height="50"
+    <img class="doesNotHave" id="eponasSong" src="./sprites/tileEpona.png" width="50" height="50"
         style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sunsSong" src="./sprites/tile146.png" width="50" height="50"
+    <img class="doesNotHave" id="sunsSong" src="./sprites/tileSun.png" width="50" height="50"
         style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="songOfTime" src="./sprites/tile146.png" width="50" height="50"
+    <img class="doesNotHave" id="songOfTime" src="./sprites/tileTime.png" width="50" height="50"
         style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="songOfStorms" src="./sprites/tile146.png" width="50" height="50"
+    <img class="doesNotHave" id="songOfStorms" src="./sprites/tileStorms.png" width="50" height="50"
         style="padding-right: 3.27px;">
     <img class="doesNotHave" id="minuetOfForest" src="./sprites/tile141.png" width="50" height="50"
         style="padding-right: 3.27px;">
@@ -467,66 +484,88 @@
     <img class="doesNotHave" id="nocturneOfShadow" src="./sprites/tile145.png" width="50" height="50"
         style="padding-right: 3.3px;">
     <img class="doesNotHave" id="preludeOfLight" src="./sprites/tile140.png" width="50" height="50">
+
+    <span style="position: absolute; z-index: 1; left: 338px; top: 677px">
+        <img class="doesNotHave" id="goldSkulltulas100" src="./sprites/blank.png" width="50" height="50">
+    </span>
+
+    <span style="position: absolute; z-index: 1; left: 390px; top: 675px">
+        <img class="doesNotHave" id="smallKey" src="./sprites/tile282.png" width="50" height="50"
+            style="position: relative; right: 1px;">
+        <img class="doesNotHave" id="smallKey1" src="./sprites/0.png" height="50" width="25"
+            style="position: relative; left: -8px;">
+    </span>
+
     <script>
-        /*      
-                setTimeout(()=>{
-                    flipUpgrade("bottle_1", 1);
-                    flipUpgrade("bottle_2", 3);
-                    flipUpgrade("bottle_3", 5);
-                    flipUpgrade("bottle_4", 7);
-                }, 1 * 1000);
-        */
+        var curScene = 0;
+        hooks.onSceneChange = function (scene) {curScene = scene;}
+
         function flipUpgrade(id, level) {
             try {
-                let icons = icon_index[id];
-                let alts = alt_index[id];
-                let _icon = icons[level];
-                let _alt = alts[level];
-                if (_icon === null || icons === undefined) {
-                    return;
-                }
-                if (_alt === null || _alt === undefined) {
-                    return;
-                }
-                let element = document.getElementById(id);
-                if (element.classList.contains("doesNotHave")) {
-                    element.classList.remove("doesNotHave");
-                    element.classList.add("doesHave");
-                }
-                else if (element.classList.contains("doesHave")) {
-                    element.classList.remove("doesHave");
-                    element.classList.add("doesHave1");
+                if (level > -1) {
+                    let icons = icon_index[id];
+                    let alts = alt_index[id];
+                    if (
+                        icons[level] === null ||
+                        icons[level] === undefined ||
+                        alts[level] === null ||
+                        alts[level] === undefined
+                    ) { return; }
+
+                    let element = document.getElementById(id);
+
+                    if (element.level === level) return;
+
+                    if (element.classList.contains("doesNotHave")) {
+                        element.classList.remove("doesNotHave");
+                        element.classList.add("doesHave");
+                    }
+                    else if (element.classList.contains("doesHave")) {
+                        element.classList.remove("doesHave");
+                        element.classList.add("doesHave1");
+                    }
+                    else {
+                        element.classList.remove("doesHave1");
+                        element.classList.add("doesHave");
+                    }
+                    element.src = icons[level];
+                    element.alt = alts[level];
+                    element.level = level;
                 }
                 else {
-                    element.classList.remove("doesHave1");
-                    element.classList.add("doesHave");
-                    element.src = _icon[level];
+                    let toggle = document.getElementById(id);
+
+                    if (level === -2) {
+                        if (toggle.classList.contains("doesHave")) {
+                            toggle.classList.remove("doesHave");
+                        }
+                        if (toggle.classList.contains("doesHave1")) {
+                            toggle.classList.remove("doesHave1");
+                        }
+                        if (!toggle.classList.contains("doesNotHave")) {
+                            toggle.classList.add("doesNotHave");
+                        }
+                    } else {
+                        if (!toggle.classList.contains("doesNotHave")) {
+                            return;
+                        }
+
+                        toggle.classList.remove("doesNotHave");
+                        toggle.classList.add("doesHave");
+                    }
                 }
-                element.src = _icon;
-                element.alt = _alt;
             }
             catch (err) {
-                console.log(err);
+                console.log(err + " [ id: " + id + ", level: " + level + "]");
             }
-        }        
-        function collect(id) {
-            let toggle = document.getElementById(id);
-
-            if (!toggle.classList.contains("doesNotHave")) {
-                return;
-            }
-
-            toggle.classList.remove("doesNotHave");
-            toggle.classList.add("doesHave");
         }
-
         function increaseCount(id, level) {
             let count = document.getElementById(id);
             if (count.classList.contains("doesNotHave")) {
                 count.classList.remove("doesNotHave");
                 count.classList.add("doesHave");
             }
-            if (count.classList.contains("doesHave")) {
+            else if (count.classList.contains("doesHave")) {
                 count.classList.remove("doesHave");
                 count.classList.add("doesHave1");
             }
@@ -537,141 +576,167 @@
             count.src = numbers[level];
         }
 
-        var gsOnes = "0";
-        var gsTens = "0";
-        var hpOnes = "0";
-        var hpTens = "0";
-        var hcOnes = "0";
-        var hcTens = "0";
-        function splitCount(id) {
-            if (id === "goldSkulltulas") {
-                parseCountparseGoldSulltula();
-            } else if (id === "heartPieces") {
-                parseHeartPiece();
-            } else if (id === "heartContainers") {
-                parseHeartContainer();
-            }
-        }
-        function parseGoldSkulltula() {
-            var tag = "goldSkulltulas";
-            var tag1 = "goldSkulltulas1";
-            var tag10 = "goldSkulltulas10";
-            var split = packet.questStorage(tag);
-
-            if (split.substring.length > 1) {
-                var strOnes = split.substring(1, 2);
-                var strTens = split.substring(0, 1);
-
-                if (gsOnes !== ones) {
-                    increaseCount(tag1, tag, ones);
-                    gsOnes = ones;
-                }
-
-                if (gsTens !== tens) {
-                    increaseCount(tag10, tag, tens);
-                    gsTens = tens;
-                }
-            }
-            else {
-                var val = packet.questStorage(tag);
-                increaseCount(tag1, tag, val);
-            }
-        }
-        function parseHeartPiece() {
-            var tag = "heartPieces";
-            var tag1 = "heartPieces1";
-            var tag10 = "heartPieces10";
-            var split = packet.questStorage(tag);
-
-            if (split.substring.length > 1) {
-                var strOnes = split.substring(1, 2);
-                var strTens = split.substring(0, 1);
-
-                if (hpOnes !== ones) {
-                    increaseCount(tag1, tag, ones);
-                    hpOnes = ones;
-                }
-
-                if (hpTens !== tens) {
-                    increaseCount(tag10, tag, tens);
-                    hpTens = tens;
-                }
-            }
-            else {
-                var val = packet.questStorage(tag);
-                increaseCount(tag1, tag, val);
-            }
-        }
-        function parseHeartContainer() {
-            var tag = "heartContainers";
-            var tag1 = "heartContainers1";
-            var tag10 = "heartContainers10";
-            var split = packet.questStorage(tag);
-
-            if (split.substring.length > 1) {
-                var strOnes = split.substring(1, 2);
-                var strTens = split.substring(0, 1);
-
-                if (hcOnes !== ones) {
-                    increaseCount(tag1, tag, ones);
-                    hcOnes = ones;
-                }
-
-                if (hcTens !== tens) {
-                    increaseCount(tag10, tag, tens);
-                    hcTens = tens;
-                }
-            }
-            else {
-                var val = packet.questStorage(tag);
-                increaseCount(tag1, tag, val);
-            }
-        }
-
-
         hooks.onData = (packet) => {
             parsePacketInventory(packet.data.inventory);
             parsePacketEquipment(packet.data.equipment);
             parsePacketQuest(packet.data.quest);
+            parsePacketDungeon(packet.data.dungeonItems);
         };
 
+        var gsOnes = "0";
+        var gsTens = "0";
+        var gsHund = "0";
+        var hpOnes = "0";
+        var hpTens = "0";
+        var hcOnes = "0";
+        var hcTens = "0";
+        var keyOnes = "0";
+        function parseGoldSkulltula(value) {
+            var tag1 = "goldSkulltulas1";
+            var tag10 = "goldSkulltulas10";
+            var tag100 = "goldSkulltulas100";
+            var split = value.toString();
+
+            if (value > 99) {
+                if (gsOnes !== "10") {
+                    increaseCount(tag1, 10);
+                    gsOnes = "10";
+                }
+                if (gsTens !== "10") {
+                    increaseCount(tag10, 10);
+                    gsTens = "10";
+                }
+
+                if (gsHund !== "10") {
+                    increaseCount(tag100, 11);
+                    gsHund = "10";
+                }
+
+                return;
+            } else if (gsHund === "10") {
+                let element = document.getElementById(tag100);
+                element.src = "./sprites/blank.png";
+            }
+
+            if (value > 9) {
+                var strOnes = split.substring(1, 2);
+                var strTens = split.substring(0, 1);
+
+                if (gsOnes !== strOnes) {
+                    increaseCount(tag1, strOnes);
+                    gsOnes = strOnes;
+                }
+
+                if (gsTens !== strTens) {
+                    increaseCount(tag10, strTens);
+                    gsTens = strTens;
+                }
+            }
+            else {
+                if (gsOnes !== split) {
+                    increaseCount(tag1, split);
+                    gsOnes = split
+                }
+            }
+        }
+        function parseHeartPiece(value) {
+            var tag1 = "heartPieces1";
+            var tag10 = "heartPieces10";
+            var split = value.toString();
+
+            if (value > 9) {
+                var strOnes = split.substring(1, 2);
+                var strTens = split.substring(0, 1);
+
+                if (hpOnes !== strOnes) {
+                    increaseCount(tag1, strOnes);
+                    hpOnes = strOnes;
+                }
+
+                if (hpTens !== strTens) {
+                    increaseCount(tag10, strTens);
+                    hpTens = strTens;
+                }
+            }
+            else {
+                if (hpOnes !== split) {
+                    increaseCount(tag1, split);
+                    hpOnes = split
+                }
+            }
+        }
+        function parseHeartContainer(value) {
+            var tag1 = "heartPieces1";
+            var tag10 = "heartPieces10";
+            var split = value.toString();
+
+            if (value > 9) {
+                var strOnes = split.substring(1, 2);
+                var strTens = split.substring(0, 1);
+
+                if (hpOnes !== strOnes) {
+                    increaseCount(tag1, strOnes);
+                    hpOnes = strOnes;
+                }
+
+                if (hpTens !== strTens) {
+                    increaseCount(tag10, strTens);
+                    hpTens = strTens;
+                }
+            }
+            else {
+                if (hpOnes !== split) {
+                    increaseCount(tag1, split);
+                    hpOnes = split
+                }
+            }
+        }
+        function parseSmallKey(value) {
+            var split = value.toString();
+            if (value > 9) { return };
+            if (keyOnes !== split) {
+                increaseCount("dungeonKeys1", split);
+                keyOnes = split
+            }
+        }
+
         function parsePacketInventory(inventory) {
-            if (inventory.dekuSticks) {collect("dekuSticks")};
-            if (inventory.dekuNuts) {collect("dekuNuts")};
-            if (inventory.bombs) {collect("bombs")};
-            if (inventory.bombchus) {collect("bombchus")};
-            if (inventory.magicBeans) {collect("magicBeans")};
-            if (inventory.fairySlingshot) {collect("fairySlingshot")};
-            if (inventory.fairyBow) {collect("fairyBow")};
-            if (inventory.fireArrows) {collect("fireArrows")};
-            if (inventory.iceArrows) {collect("iceArrows")};
-            if (inventory.lightArrows) {collect("lightArrows")};
-            if (inventory.dinsFire) {collect("dinsFire")};
-            if (inventory.faroresWind) {collect("faroresWind")};
-            if (inventory.nayrusLove) {collect("nayrusLove")};
-            if (inventory.ocarina === 1) {collect("ocarina")};
-            if (inventory.ocarina === 2) {flipUpgrade("ocarina", inventory.ocarina)};
-            if (inventory.hookshot === 1) {collect("hookshot")};
-            if (inventory.hookshot === 2) {flipUpgrade("hookshot", inventory.hookshot)};
-            if (inventory.boomerang) {collect("boomerang")};
-            if (inventory.lensOfTruth) {collect("lensOfTruth")};
-            if (inventory.megatonHammer) {collect("megatonHammer")};
-            if (inventory.childTradeItem >= 0x0021 && inventory.childTradeItem <= 0x002b){
+            if (inventory.dekuSticks) { flipUpgrade("dekuSticks", -1) };
+            if (inventory.dekuNuts) { flipUpgrade("dekuNuts", -1) };
+            if (inventory.bombs) { flipUpgrade("bombs", -1) };
+            if (inventory.bombchus) { flipUpgrade("bombchus", -1) };
+            if (inventory.magicBeans) { flipUpgrade("magicBeans", -1) };
+            if (inventory.fairySlingshot) { flipUpgrade("fairySlingshot", -1) };
+            if (inventory.fairyBow) { flipUpgrade("fairyBow", -1) };
+            if (inventory.fireArrows) { flipUpgrade("fireArrows", -1) };
+            if (inventory.iceArrows) { flipUpgrade("iceArrows", -1) };
+            if (inventory.lightArrows) { flipUpgrade("lightArrows", -1) };
+            if (inventory.dinsFire) { flipUpgrade("dinsFire", -1) };
+            if (inventory.faroresWind) { flipUpgrade("faroresWind", -1) };
+            if (inventory.nayrusLove) { flipUpgrade("nayrusLove", -1) };
+            if (inventory.ocarina === 1) { flipUpgrade("ocarina", inventory.ocarina) };
+            if (inventory.ocarina === 2) { flipUpgrade("ocarina", inventory.ocarina) };
+            if (inventory.hookshot === 1) { flipUpgrade("hookshot", inventory.hookshot) };
+            if (inventory.hookshot === 2) { flipUpgrade("hookshot", inventory.hookshot) };
+            if (inventory.boomerang) { flipUpgrade("boomerang", -1) };
+            if (inventory.lensOfTruth) { flipUpgrade("lensOfTruth", -1) };
+            if (inventory.megatonHammer) { flipUpgrade("megatonHammer", -1) };
+            if (inventory.childTradeItem >= 33 && inventory.childTradeItem <= 44) {
                 flipUpgrade("childTradeItem", inventory.childTradeItem)
             };
-            if (inventory.adultTradeItem >= 0x002d && inventory.adultTradeItem <= 0x0038){
+            if (inventory.adultTradeItem >= 45 && inventory.adultTradeItem <= 55) {
                 flipUpgrade("adultTradeItem", inventory.adultTradeItem);
             }
-            if (inventory.bottle_1 >= 0x0014 && inventory.bottle_1 <= 0x0020) {
+            if (inventory.bottle_1 >= 20 && inventory.bottle_1 <= 32) {
                 flipUpgrade("bottle_1", inventory.bottle_1);
             }
-            if (inventory.bottle_2 >= 0x0014 && inventory.bottle_2 <= 0x0020) {
+            if (inventory.bottle_2 >= 20 && inventory.bottle_2 <= 32) {
                 flipUpgrade("bottle_2", inventory.bottle_2);
             }
-            if (inventory.bottle_3 >= 0x0014 && inventory.bottle_3 <= 0x0020) {
+            if (inventory.bottle_3 >= 20 && inventory.bottle_3 <= 32) {
                 flipUpgrade("bottle_3", inventory.bottle_3);
             }
-            if (inventory.bottle_4 >= 0x0014 && inventory.bottle_4 <= 0x0020) {
+            if (inventory.bottle_4 >= 20 && inventory.bottle_4 <= 32) {
                 flipUpgrade("bottle_4", inventory.bottle_4);
             }
             if (inventory.wallet > 0 && inventory.wallet < 4) {
@@ -692,56 +757,155 @@
             if (inventory.bombBag > 0 && inventory.bombBag < 4) {
                 flipUpgrade("bombBag", inventory.bombBag)
             }
-            
         }
-    
+
         function parsePacketEquipment(equipment) {
-            if (equipment.kokiriSword) {collect("kokiriSword")};
-            if (equipment.masterSword) {collect("masterSword")};
-            if (equipment.biggoronSword) {collect("biggoronSword")};
-            if (equipment.dekuShield) {collect("dekuShield")};
-            if (equipment.hylianShield) {collect("hylianShield")};
-            if (equipment.mirrorShield) {collect("mirrorShield")};
-            if (equipment.kokiriTunic) {collect("kokiriTunic")};
-            if (equipment.goronTunic) {collect("goronTunic")};
-            if (equipment.zoraTunic) {collect("zoraTunic")};
-            if (equipment.kokiriBoots) {collect("kokiriBoots")};
-            if (equipment.ironBoots) {collect("ironBoots")};
-            if (equipment.hoverBoots) {collect("hoverBoots")};            
+            if (equipment.kokiriSword) { flipUpgrade("kokiriSword", -1) };
+            if (equipment.masterSword) { flipUpgrade("masterSword", -1) };
+            if (equipment.biggoronSword) { flipUpgrade("biggoronSword", -1) };
+            if (equipment.dekuShield) { flipUpgrade("dekuShield", -1) };
+            if (equipment.hylianShield) { flipUpgrade("hylianShield", -1) };
+            if (equipment.mirrorShield) { flipUpgrade("mirrorShield", -1) };
+            if (equipment.kokiriTunic) { flipUpgrade("kokiriTunic", -1) };
+            if (equipment.goronTunic) { flipUpgrade("goronTunic", -1) };
+            if (equipment.zoraTunic) { flipUpgrade("zoraTunic", -1) };
+            if (equipment.kokiriBoots) { flipUpgrade("kokiriBoots", -1) };
+            if (equipment.ironBoots) { flipUpgrade("ironBoots", -1) };
+            if (equipment.hoverBoots) { flipUpgrade("hoverBoots", -1) };
         }
 
         function parsePacketQuest(quest) {
-            if (quest.goldSkulltulas > 0) {parseGoldSkulltula()};
-            if (quest.heartPieces > 0) {parseHeartPiece()};
-            if (quest.heartContainers > 0) {parseHeartContainer()};
+            if (quest.goldSkulltulas > 0) {
+                parseGoldSkulltula(quest.goldSkulltulas);
+                flipUpgrade("goldSkulltulas", -1);
+            }
+            if (quest.heartPieces > 0) {
+                parseHeartPiece(quest.heartPieces);
+                flipUpgrade("heartPieces", -1);
+            }
+            if (quest.heart_containers > 0) {
+                parseHeartContainer(quest.heart_containers);
+                flipUpgrade("heart_containers", -1);
+            }
             if (quest.magic_meter_size > 0 && quest.magic_meter_size < 3) {
                 flipUpgrade("magic_meter_size", quest.magic_meter_size);
             }
-            if (quest.kokiriEmerald) {collect("kokiriEmerald")};
-            if (quest.goronRuby) {collect("goronRuby")};
-            if (quest.zoraSapphire) {collect("zoraSapphire")};
-            if (quest.lightMedallion) {collect("lightMedallion")};
-            if (quest.forestMedallion) {collect("forestMedallion")};
-            if (quest.fireMedallion) {collect("fireMedallion")};
-            if (quest.waterMedallion) {collect("waterMedallion")};
-            if (quest.shadowMedallion) {collect("shadowMedallion")};
-            if (quest.spiritMedallion) {collect("spiritMedallion")};
-            if (quest.zeldasLullaby) {collect("zeldasLullaby")};
-            if (quest.eponasSong) {collect("eponasSong")};
-            if (quest.sariasSong) {collect("sariasSong")};
-            if (quest.sunsSong) {collect("sunsSong")};
-            if (quest.songOfTime) {collect("songOfTime")};
-            if (quest.songOfStorms) {collect("songOfStorms")};
-            if (quest.preludeOfLight) {collect("preludeOfLight")};
-            if (quest.minuetOfForest) {collect("minuetOfForest")};
-            if (quest.boleroOfFire) {collect("boleroOfFire")};
-            if (quest.serenadeOfWater) {collect("serenadeOfWater")};
-            if (quest.nocturneOfShadow) {collect("nocturneOfShadow")};
-            if (quest.requiemOfSpirit) {collect("requiemOfSpirit")};
-            if (quest.gerudoMembershipCard) {collect("gerudoMembershipCard")};
-            if (quest.stoneOfAgony) {collect("stoneOfAgony")};
-            if (quest.double_defense) {collect("double_defense")};
+            if (quest.kokiriEmerald) { flipUpgrade("kokiriEmerald", -1) };
+            if (quest.goronRuby) { flipUpgrade("goronRuby", -1) };
+            if (quest.zoraSapphire) { flipUpgrade("zoraSapphire", -1) };
+            if (quest.lightMedallion) { flipUpgrade("lightMedallion", -1) };
+            if (quest.forestMedallion) { flipUpgrade("forestMedallion", -1) };
+            if (quest.fireMedallion) { flipUpgrade("fireMedallion", -1) };
+            if (quest.waterMedallion) { flipUpgrade("waterMedallion", -1) };
+            if (quest.shadowMedallion) { flipUpgrade("shadowMedallion", -1) };
+            if (quest.spiritMedallion) { flipUpgrade("spiritMedallion", -1) };
+            if (quest.zeldasLullaby) { flipUpgrade("zeldasLullaby", -1) };
+            if (quest.eponasSong) { flipUpgrade("eponasSong", -1) };
+            if (quest.sariasSong) { flipUpgrade("sariasSong", -1) };
+            if (quest.sunsSong) { flipUpgrade("sunsSong", -1) };
+            if (quest.songOfTime) { flipUpgrade("songOfTime", -1) };
+            if (quest.songOfStorms) { flipUpgrade("songOfStorms", -1) };
+            if (quest.preludeOfLight) { flipUpgrade("preludeOfLight", -1) };
+            if (quest.minuetOfForest) { flipUpgrade("minuetOfForest", -1) };
+            if (quest.boleroOfFire) { flipUpgrade("boleroOfFire", -1) };
+            if (quest.serenadeOfWater) { flipUpgrade("serenadeOfWater", -1) };
+            if (quest.nocturneOfShadow) { flipUpgrade("nocturneOfShadow", -1) };
+            if (quest.requiemOfSpirit) { flipUpgrade("requiemOfSpirit", -1) };
+            if (quest.gerudoMembershipCard) { flipUpgrade("gerudoMembershipCard", -1) };
+            if (quest.stoneOfAgony) { flipUpgrade("stoneOfAgony", -1) };
+            if (quest.double_defense) { flipUpgrade("double_defense", -1) };
+        }
+
+        function parsePacketDungeon(item) {
+            // if (quest.key > 0) {
+            //     parseSmallKey(quest.key);
+            //     flipUpgrade("smallKey", -1);
+            // }
+
+            switch (curScene) {
+                // The Great Deku Tree
+                case 0x0000:
+                    if (item.DEKU_TREE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.DEKU_TREE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.DEKU_TREE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Dodongo's Cavern
+                case 0x0001:
+                    if (item.DODONGOS_CAVERN.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.DODONGOS_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.DODONGOS_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Inside Jabu Jabu's Belly
+                case 0x0002:
+                    if (item.JABJ_JABUS_BELLY.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.JABJ_JABUS_BELLY.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.JABJ_JABUS_BELLY.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Forest Temple
+                case 0x0003:
+                    if (item.FOREST_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.FOREST_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.FOREST_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Fire Temple
+                case 0x0004:
+                    if (item.FIRE_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.FIRE_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.FIRE_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Water Temple
+                case 0x0005:
+                    if (item.WATER_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.WATER_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.WATER_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Spirit Temple
+                case 0x0006:
+                    if (item.SPIRIT_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.SPIRIT_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.SPIRIT_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Shadow Temple
+                case 0x0007:
+                    if (item.SHADOW_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.SHADOW_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.SHADOW_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Bottom of the Well
+                case 0x0008:
+                    if (item.BOTTOM_OF_THE_WELL.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.BOTTOM_OF_THE_WELL.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.BOTTOM_OF_THE_WELL.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Ice Cavern
+                case 0x0009:
+                    if (item.ICE_CAVERN.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.ICE_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.ICE_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+
+                // Ganon's Tower
+                case 0x000a:
+                    if (item.GANONS_CASTLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.GANONS_CASTLE.map) { flipUpgrade("dungeonMap", -1) };
+                    if (item.GANONS_CASTLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                    break;
+                default:
+                    flipUpgrade("bossKey", -2);
+                    flipUpgrade("dungeonMap", -2);
+                    flipUpgrade("dungeonCompass", -2);
+            }
         }
     </script>
 </body>
+
 </html>
