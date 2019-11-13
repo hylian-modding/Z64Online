@@ -491,9 +491,9 @@
 
     <span style="position: absolute; z-index: 1; left: 390px; top: 675px">
         <img class="doesNotHave" id="smallKey" src="./sprites/tile282.png" width="50" height="50"
-            style="position: relative; right: 1px;">
+            style="position: relative; right: 5px;">
         <img class="doesNotHave" id="smallKey1" src="./sprites/0.png" height="50" width="25"
-            style="position: relative; left: -8px;">
+            style="position: relative; left: -15px;">
     </span>
 
     <script>
@@ -666,28 +666,28 @@
             }
         }
         function parseHeartContainer(value) {
-            var tag1 = "heartPieces1";
-            var tag10 = "heartPieces10";
+            var tag1 = "heart_containers1";
+            var tag10 = "heart_containers10";
             var split = value.toString();
 
             if (value > 9) {
                 var strOnes = split.substring(1, 2);
                 var strTens = split.substring(0, 1);
 
-                if (hpOnes !== strOnes) {
+                if (hcOnes !== strOnes) {
                     increaseCount(tag1, strOnes);
-                    hpOnes = strOnes;
+                    hcOnes = strOnes;
                 }
 
-                if (hpTens !== strTens) {
+                if (hcTens !== strTens) {
                     increaseCount(tag10, strTens);
-                    hpTens = strTens;
+                    hcTens = strTens;
                 }
             }
             else {
-                if (hpOnes !== split) {
+                if (hcOnes !== split) {
                     increaseCount(tag1, split);
-                    hpOnes = split
+                    hcOnes = split
                 }
             }
         }
