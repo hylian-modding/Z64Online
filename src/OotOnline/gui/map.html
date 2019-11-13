@@ -152,6 +152,16 @@
                             onPlayerLeft: (packet) => { },
                             onData: (packet) => { }
                         }; */
+            hooks.onAgeChange = function (packet) {
+                // if (player1.age !== packet.data.toString()) {
+                //     if (packet.data === 0) {
+                //         player1.icon.src = "./sprites/tileAdult.png";
+                //     } else {
+                //         player1.icon.src = "./sprites/tileChild.png";
+                //     }
+                //     player1.age = packet.data.toString();
+                // }
+            }
             hooks.onSceneChange = function (scene) {
                 player1.pos.x = coords[scene].x;
                 player1.pos.y = coords[scene].y;
@@ -178,6 +188,15 @@
                     if (otherPlayers[i].user.uuid === player) {
                         otherPlayers[i].pos.x = coords[packet.data.scene].x;
                         otherPlayers[i].pos.y = coords[packet.data.scene].y;
+
+                        // if (otherPlayers[i].age !== packet.data.age.toString()) {
+                        //     if (packet.data.age === 0) {
+                        //         otherPlayers[i].icon.src = "./sprites/tileAdult.png";
+                        //     } else {
+                        //         otherPlayers[i].icon.src = "./sprites/tileChild.png";
+                        //     }
+                        //     otherPlayers[i].age = packet.data.age.toString();
+                        // }
                         break;
                     }
                 }
@@ -209,13 +228,14 @@
             function makePlayerMarker() {
                 var marker = {};
                 marker["icon"] = new Image();
-                marker.icon.src = "./sprites/tile381.png";
+                marker.icon.src = "./sprites/tileAdult.png";
                 marker.icon.width = 24;
                 marker.icon.height = 24;
                 marker["pos"] = {};
                 marker.pos["x"] = 0;
                 marker.pos["y"] = 0;
-                marker["user"] = { uuid: "", nickname: "" };
+                //marker["age"] = "0";
+                marker["user"] = { uuid: "", nickname: ""};
                 marker.icon.onload = function () {
                     context.drawImage(marker.icon, marker.pos.x, marker.pos.y, marker.icon.width, marker.icon.height);
                 }
@@ -338,6 +358,7 @@
                 0: "./sprites/tile081.png", 1: "./sprites/tile081_0.png",
                 2: "./sprites/tile081_1.png", 3: "./sprites/tile081_2.png"
             }
+            var age_icons = { 0: "./sprites/tileAdult.png", 1: "./sprites/tileChild.png" }
 
             var song1_icons = { 1: "./sprites/tileZelda.png" };
             var song2_icons = { 1: "./sprites/tileEpona.png" };
@@ -359,7 +380,7 @@
                 "bottle_1": bottle_icons, "bottle_2": bottle_icons, "bottle_3": bottle_icons, "bottle_4": bottle_icons,
                 "goldSkulltulas100": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers,
                 "heart_containers": hc_icons, "heart_containers10": numbers, "heart_containers1": numbers,
-                "dekuSticks": deku_stix_icons, "dekuNuts": deku_nut_icons,
+                "dekuSticks": deku_stix_icons, "dekuNuts": deku_nut_icons, "age": age_icons,
                 "dungeonKey": key_icons, "heartPieces": hp_icons,
                 "zeldasLullaby": song1_icons, "eponasSong": song2_icons, "sariasSong": song3_icons,
                 "sunsSong": song4_icons, "songOfTime": song5_icons, "songOfStorms": song6_icons, "preludeOfLight": song7_icons,
@@ -392,6 +413,7 @@
                 "heart_containers10": ["Heart Containers"], "heart_containers1": ["Heart Containers"],
                 "heartPieces": ["Heart Pieces", "Heart Pieces", "Heart Pieces", "Heart Pieces"],
                 "goldSkulltulas100": ["Gold Skulltulas"], "goldSkulltulas10": ["Gold Skulltulas"], "goldSkulltulas1": ["Gold Skulltulas"],
+                "age": ["Adult", "Child"],
                 "dekuSticks": ["Deku Sticks", "Deku Sticks", "Deku Sticks", "Deku Sticks"],
                 "dekuNuts": ["Deku Nuts", "Deku Nuts", "Deku Nuts", "Deku Nuts"],
                 "dungeonKey": ["Small Key", "Boss Key"],
@@ -421,7 +443,7 @@
     <img class="doesNotHave" id="dinsFire" src="./sprites/tile260.png" width="50" height="50">
     <br>
     <img class="doesNotHave" id="bombBag" src="./sprites/tile246.png" width="50" height="50" alt="">
-    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="age" src="./sprites/tileChild.png" width="50" height="50" alt="">
     <img src="./sprites/blank.png" width="50" height="50">
     <img class="doesNotHave" id="dekuShield" src="./sprites/tile020.png" width="50" height="50">
     <img class="doesNotHave" id="hylianShield" src="./sprites/tile021.png" width="50" height="50">
@@ -512,6 +534,9 @@
     <script>
         var curScene = 0;
         hooks.onSceneChange = function (scene) { curScene = scene; }
+        hooks.onAgeChange = function (packet) {
+            flipUpgrade("age", packet.data);
+        }
 
         function flipUpgrade(id, level) {
             try {
