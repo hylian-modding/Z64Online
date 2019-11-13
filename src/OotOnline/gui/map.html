@@ -319,17 +319,52 @@
             };
 
             var numbers = {
-                0: "./sprites/0.png", 1: "./sprites/1.png", 2: "./sprites/2.png", 3: "./sprites/3.png", 4: "./sprites/4.png", 5: "./sprites/5.png",
-                6: "./sprites/6.png", 7: "./sprites/7.png", 8: "./sprites/8.png", 9: "./sprites/9.png", 10: "./sprites/blank.png", 11: "./sprites/100.png"
+                0: "./sprites/0.png", 1: "./sprites/1.png", 2: "./sprites/2.png", 3: "./sprites/3.png", 4: "./sprites/4.png",
+                5: "./sprites/5.png", 6: "./sprites/6.png", 7: "./sprites/7.png", 8: "./sprites/8.png", 9: "./sprites/9.png"
             }
+
+            var key_icons = { 0: "./sprites/tile282.png", 1: "./sprites/tile283.png" };
+            var hc_icons = { 0: "./sprites/tile266.png", 1: "./sprites/tile264.png" };
+            var hp_icons = {
+                0: "./sprites/tile265_0.png", 1: "./sprites/tile265_1.png",
+                2: "./sprites/tile265_2.png", 3: "./sprites/tile265_3.png"
+            };
+
+            var deku_nut_icons = {
+                0: "./sprites/tile080.png", 1: "./sprites/tile080_0.png",
+                2: "./sprites/tile080_1.png", 3: "./sprites/tile080_2.png"
+            }
+            var deku_stix_icons = {
+                0: "./sprites/tile081.png", 1: "./sprites/tile081_0.png",
+                2: "./sprites/tile081_1.png", 3: "./sprites/tile081_2.png"
+            }
+
+            var song1_icons = { 1: "./sprites/tileZelda.png" };
+            var song2_icons = { 1: "./sprites/tileEpona.png" };
+            var song3_icons = { 1: "./sprites/tileSaria.png" };
+            var song4_icons = { 1: "./sprites/tileSun.png" };
+            var song5_icons = { 1: "./sprites/tileTime.png" };
+            var song6_icons = { 1: "./sprites/tileStorms.png" };
+            var song7_icons = { 1: "./sprites/tile140.png" };
+            var song8_icons = { 1: "./sprites/tile141.png" };
+            var song9_icons = { 1: "./sprites/tile142.png" };
+            var song10_icons = { 1: "./sprites/tile143.png" };
+            var song11_icons = { 1: "./sprites/tile145.png" };
+            var song12_icons = { 1: "./sprites/tile144.png" };
 
             var icon_index = {
                 "wallet": wallet_icons, "quiver": quiver_icons, "bombBag": bombbag_icons, "swimming": swimming_icons,
                 "bulletBag": bulletBag_icons, "strength": strength_icons, "ocarina": ocarina_icons, "hookshot": hookshot_icons,
                 "childTradeItem": childTrade_icons, "adultTradeItem": adultTrade_icons, "magic_meter_size": magic_icons,
                 "bottle_1": bottle_icons, "bottle_2": bottle_icons, "bottle_3": bottle_icons, "bottle_4": bottle_icons,
-                "heart_containers10": numbers, "heart_containers1": numbers, "heartPieces10": numbers, "heartPieces1": numbers,
-                "goldSkulltulas100": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers
+                "goldSkulltulas100": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers,
+                "heart_containers": hc_icons, "heart_containers10": numbers, "heart_containers1": numbers,
+                "dekuSticks": deku_stix_icons, "dekuNuts": deku_nut_icons,
+                "dungeonKey": key_icons, "heartPieces": hp_icons,
+                "zeldasLullaby": song1_icons, "eponasSong": song2_icons, "sariasSong": song3_icons,
+                "sunsSong": song4_icons, "songOfTime": song5_icons, "songOfStorms": song6_icons, "preludeOfLight": song7_icons,
+                "minuetOfForest": song8_icons, "boleroOfFire": song9_icons, "serenadeOfWater": song10_icons,
+                "nocturneOfShadow": song11_icons, "requiemOfSpirit": song12_icons
             }
 
             var alt_index = {
@@ -353,146 +388,126 @@
                 },
                 "magic_meter_size": ["None", "Magic", "Extended Magic"],
                 "bottle_1": bottle_alts, "bottle_2": bottle_alts, "bottle_3": bottle_alts, "bottle_4": bottle_alts,
+                "heart_containers": ["Heart Containers", "Double Defense Heart Containers"],
                 "heart_containers10": ["Heart Containers"], "heart_containers1": ["Heart Containers"],
-                "heartPieces10": ["Heart Pieces"], "heartPieces1": ["Heart Pieces"],
+                "heartPieces": ["Heart Pieces", "Heart Pieces", "Heart Pieces", "Heart Pieces"],
                 "goldSkulltulas100": ["Gold Skulltulas"], "goldSkulltulas10": ["Gold Skulltulas"], "goldSkulltulas1": ["Gold Skulltulas"],
-                "dekuSticks": ["Deku Sticks"], "dekuNuts": ["Deku Nuts"]
+                "dekuSticks": ["Deku Sticks", "Deku Sticks", "Deku Sticks", "Deku Sticks"],
+                "dekuNuts": ["Deku Nuts", "Deku Nuts", "Deku Nuts", "Deku Nuts"],
+                "dungeonKey": ["Small Key", "Boss Key"],
+                "zeldasLullaby": { 1: "Zelda's Lullaby" }, "eponasSong": { 1: "Epona's Song" },
+                "sariasSong": { 1: "Saria's Song" }, "sunsSong": { 1: "Sun's Son" }, "songOfTime": { 1: "Song of Time" },
+                "songOfStorms": { 1: "Song of Storms" }, "preludeOfLight": { 1: "Prelude of Light" },
+                "minuetOfForest": { 1: "Minuet of Forest" }, "boleroOfFire": { 1: "Bolero of Fire" },
+                "serenadeOfWater": { 1: "Serenade of Water" }, "nocturneOfShadow": { 1: "Nocturne of Shadow" },
+                "requiemOfSpirit": { 1: "Requiem of Spirit" }
             };
 
         </script></span>
     <br>
-    <span style="line-height: 250%">
-        <img class="doesNotHave" id="kokiriEmerald" src="./sprites/tile160.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="goronRuby" src="./sprites/tile161.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="zoraSapphire" src="./sprites/tile162.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="lightMedallion" src="./sprites/tile163.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="forestMedallion" src="./sprites/tile164.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="fireMedallion" src="./sprites/tile165.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="waterMedallion" src="./sprites/tile166.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="shadowMedallion" src="./sprites/tile168.png" width="50" height="50">
-        <img src="./sprites/blank.png" width="21" height="50">
-        <img class="doesNotHave" id="spiritMedallion" src="./sprites/tile167.png" width="50" height="50">
-    </span>
     <br>
+    <img class="doesNotHave" id="bulletBag" src="./sprites/tile243.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="quiver" src="./sprites/tile249.png" width="50" height="50" alt="">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="kokiriSword" src="./sprites/tile060.png" width="50" height="50">
+    <img class="doesNotHave" id="masterSword" src="./sprites/tile061.png" width="50" height="50">
+    <img class="doesNotHave" id="biggoronSword" src="./sprites/tile062.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="50" height="50">
     <img class="doesNotHave" id="dekuNuts" src="./sprites/tile080.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="dekuSticks" src="./sprites/tile081.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="bombs" src="./sprites/tile085.png" width="50" height="50">
     <img class="doesNotHave" id="fairyBow" src="./sprites/tile120.png" width="50" height="50">
     <img class="doesNotHave" id="fireArrows" src="./sprites/tile122.png" width="50" height="50">
     <img class="doesNotHave" id="dinsFire" src="./sprites/tile260.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="kokiriSword" src="./sprites/tile060.png" width="50" height="50">
-    <img class="doesNotHave" id="masterSword" src="./sprites/tile061.png" width="50" height="50">
-    <img class="doesNotHave" id="biggoronSword" src="./sprites/tile062.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="bulletBag" src="./sprites/tile243.png" width="50" height="50" alt="">
-    <img class="doesNotHave" id="quiver" src="./sprites/tile249.png" width="50" height="50" alt="">
     <br>
+    <img class="doesNotHave" id="bombBag" src="./sprites/tile246.png" width="50" height="50" alt="">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="dekuShield" src="./sprites/tile020.png" width="50" height="50">
+    <img class="doesNotHave" id="hylianShield" src="./sprites/tile021.png" width="50" height="50">
+    <img class="doesNotHave" id="mirrorShield" src="./sprites/tile022.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="50" height="50">
     <img class="doesNotHave" id="fairySlingshot" src="./sprites/tile083.png" width="50" height="50">
     <img class="doesNotHave" id="ocarina" src="./sprites/tile100.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="bombchus" src="./sprites/tile086.png" width="50" height="50">
     <img class="doesNotHave" id="hookshot" src="./sprites/tile090.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="iceArrows" src="./sprites/tile123.png" width="50" height="50">
     <img class="doesNotHave" id="faroresWind" src="./sprites/tile261.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="dekuShield" src="./sprites/tile020.png" width="50" height="50">
-    <img class="doesNotHave" id="hylianShield" src="./sprites/tile021.png" width="50" height="50">
-    <img class="doesNotHave" id="mirrorShield" src="./sprites/tile022.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="bombBag" src="./sprites/tile246.png" width="50" height="50" alt="">
-    <img class="doesNotHave" id="wallet" src="./sprites/tile240.png" width="50" height="50" alt="" />
     <br>
+    <img class="doesNotHave" id="strength" src="./sprites/tile302.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="magic_meter_size" src="./sprites/tile270.png" width="50" height="50" alt="">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="kokiriTunic" src="./sprites/tile000.png" width="50" height="50">
+    <img class="doesNotHave" id="goronTunic" src="./sprites/tile001.png" width="50" height="50">
+    <img class="doesNotHave" id="zoraTunic" src="./sprites/tile002.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="50" height="50">
     <img class="doesNotHave" id="boomerang" src="./sprites/tile087.png" width="50" height="50">
     <img class="doesNotHave" id="lensOfTruth" src="./sprites/tile088.png" width="50" height="50">
     <img class="doesNotHave" id="magicBeans" src="./sprites/tile089.png" width="50" height="50">
     <img class="doesNotHave" id="megatonHammer" src="./sprites/tile092.png" width="50" height="50">
     <img class="doesNotHave" id="lightArrows" src="./sprites/tile124.png" width="50" height="50">
     <img class="doesNotHave" id="nayrusLove" src="./sprites/tile262.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="kokiriTunic" src="./sprites/tile000.png" width="50" height="50">
-    <img class="doesNotHave" id="goronTunic" src="./sprites/tile001.png" width="50" height="50">
-    <img class="doesNotHave" id="zoraTunic" src="./sprites/tile002.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="strength" src="./sprites/tile302.png" width="50" height="50" alt="">
-    <img class="doesNotHave" id="magic_meter_size" src="./sprites/tile270.png" width="50" height="50" alt="">
     <br>
+    <img class="doesNotHave" id="swimming" src="./sprites/tile300.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="wallet" src="./sprites/tile240.png" width="50" height="50" alt="" />
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="kokiriBoots" src="./sprites/tile040.png" width="50" height="50">
+    <img class="doesNotHave" id="ironBoots" src="./sprites/tile041.png" width="50" height="50">
+    <img class="doesNotHave" id="hoverBoots" src="./sprites/tile042.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="50" height="50">
     <img class="doesNotHave" id="bottle_1" src="./sprites/tile180.png" width="50" height="50">
     <img class="doesNotHave" id="bottle_2" src="./sprites/tile180.png" width="50" height="50">
     <img class="doesNotHave" id="bottle_3" src="./sprites/tile180.png" width="50" height="50">
     <img class="doesNotHave" id="bottle_4" src="./sprites/tile180.png" width="50" height="50">
     <img class="doesNotHave" id="adultTradeItem" src="./sprites/tile321.png" width="50" height="50" alt="">
     <img class="doesNotHave" id="childTradeItem" src="./sprites/tile321.png" width="50" height="50" alt="">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="kokiriBoots" src="./sprites/tile040.png" width="50" height="50">
-    <img class="doesNotHave" id="ironBoots" src="./sprites/tile041.png" width="50" height="50">
-    <img class="doesNotHave" id="hoverBoots" src="./sprites/tile042.png" width="50" height="50">
-    <img src="./sprites/blank.png" width="43" height="50">
-    <img class="doesNotHave" id="swimming" src="./sprites/tile300.png" width="50" height="50" alt="">
+    <br>
+    <br>
+    <img class="doesNotHave" id="heart_containers" src="./sprites/tile266.png" width="50" height="50">
+    <img class="doesNotHave" id="heart_containers10" src="./sprites/0.png" width="25" height="50">
+    <img class="doesNotHave" id="heart_containers1" src="./sprites/0.png" width="25" height="50">
+    <img src="./sprites/blank.png" width="46" height="50">
+    <img class="doesNotHave" id="stoneOfAgony" src="./sprites/tile268.png" width="50" height="50">
     <img class="doesNotHave" id="gerudoMembershipCard" src="./sprites/tile104.png" width="50" height="50">
+    <img class="doesNotHave" id="heartPieces" src="./sprites/tile265_0.png" width="50" height="50">
+    <img class="doesNotHave" id="goldSkulltulas" src="./sprites/tile420.png" width="50" height="50">
+    <img class="doesNotHave" id="goldSkulltulasBuffer" src="./sprites/blank.png" width="10" height="50">
+    <img class="doesNotHave" id="goldSkulltulas100" src="./sprites/0.png" width="25" height="50">
+    <img class="doesNotHave" id="goldSkulltulas10" src="./sprites/0.png" width="25" height="50">
+    <img class="doesNotHave" id="goldSkulltulas1" src="./sprites/0.png" width="25" height="50">
+    <img src="./sprites/blank.png" width="57" height="50">
+    <img class="doesNotHave" id="shadowMedallion" src="./sprites/tile167.png" width="50" height="50">
+    <img class="doesNotHave" id="lightMedallion" src="./sprites/tile163.png" width="50" height="50">
+    <img class="doesNotHave" id="forestMedallion" src="./sprites/tile164.png" width="50" height="50">
     <br>
-    <span style="line-height: 250%">
-        <img class="doesNotHave" id="double_defense" src="./sprites/tile264.png" width="50" height="50">
-        <img class="doesNotHave" id="heart_containers" src="./sprites/tile266.png" width="50" height="50"
-            style="padding-right: 3px;">
-        <img class="doesNotHave" id="heart_containers10" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="heart_containers1" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="heartPieces" src="./sprites/tile265.png" width="50" height="50"
-            style="padding-right: 3px;">
-        <img class="doesNotHave" id="heartPieces10" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="heartPieces1" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="goldSkulltulas" src="./sprites/tile420.png" width="50" height="50"
-            style="padding-right: 3px;">
-        <img class="doesNotHave" id="goldSkulltulas10" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="goldSkulltulas1" src="./sprites/0.png" height="50" width="25">
-        <img class="doesNotHave" id="smallKeyDummy" src="./sprites/blank.png" height="50" width="53">
-        <img class="doesNotHave" id="bossKey" src="./sprites/tile283.png" width="50" height="50">
-        <img class="doesNotHave" id="dungeonMap" src="./sprites/tile280.png" width="50" height="50">
-        <img class="doesNotHave" id="dungeonMapSpace" src="./sprites/blank.png" width="3" height="50">
-        <img class="doesNotHave" id="dungeonCompass" src="./sprites/tile281.png" width="50" height="50">
-        <img class="doesNotHave" id="dungeonCompassDummy" src="./sprites/blank.png" width="2" height="50">
-        <img class="doesNotHave" id="stoneOfAgony" src="./sprites/tile268.png" width="50" height="50">
-    </span>
+    <img class="doesNotHave" id="dungeonKey" src="./sprites/tile282.png" width="50" height="50">
+    <img class="doesNotHave" id="dungeonKey10" src="./sprites/0.png" width="25" height="50">
+    <img class="doesNotHave" id="dungeonKey1" src="./sprites/0.png" width="25" height="50">
+    <img src="./sprites/blank.png" width="46" height="50">
+    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="eponasSong" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="sariasSong" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="sunsSong" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="songOfTime" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="songOfStorms" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="spiritMedallion" src="./sprites/tile168.png" width="50" height="50">
+    <img class="doesNotHave" id="waterMedallion" src="./sprites/tile166.png" width="50" height="50">
+    <img class="doesNotHave" id="fireMedallion" src="./sprites/tile165.png" width="50" height="50">
     <br>
-    <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tileZelda.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="eponasSong" src="./sprites/tileEpona.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sariasSong" src="./sprites/tileSaria.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sunsSong" src="./sprites/tileSun.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="songOfTime" src="./sprites/tileTime.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="songOfStorms" src="./sprites/tileStorms.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="minuetOfForest" src="./sprites/tile141.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="boleroOfFire" src="./sprites/tile142.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="serenadeOfWater" src="./sprites/tile143.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="requiemOfSpirit" src="./sprites/tile144.png" width="50" height="50"
-        style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="nocturneOfShadow" src="./sprites/tile145.png" width="50" height="50"
-        style="padding-right: 3.3px;">
-    <img class="doesNotHave" id="preludeOfLight" src="./sprites/tile140.png" width="50" height="50">
-
-    <span style="position: absolute; z-index: 1; left: 338px; top: 677px">
-        <img class="doesNotHave" id="goldSkulltulas100" src="./sprites/blank.png" width="50" height="50">
-    </span>
-
-    <span style="position: absolute; z-index: 1; left: 390px; top: 675px">
-        <img class="doesNotHave" id="smallKey" src="./sprites/tile282.png" width="50" height="50">
-        <img class="doesNotHave" id="smallKey1" src="./sprites/0.png" width="25" height="50"
-            style="position: relative; left: -15px;">
-    </span>
+    <img class="doesNotHave" id="dungeonCompass" src="./sprites/tile281.png" width="50" height="50">
+    <img class="doesNotHave" id="dungeonMap" src="./sprites/tile280.png" width="50" height="50">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="minuetOfForest" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="boleroOfFire" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="serenadeOfWater" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="requiemOfSpirit" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="nocturneOfShadow" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img class="doesNotHave" id="preludeOfLight" src="./sprites/tile146.png" width="50" height="50" alt="">
+    <img src="./sprites/blank.png" width="50" height="50">
+    <img class="doesNotHave" id="kokiriEmerald" src="./sprites/tile160.png" width="50" height="50">
+    <img class="doesNotHave" id="goronRuby" src="./sprites/tile161.png" width="50" height="50">
+    <img class="doesNotHave" id="zoraSapphire" src="./sprites/tile162.png" width="50" height="50">
 
     <script>
         var curScene = 0;
@@ -584,109 +599,69 @@
         var gsOnes = "0";
         var gsTens = "0";
         var gsHund = "0";
-        var hpOnes = "0";
-        var hpTens = "0";
         var hcOnes = "0";
         var hcTens = "0";
         var keyOnes = "0";
+        var keyTens = "0";
         function parseGoldSkulltula(value) {
             var tag1 = "goldSkulltulas1";
             var tag10 = "goldSkulltulas10";
             var tag100 = "goldSkulltulas100";
-            var split = value.toString();
+            var val1 = "0";
+            var val10 = "0";
+            var val100 = "0";
+            var strVal = value.toString();
 
             if (value > 99) {
-                if (gsOnes !== "10") {
-                    increaseCount(tag1, 10);
-                    gsOnes = "10";
-                }
-                if (gsTens !== "10") {
-                    increaseCount(tag10, 10);
-                    gsTens = "10";
-                }
-
-                if (gsHund !== "10") {
-                    increaseCount(tag100, 11);
-                    gsHund = "10";
-                }
-
-                return;
-            } else if (gsHund === "10") {
-                let element = document.getElementById(tag100);
-                element.src = "./sprites/blank.png";
-            }
-
-            if (value > 9) {
-                var strOnes = split.substring(1, 2);
-                var strTens = split.substring(0, 1);
-
-                if (gsOnes !== strOnes) {
-                    increaseCount(tag1, strOnes);
-                    gsOnes = strOnes;
-                }
-
-                if (gsTens !== strTens) {
-                    increaseCount(tag10, strTens);
-                    gsTens = strTens;
-                }
+                val1 = strVal.substring(2, 3);
+                val10 = strVal.substring(1, 2);
+                val100 = strVal.substring(0, 1);
+            } else if (value > 9) {
+                val1 = strVal.substring(1, 2);
+                val10 = strVal.substring(0, 1);
             }
             else {
-                if (gsOnes !== split) {
-                    increaseCount(tag1, split);
-                    gsOnes = split
-                }
+                val1 = strVal;
             }
-        }
-        function parseHeartPiece(value) {
-            var tag1 = "heartPieces1";
-            var tag10 = "heartPieces10";
-            var split = value.toString();
 
-            if (value > 9) {
-                var strOnes = split.substring(1, 2);
-                var strTens = split.substring(0, 1);
-
-                if (hpOnes !== strOnes) {
-                    increaseCount(tag1, strOnes);
-                    hpOnes = strOnes;
-                }
-
-                if (hpTens !== strTens) {
-                    increaseCount(tag10, strTens);
-                    hpTens = strTens;
-                }
+            if (gsOnes !== val1) {
+                increaseCount(tag1, val1);
+                gsOnes = val1;
             }
-            else {
-                if (hpOnes !== split) {
-                    increaseCount(tag1, split);
-                    hpOnes = split
-                }
+
+            if (gsTens !== val10) {
+                increaseCount(tag10, val10);
+                gsTens = val10;
+            }
+
+            if (gsHund !== val100) {
+                increaseCount(tag100, val100);
+                gsHund = val100;
             }
         }
         function parseHeartContainer(value) {
             var tag1 = "heart_containers1";
             var tag10 = "heart_containers10";
-            var split = value.toString();
+            var val1 = "0";
+            var val10 = "0";
+            var strVal = value.toString();
 
             if (value > 9) {
-                var strOnes = split.substring(1, 2);
-                var strTens = split.substring(0, 1);
-
-                if (hcOnes !== strOnes) {
-                    increaseCount(tag1, strOnes);
-                    hcOnes = strOnes;
-                }
-
-                if (hcTens !== strTens) {
-                    increaseCount(tag10, strTens);
-                    hcTens = strTens;
-                }
+                val1 = strVal.substring(1, 2);
+                val10 = strVal.substring(0, 1);
             }
             else {
-                if (hcOnes !== split) {
-                    increaseCount(tag1, split);
-                    hcOnes = split
-                }
+                val1 = strVal;
+            }
+
+            if (hcOnes !== val1) {
+                increaseCount(tag1, val1);
+                hcOnes = val1;
+            }
+
+            if (hcTens !== val10) {
+                increaseCount(tag10, val10);
+                hcTens = val10;
             }
         }
         function parseSmallKey(value) {
@@ -699,8 +674,12 @@
         }
 
         function parsePacketInventory(inventory) {
-            if (inventory.dekuSticks) { flipUpgrade("dekuSticks", -1) };
-            if (inventory.dekuNuts) { flipUpgrade("dekuNuts", -1) };
+            if (inventory.dekuSticksCapacity > 0 && inventory.dekuSticksCapacity < 4) {
+                flipUpgrade("dekuSticks", inventory.dekuSticksCapacity);
+            }
+            if (inventory.dekuNutsCapacity > 0 && inventory.dekuNutsCapacity < 4) {
+                flipUpgrade("dekuNuts", inventory.dekuNutsCapacity);
+            }
             if (inventory.bombs) { flipUpgrade("bombs", -1) };
             if (inventory.bombchus) { flipUpgrade("bombchus", -1) };
             if (inventory.magicBeans) { flipUpgrade("magicBeans", -1) };
@@ -777,9 +756,8 @@
                 parseGoldSkulltula(quest.goldSkulltulas);
                 flipUpgrade("goldSkulltulas", -1);
             }
-            if (quest.heartPieces > 0) {
-                parseHeartPiece(quest.heartPieces);
-                flipUpgrade("heartPieces", -1);
+            if (quest.heartPieces > -1 && quest.heartPieces < 4) {
+                flipUpgrade("heartPieces", quest.heartPieces);
             }
             if (quest.heart_containers > 0) {
                 parseHeartContainer(quest.heart_containers);
@@ -797,21 +775,21 @@
             if (quest.waterMedallion) { flipUpgrade("waterMedallion", -1) };
             if (quest.shadowMedallion) { flipUpgrade("shadowMedallion", -1) };
             if (quest.spiritMedallion) { flipUpgrade("spiritMedallion", -1) };
-            if (quest.zeldasLullaby) { flipUpgrade("zeldasLullaby", -1) };
-            if (quest.eponasSong) { flipUpgrade("eponasSong", -1) };
-            if (quest.sariasSong) { flipUpgrade("sariasSong", -1) };
-            if (quest.sunsSong) { flipUpgrade("sunsSong", -1) };
-            if (quest.songOfTime) { flipUpgrade("songOfTime", -1) };
-            if (quest.songOfStorms) { flipUpgrade("songOfStorms", -1) };
-            if (quest.preludeOfLight) { flipUpgrade("preludeOfLight", -1) };
-            if (quest.minuetOfForest) { flipUpgrade("minuetOfForest", -1) };
-            if (quest.boleroOfFire) { flipUpgrade("boleroOfFire", -1) };
-            if (quest.serenadeOfWater) { flipUpgrade("serenadeOfWater", -1) };
-            if (quest.nocturneOfShadow) { flipUpgrade("nocturneOfShadow", -1) };
-            if (quest.requiemOfSpirit) { flipUpgrade("requiemOfSpirit", -1) };
+            if (quest.zeldasLullaby) { flipUpgrade("zeldasLullaby", 1) };
+            if (quest.eponasSong) { flipUpgrade("eponasSong", 1) };
+            if (quest.sariasSong) { flipUpgrade("sariasSong", 1) };
+            if (quest.sunsSong) { flipUpgrade("sunsSong", 1) };
+            if (quest.songOfTime) { flipUpgrade("songOfTime", 1) };
+            if (quest.songOfStorms) { flipUpgrade("songOfStorms", 1) };
+            if (quest.preludeOfLight) { flipUpgrade("preludeOfLight", 1) };
+            if (quest.minuetOfForest) { flipUpgrade("minuetOfForest", 1) };
+            if (quest.boleroOfFire) { flipUpgrade("boleroOfFire", 1) };
+            if (quest.serenadeOfWater) { flipUpgrade("serenadeOfWater", 1) };
+            if (quest.nocturneOfShadow) { flipUpgrade("nocturneOfShadow", 1) };
+            if (quest.requiemOfSpirit) { flipUpgrade("requiemOfSpirit", 1) };
             if (quest.gerudoMembershipCard) { flipUpgrade("gerudoMembershipCard", -1) };
             if (quest.stoneOfAgony) { flipUpgrade("stoneOfAgony", -1) };
-            if (quest.double_defense) { flipUpgrade("double_defense", -1) };
+            if (quest.double_defense) { flipUpgrade("heart_containers", 1) };
         }
 
         function parsePacketDungeon(item) {
@@ -823,82 +801,126 @@
             switch (curScene) {
                 // The Great Deku Tree
                 case 0x0000:
-                    if (item.DEKU_TREE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.DEKU_TREE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.DEKU_TREE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.DEKU_TREE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Dodongo's Cavern
                 case 0x0001:
-                    if (item.DODONGOS_CAVERN.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.DODONGOS_CAVERN.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.DODONGOS_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.DODONGOS_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Inside Jabu Jabu's Belly
                 case 0x0002:
-                    if (item.JABJ_JABUS_BELLY.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.JABJ_JABUS_BELLY.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.JABJ_JABUS_BELLY.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.JABJ_JABUS_BELLY.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Forest Temple
                 case 0x0003:
-                    if (item.FOREST_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.FOREST_TEMPLE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.FOREST_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.FOREST_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Fire Temple
                 case 0x0004:
-                    if (item.FIRE_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.FIRE_TEMPLE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.FIRE_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.FIRE_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Water Temple
                 case 0x0005:
-                    if (item.WATER_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.WATER_TEMPLE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.WATER_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.WATER_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Spirit Temple
                 case 0x0006:
-                    if (item.SPIRIT_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.SPIRIT_TEMPLE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.SPIRIT_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.SPIRIT_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Shadow Temple
                 case 0x0007:
-                    if (item.SHADOW_TEMPLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.SHADOW_TEMPLE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.SHADOW_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.SHADOW_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Bottom of the Well
                 case 0x0008:
-                    if (item.BOTTOM_OF_THE_WELL.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.BOTTOM_OF_THE_WELL.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.BOTTOM_OF_THE_WELL.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.BOTTOM_OF_THE_WELL.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Ice Cavern
                 case 0x0009:
-                    if (item.ICE_CAVERN.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.ICE_CAVERN.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.ICE_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.ICE_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
 
                 // Ganon's Tower
                 case 0x000a:
-                    if (item.GANONS_CASTLE.bossKey) { flipUpgrade("bossKey", -1) };
+                    if (item.GANONS_CASTLE.bossKey) {
+                        flipUpgrade("dungeonKey", 1);
+                    } else {
+                        flipUpgrade("dungeonKey", 0);
+                    }
                     if (item.GANONS_CASTLE.map) { flipUpgrade("dungeonMap", -1) };
                     if (item.GANONS_CASTLE.compass) { flipUpgrade("dungeonCompass", -1) };
                     break;
                 default:
-                    flipUpgrade("bossKey", -2);
+                    flipUpgrade("dungeonKey", 0);
                     flipUpgrade("dungeonMap", -2);
                     flipUpgrade("dungeonCompass", -2);
             }
