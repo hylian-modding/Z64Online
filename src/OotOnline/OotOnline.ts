@@ -398,6 +398,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
       );
+      this.ModLoader.gui.tunnel.send(
+        'OotOnline:onAgeChange',
+        new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', this.core.save.age)
+      );
     }, 1000);
   }
 
@@ -1055,12 +1059,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(OotEvents.ON_AGE_CHANGE)
   onAgeChange(age: Age) {
-    if (
-      this.core.helper.isTitleScreen() ||
-      !this.core.helper.isSceneNumberValid()
-    ) {
-      return;
-    }
     this.overlord.localPlayerLoadingZone();
     this.ModLoader.gui.tunnel.send(
       'OotOnline:onAgeChange',
