@@ -463,9 +463,9 @@
     <br>
     <img class="doesNotHave" id="zeldasLullaby" src="./sprites/tileZelda.png" width="50" height="50"
         style="padding-right: 3.27px;">
-    <img class="doesNotHave" id="sariasSong" src="./sprites/tileSaria.png" width="50" height="50"
-        style="padding-right: 3.27px;">
     <img class="doesNotHave" id="eponasSong" src="./sprites/tileEpona.png" width="50" height="50"
+        style="padding-right: 3.27px;">
+    <img class="doesNotHave" id="sariasSong" src="./sprites/tileSaria.png" width="50" height="50"
         style="padding-right: 3.27px;">
     <img class="doesNotHave" id="sunsSong" src="./sprites/tileSun.png" width="50" height="50"
         style="padding-right: 3.27px;">
@@ -491,14 +491,14 @@
 
     <span style="position: absolute; z-index: 1; left: 390px; top: 675px">
         <img class="doesNotHave" id="smallKey" src="./sprites/tile282.png" width="50" height="50"
-            style="position: relative; right: 5px;">
+            style="position: relative; right: 10px;">
         <img class="doesNotHave" id="smallKey1" src="./sprites/0.png" height="50" width="25"
             style="position: relative; left: -15px;">
     </span>
 
     <script>
         var curScene = 0;
-        hooks.onSceneChange = function (scene) {curScene = scene;}
+        hooks.onSceneChange = function (scene) { curScene = scene; }
 
         function flipUpgrade(id, level) {
             try {
