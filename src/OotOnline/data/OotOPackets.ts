@@ -244,11 +244,13 @@ export class Ooto_EquestrianTickServerPacket extends Packet {
 
 export class Ooto_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
+  room: number;
   scene: number;
-  constructor(data: ActorPacketData, scene: number, lobby: string) {
+  constructor(data: ActorPacketData, scene: number, room: number, lobby: string) {
     super('Ooto_SpawnActorPacket', 'OotOnline', lobby, true);
     this.actorData = data;
     this.scene = scene;
+    this.room = room;
   }
 }
 

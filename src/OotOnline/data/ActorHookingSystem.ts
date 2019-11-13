@@ -119,6 +119,7 @@ export class ActorHookingManager {
         new Ooto_SpawnActorPacket(
           actorData,
           this.core.global.scene,
+          this.core.global.room,
           this.modloader.clientLobby
         )
       );
@@ -130,6 +131,7 @@ export class ActorHookingManager {
         new Ooto_SpawnActorPacket(
           actorData,
           this.core.global.scene,
+          this.core.global.room,
           this.modloader.clientLobby
         )
       );
@@ -216,7 +218,8 @@ export class ActorHookingManager {
     if (
       packet.scene !== this.core.global.scene ||
       packet.room !== this.core.global.room ||
-      this.core.helper.isLinkEnteringLoadingZone()
+      this.core.helper.isLinkEnteringLoadingZone() ||
+      this.core.global.scene_framecount < 100
     ) {
       return;
     }
@@ -323,13 +326,14 @@ export class ActorHookingManager {
     if (
       packet.scene !== this.core.global.scene ||
       packet.room !== this.core.global.room ||
-      this.core.helper.isLinkEnteringLoadingZone()
+      this.core.helper.isLinkEnteringLoadingZone() ||
+      this.core.global.scene_framecount < 100
     ) {
       return;
     }
     if (this.actorHookTicks.has(packet.actorUUID)) {
       let actor: IActor = this.actorHookTicks.get(packet.actorUUID)!.actor;
-      actor.destroy();
+      //actor.destroy();
     } else if (this.bombsRemote.has(packet.actorUUID)) {
       this.bombsRemote.delete(packet.actorUUID);
     } else if (this.chusRemote.has(packet.actorUUID)) {
@@ -342,7 +346,9 @@ export class ActorHookingManager {
   onActorSpawnRequest(packet: Ooto_SpawnActorPacket) {
     if (
       packet.scene !== this.core.global.scene ||
-      this.core.helper.isLinkEnteringLoadingZone()
+      packet.room !== this.core.global.room ||
+      this.core.helper.isLinkEnteringLoadingZone() ||
+      this.core.global.scene_framecount < 100
     ) {
       return;
     }
@@ -401,7 +407,7 @@ export class ActorHookingManager {
 
   onTick() {
     this.actorHookTicks.forEach((value: ActorHookProcessor, key: string) => {
-      value.onTick();
+      //value.onTick();
     });
     this.bombsLocal.forEach((value: IActor, key: string) => {
       this.bombProcessor.actor = value;

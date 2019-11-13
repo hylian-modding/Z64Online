@@ -103,7 +103,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
 
-  constructor() {}
+  constructor() { }
 
   debuggingBombs() {
     this.core.save.inventory.bombBag = AmmoUpgrade.BASE;
@@ -142,7 +142,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     setupNetworkHandlers(this.modelManager);
   }
 
-  init(): void {}
+  init(): void { }
 
   postinit(): void {
     //this.ModLoader.emulator.memoryDebugLogger(true);
@@ -207,6 +207,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   updateFlags() {
+
+    this.ModLoader.utils.clearBuffer(this.clientStorage.sceneStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.eventStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.itemFlagStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.infStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.skulltulaStorage);
+
     let scene_data = this.core.save.permSceneData;
     let event_data = this.core.save.eventFlags;
     let item_data = this.core.save.itemFlags;
@@ -234,25 +241,17 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.clientStorage.skulltulaStorage
     );
 
-    if (
-      Object.keys(scenes).length > 0 ||
-      Object.keys(events).length > 0 ||
-      Object.keys(items).length > 0 ||
-      Object.keys(inf).length > 0 ||
-      Object.keys(skulltulas).length > 0
-    ) {
-      this.ModLoader.logger.info('updateFlags()');
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_ClientFlagUpdate(
-          scenes,
-          events,
-          items,
-          inf,
-          skulltulas,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
+    this.ModLoader.logger.info('updateFlags()');
+    this.ModLoader.clientSide.sendPacket(
+      new Ooto_ClientFlagUpdate(
+        scenes,
+        events,
+        items,
+        inf,
+        skulltulas,
+        this.ModLoader.clientLobby
+      )
+    );
   }
 
   autosaveSceneData() {
@@ -499,9 +498,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         new DiscordStatus(
           'Playing OotOnline',
           'In ' +
-            this.clientStorage.localization[
-              this.clientStorage.scene_keys[scene]
-            ]
+          this.clientStorage.localization[
+          this.clientStorage.scene_keys[scene]
+          ]
         )
       );
     }
@@ -524,10 +523,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     storage.players[packet.player.uuid] = packet.scene;
     this.ModLoader.logger.info(
       'Server: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      packet.scene +
+      '.'
     );
     bus.emit(
       OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
@@ -539,10 +538,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneChange_client(packet: Ooto_ScenePacket) {
     this.ModLoader.logger.info(
       'client receive: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      this.clientStorage.localization[this.clientStorage.scene_keys[packet.scene]] +
+      '.'
     );
     this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
@@ -594,7 +593,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           }
         }
       });
-    } catch (err) {}
+    } catch (err) { }
   }
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
@@ -1063,6 +1062,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       return;
     }
     this.overlord.localPlayerLoadingZone();
+    this.ModLoader.gui.tunnel.send(
+      'OotOnline:onAgeChange',
+      new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', age)
+    );
   }
 
   @EventHandler(OotOnlineEvents.ON_INVENTORY_UPDATE)
@@ -1090,7 +1093,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000001,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1102,7 +1105,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000002,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1114,7 +1117,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000003,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
   }

@@ -111,6 +111,12 @@ export class ModelManager {
     let start: number = rom.readUInt32BE(dma + offset + 0x8);
     let end: number = rom.readUInt32BE(dma + offset + 0xc);
     let size: number = end - start;
+    let isFileCompressed = true;
+    if (end === 0) {
+      isFileCompressed = false;
+      size = rom.readUInt32BE(dma + offset + 0x4) - rom.readUInt32BE(dma + offset);
+      end = start + size;
+    }
     let buf: Buffer = Buffer.alloc(size);
     rom.copy(buf, 0, start, end);
     return buf;
@@ -154,6 +160,7 @@ export class ModelManager {
     let adult = 502;
     let child = 503;
     let code = 27;
+    let anim: number = 7;
     let offset = 0xe65a0;
 
     if (this.customModelFileAdult !== '') {
@@ -161,6 +168,7 @@ export class ModelManager {
       let adult_model: Buffer = fs.readFileSync(this.customModelFileAdult);
       let _adult_model = this.ModLoader.utils.yaz0Encode(adult_model);
       let adult_zobj = this.getRawFileFromRom(evt.rom, adult);
+      this.ModLoader.utils.clearBuffer(adult_zobj);
       _adult_model.copy(adult_zobj);
       this.injectRawFileToRom(evt.rom, adult, adult_zobj);
 
@@ -189,6 +197,7 @@ export class ModelManager {
       let child_model: Buffer = fs.readFileSync(this.customModelFileChild);
       let _child_model = this.ModLoader.utils.yaz0Encode(child_model);
       let child_zobj = this.getRawFileFromRom(evt.rom, child);
+      this.ModLoader.utils.clearBuffer(child_zobj);
       _child_model.copy(child_zobj);
       this.injectRawFileToRom(evt.rom, child, child_zobj);
 
@@ -210,6 +219,15 @@ export class ModelManager {
       child_model.writeUInt32BE(code_file.readUInt32BE(offset + 0x4), 0x500c);
 
       this.clientStorage.childModel = child_model;
+    }
+
+    if (this.customModelFileAnims !== ''){
+      console.log("Loading new animations...");
+      let anim_file: Buffer = fs.readFileSync(this.customModelFileAnims);
+      let anim_zobj: Buffer = this.getRawFileFromRom(evt.rom, anim);
+      this.ModLoader.utils.clearBuffer(anim_zobj);
+      anim_file.copy(anim_zobj);
+      this.injectRawFileToRom(evt.rom, anim, anim_zobj);
     }
 
     if (this.clientStorage.adultModel.byteLength > 1) {

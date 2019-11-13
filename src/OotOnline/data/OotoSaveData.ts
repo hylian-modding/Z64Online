@@ -356,57 +356,10 @@ export function mergeInventoryData(
     save.childTradeItem = InventoryItem.NONE;
   }
 
-  // Logic
-  if (
-    incoming.childTradeItem === InventoryItem.WEIRD_EGG &&
-    save.childTradeItem === InventoryItem.NONE
-  ) {
-    save.childTradeItem = InventoryItem.WEIRD_EGG;
-  } else if (
-    incoming.childTradeItem === InventoryItem.CHILD_CUCCO &&
-    save.childTradeItem === InventoryItem.WEIRD_EGG
-  ) {
-    save.childTradeItem = InventoryItem.CHILD_CUCCO;
-  } else if (
-    incoming.childTradeItem === InventoryItem.ZELDAS_LETTER &&
-    save.childTradeItem === InventoryItem.CHILD_CUCCO
-  ) {
-    save.childTradeItem = InventoryItem.ZELDAS_LETTER;
-  } else if (
-    incoming.childTradeItem === InventoryItem.KEATON_MASK &&
-    save.childTradeItem === InventoryItem.ZELDAS_LETTER
-  ) {
-    save.childTradeItem = InventoryItem.KEATON_MASK;
-  } else if (
-    incoming.childTradeItem === InventoryItem.SOLD_OUT &&
-    save.childTradeItem === InventoryItem.KEATON_MASK
-  ) {
-    save.childTradeItem = InventoryItem.SOLD_OUT;
-  } else if (
-    incoming.childTradeItem === InventoryItem.SKULL_MASK &&
-    save.childTradeItem === InventoryItem.SOLD_OUT
-  ) {
-    save.childTradeItem = InventoryItem.SKULL_MASK;
-  } else if (
-    incoming.childTradeItem === InventoryItem.SOLD_OUT &&
-    save.childTradeItem === InventoryItem.SKULL_MASK
-  ) {
-    save.childTradeItem = InventoryItem.SOLD_OUT;
-  } else if (
-    incoming.childTradeItem === InventoryItem.SPOOKY_MASK &&
-    save.childTradeItem === InventoryItem.SOLD_OUT
-  ) {
-    save.childTradeItem = InventoryItem.SPOOKY_MASK;
-  } else if (
-    incoming.childTradeItem === InventoryItem.SOLD_OUT &&
-    save.childTradeItem === InventoryItem.SPOOKY_MASK
-  ) {
-    save.childTradeItem = InventoryItem.SOLD_OUT;
-  } else if (
-    incoming.childTradeItem === InventoryItem.BUNNY_HOOD &&
-    save.childTradeItem === InventoryItem.SOLD_OUT
-  ) {
-    save.childTradeItem = InventoryItem.BUNNY_HOOD;
+  if (incoming.childTradeItem !== InventoryItem.SOLD_OUT){
+    if (incoming.childTradeItem > save.childTradeItem && save.childTradeItem <= InventoryItem.MASK_OF_TRUTH){
+      save.childTradeItem = incoming.childTradeItem;
+    }
   }
 
   //-----------------------------------------------------
@@ -426,62 +379,10 @@ export function mergeInventoryData(
     save.adultTradeItem = InventoryItem.NONE;
   }
 
-  // Logic
-  if (
-    save.adultTradeItem === InventoryItem.NONE &&
-    incoming.adultTradeItem === InventoryItem.POCKET_EGG
-  ) {
-    save.adultTradeItem = InventoryItem.POCKET_EGG;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.POCKET_CUCCO &&
-    save.adultTradeItem === InventoryItem.POCKET_EGG
-  ) {
-    save.adultTradeItem = InventoryItem.POCKET_CUCCO;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.COJIRO &&
-    save.adultTradeItem === InventoryItem.POCKET_CUCCO
-  ) {
-    save.adultTradeItem = InventoryItem.COJIRO;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.ODD_MUSHROOM &&
-    save.adultTradeItem === InventoryItem.COJIRO
-  ) {
-    save.adultTradeItem = InventoryItem.ODD_MUSHROOM;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.ODD_POTION &&
-    save.adultTradeItem === InventoryItem.ODD_MUSHROOM
-  ) {
-    save.adultTradeItem = InventoryItem.ODD_POTION;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.POACHERS_SAW &&
-    save.adultTradeItem === InventoryItem.ODD_POTION
-  ) {
-    save.adultTradeItem = InventoryItem.POACHERS_SAW;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.BROKEN_GORON_SWORD &&
-    save.adultTradeItem === InventoryItem.POACHERS_SAW
-  ) {
-    save.adultTradeItem = InventoryItem.BROKEN_GORON_SWORD;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.PRESCRIPTION &&
-    save.adultTradeItem === InventoryItem.BROKEN_GORON_SWORD
-  ) {
-    save.adultTradeItem = InventoryItem.PRESCRIPTION;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.EYEBALL_FROG &&
-    save.adultTradeItem === InventoryItem.PRESCRIPTION
-  ) {
-    save.adultTradeItem = InventoryItem.EYEBALL_FROG;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.EYE_DROPS &&
-    save.adultTradeItem === InventoryItem.PRESCRIPTION
-  ) {
-    save.adultTradeItem = InventoryItem.EYE_DROPS;
-  } else if (
-    incoming.adultTradeItem === InventoryItem.CLAIM_CHECK &&
-    save.adultTradeItem === InventoryItem.EYE_DROPS
-  ) {
-    save.adultTradeItem = InventoryItem.CLAIM_CHECK;
+  if (incoming.adultTradeItem > save.adultTradeItem){
+    if (isAdultTradeItem(incoming.adultTradeItem)){
+      save.adultTradeItem = incoming.adultTradeItem;
+    }
   }
 
   // Allow people to bottle dupe over CLAIM_CHECK.

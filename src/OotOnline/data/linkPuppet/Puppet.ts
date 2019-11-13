@@ -111,6 +111,7 @@ export class Puppet {
       if (this.data.pointer > 0) {
         this.emulator.rdramWrite32(this.data.pointer + 0x130, 0x0);
         this.emulator.rdramWrite32(this.data.pointer + 0x134, 0x0);
+        this.data.pointer = 0;
       }
       this.isSpawned = false;
       this.isShoveled = false;
