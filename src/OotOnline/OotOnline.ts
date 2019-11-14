@@ -399,13 +399,20 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
       );
+      let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
+        this.core.global.scene,
+        this.core.save.age,
+        this.ModLoader.clientLobby
+      );
+      if (this.modelManager.clientStorage.adultIcon.byteLength > 1) {
+        gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
+      }
+      if (this.modelManager.clientStorage.childIcon.byteLength > 1) {
+        gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
+      }
       this.ModLoader.gui.tunnel.send(
         'OotOnline:onAgeChange',
-        new GUITunnelPacket(
-          'OotOnline',
-          'OotOnline:onAgeChange',
-          this.core.save.age
-        )
+        new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p)
       );
     }, 1000);
   }
@@ -1114,9 +1121,20 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   @EventHandler(OotEvents.ON_AGE_CHANGE)
   onAgeChange(age: Age) {
     this.overlord.localPlayerLoadingZone();
+    let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
+      this.core.global.scene,
+      this.core.save.age,
+      this.ModLoader.clientLobby
+    );
+    if (this.modelManager.clientStorage.adultIcon.byteLength > 1) {
+      gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
+    }
+    if (this.modelManager.clientStorage.childIcon.byteLength > 1) {
+      gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
+    }
     this.ModLoader.gui.tunnel.send(
       'OotOnline:onAgeChange',
-      new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', age)
+      new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p)
     );
   }
 
