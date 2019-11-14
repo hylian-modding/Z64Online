@@ -79,8 +79,10 @@ export class Puppet {
               this.data.pointer + 0x24,
               0xc
             );
-            this.isSpawned = true;
-            this.isSpawning = false;
+            this.ModLoader.utils.setTimeoutFrames(() => {
+              this.isSpawned = true;
+              this.isSpawning = false;
+            }, 5);
           }
         }
       );

@@ -178,7 +178,7 @@ export class PuppetOverlord {
   }
 
   sendPuppetPacket() {
-    if (!this.amIAlone && this.core.global.scene_framecount > 100) {
+    if (!this.amIAlone) {
       this.mapi.clientSide.sendPacket(
         new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.mapi.clientLobby)
       );
@@ -189,8 +189,7 @@ export class PuppetOverlord {
     if (
       this.puppets.has(packet.player.uuid) &&
       !this.core.helper.isPaused() &&
-      this.core.link.state !== LinkState.BUSY &&
-      this.core.global.scene_framecount > 100
+      this.core.link.state !== LinkState.BUSY
     ) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       puppet.processIncomingPuppetData(packet.data);
@@ -201,8 +200,7 @@ export class PuppetOverlord {
     if (!this.core.helper.isPaused()) {
       if (
         !this.core.helper.isLinkEnteringLoadingZone() &&
-        this.core.helper.isInterfaceShown() &&
-        this.core.global.scene_framecount > 100
+        this.core.helper.isInterfaceShown()
       ) {
         this.processNewPlayers();
         this.processAwaitingSpawns();

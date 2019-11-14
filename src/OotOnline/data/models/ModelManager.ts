@@ -397,6 +397,14 @@ export class ModelManager {
       this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }
+    if (puppet.age === Age.ADULT && (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer).model.adult === undefined){
+      this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
+      return;
+    }
+    if (puppet.age === Age.CHILD && (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer).model.child === undefined){
+      this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
+      return;
+    }
     if (!this.allocationManager.isPlayerAllocated(puppet.player)) {
       this.allocationManager.allocateSlot(
         this.clientStorage.playerModelCache[puppet.player.uuid]
