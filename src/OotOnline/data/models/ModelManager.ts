@@ -25,11 +25,7 @@ import {
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
 import { OotOnlineStorage } from '../../OotOnlineStorage';
-import {
-  IOotOnlineHelpers,
-  OotOnlineEvents,
-  Ooto_CustomModelMetadata,
-} from '../../OotoAPI/OotoAPI';
+import { IOotOnlineHelpers, OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -85,15 +81,13 @@ export class ModelManager {
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
-  onCustomModel(evt: Ooto_CustomModelMetadata) {
-    this.customModelFileAdult = evt.model;
-    console.log(evt);
+  onCustomModel(file: string) {
+    this.customModelFileAdult = file;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
-  onCustomModel2(evt: Ooto_CustomModelMetadata) {
-    this.customModelFileChild = evt.model;
-    console.log(evt);
+  onCustomModel2(file: string) {
+    this.customModelFileChild = file;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS)
