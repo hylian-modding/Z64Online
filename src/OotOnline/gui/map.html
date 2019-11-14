@@ -240,10 +240,10 @@
                 marker.icon.width = 24;
                 marker.icon.height = 24;
                 marker["pos"] = {};
-                marker.pos["x"] = 0;
-                marker.pos["y"] = 0;
+                marker.pos["x"] = -32;
+                marker.pos["y"] = -32;
                 marker["age"] = "0";
-                marker["user"] = { uuid: "", nickname: ""};
+                marker["user"] = { uuid: "", nickname: "" };
                 marker.icon.onload = function () {
                     context.drawImage(marker.icon, marker.pos.x, marker.pos.y, marker.icon.width, marker.icon.height);
                 }
@@ -366,6 +366,20 @@
                 0: "./sprites/tile081.png", 1: "./sprites/tile081_0.png",
                 2: "./sprites/tile081_1.png", 3: "./sprites/tile081_2.png"
             }
+            var bean_icons = { 0: "./sprites/tile089.png", 1: "./sprites/tile089_0.png" };
+            var bombchu_icons = { 0: "./sprites/tile086.png", 1: "./sprites/tile086_0.png" };
+            var bomb_icons = {
+                0: "./sprites/tile085.png", 1: "./sprites/tile085_0.png",
+                2: "./sprites/tile085_1.png", 3: "./sprites/tile085_2.png"
+            }
+            var slingshot_icons = {
+                0: "./sprites/tile083.png", 1: "./sprites/tile083_0.png",
+                2: "./sprites/tile083_1.png", 3: "./sprites/tile083_2.png"
+            }
+            var bow_icons = {
+                0: "./sprites/tile120.png", 1: "./sprites/tile120_0.png",
+                2: "./sprites/tile120_1.png", 3: "./sprites/tile120_2.png"
+            }
             var age_icons = { 0: "./sprites/tileAdult.png", 1: "./sprites/tileChild.png" }
 
             var song1_icons = { 1: "./sprites/tileZelda.png" };
@@ -389,6 +403,8 @@
                 "goldSkulltulas100": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers,
                 "heart_containers": hc_icons, "heart_containers10": numbers, "heart_containers1": numbers,
                 "dekuSticks": deku_stix_icons, "dekuNuts": deku_nut_icons, "age": age_icons,
+                "magicBeans": bean_icons, "bombchus": bombchu_icons, "bombs": bomb_icons,
+                "fairySlingshot": slingshot_icons, "fairyBow": bow_icons,
                 "dungeonKey": key_icons, "heartPieces": hp_icons,
                 "zeldasLullaby": song1_icons, "eponasSong": song2_icons, "sariasSong": song3_icons,
                 "sunsSong": song4_icons, "songOfTime": song5_icons, "songOfStorms": song6_icons, "preludeOfLight": song7_icons,
@@ -421,9 +437,12 @@
                 "heart_containers10": ["Heart Containers"], "heart_containers1": ["Heart Containers"],
                 "heartPieces": ["Heart Pieces", "Heart Pieces", "Heart Pieces", "Heart Pieces"],
                 "goldSkulltulas100": ["Gold Skulltulas"], "goldSkulltulas10": ["Gold Skulltulas"], "goldSkulltulas1": ["Gold Skulltulas"],
-                "age": ["Adult", "Child"],
+                "age": ["Adult", "Child"], "magicBeans": ["Magic Beans", "Magic Beans"], "bombchus": ["Bombchus", "Bombchus"],
+                "bombs": ["Bombs", "Bombs", "Bombs", "Bombs"],
                 "dekuSticks": ["Deku Sticks", "Deku Sticks", "Deku Sticks", "Deku Sticks"],
                 "dekuNuts": ["Deku Nuts", "Deku Nuts", "Deku Nuts", "Deku Nuts"],
+                "fairySlingshot": ["Fairy Slingshot", "Fairy Slingshot", "Fairy Slingshot", "Fairy Slingshot"],
+                "fairyBow": ["Fairy Bow", "Fairy Bow", "Fairy Bow", "Fairy Bow"],
                 "dungeonKey": ["Small Key", "Boss Key"],
                 "zeldasLullaby": { 1: "Zelda's Lullaby" }, "eponasSong": { 1: "Epona's Song" },
                 "sariasSong": { 1: "Saria's Song" }, "sunsSong": { 1: "Sun's Son" }, "songOfTime": { 1: "Song of Time" },
@@ -433,418 +452,414 @@
                 "requiemOfSpirit": { 1: "Requiem of Spirit" }
             };
 
-        function flipUpgrade(id, level) {
-            try {
-                if (level > -1) {
-                    let icons = icon_index[id];
-                    let alts = alt_index[id];
-                    if (
-                        icons[level] === null ||
-                        icons[level] === undefined ||
-                        alts[level] === null ||
-                        alts[level] === undefined
-                    ) { return; }
+            function flipUpgrade(id, level) {
+                try {
+                    if (level > -1) {
+                        let icons = icon_index[id];
+                        let alts = alt_index[id];
+                        if (
+                            icons[level] === null ||
+                            icons[level] === undefined ||
+                            alts[level] === null ||
+                            alts[level] === undefined
+                        ) { return; }
 
-                    let element = document.getElementById(id);
+                        let element = document.getElementById(id);
 
-                    if (element.level === level) return;
+                        if (element.level === level) return;
 
-                    if (element.classList.contains("doesNotHave")) {
-                        element.classList.remove("doesNotHave");
-                        element.classList.add("doesHave");
-                    }
-                    else if (element.classList.contains("doesHave")) {
-                        element.classList.remove("doesHave");
-                        element.classList.add("doesHave1");
+                        if (element.classList.contains("doesNotHave")) {
+                            element.classList.remove("doesNotHave");
+                            element.classList.add("doesHave");
+                        }
+                        else if (element.classList.contains("doesHave")) {
+                            element.classList.remove("doesHave");
+                            element.classList.add("doesHave1");
+                        }
+                        else {
+                            element.classList.remove("doesHave1");
+                            element.classList.add("doesHave");
+                        }
+                        element.src = icons[level];
+                        element.alt = alts[level];
+                        element.level = level;
                     }
                     else {
-                        element.classList.remove("doesHave1");
-                        element.classList.add("doesHave");
+                        let toggle = document.getElementById(id);
+
+                        if (level === -2) {
+                            if (toggle.classList.contains("doesHave")) {
+                                toggle.classList.remove("doesHave");
+                            }
+                            if (toggle.classList.contains("doesHave1")) {
+                                toggle.classList.remove("doesHave1");
+                            }
+                            if (!toggle.classList.contains("doesNotHave")) {
+                                toggle.classList.add("doesNotHave");
+                            }
+                        } else {
+                            if (!toggle.classList.contains("doesNotHave")) {
+                                return;
+                            }
+
+                            toggle.classList.remove("doesNotHave");
+                            toggle.classList.add("doesHave");
+                        }
                     }
-                    element.src = icons[level];
-                    element.alt = alts[level];
-                    element.level = level;
+                }
+                catch (err) {
+                    console.log(err + " [ id: " + id + ", level: " + level + "]");
+                }
+            }
+            function increaseCount(id, level) {
+                let count = document.getElementById(id);
+                if (count.classList.contains("doesNotHave")) {
+                    count.classList.remove("doesNotHave");
+                    count.classList.add("doesHave");
+                }
+                else if (count.classList.contains("doesHave")) {
+                    count.classList.remove("doesHave");
+                    count.classList.add("doesHave1");
                 }
                 else {
-                    let toggle = document.getElementById(id);
+                    count.classList.remove("doesHave1");
+                    count.classList.add("doesHave");
+                }
+                count.src = numbers[level];
+            }
 
-                    if (level === -2) {
-                        if (toggle.classList.contains("doesHave")) {
-                            toggle.classList.remove("doesHave");
-                        }
-                        if (toggle.classList.contains("doesHave1")) {
-                            toggle.classList.remove("doesHave1");
-                        }
-                        if (!toggle.classList.contains("doesNotHave")) {
-                            toggle.classList.add("doesNotHave");
-                        }
-                    } else {
-                        if (!toggle.classList.contains("doesNotHave")) {
-                            return;
-                        }
+            hooks.onData = (packet) => {
+                parsePacketInventory(packet.data.inventory);
+                parsePacketEquipment(packet.data.equipment);
+                parsePacketQuest(packet.data.quest);
+                parsePacketDungeon(packet.data.dungeonItems);
+            };
 
-                        toggle.classList.remove("doesNotHave");
-                        toggle.classList.add("doesHave");
-                    }
+            var gsOnes = "0";
+            var gsTens = "0";
+            var gsHund = "0";
+            var hcOnes = "0";
+            var hcTens = "0";
+            var keyOnes = "0";
+            var keyTens = "0";
+            function parseGoldSkulltula(value) {
+                var tag1 = "goldSkulltulas1";
+                var tag10 = "goldSkulltulas10";
+                var tag100 = "goldSkulltulas100";
+                var val1 = "0";
+                var val10 = "0";
+                var val100 = "0";
+                var strVal = value.toString();
+
+                if (value > 99) {
+                    val1 = strVal.substring(2, 3);
+                    val10 = strVal.substring(1, 2);
+                    val100 = strVal.substring(0, 1);
+                } else if (value > 9) {
+                    val1 = strVal.substring(1, 2);
+                    val10 = strVal.substring(0, 1);
+                }
+                else {
+                    val1 = strVal;
+                }
+
+                if (gsOnes !== val1) {
+                    increaseCount(tag1, val1);
+                    gsOnes = val1;
+                }
+
+                if (gsTens !== val10) {
+                    increaseCount(tag10, val10);
+                    gsTens = val10;
+                }
+
+                if (gsHund !== val100) {
+                    increaseCount(tag100, val100);
+                    gsHund = val100;
                 }
             }
-            catch (err) {
-                console.log(err + " [ id: " + id + ", level: " + level + "]");
-            }
-        }
-        function increaseCount(id, level) {
-            let count = document.getElementById(id);
-            if (count.classList.contains("doesNotHave")) {
-                count.classList.remove("doesNotHave");
-                count.classList.add("doesHave");
-            }
-            else if (count.classList.contains("doesHave")) {
-                count.classList.remove("doesHave");
-                count.classList.add("doesHave1");
-            }
-            else {
-                count.classList.remove("doesHave1");
-                count.classList.add("doesHave");
-            }
-            count.src = numbers[level];
-        }
+            function parseHeartContainer(value) {
+                var tag1 = "heart_containers1";
+                var tag10 = "heart_containers10";
+                var val1 = "0";
+                var val10 = "0";
+                var strVal = value.toString();
 
-        hooks.onData = (packet) => {
-            parsePacketInventory(packet.data.inventory);
-            parsePacketEquipment(packet.data.equipment);
-            parsePacketQuest(packet.data.quest);
-            parsePacketDungeon(packet.data.dungeonItems);
-        };
+                if (value > 9) {
+                    val1 = strVal.substring(1, 2);
+                    val10 = strVal.substring(0, 1);
+                }
+                else {
+                    val1 = strVal;
+                }
 
-        var gsOnes = "0";
-        var gsTens = "0";
-        var gsHund = "0";
-        var hcOnes = "0";
-        var hcTens = "0";
-        var keyOnes = "0";
-        var keyTens = "0";
-        function parseGoldSkulltula(value) {
-            var tag1 = "goldSkulltulas1";
-            var tag10 = "goldSkulltulas10";
-            var tag100 = "goldSkulltulas100";
-            var val1 = "0";
-            var val10 = "0";
-            var val100 = "0";
-            var strVal = value.toString();
+                if (hcOnes !== val1) {
+                    increaseCount(tag1, val1);
+                    hcOnes = val1;
+                }
 
-            if (value > 99) {
-                val1 = strVal.substring(2, 3);
-                val10 = strVal.substring(1, 2);
-                val100 = strVal.substring(0, 1);
-            } else if (value > 9) {
-                val1 = strVal.substring(1, 2);
-                val10 = strVal.substring(0, 1);
+                if (hcTens !== val10) {
+                    increaseCount(tag10, val10);
+                    hcTens = val10;
+                }
             }
-            else {
-                val1 = strVal;
+            function parseSmallKey(value) {
+                var split = value.toString();
+                if (value > 9) { return };
+                if (keyOnes !== split) {
+                    increaseCount("dungeonKeys1", split);
+                    keyOnes = split
+                }
             }
 
-            if (gsOnes !== val1) {
-                increaseCount(tag1, val1);
-                gsOnes = val1;
+            function parsePacketInventory(inventory) {
+                if (inventory.dekuSticks) { flipUpgrade("dekuSticks", inventory.dekuSticksCapacity) };
+                if (inventory.dekuNuts) { flipUpgrade("dekuNuts", inventory.dekuNutsCapacity) };
+                if (inventory.bombs) { flipUpgrade("bombs", inventory.bombBag) };
+                if (inventory.bombchus) { flipUpgrade("bombchus", 1) };
+                if (inventory.magicBeans) { flipUpgrade("magicBeans", 1) };
+                if (inventory.fairySlingshot) { flipUpgrade("fairySlingshot", inventory.bulletBag) };
+                if (inventory.fairyBow) { flipUpgrade("fairyBow", inventory.quiver) };
+                if (inventory.fireArrows) { flipUpgrade("fireArrows", -1) };
+                if (inventory.iceArrows) { flipUpgrade("iceArrows", -1) };
+                if (inventory.lightArrows) { flipUpgrade("lightArrows", -1) };
+                if (inventory.dinsFire) { flipUpgrade("dinsFire", -1) };
+                if (inventory.faroresWind) { flipUpgrade("faroresWind", -1) };
+                if (inventory.nayrusLove) { flipUpgrade("nayrusLove", -1) };
+                if (inventory.ocarina === 1) { flipUpgrade("ocarina", inventory.ocarina) };
+                if (inventory.ocarina === 2) { flipUpgrade("ocarina", inventory.ocarina) };
+                if (inventory.hookshot === 1) { flipUpgrade("hookshot", inventory.hookshot) };
+                if (inventory.hookshot === 2) { flipUpgrade("hookshot", inventory.hookshot) };
+                if (inventory.boomerang) { flipUpgrade("boomerang", -1) };
+                if (inventory.lensOfTruth) { flipUpgrade("lensOfTruth", -1) };
+                if (inventory.megatonHammer) { flipUpgrade("megatonHammer", -1) };
+                if (inventory.childTradeItem >= 33 && inventory.childTradeItem <= 44) {
+                    flipUpgrade("childTradeItem", inventory.childTradeItem)
+                };
+                if (inventory.adultTradeItem >= 45 && inventory.adultTradeItem <= 55) {
+                    flipUpgrade("adultTradeItem", inventory.adultTradeItem);
+                }
+                if (inventory.bottle_1 >= 20 && inventory.bottle_1 <= 32) {
+                    flipUpgrade("bottle_1", inventory.bottle_1);
+                }
+                if (inventory.bottle_2 >= 20 && inventory.bottle_2 <= 32) {
+                    flipUpgrade("bottle_2", inventory.bottle_2);
+                }
+                if (inventory.bottle_3 >= 20 && inventory.bottle_3 <= 32) {
+                    flipUpgrade("bottle_3", inventory.bottle_3);
+                }
+                if (inventory.bottle_4 >= 20 && inventory.bottle_4 <= 32) {
+                    flipUpgrade("bottle_4", inventory.bottle_4);
+                }
+                if (inventory.wallet > 0 && inventory.wallet < 4) {
+                    flipUpgrade("wallet", inventory.wallet);
+                }
+                if (inventory.quiver > 0 && inventory.quiver < 4) {
+                    flipUpgrade("quiver", inventory.quiver);
+                }
+                if (inventory.bulletBag > 0 && inventory.bulletBag < 4) {
+                    flipUpgrade("bulletBag", inventory.bulletBag);
+                }
+                if (inventory.strength > 0 && inventory.strength < 4) {
+                    flipUpgrade("strength", inventory.strength)
+                }
+                if (inventory.swimming > 0 && inventory.swimming < 3) {
+                    flipUpgrade("swimming", inventory.swimming)
+                }
+                if (inventory.bombBag > 0 && inventory.bombBag < 4) {
+                    flipUpgrade("bombBag", inventory.bombBag)
+                }
             }
 
-            if (gsTens !== val10) {
-                increaseCount(tag10, val10);
-                gsTens = val10;
+            function parsePacketEquipment(equipment) {
+                if (equipment.kokiriSword) { flipUpgrade("kokiriSword", -1) };
+                if (equipment.masterSword) { flipUpgrade("masterSword", -1) };
+                if (equipment.biggoronSword) { flipUpgrade("biggoronSword", -1) };
+                if (equipment.dekuShield) { flipUpgrade("dekuShield", -1) };
+                if (equipment.hylianShield) { flipUpgrade("hylianShield", -1) };
+                if (equipment.mirrorShield) { flipUpgrade("mirrorShield", -1) };
+                if (equipment.kokiriTunic) { flipUpgrade("kokiriTunic", -1) };
+                if (equipment.goronTunic) { flipUpgrade("goronTunic", -1) };
+                if (equipment.zoraTunic) { flipUpgrade("zoraTunic", -1) };
+                if (equipment.kokiriBoots) { flipUpgrade("kokiriBoots", -1) };
+                if (equipment.ironBoots) { flipUpgrade("ironBoots", -1) };
+                if (equipment.hoverBoots) { flipUpgrade("hoverBoots", -1) };
             }
 
-            if (gsHund !== val100) {
-                increaseCount(tag100, val100);
-                gsHund = val100;
+            function parsePacketQuest(quest) {
+                if (quest.goldSkulltulas > 0) {
+                    parseGoldSkulltula(quest.goldSkulltulas);
+                    flipUpgrade("goldSkulltulas", -1);
+                }
+                if (quest.heartPieces > -1 && quest.heartPieces < 4) {
+                    flipUpgrade("heartPieces", quest.heartPieces);
+                }
+                if (quest.heart_containers > 0) {
+                    parseHeartContainer(quest.heart_containers);
+                    flipUpgrade("heart_containers", -1);
+                }
+                if (quest.magic_meter_size > 0 && quest.magic_meter_size < 3) {
+                    flipUpgrade("magic_meter_size", quest.magic_meter_size);
+                }
+                if (quest.kokiriEmerald) { flipUpgrade("kokiriEmerald", -1) };
+                if (quest.goronRuby) { flipUpgrade("goronRuby", -1) };
+                if (quest.zoraSapphire) { flipUpgrade("zoraSapphire", -1) };
+                if (quest.lightMedallion) { flipUpgrade("lightMedallion", -1) };
+                if (quest.forestMedallion) { flipUpgrade("forestMedallion", -1) };
+                if (quest.fireMedallion) { flipUpgrade("fireMedallion", -1) };
+                if (quest.waterMedallion) { flipUpgrade("waterMedallion", -1) };
+                if (quest.shadowMedallion) { flipUpgrade("shadowMedallion", -1) };
+                if (quest.spiritMedallion) { flipUpgrade("spiritMedallion", -1) };
+                if (quest.zeldasLullaby) { flipUpgrade("zeldasLullaby", 1) };
+                if (quest.eponasSong) { flipUpgrade("eponasSong", 1) };
+                if (quest.sariasSong) { flipUpgrade("sariasSong", 1) };
+                if (quest.sunsSong) { flipUpgrade("sunsSong", 1) };
+                if (quest.songOfTime) { flipUpgrade("songOfTime", 1) };
+                if (quest.songOfStorms) { flipUpgrade("songOfStorms", 1) };
+                if (quest.preludeOfLight) { flipUpgrade("preludeOfLight", 1) };
+                if (quest.minuetOfForest) { flipUpgrade("minuetOfForest", 1) };
+                if (quest.boleroOfFire) { flipUpgrade("boleroOfFire", 1) };
+                if (quest.serenadeOfWater) { flipUpgrade("serenadeOfWater", 1) };
+                if (quest.nocturneOfShadow) { flipUpgrade("nocturneOfShadow", 1) };
+                if (quest.requiemOfSpirit) { flipUpgrade("requiemOfSpirit", 1) };
+                if (quest.gerudoMembershipCard) { flipUpgrade("gerudoMembershipCard", -1) };
+                if (quest.stoneOfAgony) { flipUpgrade("stoneOfAgony", -1) };
+                if (quest.double_defense) { flipUpgrade("heart_containers", 1) };
             }
-        }
-        function parseHeartContainer(value) {
-            var tag1 = "heart_containers1";
-            var tag10 = "heart_containers10";
-            var val1 = "0";
-            var val10 = "0";
-            var strVal = value.toString();
 
-            if (value > 9) {
-                val1 = strVal.substring(1, 2);
-                val10 = strVal.substring(0, 1);
-            }
-            else {
-                val1 = strVal;
-            }
+            function parsePacketDungeon(item) {
+                // if (quest.key > 0) {
+                //     parseSmallKey(quest.key);
+                //     flipUpgrade("smallKey", -1);
+                // }
 
-            if (hcOnes !== val1) {
-                increaseCount(tag1, val1);
-                hcOnes = val1;
-            }
+                switch (curScene) {
+                    // The Great Deku Tree
+                    case 0x0000:
+                        if (item.DEKU_TREE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.DEKU_TREE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.DEKU_TREE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
 
-            if (hcTens !== val10) {
-                increaseCount(tag10, val10);
-                hcTens = val10;
-            }
-        }
-        function parseSmallKey(value) {
-            var split = value.toString();
-            if (value > 9) { return };
-            if (keyOnes !== split) {
-                increaseCount("dungeonKeys1", split);
-                keyOnes = split
-            }
-        }
+                    // Dodongo's Cavern
+                    case 0x0001:
+                        if (item.DODONGOS_CAVERN.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.DODONGOS_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.DODONGOS_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
 
-        function parsePacketInventory(inventory) {
-            if (inventory.dekuSticksCapacity > 0 && inventory.dekuSticksCapacity < 4) {
-                flipUpgrade("dekuSticks", inventory.dekuSticksCapacity);
-            }
-            if (inventory.dekuNutsCapacity > 0 && inventory.dekuNutsCapacity < 4) {
-                flipUpgrade("dekuNuts", inventory.dekuNutsCapacity);
-            }
-            if (inventory.bombs) { flipUpgrade("bombs", -1) };
-            if (inventory.bombchus) { flipUpgrade("bombchus", -1) };
-            if (inventory.magicBeans) { flipUpgrade("magicBeans", -1) };
-            if (inventory.fairySlingshot) { flipUpgrade("fairySlingshot", -1) };
-            if (inventory.fairyBow) { flipUpgrade("fairyBow", -1) };
-            if (inventory.fireArrows) { flipUpgrade("fireArrows", -1) };
-            if (inventory.iceArrows) { flipUpgrade("iceArrows", -1) };
-            if (inventory.lightArrows) { flipUpgrade("lightArrows", -1) };
-            if (inventory.dinsFire) { flipUpgrade("dinsFire", -1) };
-            if (inventory.faroresWind) { flipUpgrade("faroresWind", -1) };
-            if (inventory.nayrusLove) { flipUpgrade("nayrusLove", -1) };
-            if (inventory.ocarina === 1) { flipUpgrade("ocarina", inventory.ocarina) };
-            if (inventory.ocarina === 2) { flipUpgrade("ocarina", inventory.ocarina) };
-            if (inventory.hookshot === 1) { flipUpgrade("hookshot", inventory.hookshot) };
-            if (inventory.hookshot === 2) { flipUpgrade("hookshot", inventory.hookshot) };
-            if (inventory.boomerang) { flipUpgrade("boomerang", -1) };
-            if (inventory.lensOfTruth) { flipUpgrade("lensOfTruth", -1) };
-            if (inventory.megatonHammer) { flipUpgrade("megatonHammer", -1) };
-            if (inventory.childTradeItem >= 33 && inventory.childTradeItem <= 44) {
-                flipUpgrade("childTradeItem", inventory.childTradeItem)
-            };
-            if (inventory.adultTradeItem >= 45 && inventory.adultTradeItem <= 55) {
-                flipUpgrade("adultTradeItem", inventory.adultTradeItem);
-            }
-            if (inventory.bottle_1 >= 20 && inventory.bottle_1 <= 32) {
-                flipUpgrade("bottle_1", inventory.bottle_1);
-            }
-            if (inventory.bottle_2 >= 20 && inventory.bottle_2 <= 32) {
-                flipUpgrade("bottle_2", inventory.bottle_2);
-            }
-            if (inventory.bottle_3 >= 20 && inventory.bottle_3 <= 32) {
-                flipUpgrade("bottle_3", inventory.bottle_3);
-            }
-            if (inventory.bottle_4 >= 20 && inventory.bottle_4 <= 32) {
-                flipUpgrade("bottle_4", inventory.bottle_4);
-            }
-            if (inventory.wallet > 0 && inventory.wallet < 4) {
-                flipUpgrade("wallet", inventory.wallet);
-            }
-            if (inventory.quiver > 0 && inventory.quiver < 4) {
-                flipUpgrade("quiver", inventory.quiver);
-            }
-            if (inventory.bulletBag > 0 && inventory.bulletBag < 4) {
-                flipUpgrade("bulletBag", inventory.bulletBag);
-            }
-            if (inventory.strength > 0 && inventory.strength < 4) {
-                flipUpgrade("strength", inventory.strength)
-            }
-            if (inventory.swimming > 0 && inventory.swimming < 3) {
-                flipUpgrade("swimming", inventory.swimming)
-            }
-            if (inventory.bombBag > 0 && inventory.bombBag < 4) {
-                flipUpgrade("bombBag", inventory.bombBag)
-            }
-        }
+                    // Inside Jabu Jabu's Belly
+                    case 0x0002:
+                        if (item.JABJ_JABUS_BELLY.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.JABJ_JABUS_BELLY.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.JABJ_JABUS_BELLY.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
 
-        function parsePacketEquipment(equipment) {
-            if (equipment.kokiriSword) { flipUpgrade("kokiriSword", -1) };
-            if (equipment.masterSword) { flipUpgrade("masterSword", -1) };
-            if (equipment.biggoronSword) { flipUpgrade("biggoronSword", -1) };
-            if (equipment.dekuShield) { flipUpgrade("dekuShield", -1) };
-            if (equipment.hylianShield) { flipUpgrade("hylianShield", -1) };
-            if (equipment.mirrorShield) { flipUpgrade("mirrorShield", -1) };
-            if (equipment.kokiriTunic) { flipUpgrade("kokiriTunic", -1) };
-            if (equipment.goronTunic) { flipUpgrade("goronTunic", -1) };
-            if (equipment.zoraTunic) { flipUpgrade("zoraTunic", -1) };
-            if (equipment.kokiriBoots) { flipUpgrade("kokiriBoots", -1) };
-            if (equipment.ironBoots) { flipUpgrade("ironBoots", -1) };
-            if (equipment.hoverBoots) { flipUpgrade("hoverBoots", -1) };
-        }
+                    // Forest Temple
+                    case 0x0003:
+                        if (item.FOREST_TEMPLE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.FOREST_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.FOREST_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
 
-        function parsePacketQuest(quest) {
-            if (quest.goldSkulltulas > 0) {
-                parseGoldSkulltula(quest.goldSkulltulas);
-                flipUpgrade("goldSkulltulas", -1);
-            }
-            if (quest.heartPieces > -1 && quest.heartPieces < 4) {
-                flipUpgrade("heartPieces", quest.heartPieces);
-            }
-            if (quest.heart_containers > 0) {
-                parseHeartContainer(quest.heart_containers);
-                flipUpgrade("heart_containers", -1);
-            }
-            if (quest.magic_meter_size > 0 && quest.magic_meter_size < 3) {
-                flipUpgrade("magic_meter_size", quest.magic_meter_size);
-            }
-            if (quest.kokiriEmerald) { flipUpgrade("kokiriEmerald", -1) };
-            if (quest.goronRuby) { flipUpgrade("goronRuby", -1) };
-            if (quest.zoraSapphire) { flipUpgrade("zoraSapphire", -1) };
-            if (quest.lightMedallion) { flipUpgrade("lightMedallion", -1) };
-            if (quest.forestMedallion) { flipUpgrade("forestMedallion", -1) };
-            if (quest.fireMedallion) { flipUpgrade("fireMedallion", -1) };
-            if (quest.waterMedallion) { flipUpgrade("waterMedallion", -1) };
-            if (quest.shadowMedallion) { flipUpgrade("shadowMedallion", -1) };
-            if (quest.spiritMedallion) { flipUpgrade("spiritMedallion", -1) };
-            if (quest.zeldasLullaby) { flipUpgrade("zeldasLullaby", 1) };
-            if (quest.eponasSong) { flipUpgrade("eponasSong", 1) };
-            if (quest.sariasSong) { flipUpgrade("sariasSong", 1) };
-            if (quest.sunsSong) { flipUpgrade("sunsSong", 1) };
-            if (quest.songOfTime) { flipUpgrade("songOfTime", 1) };
-            if (quest.songOfStorms) { flipUpgrade("songOfStorms", 1) };
-            if (quest.preludeOfLight) { flipUpgrade("preludeOfLight", 1) };
-            if (quest.minuetOfForest) { flipUpgrade("minuetOfForest", 1) };
-            if (quest.boleroOfFire) { flipUpgrade("boleroOfFire", 1) };
-            if (quest.serenadeOfWater) { flipUpgrade("serenadeOfWater", 1) };
-            if (quest.nocturneOfShadow) { flipUpgrade("nocturneOfShadow", 1) };
-            if (quest.requiemOfSpirit) { flipUpgrade("requiemOfSpirit", 1) };
-            if (quest.gerudoMembershipCard) { flipUpgrade("gerudoMembershipCard", -1) };
-            if (quest.stoneOfAgony) { flipUpgrade("stoneOfAgony", -1) };
-            if (quest.double_defense) { flipUpgrade("heart_containers", 1) };
-        }
+                    // Fire Temple
+                    case 0x0004:
+                        if (item.FIRE_TEMPLE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.FIRE_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.FIRE_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
 
-        function parsePacketDungeon(item) {
-            // if (quest.key > 0) {
-            //     parseSmallKey(quest.key);
-            //     flipUpgrade("smallKey", -1);
-            // }
+                    // Water Temple
+                    case 0x0005:
+                        if (item.WATER_TEMPLE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.WATER_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.WATER_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
 
-            switch (curScene) {
-                // The Great Deku Tree
-                case 0x0000:
-                    if (item.DEKU_TREE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
+                    // Spirit Temple
+                    case 0x0006:
+                        if (item.SPIRIT_TEMPLE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.SPIRIT_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.SPIRIT_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
+
+                    // Shadow Temple
+                    case 0x0007:
+                        if (item.SHADOW_TEMPLE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.SHADOW_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.SHADOW_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
+
+                    // Bottom of the Well
+                    case 0x0008:
+                        if (item.BOTTOM_OF_THE_WELL.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.BOTTOM_OF_THE_WELL.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.BOTTOM_OF_THE_WELL.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
+
+                    // Ice Cavern
+                    case 0x0009:
+                        if (item.ICE_CAVERN.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.ICE_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.ICE_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
+
+                    // Ganon's Tower
+                    case 0x000a:
+                        if (item.GANONS_CASTLE.bossKey) {
+                            flipUpgrade("dungeonKey", 1);
+                        } else {
+                            flipUpgrade("dungeonKey", 0);
+                        }
+                        if (item.GANONS_CASTLE.map) { flipUpgrade("dungeonMap", -1) };
+                        if (item.GANONS_CASTLE.compass) { flipUpgrade("dungeonCompass", -1) };
+                        break;
+                    default:
                         flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.DEKU_TREE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.DEKU_TREE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Dodongo's Cavern
-                case 0x0001:
-                    if (item.DODONGOS_CAVERN.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.DODONGOS_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.DODONGOS_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Inside Jabu Jabu's Belly
-                case 0x0002:
-                    if (item.JABJ_JABUS_BELLY.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.JABJ_JABUS_BELLY.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.JABJ_JABUS_BELLY.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Forest Temple
-                case 0x0003:
-                    if (item.FOREST_TEMPLE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.FOREST_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.FOREST_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Fire Temple
-                case 0x0004:
-                    if (item.FIRE_TEMPLE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.FIRE_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.FIRE_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Water Temple
-                case 0x0005:
-                    if (item.WATER_TEMPLE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.WATER_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.WATER_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Spirit Temple
-                case 0x0006:
-                    if (item.SPIRIT_TEMPLE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.SPIRIT_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.SPIRIT_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Shadow Temple
-                case 0x0007:
-                    if (item.SHADOW_TEMPLE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.SHADOW_TEMPLE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.SHADOW_TEMPLE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Bottom of the Well
-                case 0x0008:
-                    if (item.BOTTOM_OF_THE_WELL.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.BOTTOM_OF_THE_WELL.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.BOTTOM_OF_THE_WELL.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Ice Cavern
-                case 0x0009:
-                    if (item.ICE_CAVERN.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.ICE_CAVERN.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.ICE_CAVERN.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-
-                // Ganon's Tower
-                case 0x000a:
-                    if (item.GANONS_CASTLE.bossKey) {
-                        flipUpgrade("dungeonKey", 1);
-                    } else {
-                        flipUpgrade("dungeonKey", 0);
-                    }
-                    if (item.GANONS_CASTLE.map) { flipUpgrade("dungeonMap", -1) };
-                    if (item.GANONS_CASTLE.compass) { flipUpgrade("dungeonCompass", -1) };
-                    break;
-                default:
-                    flipUpgrade("dungeonKey", 0);
-                    flipUpgrade("dungeonMap", -2);
-                    flipUpgrade("dungeonCompass", -2);
+                        flipUpgrade("dungeonMap", -2);
+                        flipUpgrade("dungeonCompass", -2);
+                }
             }
-        }
         </script></span>
     <br>
     <br>
@@ -952,7 +967,7 @@
     <img class="doesNotHave" id="zoraSapphire" src="./sprites/tile162.png" width="50" height="50">
 
     <script>
-        
+
     </script>
 </body>
 
