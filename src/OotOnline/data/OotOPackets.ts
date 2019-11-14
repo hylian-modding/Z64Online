@@ -246,7 +246,12 @@ export class Ooto_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
   room: number;
   scene: number;
-  constructor(data: ActorPacketData, scene: number, room: number, lobby: string) {
+  constructor(
+    data: ActorPacketData,
+    scene: number,
+    room: number,
+    lobby: string
+  ) {
     super('Ooto_SpawnActorPacket', 'OotOnline', lobby, true);
     this.actorData = data;
     this.scene = scene;
@@ -309,5 +314,49 @@ export class Ooto_KeyPacket extends Packet {
   constructor(key: IKeySave, lobby: string) {
     super('Ooto_KeyPacket', 'OotOnline', lobby, true);
     this.key = key;
+  }
+}
+
+export class Ooto_IconAllocatePacket extends Packet {
+  icon: Buffer;
+  age: Age;
+
+  constructor(buf: Buffer, age: Age, lobby: string) {
+    super('Ooto_IconAllocatePacket', 'OotOnline', lobby, true);
+    this.icon = buf;
+    this.age = age;
+  }
+}
+
+export class Ooto_SceneGUIPacket extends Packet {
+  scene: number;
+  age: Age;
+  iconAdult!: string;
+  iconChild!: string;
+
+  constructor(
+    scene: number,
+    age: Age,
+    lobby: string,
+    iconAdult?: Buffer,
+    iconChild?: Buffer
+  ) {
+    super('Ooto_SceneGUIPacket', 'OotOnline', lobby, false);
+    this.scene = scene;
+    this.age = age;
+    if (iconAdult !== undefined) {
+      this.iconAdult = iconAdult.toString('base64');
+    }
+    if (iconChild !== undefined) {
+      this.iconChild = iconChild.toString('base64');
+    }
+  }
+
+  setAdultIcon(iconAdult: Buffer) {
+    this.iconAdult = iconAdult.toString('base64');
+  }
+
+  setChildIcon(iconChild: Buffer) {
+    this.iconChild = iconChild.toString('base64');
   }
 }

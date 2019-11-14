@@ -16,6 +16,7 @@ import zlib, { deflateRaw } from 'zlib';
 import {
   Ooto_AllocateModelPacket,
   Ooto_DownloadAllModelsPacket,
+  Ooto_IconAllocatePacket,
 } from '../OotOPackets';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
 import {
@@ -69,6 +70,8 @@ export class ModelManager {
   customModelFileAnims = '';
   customModelRepointsAdult = __dirname + '/zobjs/adult_patch.zobj';
   customModelRepointsChild = __dirname + '/zobjs/child_patch.zobj';
+  customModelFileAdultIcon = '';
+  customModelFileChildIcon = '';
 
   constructor(
     ModLoader: IModLoaderAPI,
@@ -98,6 +101,16 @@ export class ModelManager {
     this.customModelFileAnims = file;
   }
 
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ICON_ADULT)
+  onCustomModel4(file: string) {
+    this.customModelFileAdultIcon = file;
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ICON_CHILD)
+  onCustomModel5(file: string) {
+    this.customModelFileChildIcon = file;
+  }
+
   injectRawFileToRom(rom: Buffer, index: number, file: Buffer) {
     let dma = 0x7430;
     let offset: number = index * 0x10;
@@ -114,7 +127,8 @@ export class ModelManager {
     let isFileCompressed = true;
     if (end === 0) {
       isFileCompressed = false;
-      size = rom.readUInt32BE(dma + offset + 0x4) - rom.readUInt32BE(dma + offset);
+      size =
+        rom.readUInt32BE(dma + offset + 0x4) - rom.readUInt32BE(dma + offset);
       end = start + size;
     }
     let buf: Buffer = Buffer.alloc(size);
@@ -160,7 +174,7 @@ export class ModelManager {
     let adult = 502;
     let child = 503;
     let code = 27;
-    let anim: number = 7;
+    let anim = 7;
     let offset = 0xe65a0;
 
     if (this.customModelFileAdult !== '') {
@@ -221,13 +235,27 @@ export class ModelManager {
       this.clientStorage.childModel = child_model;
     }
 
-    if (this.customModelFileAnims !== ''){
-      console.log("Loading new animations...");
+    if (this.customModelFileAnims !== '') {
+      console.log('Loading new animations...');
       let anim_file: Buffer = fs.readFileSync(this.customModelFileAnims);
       let anim_zobj: Buffer = this.getRawFileFromRom(evt.rom, anim);
       this.ModLoader.utils.clearBuffer(anim_zobj);
       anim_file.copy(anim_zobj);
       this.injectRawFileToRom(evt.rom, anim, anim_zobj);
+    }
+
+    if (this.customModelFileAdultIcon !== '') {
+      console.log('Loading custom map icon (Adult) ...');
+      this.clientStorage.adultIcon = fs.readFileSync(
+        this.customModelFileAdultIcon
+      );
+    }
+
+    if (this.customModelFileChildIcon !== '') {
+      console.log('Loading custom map icon (Child) ...');
+      this.clientStorage.childIcon = fs.readFileSync(
+        this.customModelFileChildIcon
+      );
     }
 
     if (this.clientStorage.adultModel.byteLength > 1) {
@@ -244,6 +272,24 @@ export class ModelManager {
         new Ooto_AllocateModelPacket(
           zlib.deflateSync(this.clientStorage.childModel),
           Age.CHILD,
+          this.ModLoader.clientLobby
+        )
+      );
+    }
+    if (this.clientStorage.childIcon.byteLength > 1) {
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_IconAllocatePacket(
+          zlib.deflateSync(this.clientStorage.childIcon),
+          Age.CHILD,
+          this.ModLoader.clientLobby
+        )
+      );
+    }
+    if (this.clientStorage.adultIcon.byteLength > 1) {
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_IconAllocatePacket(
+          zlib.deflateSync(this.clientStorage.adultIcon),
+          Age.ADULT,
           this.ModLoader.clientLobby
         )
       );
@@ -335,6 +381,37 @@ export class ModelManager {
     }
   }
 
+  @NetworkHandler('Ooto_IconAllocatePacket')
+  onIconAllocateClient(packet: Ooto_IconAllocatePacket) {
+    if (
+      !this.clientStorage.playerModelCache.hasOwnProperty(packet.player.uuid)
+    ) {
+      this.clientStorage.playerModelCache[packet.player.uuid] = new ModelPlayer(
+        packet.player.uuid
+      );
+    }
+    if (packet.age === Age.ADULT) {
+      (this.clientStorage.playerModelCache[
+        packet.player.uuid
+      ] as ModelPlayer).customIconAdult = zlib.inflateSync(packet.icon);
+      console.log(
+        'client: Saving custom icon for (Adult) player ' +
+          packet.player.nickname +
+          '.'
+      );
+    }
+    if (packet.age === Age.CHILD) {
+      (this.clientStorage.playerModelCache[
+        packet.player.uuid
+      ] as ModelPlayer).customIconChild = zlib.inflateSync(packet.icon);
+      console.log(
+        'client: Saving custom icon for (Child) player ' +
+          packet.player.nickname +
+          '.'
+      );
+    }
+  }
+
   @EventHandler(EventsServer.ON_LOBBY_LEAVE)
   onServerPlayerLeft(evt: EventServerLeft) {
     let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
@@ -397,11 +474,27 @@ export class ModelManager {
       this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }
-    if (puppet.age === Age.ADULT && (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer).model.adult === undefined){
+    if (
+      puppet.age === Age.ADULT &&
+      (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer)
+        .model.adult === undefined
+    ) {
+      this.ModLoader.emulator.rdramWriteBuffer(
+        0x800000,
+        this.allocationManager.models[0].model.adult
+      );
       this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }
-    if (puppet.age === Age.CHILD && (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer).model.child === undefined){
+    if (
+      puppet.age === Age.CHILD &&
+      (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer)
+        .model.child === undefined
+    ) {
+      this.ModLoader.emulator.rdramWriteBuffer(
+        0x837800,
+        this.allocationManager.models[1].model.child
+      );
       this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }

@@ -14,6 +14,8 @@ export enum OotOnlineEvents {
   CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult',
   CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild',
   CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims',
+  CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult',
+  CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild',
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
 }
 

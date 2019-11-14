@@ -356,8 +356,11 @@ export function mergeInventoryData(
     save.childTradeItem = InventoryItem.NONE;
   }
 
-  if (incoming.childTradeItem !== InventoryItem.SOLD_OUT){
-    if (incoming.childTradeItem > save.childTradeItem && save.childTradeItem <= InventoryItem.MASK_OF_TRUTH){
+  if (incoming.childTradeItem !== InventoryItem.SOLD_OUT) {
+    if (
+      incoming.childTradeItem > save.childTradeItem &&
+      save.childTradeItem <= InventoryItem.MASK_OF_TRUTH
+    ) {
       save.childTradeItem = incoming.childTradeItem;
     }
   }
@@ -379,8 +382,8 @@ export function mergeInventoryData(
     save.adultTradeItem = InventoryItem.NONE;
   }
 
-  if (incoming.adultTradeItem > save.adultTradeItem){
-    if (isAdultTradeItem(incoming.adultTradeItem)){
+  if (incoming.adultTradeItem > save.adultTradeItem) {
+    if (isAdultTradeItem(incoming.adultTradeItem)) {
       save.adultTradeItem = incoming.adultTradeItem;
     }
   }
