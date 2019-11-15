@@ -227,7 +227,7 @@
                             }
 
                             otherPlayers[i].icon.src = icon;
-                            otherPlayers[i].age = packet.data.age;
+                            otherPlayers[i].age = packet.data.age.toString();
                             otherPlayers[i].user.nickname = ext + otherPlayers[i].user.nickname;
                         }
                         break;
