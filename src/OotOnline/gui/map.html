@@ -228,7 +228,7 @@
 
                             otherPlayers[i].icon.src = icon;
                             otherPlayers[i].age = packet.data.age.toString();
-                            otherPlayers[i].user.nickname = ext + otherPlayers[i].user.nickname;
+                            otherPlayers[i].user.ext = ext;
                         }
                         break;
                     }
@@ -267,8 +267,8 @@
                 marker["pos"] = {};
                 marker.pos["x"] = -32;
                 marker.pos["y"] = -32;
-                marker["age"] = "0";
-                marker["user"] = { uuid: "", nickname: "" };
+                marker["age"] = "-1";
+                marker["user"] = { uuid: "", nickname: "", ext: ""};
                 marker.icon.onload = function () {
                     context.drawImage(marker.icon, marker.pos.x, marker.pos.y, marker.icon.width, marker.icon.height);
                 }
@@ -328,7 +328,7 @@
                 for (let i = 0; i < otherPlayers.length; i++) {
                     let p = otherPlayers[i];
                     if (isBetween(x, x_m, p.pos.x) && isBetween(y, y_m, p.pos.y)) {
-                        users.push(p.user.nickname);
+                        users.push(p.user.ext + p.user.nickname);
                     }
                 }
                 var message = users.toString();
