@@ -610,9 +610,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         );
       }
     }
-    if (this.modelManager.clientStorage.childIcon.byteLength > 1) {
-      gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
-    }
     this.ModLoader.gui.tunnel.send(
       'OotOnline:onSceneChanged_Network',
       new GUITunnelPacket(
