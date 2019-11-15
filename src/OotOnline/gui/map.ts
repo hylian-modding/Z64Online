@@ -8,7 +8,7 @@ const electron = require('electron');
 const ipc = electron.ipcRenderer;
 
 const hooks = {
-  onSceneChange: (scene: number) => {},
+  onSceneChange: (packet: GUITunnelPacket) => {},
   onSceneChange_Network: (packet: GUITunnelPacket) => {},
   onPlayerLeft: (packet: GUITunnelPacket) => {},
   onData: (packet: GUITunnelPacket) => {},
@@ -25,7 +25,7 @@ class MapMessageHandlers {
 
   @TunnelMessageHandler('OotOnline:onSceneChanged')
   onPlayerMoved(evt: GUITunnelPacket) {
-    hooks.onSceneChange(evt.data as number);
+    hooks.onSceneChange(evt);
   }
 
   @TunnelMessageHandler('OotOnline:onSceneChanged_Network')

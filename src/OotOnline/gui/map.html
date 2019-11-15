@@ -142,7 +142,7 @@
                 0x0060: { x: 435, y: 60 }, // Death Mountain Trail
                 0x0061: { x: 448, y: 6 }, // Death Mountain Crater
                 0x0062: { x: 416, y: 26 }, // Goron 
-                0x0063: { x: 504, y: 159 }, // Lon Lon Ranch
+                0x0063: { x: 305, y: 150 }, // Lon Lon Ranch
                 0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
             };
             var hooks = require('./map.js');
@@ -153,26 +153,37 @@
                             onData: (packet) => { }
                         }; */
             hooks.onAgeChange = function (packet) {
-                if (player1.age !== packet.data.toString()) {
-                    if (packet.data === 0) {
-                        player1.icon.src = "./sprites/tileAdult.png";
+                let icon = "";
+
+                if (packet.data.age === 0) {
+                    if (packet.data.hasOwnProperty("iconAdult")) {
+                        icon = "data:image/jpg;base64," + packet.data.iconAdult;
                     } else {
-                        player1.icon.src = "./sprites/tileChild.png";
+                        icon = "./sprites/tileAdult.png";
                     }
-                    player1.age = packet.data.toString();
+                    icon_index["age"][0] = icon;
+                } else {
+                    if (packet.data.hasOwnProperty("iconChild")) {
+                        icon = "data:image/jpg;base64," + packet.data.iconChild;
+                    } else {
+                        icon = "./sprites/tileChild.png";
+                    }
+                    icon_index["age"][1] = icon;
                 }
 
-                flipUpgrade("age", packet.data);
+                player1.icon.src = icon;
+                player1.age = packet.data.age.toString();
+                flipUpgrade("age", packet.data.age);
             }
 
             var curScene = 0;
-            hooks.onSceneChange = function (scene) {
-                player1.pos.x = coords[scene].x;
-                player1.pos.y = coords[scene].y;
+            hooks.onSceneChange = function (packet) {
+                player1.pos.x = coords[packet.data.scene].x;
+                player1.pos.y = coords[packet.data.scene].y;
                 player1.user.uuid = "THIS IS ME";
                 player1.user.nickname = "Me";
 
-                curScene = scene;
+                curScene = packet.data.scene;
             }
             hooks.onSceneChange_Network = function (packet) {
                 console.log(packet);
@@ -196,14 +207,28 @@
                         otherPlayers[i].pos.y = coords[packet.data.scene].y;
 
                         if (otherPlayers[i].age !== packet.data.age.toString()) {
+                            let icon = "";
+                            let ext = "";
+
                             if (packet.data.age === 0) {
-                                otherPlayers[i].icon.src = "./sprites/tileAdult.png";
-                                otherPlayers[i].user.nickname = "[Adult]:" + otherPlayers[i].user.nickname;
+                                if (packet.data.hasOwnProperty("iconAdult")) {
+                                    icon = "data:image/jpg;base64," + packet.data.iconAdult;
+                                } else {
+                                    icon = "./sprites/tileAdult.png";
+                                }
+                                ext = "[Adult]:";
                             } else {
-                                otherPlayers[i].icon.src = "./sprites/tileChild.png";
-                                otherPlayers[i].user.nickname = "[Child]:" + otherPlayers[i].user.nickname;
+                                if (packet.data.hasOwnProperty("iconChild")) {
+                                    icon = "data:image/jpg;base64," + packet.data.iconChild;
+                                } else {
+                                    icon = "./sprites/tileChild.png";
+                                }
+                                ext = "[Child]:";
                             }
-                            otherPlayers[i].age = packet.data.age.toString();
+
+                            otherPlayers[i].icon.src = icon;
+                            otherPlayers[i].age = packet.data.age;
+                            otherPlayers[i].user.nickname = ext + otherPlayers[i].user.nickname;
                         }
                         break;
                     }
@@ -380,7 +405,6 @@
                 0: "./sprites/tile120.png", 1: "./sprites/tile120_0.png",
                 2: "./sprites/tile120_1.png", 3: "./sprites/tile120_2.png"
             }
-            var age_icons = { 0: "./sprites/tileAdult.png", 1: "./sprites/tileChild.png" }
 
             var song1_icons = { 1: "./sprites/tileZelda.png" };
             var song2_icons = { 1: "./sprites/tileEpona.png" };
@@ -402,14 +426,15 @@
                 "bottle_1": bottle_icons, "bottle_2": bottle_icons, "bottle_3": bottle_icons, "bottle_4": bottle_icons,
                 "goldSkulltulas100": numbers, "goldSkulltulas10": numbers, "goldSkulltulas1": numbers,
                 "heart_containers": hc_icons, "heart_containers10": numbers, "heart_containers1": numbers,
-                "dekuSticks": deku_stix_icons, "dekuNuts": deku_nut_icons, "age": age_icons,
+                "dekuSticks": deku_stix_icons, "dekuNuts": deku_nut_icons,
                 "magicBeans": bean_icons, "bombchus": bombchu_icons, "bombs": bomb_icons,
                 "fairySlingshot": slingshot_icons, "fairyBow": bow_icons,
                 "dungeonKey": key_icons, "heartPieces": hp_icons,
                 "zeldasLullaby": song1_icons, "eponasSong": song2_icons, "sariasSong": song3_icons,
                 "sunsSong": song4_icons, "songOfTime": song5_icons, "songOfStorms": song6_icons, "preludeOfLight": song7_icons,
                 "minuetOfForest": song8_icons, "boleroOfFire": song9_icons, "serenadeOfWater": song10_icons,
-                "nocturneOfShadow": song11_icons, "requiemOfSpirit": song12_icons
+                "nocturneOfShadow": song11_icons, "requiemOfSpirit": song12_icons,
+                "age": ["./sprites/tileAdult.png", "./sprites/tileChild.png"],
             }
 
             var alt_index = {
