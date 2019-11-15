@@ -582,6 +582,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.age,
       packet.lobby
     );
+    gui_p.player = packet.player;
     if (
       this.modelManager.clientStorage.playerModelCache.hasOwnProperty(
         packet.player.uuid

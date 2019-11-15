@@ -375,6 +375,41 @@ export class ModelManager {
     }
   }
 
+  @ServerNetworkHandler('Ooto_IconAllocatePacket')
+  onIconAllocateServer(packet: Ooto_IconAllocatePacket){
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      (this.parent as unknown) as IPlugin
+    ) as OotOnlineStorage;
+    if (
+      !storage.playerModelCache.hasOwnProperty(packet.player.uuid)
+    ) {
+      storage.playerModelCache[packet.player.uuid] = new ModelPlayer(
+        packet.player.uuid
+      );
+    }
+    if (packet.age === Age.ADULT) {
+      (storage.playerModelCache[
+        packet.player.uuid
+      ] as ModelPlayer).customIconAdult = zlib.inflateSync(packet.icon);
+      console.log(
+        'server: Saving custom icon for (Adult) player ' +
+          packet.player.nickname +
+          '.'
+      );
+    }
+    if (packet.age === Age.CHILD) {
+      (storage.playerModelCache[
+        packet.player.uuid
+      ] as ModelPlayer).customIconChild = zlib.inflateSync(packet.icon);
+      console.log(
+        'server: Saving custom icon for (Child) player ' +
+          packet.player.nickname +
+          '.'
+      );
+    }
+  }
+
   @NetworkHandler('Ooto_IconAllocatePacket')
   onIconAllocateClient(packet: Ooto_IconAllocatePacket) {
     if (
@@ -458,6 +493,7 @@ export class ModelManager {
         thread.startThread();
       }
     });
+    this.ModLoader.logger.info(this.clientStorage.playerModelCache);
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
