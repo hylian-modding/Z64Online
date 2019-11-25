@@ -1196,6 +1196,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.overlord.generateCrashDump();
     let dump_parse: CrashParser = new CrashParser();
     dump_parse.parse();
+    fs.writeFileSync(
+      './Ooto_storagedump.json',
+      JSON.stringify(this.clientStorage, null, 2)
+    );
   }
 }
 
