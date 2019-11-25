@@ -376,14 +376,12 @@ export class ModelManager {
   }
 
   @ServerNetworkHandler('Ooto_IconAllocatePacket')
-  onIconAllocateServer(packet: Ooto_IconAllocatePacket){
+  onIconAllocateServer(packet: Ooto_IconAllocatePacket) {
     let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
       packet.lobby,
       (this.parent as unknown) as IPlugin
     ) as OotOnlineStorage;
-    if (
-      !storage.playerModelCache.hasOwnProperty(packet.player.uuid)
-    ) {
+    if (!storage.playerModelCache.hasOwnProperty(packet.player.uuid)) {
       storage.playerModelCache[packet.player.uuid] = new ModelPlayer(
         packet.player.uuid
       );

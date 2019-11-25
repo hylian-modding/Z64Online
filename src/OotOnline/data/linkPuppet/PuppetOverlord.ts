@@ -4,6 +4,7 @@ import IMemory from 'modloader64_api/IMemory';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, ILogger } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_PuppetPacket, Ooto_SceneRequestPacket } from '../OotOPackets';
+import fs from 'fs';
 
 export class PuppetOverlord {
   private logger: ILogger;
@@ -186,14 +187,29 @@ export class PuppetOverlord {
   }
 
   processPuppetPacket(packet: Ooto_PuppetPacket) {
-    if (
-      this.puppets.has(packet.player.uuid) &&
-      !this.core.helper.isPaused() &&
-      this.core.link.state !== LinkState.BUSY
-    ) {
+    if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       puppet.processIncomingPuppetData(packet.data);
     }
+  }
+
+  generateCrashDump() {
+    let _puppets: any = {};
+    this.puppets.forEach(
+      (value: Puppet, key: string, map: Map<string, Puppet>) => {
+        _puppets[key] = {
+          isSpawned: value.isSpawned,
+          isSpawning: value.isSpawning,
+          isShoveled: value.isShoveled,
+          pointer: value.data.pointer,
+          player: value.player,
+        };
+      }
+    );
+    fs.writeFileSync(
+      './PuppetOverlord_crashdump.json',
+      JSON.stringify(_puppets, null, 2)
+    );
   }
 
   onTick() {

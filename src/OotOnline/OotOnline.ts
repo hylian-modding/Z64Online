@@ -79,6 +79,7 @@ import { ModelManager } from './data/models/ModelManager';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
+import { CrashParser } from './data/crash/crashparser';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -1188,6 +1189,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         (success: boolean, result: number) => {}
       );
     }
+  }
+
+  @EventHandler(ModLoader.ModLoaderEvents.ON_CRASH)
+  onEmuCrash(evt: any) {
+    this.overlord.generateCrashDump();
+    let dump_parse: CrashParser = new CrashParser();
+    dump_parse.parse();
   }
 }
 
