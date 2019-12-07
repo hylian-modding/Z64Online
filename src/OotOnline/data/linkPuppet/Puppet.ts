@@ -74,15 +74,14 @@ export class Puppet {
             this.data.pointer = result & 0x00ffffff;
             console.log('Puppet spawned!');
             console.log(this.data.pointer.toString(16));
+            this.doNotDespawnMe();
             bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
             this.void = this.emulator.rdramReadBuffer(
               this.data.pointer + 0x24,
               0xc
             );
-            this.ModLoader.utils.setTimeoutFrames(() => {
-              this.isSpawned = true;
-              this.isSpawning = false;
-            }, 5);
+            this.isSpawned = true;
+            this.isSpawning = false;
           }
         }
       );
@@ -91,7 +90,6 @@ export class Puppet {
 
   processIncomingPuppetData(data: PuppetData) {
     if (this.isSpawned && !this.isShoveled) {
-      this.doNotDespawnMe();
       Object.keys(data).forEach((key: string) => {
         (this.data as any)[key] = (data as any)[key];
       });

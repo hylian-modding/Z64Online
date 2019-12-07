@@ -292,16 +292,7 @@ export class ModelManager {
     console.log('Done.');
   }
 
-  onPostInit() {
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x800000,
-      this.allocationManager.models[0].model.adult
-    );
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x837800,
-      this.allocationManager.models[1].model.child
-    );
-  }
+  onPostInit() {}
 
   @ServerNetworkHandler('Ooto_AllocateModelPacket')
   onModelAllocate_server(packet: Ooto_AllocateModelPacket) {
@@ -499,30 +490,17 @@ export class ModelManager {
     if (
       !this.clientStorage.playerModelCache.hasOwnProperty(puppet.player.uuid)
     ) {
-      this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
-      return;
-    }
-    if (
-      puppet.age === Age.ADULT &&
-      (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer)
-        .model.adult === undefined
-    ) {
-      this.ModLoader.emulator.rdramWriteBuffer(
-        0x800000,
-        this.allocationManager.models[0].model.adult
-      );
-      this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
-      return;
-    }
-    if (
-      puppet.age === Age.CHILD &&
-      (this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer)
-        .model.child === undefined
-    ) {
-      this.ModLoader.emulator.rdramWriteBuffer(
-        0x837800,
-        this.allocationManager.models[1].model.child
-      );
+      if (puppet.age === Age.ADULT) {
+        this.ModLoader.emulator.rdramWriteBuffer(
+          0x800000,
+          this.allocationManager.models[0].model.adult
+        );
+      } else {
+        this.ModLoader.emulator.rdramWriteBuffer(
+          0x837800,
+          this.allocationManager.models[1].model.child
+        );
+      }
       this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }

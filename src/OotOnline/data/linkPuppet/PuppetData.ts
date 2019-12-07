@@ -38,6 +38,7 @@ export class PuppetData {
     this.copyFields.push('gauntlet_color');
     this.copyFields.push('areHandsClosed');
     this.copyFields.push('current_mask');
+    this.copyFields.push('shield_state');
   }
 
   get pos(): Buffer {
@@ -330,6 +331,14 @@ export class PuppetData {
 
   set back_item(num: number) {
     this.emulator.rdramWrite8(this.pointer + 0x27b, num);
+  }
+
+  get shield_state(): number {
+    return this.emulator.rdramRead32(0x1db09c);
+  }
+
+  set shield_state(state: number) {
+    this.emulator.rdramWrite32(this.pointer + 0x284, state);
   }
 
   toJSON() {

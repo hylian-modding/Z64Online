@@ -6,14 +6,15 @@ export class CrashParser {
 
   parse() {
     let dump: Buffer = zlib.inflateSync(fs.readFileSync('./crash_dump.bin'));
+    fs.writeFileSync('./crash_dump_inflate.bin', dump);
 
     let gc = 0x1c84a0;
     let actor_array_offset = 0x001c30;
     let actor_next_offset = 0x124;
     let actor_names: any = JSON.parse(
-      fs.readFileSync('./ACTOR_NAMES.json').toString()
+      fs.readFileSync(__dirname + '/ACTOR_NAMES.json').toString()
     );
-
+    let output: string[][] = new Array<string[]>();
     for (let i = 0; i < 12 * 8; i += 8) {
       let actors: number[] = new Array<number>();
       let addr: number = gc + actor_array_offset + i;
@@ -29,16 +30,28 @@ export class CrashParser {
         }
       }
       let str: string[] = new Array<string>();
+      if (!fs.existsSync('./actors')) {
+        fs.mkdirSync('./actors');
+      }
       for (let i = 0; i < actors.length; i++) {
         let p: number = actors[i];
         let id: number = dump.readUInt16BE(p);
         let _id: string = '0x' + id.toString(16).toUpperCase();
         str.push(actor_names[_id].trim());
+        let a: Buffer = Buffer.alloc(0x300);
+        dump.copy(a, 0, p, p + 0x300);
+        try {
+          fs.writeFileSync(
+            './actors/' + actor_names[_id].trim().replace('/', '-') + '.bin',
+            a
+          );
+        } catch (err) {}
       }
-      fs.writeFileSync(
-        './crash_dump_actors.json',
-        JSON.stringify(str, null, 2)
-      );
+      output.push(str);
     }
+    fs.writeFileSync(
+      './crash_dump_actors.json',
+      JSON.stringify(output, null, 2)
+    );
   }
 }

@@ -79,7 +79,8 @@ import { ModelManager } from './data/models/ModelManager';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
-import { CrashParser } from './data/crash/crashparser';
+import { CrashParser } from './data/crash/CrashParser';
+import zlib from 'zlib';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -177,6 +178,21 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     status.partyMax = 30;
     status.partySize = 1;
     this.ModLoader.gui.setDiscordStatus(status);
+  }
+
+  @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
+  onPayload(evt: any) {
+    if (evt.file === 'link_puppet.ovl') {
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        this.ModLoader.emulator.rdramWrite16(0x600140, evt.result);
+        console.log('Setting link puppet id to ' + evt.result + '.');
+      }, 20);
+    } else if (evt.file === 'epona_puppet.ovl') {
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        this.ModLoader.emulator.rdramWrite16(0x600150, evt.result);
+        console.log('Setting epona puppet id to ' + evt.result + '.');
+      }, 20);
+    }
   }
 
   @EventHandler(OotOnlineEvents.GHOST_MODE)
@@ -354,7 +370,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
-  onTick(): void {
+  onTick(frame: number): void {
     if (
       !this.core.helper.isTitleScreen() &&
       this.core.helper.isSceneNumberValid()
