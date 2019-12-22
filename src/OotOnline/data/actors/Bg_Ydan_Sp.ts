@@ -4,7 +4,7 @@ class Bg_Ydan_Sp extends ActorHookBase {
   constructor() {
     super();
     this.actorID = 0x000f;
-    this.hooks.push(new HookInfo(0x171, 0x1, false));
+    this.hooks.push(new HookInfo(0x154, 0x4, true));
   }
 }
 
