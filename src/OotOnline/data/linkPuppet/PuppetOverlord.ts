@@ -94,6 +94,9 @@ export class PuppetOverlord {
   changePuppetScene(player: INetworkPlayer, entering_scene: number, age: Age) {
     if (this.puppets.has(player.uuid)) {
       let puppet = this.puppets.get(player.uuid)!;
+      if (puppet.isSpawned && puppet.age !== age) {
+        puppet.despawn();
+      }
       puppet.scene = entering_scene;
       puppet.age = age;
       this.logger.info(

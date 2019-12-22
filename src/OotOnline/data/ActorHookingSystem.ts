@@ -49,6 +49,8 @@ export class ActorHookingManager {
   core: IOOTCore;
   parent: IOotOnlineHelpers;
 
+  names: any;
+
   constructor(
     modloader: IModLoaderAPI,
     core: IOOTCore,
@@ -66,6 +68,9 @@ export class ActorHookingManager {
     });
     this.core = core;
     this.parent = parent;
+    this.names = JSON.parse(
+      fs.readFileSync(__dirname + '/crash/ACTOR_NAMES.json').toString()
+    );
   }
 
   onPostInit() {
@@ -97,8 +102,17 @@ export class ActorHookingManager {
     if (!(this.parent as any).LobbyConfig.actor_syncing) {
       return;
     }
-    if (this.actorHookMap.has(actor.actorID)) {
-      console.log('Setting up hook for actor ' + actor.actorUUID + '.');
+    if (
+      this.actorHookMap.has(actor.actorID) &&
+      !this.actorHookTicks.has(actor.actorUUID)
+    ) {
+      console.log(
+        'Setting up hook for actor ' +
+          this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
+          ': ' +
+          actor.actorUUID +
+          '.'
+      );
       this.actorHookTicks.set(
         actor.actorUUID,
         new ActorHookProcessor(
@@ -144,7 +158,7 @@ export class ActorHookingManager {
       return;
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
-      console.log('Deleting hook for actor ' + actor.actorUUID + '.');
+      //console.log('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.modloader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
@@ -153,7 +167,7 @@ export class ActorHookingManager {
           this.modloader.clientLobby
         )
       );
-      this.actorHookTicks.delete(actor.actorUUID);
+      //this.actorHookTicks.delete(actor.actorUUID);
     } else if (actor.actorID === BOMB_ID) {
       if (this.bombsLocal.has(actor.actorUUID)) {
         this.modloader.clientSide.sendPacket(
@@ -215,14 +229,6 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_ActorPacket')
   onActorPacket(packet: Ooto_ActorPacket) {
-    if (
-      packet.scene !== this.core.global.scene ||
-      packet.room !== this.core.global.room ||
-      this.core.helper.isLinkEnteringLoadingZone() ||
-      this.core.global.scene_framecount < 100
-    ) {
-      return;
-    }
     if (this.actorHookTicks.has(packet.actorData.actor.actorUUID)) {
       this.actorHookTicks.get(
         packet.actorData.actor.actorUUID
@@ -323,21 +329,9 @@ export class ActorHookingManager {
 
   @NetworkHandler('Ooto_ActorDeadPacket')
   onActorDead(packet: Ooto_ActorDeadPacket) {
-    if (
-      packet.scene !== this.core.global.scene ||
-      packet.room !== this.core.global.room ||
-      this.core.helper.isLinkEnteringLoadingZone() ||
-      this.core.global.scene_framecount < 100
-    ) {
-      return;
-    }
-    if (this.actorHookTicks.has(packet.actorUUID)) {
-      let actor: IActor = this.actorHookTicks.get(packet.actorUUID)!.actor;
-      //actor.destroy();
-    } else if (this.bombsRemote.has(packet.actorUUID)) {
+    if (this.bombsRemote.has(packet.actorUUID)) {
       this.bombsRemote.delete(packet.actorUUID);
     } else if (this.chusRemote.has(packet.actorUUID)) {
-      let chu: IActor = this.chusRemote.get(packet.actorUUID)!;
       this.chusRemote.delete(packet.actorUUID);
     }
   }
@@ -407,7 +401,7 @@ export class ActorHookingManager {
 
   onTick() {
     this.actorHookTicks.forEach((value: ActorHookProcessor, key: string) => {
-      //value.onTick();
+      value.onTick();
     });
     this.bombsLocal.forEach((value: IActor, key: string) => {
       this.bombProcessor.actor = value;

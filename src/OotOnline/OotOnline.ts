@@ -413,9 +413,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   @EventHandler(OotEvents.ON_SAVE_LOADED)
   onSaveLoaded(evt: any) {
     setTimeout(() => {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
-      );
+      if (this.LobbyConfig.data_syncing) {
+        this.ModLoader.clientSide.sendPacket(
+          new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby)
+        );
+      }
       let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
         this.core.global.scene,
         this.core.save.age,
@@ -513,6 +515,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: number) {
+    this.overlord.localPlayerLoadingZone();
     this.overlord.localPlayerChangingScenes(scene, this.core.save.age);
     this.ModLoader.clientSide.sendPacket(
       new Ooto_ScenePacket(
@@ -1138,7 +1141,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.overlord.localPlayerLoadingZone();
     let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
       this.core.global.scene,
-      this.core.save.age,
+      age,
       this.ModLoader.clientLobby
     );
     if (this.modelManager.clientStorage.adultIcon.byteLength > 1) {
@@ -1150,6 +1153,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.ModLoader.gui.tunnel.send(
       'OotOnline:onAgeChange',
       new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p)
+    );
+    this.ModLoader.clientSide.sendPacket(
+      new Ooto_ScenePacket(
+        this.ModLoader.clientLobby,
+        this.core.global.scene,
+        age
+      )
     );
   }
 
