@@ -1,5 +1,5 @@
 import { IActor } from 'modloader64_api/OOT/IActor';
-import { EventHandler } from 'modloader64_api/EventHandler';
+import { EventHandler, bus } from 'modloader64_api/EventHandler';
 import { OotEvents, IOOTCore, LinkState } from 'modloader64_api/OOT/OOTAPI';
 import {
   ActorHookBase,
@@ -23,7 +23,7 @@ import {
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { v4 } from 'uuid';
-import { IOotOnlineHelpers } from '../OotoAPI/OotoAPI';
+import { IOotOnlineHelpers, OotOnlineEvents } from '../OotoAPI/OotoAPI';
 
 // Actor Hooking Stuff
 
@@ -57,15 +57,6 @@ export class ActorHookingManager {
     parent: IOotOnlineHelpers
   ) {
     this.modloader = modloader;
-    let dir = path.join(__dirname, 'actors');
-    fs.readdirSync(dir).forEach((file: string) => {
-      let parse = path.parse(file);
-      if (parse.ext === '.js') {
-        let hook: ActorHookBase = require(path.join(dir, file));
-        this.actorHookMap.set(hook.actorID, hook);
-        console.log('Loaded hook data for ' + parse.name + '.');
-      }
-    });
     this.core = core;
     this.parent = parent;
     this.names = JSON.parse(
@@ -73,7 +64,21 @@ export class ActorHookingManager {
     );
   }
 
+  @EventHandler(OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD)
+  onActorSyncFile(evt: string) {
+    let hook: ActorHookBase = require(evt);
+    this.actorHookMap.set(hook.actorID, hook);
+    this.modloader.logger.info("Loading actor hook for actor " + this.names["0x" + hook.actorID.toString(16).toUpperCase()] + ".");
+  }
+
   onPostInit() {
+    let dir = path.join(__dirname, 'actors');
+    fs.readdirSync(dir).forEach((file: string) => {
+      let parse = path.parse(file);
+      if (parse.ext === '.js') {
+        bus.emit(OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD, path.join(dir, file));
+      }
+    });
     let bombs = new ActorHookBase();
     bombs.actorID = BOMB_ID;
     bombs.hooks.push(new HookInfo(0x1e8, 0x4));
@@ -106,18 +111,24 @@ export class ActorHookingManager {
       this.actorHookMap.has(actor.actorID) &&
       !this.actorHookTicks.has(actor.actorUUID)
     ) {
+      let base: ActorHookBase = this.actorHookMap.get(actor.actorID)!;
+      if (base.checkVariable) {
+        if (actor.variable !== base.variable) {
+          return;
+        }
+      }
       console.log(
         'Setting up hook for actor ' +
-          this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
-          ': ' +
-          actor.actorUUID +
-          '.'
+        this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
+        ': ' +
+        actor.actorUUID +
+        '.'
       );
       this.actorHookTicks.set(
         actor.actorUUID,
         new ActorHookProcessor(
           actor,
-          this.actorHookMap.get(actor.actorID)!,
+          base,
           this.modloader,
           this.core
         )
