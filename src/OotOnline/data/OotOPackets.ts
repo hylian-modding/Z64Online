@@ -13,7 +13,6 @@ import {
   IEquipmentSave,
   IQuestSave,
   IDungeonItemSave,
-  IKeySave,
   InventorySave,
 } from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
@@ -296,24 +295,6 @@ export class Ooto_BottleUpdatePacket extends Packet {
     super('Ooto_BottleUpdatePacket', 'OotOnline', lobby, true);
     this.slot = slot;
     this.contents = contents;
-  }
-}
-
-export class Ooto_AllKeysPacket extends Packet {
-  keyCache: IKeySave[];
-
-  constructor(keyCache: IKeySave[], lobby: string) {
-    super('Ooto_AllKeysPacket', 'OotOnline', lobby, false);
-    this.keyCache = keyCache;
-  }
-}
-
-export class Ooto_KeyPacket extends Packet {
-  key: IKeySave;
-
-  constructor(key: IKeySave, lobby: string) {
-    super('Ooto_KeyPacket', 'OotOnline', lobby, true);
-    this.key = key;
   }
 }
 

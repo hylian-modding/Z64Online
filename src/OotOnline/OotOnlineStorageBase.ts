@@ -6,8 +6,6 @@ import {
   SKULLTULA_ARR_SIZE,
 } from './OotOnline';
 import {
-  IKeySave,
-  KeySave,
   IDungeonItemSave,
   OotoDungeonItemContext,
   InventorySave,
@@ -16,14 +14,7 @@ import {
 } from './data/OotoSaveData';
 
 export class OotOnlineStorageBase {
-  constructor() {
-    for (let i = 0; i < this.keyCache.length; i++) {
-      this.keyCache[i] = new KeySave(i, 0xff);
-    }
-    console.log(
-      'Initalized key storage with ' + this.keyCache.length + ' entries.'
-    );
-  }
+  constructor() {}
 
   sceneStorage: Buffer = Buffer.alloc(SCENE_ARR_SIZE);
   eventStorage: Buffer = Buffer.alloc(EVENT_ARR_SIZE);
@@ -31,7 +22,6 @@ export class OotOnlineStorageBase {
   infStorage: Buffer = Buffer.alloc(INF_ARR_SIZE);
   skulltulaStorage: Buffer = Buffer.alloc(SKULLTULA_ARR_SIZE);
   playerModelCache: any = {};
-  keyCache: IKeySave[] = new Array<IKeySave>(0x14);
   dungeonItemStorage: IDungeonItemSave = new OotoDungeonItemContext();
   inventoryStorage: InventorySave = new InventorySave();
   equipmentStorage: EquipmentSave = new EquipmentSave();

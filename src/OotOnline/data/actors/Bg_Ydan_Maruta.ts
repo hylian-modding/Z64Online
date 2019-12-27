@@ -4,7 +4,7 @@ class Bg_Ydan_Maruta extends ActorHookBase {
   constructor() {
     super();
     this.actorID = 0x0051;
-    this.hooks.push(new HookInfo(0x16D, 0x1));
+    this.hooks.push(new HookInfo(0x16d, 0x1));
   }
 }
 

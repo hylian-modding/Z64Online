@@ -938,18 +938,3 @@ export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
     save.double_defense = incoming.double_defense;
   }
 }
-
-export interface IKeySave {
-  index: number;
-  count: number;
-}
-
-export class KeySave implements IKeySave {
-  index: number;
-  count: number;
-
-  constructor(index: number, count: number) {
-    this.index = index;
-    this.count = count;
-  }
-}

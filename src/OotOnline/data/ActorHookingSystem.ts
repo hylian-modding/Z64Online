@@ -68,7 +68,11 @@ export class ActorHookingManager {
   onActorSyncFile(evt: string) {
     let hook: ActorHookBase = require(evt);
     this.actorHookMap.set(hook.actorID, hook);
-    this.modloader.logger.info("Loading actor hook for actor " + this.names["0x" + hook.actorID.toString(16).toUpperCase()] + ".");
+    this.modloader.logger.info(
+      'Loading actor hook for actor ' +
+        this.names['0x' + hook.actorID.toString(16).toUpperCase()] +
+        '.'
+    );
   }
 
   onPostInit() {
@@ -76,7 +80,10 @@ export class ActorHookingManager {
     fs.readdirSync(dir).forEach((file: string) => {
       let parse = path.parse(file);
       if (parse.ext === '.js') {
-        bus.emit(OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD, path.join(dir, file));
+        bus.emit(
+          OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
+          path.join(dir, file)
+        );
       }
     });
     let bombs = new ActorHookBase();
@@ -119,19 +126,14 @@ export class ActorHookingManager {
       }
       console.log(
         'Setting up hook for actor ' +
-        this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
-        ': ' +
-        actor.actorUUID +
-        '.'
+          this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
+          ': ' +
+          actor.actorUUID +
+          '.'
       );
       this.actorHookTicks.set(
         actor.actorUUID,
-        new ActorHookProcessor(
-          actor,
-          base,
-          this.modloader,
-          this.core
-        )
+        new ActorHookProcessor(actor, base, this.modloader, this.core)
       );
     } else if (actor.actorID === BOMB_ID) {
       if (actor.rdramRead32(0x1e8) <= 10) {

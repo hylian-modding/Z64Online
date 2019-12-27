@@ -3,7 +3,7 @@ import { ActorHookBase, HookInfo } from '../ActorHookBase';
 class Obj_Switch extends ActorHookBase {
   constructor() {
     super();
-    this.actorID = 0x012A;
+    this.actorID = 0x012a;
     this.hooks.push(new HookInfo(0x154, 0x4, true));
   }
 }

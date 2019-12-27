@@ -65,7 +65,6 @@ import {
   Ooto_ServerFlagUpdate,
   Ooto_SubscreenSyncPacket,
   Ooto_BottleUpdatePacket,
-  Ooto_KeyPacket,
   Ooto_DownloadResponsePacket,
   Ooto_DownloadResponsePacket2,
   Ooto_SceneGUIPacket,
@@ -80,7 +79,6 @@ import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
 import { CrashParser } from './data/crash/CrashParser';
-import zlib from 'zlib';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -352,24 +350,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
-  updateKeys() {
-    for (let i = 0; i < this.clientStorage.keyCache.length; i++) {
-      let current: number = this.core.save.keyManager.getKeyCountForIndex(
-        this.clientStorage.keyCache[i].index
-      );
-      let last: number = this.clientStorage.keyCache[i].count;
-      if (current !== last) {
-        this.clientStorage.keyCache[i].count = current;
-        this.ModLoader.clientSide.sendPacket(
-          new Ooto_KeyPacket(
-            this.clientStorage.keyCache[i],
-            this.ModLoader.clientLobby
-          )
-        );
-      }
-    }
-  }
-
   onTick(frame: number): void {
     if (
       !this.core.helper.isTitleScreen() &&
@@ -388,7 +368,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           this.autosaveSceneData();
           this.updateBottles();
           this.updateSkulltulas();
-          //this.updateKeys();
           let state = this.core.link.state;
           if (
             state === LinkState.BUSY ||
@@ -699,20 +678,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   //------------------------------
   // Subscreen Syncing
   //------------------------------
-
-  @ServerNetworkHandler('Ooto_KeyPacket')
-  onKey_server(packet: Ooto_KeyPacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      packet.lobby,
-      this
-    ) as OotOnlineStorage;
-    storage.keyCache[packet.key.index].count = packet.key.count;
-  }
-
-  @NetworkHandler('Ooto_KeyPacket')
-  onKey_client(packet: Ooto_KeyPacket) {
-    this.clientStorage.keyCache[packet.key.index].count = packet.key.count;
-  }
 
   @ServerNetworkHandler('Ooto_BottleUpdatePacket')
   onBottle_server(packet: Ooto_BottleUpdatePacket) {
