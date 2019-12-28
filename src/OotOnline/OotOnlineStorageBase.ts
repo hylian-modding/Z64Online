@@ -12,6 +12,7 @@ import {
   EquipmentSave,
   QuestSave,
 } from './data/OotoSaveData';
+import { SavedLogEntry } from './data/keys/KeyLogEntry';
 
 export class OotOnlineStorageBase {
   constructor() {}
@@ -26,4 +27,5 @@ export class OotOnlineStorageBase {
   inventoryStorage: InventorySave = new InventorySave();
   equipmentStorage: EquipmentSave = new EquipmentSave();
   questStorage: QuestSave = new QuestSave();
+  changelog: Array<SavedLogEntry> = new Array<SavedLogEntry>();
 }

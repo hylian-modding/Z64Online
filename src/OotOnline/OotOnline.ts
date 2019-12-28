@@ -79,6 +79,7 @@ import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
 import { CrashParser } from './data/crash/CrashParser';
+import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -102,6 +103,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   actorHooks!: ActorHookingManager;
   EquestrianCenter!: EquestrianOverlord;
   modelManager!: ModelManager;
+  keys!: KeyLogManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
 
@@ -134,6 +136,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.clientStorage,
       this
     );
+    this.keys = new KeyLogManager(this.ModLoader, this, this.core);
+
     setupEventHandlers(this.actorHooks);
     setupNetworkHandlers(this.actorHooks);
 
@@ -142,6 +146,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
     setupEventHandlers(this.modelManager);
     setupNetworkHandlers(this.modelManager);
+
+    setupEventHandlers(this.keys);
+    setupNetworkHandlers(this.keys);
   }
 
   init(): void {}
@@ -368,6 +375,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           this.autosaveSceneData();
           this.updateBottles();
           this.updateSkulltulas();
+          this.keys.update();
           let state = this.core.link.state;
           if (
             state === LinkState.BUSY ||
@@ -766,9 +774,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         ),
         packet.player
       );
+      this.ModLoader.serverSide.sendPacketToSpecificPlayer(new Ooto_KeyRebuildPacket(storage.changelog, packet.lobby), packet.player);
     } else {
       // Game is not running, give me your data.
-      storage.saveGameSetup = true;
       this.ModLoader.serverSide.sendPacketToSpecificPlayer(
         new Ooto_DownloadResponsePacket2(packet.lobby),
         packet.player
@@ -822,6 +830,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         packet.lobby
       )
     );
+    storage.saveGameSetup = true;
   }
 
   @NetworkHandler('Ooto_SubscreenSyncPacket')
