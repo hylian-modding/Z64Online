@@ -25,7 +25,7 @@ export class KeyLogManager {
 
         Object.keys(this.indexes).forEach((key: string) => {
             let index: number = this.indexes[key];
-            this.bases.set(index, new KeyLogEntry(index, 0xFF));
+            this.bases.set(index, new KeyLogEntry(index, 0));
         });
 
         this.ModLoader = ModLoader;
@@ -33,15 +33,17 @@ export class KeyLogManager {
         this.core = core;
     }
 
-
     update(){
         Object.keys(this.indexes).forEach((key: string) => {
             let index: number = this.indexes[key];
             let entry: KeyLogEntry = this.bases.get(index)!;
             let count = this.core.save.keyManager.getKeyCountForIndex(index);
+            if (count === 0xFF){
+                count = 0;
+            }
             if (count !== entry.keyCount){
-                entry.keyCount = count;
                 this.ModLoader.clientSide.sendPacket(new Ooto_KeyDeltaClientPacket(this.ModLoader.clientLobby, entry, this.core));
+                console.log(count.toString());
             }
         });
     }
@@ -69,6 +71,9 @@ export class KeyLogManager {
 
     @NetworkHandler("Ooto_KeyDeltaServerPacket")
     onPacketClient(packet: Ooto_KeyDeltaServerPacket) { 
+        if (packet.originalUser.uuid === this.ModLoader.me.uuid){
+            return;
+        }
         let storage: OotOnlineStorageClient = (this.parent as any)["clientStorage"];
         storage.changelog.push(packet.entry);
         if (this.core.save.keyManager.getKeyCountForIndex(packet.entry.index) === 0xFF){

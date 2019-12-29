@@ -130,10 +130,10 @@ export class PuppetOverlord {
       );
       this.logger.info(
         'Player ' +
-          player.nickname +
-          ' assigned new puppet ' +
-          this.puppets.get(player.uuid)!.id +
-          '.'
+        player.nickname +
+        ' assigned new puppet ' +
+        this.puppets.get(player.uuid)!.id +
+        '.'
       );
       this.mapi.clientSide.sendPacket(
         new Ooto_SceneRequestPacket(this.mapi.clientLobby)
@@ -216,17 +216,15 @@ export class PuppetOverlord {
   }
 
   onTick() {
-    if (!this.core.helper.isPaused()) {
-      if (
-        !this.core.helper.isLinkEnteringLoadingZone() &&
-        this.core.helper.isInterfaceShown()
-      ) {
-        this.processNewPlayers();
-        this.processAwaitingSpawns();
-        this.lookForStrandedPuppets();
-        this.lookForMissingPuppets();
-      }
-      this.sendPuppetPacket();
+    if (
+      !this.core.helper.isLinkEnteringLoadingZone() &&
+      this.core.helper.isInterfaceShown()
+    ) {
+      this.processNewPlayers();
+      this.processAwaitingSpawns();
+      this.lookForStrandedPuppets();
+      this.lookForMissingPuppets();
     }
+    this.sendPuppetPacket();
   }
 }

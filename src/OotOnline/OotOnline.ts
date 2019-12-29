@@ -204,6 +204,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onGhostInstruction(evt: any) {
     this.LobbyConfig.actor_syncing = false;
     this.LobbyConfig.data_syncing = false;
+    this.clientStorage.first_time_sync = true;
   }
 
   updateInventory() {
