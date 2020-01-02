@@ -62,8 +62,9 @@ typedef struct
     uint8_t prev_health;
     uint8_t invincibility;
     uint8_t passive;
-    uint32_t shieldState;
-    uint8_t stunTimer;
+    uint32_t shieldState; // 0x284
+    uint8_t stunTimer; // 0x288
+    uint8_t launchArrow; // 0x289
 } pvp;
 
 typedef struct
@@ -74,40 +75,52 @@ typedef struct
     z64_collider_cylinder_main_t cylinder;
     z_link_puppet puppetData;
     pvp pvpData;
-    uint32_t end;
+    uint64_t end;
 } entity_t;
 
-const z64_collider_cylinder_init_t Collision =
-    {
-        .body = {
-            .unk_0x14 = 0x07,
-            .collider_flags = 0x40,
-            .collide_flags = 0x09,
-            .mask_a = 0x39,
-            .mask_b = 0x10,
-            .type = 0x01,
-            .body_flags = 0x00,
-            .toucher_mask = 0x00000000,
-            .bumper_effect = 0x00,
-            .toucher_damage = 0x04,
-            .bumper_mask = 0xFFCFFFFF,
-            .toucher_flags = 0x01,
-            .bumper_flags = 0x05,
-            .body_flags_2 = 0x05},
-        .radius = 0x0015,
-        .height = 0x002B,
-        .y_shift = 0,
-        .position = {.x = 0, .y = 0, .z = 0}};
+z64_collider_cylinder_init_t Collision =
+{
+    .body = {
+        .unk_0x14 = 0x07,
+        .collider_flags = 0x40,
+        .collide_flags = 0x09,
+        .mask_a = 0x39,
+        .mask_b = 0x10,
+        .type = 0x01,
+        .body_flags = 0x00,
+        .toucher_mask = 0x00000000,
+        .bumper_effect = 0x00,
+        .toucher_damage = 0x04,
+        .bumper_mask = 0xFFCFFFFF,
+        .toucher_flags = 0x01,
+        .bumper_flags = 0x05,
+        .body_flags_2 = 0x05
+        },
+    .radius = 0x0015,
+    .height = 0x0032,
+    .y_shift = 0,
+    .position = {.x = 0, .y = 0, .z = 0}
+};
 
 uint32_t unkchart[] =
-    {
-        0x0100000F, 0x001E1E00};
+{
+    0x0100000F, 0x001E1E00
+};
+
+/*
+    F = 4
+    E = 2
+    1 = 1
+    D = 13
+*/
+
 uint8_t damagechart[] =
-    {
-        0x10, 0xF2, 0xF1, 0xF2, 0x10, 0xF2, 0xF2, 0xC0,
-        0xF1, 0xF2, 0xF4, 0xE2, 0xF1, 0xE2, 0xE2, 0xE2,
-        0xEF, 0x60, 0x60, 0x60, 0x00, 0x00, 0xF1, 0xF4,
-        0xF2, 0xF2, 0xF8, 0xF4, 0xFA, 0x00, 0xF4, 0x00};
+{
+    0x10, 0xF2, 0x11, 0xF2, 0x11, 0xF2, 0xE2, 0x01,
+    0x11, 0xE2, 0xE4, 0xF2, 0xD2, 0xF4, 0xF2, 0xF2,
+    0xFF, 0x60, 0x60, 0x60, 0x00, 0x00, 0xE3, 0xE4,
+    0xE5, 0xE5, 0xE5, 0xE6, 0xFA, 0x00, 0xE6, 0x00
+};
 
 static void init(entity_t *en, z64_global_t *global)
 {
@@ -124,8 +137,16 @@ static void init(entity_t *en, z64_global_t *global)
         en->puppetData.age = *((uint8_t *)base + 0x0000500B);
     }
 
-    skelanime_init_mtx(
-        global,
+    if (en->puppetData.age == 0) {
+        Collision.radius = 0x13;
+        Collision.height = 0x0032;
+    }
+    else {
+        Collision.radius = 0x12;
+        Collision.height = 0x0020;
+    }
+
+    skelanime_init_mtx(global,
         &en->skelanime,
         en->puppetData.playasData.skeleton,
         0,
@@ -153,18 +174,15 @@ static void init(entity_t *en, z64_global_t *global)
     en->pvpData.prev_health = 20;
 
     en->actor.room_index = 0xFF;
-    en->actor.flags = 0x00002460;
+    en->actor.flags = 0x00002431;
 
     en->pvpData.passive = 0x1;
-    en->end = 0xDEADBEEF;
+    en->end = 0xDEADBEEFBEEFDEAD;
 }
 
 static void pvp_update(entity_t *en, z64_global_t *global)
 {
-    if (en->pvpData.prev_health != en->actor.health)
-    {
-        en->pvpData.prev_health = en->actor.health;
-    }
+    if (en->pvpData.prev_health != en->actor.health) en->pvpData.prev_health = en->actor.health;
 
     actor_update_health(&en->actor);
     actor_collider_cylinder_update(&en->actor, &en->cylinder);
@@ -172,14 +190,14 @@ static void pvp_update(entity_t *en, z64_global_t *global)
     if (en->actor.health != en->pvpData.prev_health && en->pvpData.invincibility == 0) // Damage
     {
         en->actor.damage_color = 0x5FF1;
-        en->pvpData.invincibility = 0x28;
+        en->pvpData.invincibility = 0x1E;
         en->pvpData.stunTimer = 0x28;
     }
     if (en->actor.damage_effect == 0x01 && en->pvpData.invincibility == 0) // Stun
     {
         en->actor.damage_color = 0x1FF1;
         en->puppetData.soundid = 0x389E;
-        en->pvpData.invincibility = 0x28;
+        en->pvpData.invincibility = 0x1E;
     }
     if (en->pvpData.invincibility > 0)
     {
@@ -187,20 +205,22 @@ static void pvp_update(entity_t *en, z64_global_t *global)
         en->actor.damage_color_timer = en->pvpData.invincibility;
         en->pvpData.invincibility--;
     }
-    if (en->pvpData.stunTimer > 0){
-        en->pvpData.stunTimer--;
-    }
-    if (en->actor.health <= 0)
-    {
-        en->actor.health = 10;
-    }
+    if (en->pvpData.stunTimer > 0) en->pvpData.stunTimer--;
+    if (en->actor.health <= 0) en->actor.health = 20;
 
-    if (!((en->pvpData.shieldState == 0x00400000 || en->pvpData.shieldState == 0x00428000) && actor_angle_link_in_range(&en->actor, 16384)) && en->pvpData.invincibility == 0)
+    if ((en->puppetData.heldItemLeft <= 1 || en->puppetData.heldItemLeft == 5) 
+    && !((en->pvpData.shieldState == 0x00400000 || en->pvpData.shieldState == 0x00428000) 
+    && actor_angle_link_in_range(&en->actor, en->puppetData.heldItemRight == 2 ? 10922 : 8192)) && en->pvpData.invincibility == 0)
     {
         actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
     }
 
     actor_collision_check_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
+}
+
+static void shoot_arrow(entity_t *en, z64_global_t *global) {
+    //z64_actor_t* arrow = actor_spawn(global->actor_ctxt, global, 0x0016, en->actor.pos_2.x, en->actor.pos_2.y, en->actor.pos_2.z, 0, 0, 0, 0xFFFFFFFF);
+    en->pvpData.launchArrow = 0;
 }
 
 static void play(entity_t *en, z64_global_t *global)
@@ -216,10 +236,8 @@ static void play(entity_t *en, z64_global_t *global)
         actor_collider_cylinder_update(&en->actor, &en->cylinder);
         actor_collision_check_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
     }
-    else
-    {
-        pvp_update(en, global); //Run only if pvp is enabled
-    }
+    else pvp_update(en, global); //Run only if pvp is enabled
+    if (en->pvpData.launchArrow) shoot_arrow(en, global);
 }
 
 static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_list, vec3f_t *translation, vec3s_t *rotation, entity_t *en)
@@ -561,14 +579,8 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 break;
             }
 
-            if (en->puppetData.isHandClosed == 0)
-            {
-                *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_RIGHT_HAND_OPEN_ZZ : OOT_CHILD_RIGHT_HAND_OPEN;
-            }
-            else
-            {
-                *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_RIGHT_HAND_CLOSED_ZZ : OOT_CHILD_RIGHT_HAND_CLOSED;
-            }
+            if (en->puppetData.isHandClosed == 0) *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_RIGHT_HAND_OPEN_ZZ : OOT_CHILD_RIGHT_HAND_OPEN;
+            else *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_RIGHT_HAND_CLOSED_ZZ : OOT_CHILD_RIGHT_HAND_CLOSED;
         }
     }
     else if (limb_number == SHEATH) // Sheath
@@ -747,10 +759,11 @@ const z64_actor_init_t init_vars = {
     .padding = 0x00,
     .type = 0x4,
     .room = 0xFF,
-    .flags = 0x10,
+    .flags = 0x00002431,
     .object = 0x01,
     .instance_size = sizeof(entity_t),
     .init = init,
     .dest = destroy,
     .main = play,
-    .draw = draw};
+    .draw = draw
+};
