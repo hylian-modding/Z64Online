@@ -208,12 +208,15 @@ static void pvp_update(entity_t *en, z64_global_t *global)
     if (en->pvpData.stunTimer > 0) en->pvpData.stunTimer--;
     if (en->actor.health <= 0) en->actor.health = 20;
 
-    if ((en->puppetData.heldItemLeft <= 1 || en->puppetData.heldItemLeft == 5) 
-    && !((en->pvpData.shieldState == 0x00400000 || en->pvpData.shieldState == 0x00428000) 
-    && actor_angle_link_in_range(&en->actor, en->puppetData.heldItemRight == 2 ? 10922 : 8192)) && en->pvpData.invincibility == 0)
+    if (en->puppetData.heldItemLeft <= 1 || en->puppetData.heldItemLeft == 5) 
     {
-        actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
-    } else if (actor_angle_link_in_range(&en->actor, 16384)) && en->pvpData.invincibility == 0)
+        if (!((en->pvpData.shieldState == 0x00400000 || en->pvpData.shieldState == 0x00428000) 
+        && actor_angle_link_in_range(&en->actor, en->puppetData.heldItemRight == 2 ? 10922 : 8192)) && en->pvpData.invincibility == 0)) 
+        {
+            actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
+        }
+    }
+    else if ((actor_angle_link_in_range(&en->actor, 16384)) && en->pvpData.invincibility == 0)
     {
         actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
     }
