@@ -213,6 +213,9 @@ static void pvp_update(entity_t *en, z64_global_t *global)
     && actor_angle_link_in_range(&en->actor, en->puppetData.heldItemRight == 2 ? 10922 : 8192)) && en->pvpData.invincibility == 0)
     {
         actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
+    } else if (actor_angle_link_in_range(&en->actor, 16384)) && en->pvpData.invincibility == 0)
+    {
+        actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
     }
 
     actor_collision_check_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
