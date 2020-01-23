@@ -29,10 +29,7 @@ import { IOotOnlineHelpers, OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
-import { Zobj } from './zzstatic/src/data/zobj';
-import { spawnSync } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 import { ModelThread } from './ModelThread';
 
 export class FilePatch {
@@ -513,10 +510,6 @@ export class ModelManager {
       puppet.player
     );
     let index: number = this.allocationManager.getModelIndex(model);
-    if (model.model.loadedModel === (puppet.age as number)) {
-      this.ModLoader.emulator.rdramWrite16(0x60014e, index);
-      return;
-    }
     let allocation_size = 0x37800;
     let addr: number = 0x800000 + allocation_size * index;
     console.log(index + ' ' + addr.toString(16));

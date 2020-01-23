@@ -70,8 +70,8 @@ export class ActorHookingManager {
     this.actorHookMap.set(hook.actorID, hook);
     this.modloader.logger.info(
       'Loading actor hook for actor ' +
-        this.names['0x' + hook.actorID.toString(16).toUpperCase()] +
-        '.'
+      this.names['0x' + hook.actorID.toString(16).toUpperCase()] +
+      '.'
     );
   }
 
@@ -126,10 +126,10 @@ export class ActorHookingManager {
       }
       console.log(
         'Setting up hook for actor ' +
-          this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
-          ': ' +
-          actor.actorUUID +
-          '.'
+        this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
+        ': ' +
+        actor.actorUUID +
+        '.'
       );
       this.actorHookTicks.set(
         actor.actorUUID,
@@ -171,7 +171,7 @@ export class ActorHookingManager {
       return;
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
-      //console.log('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
+      console.log('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.modloader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
@@ -180,7 +180,7 @@ export class ActorHookingManager {
           this.modloader.clientLobby
         )
       );
-      //this.actorHookTicks.delete(actor.actorUUID);
+      this.actorHookTicks.delete(actor.actorUUID);
     } else if (actor.actorID === BOMB_ID) {
       if (this.bombsLocal.has(actor.actorUUID)) {
         this.modloader.clientSide.sendPacket(
@@ -291,24 +291,12 @@ export class ActorHookingManager {
       actor.rotation.z = packet.actorData.actor.rotation.z;
 
       for (let i = 0; i < this.bombProcessor.hookBase.hooks.length; i++) {
-        if (this.bombProcessor.hookBase.hooks[i].isBehavior) {
-          let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-          this.setActorBehavior(
-            this.modloader.emulator,
-            actor,
-            this.bombProcessor.hookBase.hooks[i].offset,
-            d
-          );
-        } else {
-          actor.rdramWriteBuffer(
-            this.bombProcessor.hookBase.hooks[i].offset,
-            packet.actorData.hooks[i].data
-          );
-        }
+        actor.rdramWriteBuffer(
+          this.bombProcessor.hookBase.hooks[i].offset,
+          packet.actorData.hooks[i].data
+        );
       }
     } else if (this.chusRemote.has(packet.actorData.actor.actorUUID)) {
-      console.log(JSON.stringify(packet, null, 2));
-
       let actor: IActor = this.chusRemote.get(
         packet.actorData.actor.actorUUID
       )!;
@@ -322,20 +310,10 @@ export class ActorHookingManager {
       actor.rotation.z = packet.actorData.actor.rotation.z;
 
       for (let i = 0; i < this.chuProcessor.hookBase.hooks.length; i++) {
-        if (this.chuProcessor.hookBase.hooks[i].isBehavior) {
-          let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-          this.setActorBehavior(
-            this.modloader.emulator,
-            actor,
-            this.chuProcessor.hookBase.hooks[i].offset,
-            d
-          );
-        } else {
-          actor.rdramWriteBuffer(
-            this.chuProcessor.hookBase.hooks[i].offset,
-            packet.actorData.hooks[i].data
-          );
-        }
+        actor.rdramWriteBuffer(
+          this.chuProcessor.hookBase.hooks[i].offset,
+          packet.actorData.hooks[i].data
+        );
       }
     }
   }
@@ -361,6 +339,7 @@ export class ActorHookingManager {
     }
     let spawn_param = 0;
     let spawn_param_ = 0;
+    let pos = this.core.link.position.getRawPos();
     switch (packet.actorData.actor.actorID) {
       case BOMB_ID:
         spawn_param = 0x80600160;
@@ -370,7 +349,6 @@ export class ActorHookingManager {
       case BOMBCHU_ID:
         spawn_param = 0x80600170;
         spawn_param_ = 0x600170;
-        let pos = this.core.link.position.getRawPos();
         this.modloader.emulator.rdramWrite8(0x600172, pos[0]);
         this.modloader.emulator.rdramWrite8(0x600173, pos[1]);
         this.modloader.emulator.rdramWrite8(0x600174, pos[4] + 100);
@@ -385,7 +363,7 @@ export class ActorHookingManager {
       spawn_param,
       (success: boolean, result: number) => {
         if (success) {
-          let dref: number = result & 0x00ffffff; // - 0x80000000;
+          let dref: number = result & 0x00ffffff;
           console.log(dref.toString(16));
           let actor: IActor = this.core.actorManager.createIActorFromPointer(
             dref

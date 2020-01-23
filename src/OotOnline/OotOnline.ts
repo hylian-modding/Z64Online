@@ -149,6 +149,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
     setupEventHandlers(this.keys);
     setupNetworkHandlers(this.keys);
+
+    setupEventHandlers(this.overlord);
   }
 
   init(): void {}

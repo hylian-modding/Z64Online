@@ -23,15 +23,18 @@ export class HookData {
 
 export interface ActorPacketData {
   actor: IActor;
+  variable: number;
   hooks: HookData[];
 }
 
 export class ActorPacketData_Impl implements ActorPacketData {
   actor: IActor;
+  variable: number;
   hooks: HookData[] = new Array<HookData>();
 
   constructor(actor: IActor) {
     this.actor = actor;
+    this.variable = this.actor.variable;
   }
 }
 
@@ -84,12 +87,14 @@ export class ActorHookProcessor extends JSONTemplate {
   }
 
   onTick() {
-    if (this.lastFrameCache !== JSON.stringify(this.toJSON())) {
-      this.lastFrameCache = JSON.stringify(this.toJSON());
+    let k = this.toJSON();
+    let j = JSON.stringify(k);
+    if (this.lastFrameCache !== j) {
+      this.lastFrameCache = j;
       if (this.last_inbound_frame === 0) {
         this.modloader.clientSide.sendPacket(
           new Ooto_ActorPacket(
-            JSON.parse(this.lastFrameCache) as ActorPacketData,
+            k,
             this.core.global.scene,
             this.core.global.room,
             this.modloader.clientLobby
