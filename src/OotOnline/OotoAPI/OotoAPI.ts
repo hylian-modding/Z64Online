@@ -18,6 +18,11 @@ export enum OotOnlineEvents {
   CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild',
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
+  ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote'
+}
+
+export interface OotOnline_Emote{
+  buf: Buffer;
 }
 
 export class OotOnline_PlayerScene {

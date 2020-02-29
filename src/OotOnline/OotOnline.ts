@@ -80,6 +80,7 @@ import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
 import { CrashParser } from './data/crash/CrashParser';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
+import { EmoteManager } from './data/emotes/emoteManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -104,6 +105,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   EquestrianCenter!: EquestrianOverlord;
   modelManager!: ModelManager;
   keys!: KeyLogManager;
+  emotes!: EmoteManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
 
@@ -137,6 +139,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this
     );
     this.keys = new KeyLogManager(this.ModLoader, this, this.core);
+    this.emotes = new EmoteManager(this.ModLoader, this.core);
 
     setupEventHandlers(this.actorHooks);
     setupNetworkHandlers(this.actorHooks);
@@ -151,9 +154,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     setupNetworkHandlers(this.keys);
 
     setupEventHandlers(this.overlord);
+
+    setupEventHandlers(this.emotes);
   }
 
-  init(): void {}
+  init(): void {
+    bus.emit("CatBinding:CompileActor", {file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json")});
+  }
 
   postinit(): void {
     //this.ModLoader.emulator.memoryDebugLogger(true);
@@ -370,6 +377,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           return;
         }
         this.overlord.onTick();
+        this.emotes.onTick();
         if (this.LobbyConfig.actor_syncing) {
           this.actorHooks.onTick();
         }
@@ -480,6 +488,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       evt.lobby,
       this
     ) as OotOnlineStorage;
+    if (storage === null){
+      return;
+    }
     storage.players[evt.player.uuid] = -1;
     storage.networkPlayerInstances[evt.player.uuid] = evt.player;
   }
@@ -490,6 +501,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       evt.lobby,
       this
     ) as OotOnlineStorage;
+    if (storage === null){
+      return;
+    }
     delete storage.players[evt.player.uuid];
     delete storage.networkPlayerInstances[evt.player.uuid];
   }
@@ -553,22 +567,28 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @ServerNetworkHandler('Ooto_ScenePacket')
   onSceneChange_server(packet: Ooto_ScenePacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      packet.lobby,
-      this
-    ) as OotOnlineStorage;
-    storage.players[packet.player.uuid] = packet.scene;
-    this.ModLoader.logger.info(
-      'Server: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        packet.scene +
-        '.'
-    );
-    bus.emit(
-      OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
-      new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
-    );
+    try{
+      let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+        packet.lobby,
+        this
+      ) as OotOnlineStorage;
+      if (storage === null){
+        return;
+      }
+      storage.players[packet.player.uuid] = packet.scene;
+      this.ModLoader.logger.info(
+        'Server: Player ' +
+          packet.player.nickname +
+          ' moved to scene ' +
+          packet.scene +
+          '.'
+      );
+      bus.emit(
+        OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
+        new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
+      );
+    }catch(err){
+    }
   }
 
   @NetworkHandler('Ooto_ScenePacket')
@@ -656,6 +676,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         packet.lobby,
         this
       ) as OotOnlineStorage;
+      if (storage === null){
+        return;
+      }
       Object.keys(storage.players).forEach((key: string) => {
         if (storage.players[key] === storage.players[packet.player.uuid]) {
           if (storage.networkPlayerInstances[key].uuid !== packet.player.uuid) {
@@ -696,6 +719,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
+    if (storage === null){
+      return;
+    }
     switch (packet.slot) {
       case 0:
         storage.inventoryStorage.bottle_1 = packet.contents;
@@ -754,6 +780,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
+    if (storage === null){
+      return;
+    }
     if (storage.saveGameSetup) {
       // Game is running, get data.
       this.ModLoader.serverSide.sendPacketToSpecificPlayer(
@@ -820,6 +849,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
+    if (storage === null){
+      return;
+    }
     mergeInventoryData(storage.inventoryStorage, packet.inventory);
     mergeEquipmentData(storage.equipmentStorage, packet.equipment);
     mergeQuestSaveData(storage.questStorage, packet.quest);
@@ -910,6 +942,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
+    if (storage === null){
+      return;
+    }
     Object.keys(packet.scenes).forEach((key: string) => {
       let k = parseInt(key);
       let value = packet.scenes[k];

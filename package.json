@@ -1,11 +1,20 @@
 {
-  "name": "ootonline",
-  "version": "2.0.80",
-  "description": "",
-  "main": "OotOnline.js",
-  "author": "denoflions",
-  "credits": "\nASM: Ideka, glank.\nPuppet contributors: Psi-Hate, Drahsid.\nHelpful advice: Skawo, Noka, Clockwise.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
-  "license": "GPL-3.0",
-  "core": "OcarinaofTime",
-  "updateUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/update.json"
+  "name": "OotOnline",
+  "version": "2.0.82",
+  "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hylian-modding/OcarinaOfTimeOnline.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hylian-modding/OcarinaOfTimeOnline/issues"
+  },
+  "homepage": "https://github.com/hylian-modding/OcarinaOfTimeOnline#readme"
 }
