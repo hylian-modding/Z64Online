@@ -6,7 +6,6 @@ import {
   EventServerJoined,
   EventServerLeft,
   EventsServer,
-  setupEventHandlers,
 } from 'modloader64_api/EventHandler';
 import * as ModLoader from 'modloader64_api/IModLoaderAPI';
 import {
@@ -15,7 +14,6 @@ import {
   LobbyData,
   NetworkHandler,
   ServerNetworkHandler,
-  setupNetworkHandlers,
 } from 'modloader64_api/NetworkHandler';
 import {
   IOOTCore,
@@ -108,8 +106,31 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   emotes!: EmoteManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
+  warpLookupTable: Map<number, number> = new Map<number, number>();
 
-  constructor() {}
+  constructor() {
+    this.warpLookupTable.set(0x0003, 0x0169);
+    this.overlord = new PuppetOverlord();
+    this.actorHooks = new ActorHookingManager(this);
+    this.EquestrianCenter = new EquestrianOverlord(this);
+    this.modelManager = new ModelManager(this.clientStorage, this);
+    this.keys = new KeyLogManager(this);
+    this.emotes = new EmoteManager();
+  }
+
+  warpToScene(scene: number) {
+    this.ModLoader.emulator.rdramWrite16(0x60018E, 0x000F);
+    this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600180, () => {
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        this.core.commandBuffer.runWarp(this.warpLookupTable.get(scene)!, 0, () => {
+          this.ModLoader.utils.setTimeoutFrames(() => {
+            this.ModLoader.emulator.rdramWrite16(0x60018E, 0x0010);
+            this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600180);
+          }, 20);
+        });
+      }, 60);
+    });
+  }
 
   debuggingBombs() {
     this.core.save.inventory.bombBag = AmmoUpgrade.BASE;
@@ -126,50 +147,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   preinit(): void {
-    this.overlord = new PuppetOverlord(this.ModLoader.logger);
-    this.actorHooks = new ActorHookingManager(this.ModLoader, this.core, this);
-    this.EquestrianCenter = new EquestrianOverlord(
-      this,
-      this.ModLoader,
-      this.core
-    );
-    this.modelManager = new ModelManager(
-      this.ModLoader,
-      this.clientStorage,
-      this
-    );
-    this.keys = new KeyLogManager(this.ModLoader, this, this.core);
-    this.emotes = new EmoteManager(this.ModLoader, this.core);
-
-    setupEventHandlers(this.actorHooks);
-    setupNetworkHandlers(this.actorHooks);
-
-    setupEventHandlers(this.EquestrianCenter);
-    setupNetworkHandlers(this.EquestrianCenter);
-
-    setupEventHandlers(this.modelManager);
-    setupNetworkHandlers(this.modelManager);
-
-    setupEventHandlers(this.keys);
-    setupNetworkHandlers(this.keys);
-
-    setupEventHandlers(this.overlord);
-
-    setupEventHandlers(this.emotes);
   }
 
   init(): void {
-    bus.emit("CatBinding:CompileActor", {file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json")});
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
   }
 
   postinit(): void {
     //this.ModLoader.emulator.memoryDebugLogger(true);
-    this.overlord.postinit(
-      this.core,
-      this.ModLoader.emulator,
-      this.ModLoader.me,
-      this.ModLoader
-    );
+    this.overlord.postinit();
     this.actorHooks.onPostInit();
     this.modelManager.onPostInit();
     this.ModLoader.gui.openWindow(
@@ -488,7 +474,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       evt.lobby,
       this
     ) as OotOnlineStorage;
-    if (storage === null){
+    if (storage === null) {
       return;
     }
     storage.players[evt.player.uuid] = -1;
@@ -501,7 +487,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       evt.lobby,
       this
     ) as OotOnlineStorage;
-    if (storage === null){
+    if (storage === null) {
       return;
     }
     delete storage.players[evt.player.uuid];
@@ -549,9 +535,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         new DiscordStatus(
           'Playing OotOnline',
           'In ' +
-            this.clientStorage.localization[
-              this.clientStorage.scene_keys[scene]
-            ]
+          this.clientStorage.localization[
+          this.clientStorage.scene_keys[scene]
+          ]
         )
       );
     }
@@ -567,27 +553,27 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @ServerNetworkHandler('Ooto_ScenePacket')
   onSceneChange_server(packet: Ooto_ScenePacket) {
-    try{
+    try {
       let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
         packet.lobby,
         this
       ) as OotOnlineStorage;
-      if (storage === null){
+      if (storage === null) {
         return;
       }
       storage.players[packet.player.uuid] = packet.scene;
       this.ModLoader.logger.info(
         'Server: Player ' +
-          packet.player.nickname +
-          ' moved to scene ' +
-          packet.scene +
-          '.'
+        packet.player.nickname +
+        ' moved to scene ' +
+        packet.scene +
+        '.'
       );
       bus.emit(
         OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES,
         new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
       );
-    }catch(err){
+    } catch (err) {
     }
   }
 
@@ -595,12 +581,12 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onSceneChange_client(packet: Ooto_ScenePacket) {
     this.ModLoader.logger.info(
       'client receive: Player ' +
-        packet.player.nickname +
-        ' moved to scene ' +
-        this.clientStorage.localization[
-          this.clientStorage.scene_keys[packet.scene]
-        ] +
-        '.'
+      packet.player.nickname +
+      ' moved to scene ' +
+      this.clientStorage.localization[
+      this.clientStorage.scene_keys[packet.scene]
+      ] +
+      '.'
     );
     this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
@@ -676,7 +662,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         packet.lobby,
         this
       ) as OotOnlineStorage;
-      if (storage === null){
+      if (storage === null) {
         return;
       }
       Object.keys(storage.players).forEach((key: string) => {
@@ -689,7 +675,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           }
         }
       });
-    } catch (err) {}
+    } catch (err) { }
   }
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
@@ -719,7 +705,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
-    if (storage === null){
+    if (storage === null) {
       return;
     }
     switch (packet.slot) {
@@ -780,7 +766,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
-    if (storage === null){
+    if (storage === null) {
       return;
     }
     if (storage.saveGameSetup) {
@@ -849,7 +835,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
-    if (storage === null){
+    if (storage === null) {
       return;
     }
     mergeInventoryData(storage.inventoryStorage, packet.inventory);
@@ -942,7 +928,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       packet.lobby,
       this
     ) as OotOnlineStorage;
-    if (storage === null){
+    if (storage === null) {
       return;
     }
     Object.keys(packet.scenes).forEach((key: string) => {
@@ -1200,7 +1186,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000001,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1212,7 +1198,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000002,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
     if (
@@ -1224,7 +1210,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.core.commandBuffer.runCommand(
         Command.UPDATE_C_BUTTON_ICON,
         0x00000003,
-        (success: boolean, result: number) => {}
+        (success: boolean, result: number) => { }
       );
     }
   }

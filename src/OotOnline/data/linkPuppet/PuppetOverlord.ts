@@ -1,15 +1,13 @@
 import { Puppet } from './Puppet';
-import { IOOTCore, LinkState, Age } from 'modloader64_api/OOT/OOTAPI';
-import IMemory from 'modloader64_api/IMemory';
+import { IOOTCore, Age } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
-import { IModLoaderAPI, ILogger } from 'modloader64_api/IModLoaderAPI';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_PuppetPacket, Ooto_SceneRequestPacket } from '../OotOPackets';
 import fs from 'fs';
+import {ModLoaderAPIInject} from 'modloader64_api/ModLoaderAPIInjector';
+import { InjectCore } from 'modloader64_api/CoreInjection';
 
 export class PuppetOverlord {
-  private logger: ILogger;
-  private core!: IOOTCore;
-  private emulator!: IMemory;
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
   private awaiting_spawn: Puppet[] = new Array<Puppet>();
   fakeClientPuppet!: Puppet;
@@ -17,31 +15,23 @@ export class PuppetOverlord {
   private playersAwaitingPuppets: INetworkPlayer[] = new Array<
     INetworkPlayer
   >();
-  private mapi!: IModLoaderAPI;
-
-  constructor(logger: ILogger) {
-    this.logger = logger;
-  }
+  
+  @ModLoaderAPIInject()
+  private ModLoader!: IModLoaderAPI;
+  @InjectCore()
+  private core!: IOOTCore;
 
   postinit(
-    core: IOOTCore,
-    emulator: IMemory,
-    player: INetworkPlayer,
-    mapi: IModLoaderAPI
   ) {
-    this.emulator = emulator;
-    this.core = core;
-    this.mapi = mapi;
-
     this.fakeClientPuppet = new Puppet(
-      player,
-      core.link,
-      core.save,
-      emulator,
+      this.ModLoader.me,
+      this.core.link,
+      this.core.save,
+      this.ModLoader.emulator,
       // The pointer here points to blank space, so should be fine.
       0x6011e8,
-      core.commandBuffer,
-      this.mapi
+      this.core.commandBuffer,
+      this.ModLoader
     );
   }
 
@@ -65,7 +55,7 @@ export class PuppetOverlord {
   }
 
   registerPuppet(player: INetworkPlayer) {
-    this.logger.info(
+    this.ModLoader.logger.info(
       'Player ' + player.nickname + ' awaiting puppet assignment.'
     );
     this.playersAwaitingPuppets.push(player);
@@ -99,17 +89,17 @@ export class PuppetOverlord {
       }
       puppet.scene = entering_scene;
       puppet.age = age;
-      this.logger.info(
+      this.ModLoader.logger.info(
         'Puppet ' + puppet.id + ' moved to scene ' + puppet.scene
       );
       if (this.fakeClientPuppet.scene === puppet.scene) {
-        this.logger.info(
+        this.ModLoader.logger.info(
           'Queueing puppet ' + puppet.id + ' for immediate spawning.'
         );
         this.awaiting_spawn.push(puppet);
       }
     } else {
-      this.logger.info('No puppet found for player ' + player.nickname + '.');
+      this.ModLoader.logger.info('No puppet found for player ' + player.nickname + '.');
     }
   }
 
@@ -122,21 +112,21 @@ export class PuppetOverlord {
           player,
           this.core.link,
           this.core.save,
-          this.emulator,
+          this.ModLoader.emulator,
           0x0,
           this.core.commandBuffer,
-          this.mapi
+          this.ModLoader
         )
       );
-      this.logger.info(
+      this.ModLoader.logger.info(
         'Player ' +
         player.nickname +
         ' assigned new puppet ' +
         this.puppets.get(player.uuid)!.id +
         '.'
       );
-      this.mapi.clientSide.sendPacket(
-        new Ooto_SceneRequestPacket(this.mapi.clientLobby)
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_SceneRequestPacket(this.ModLoader.clientLobby)
       );
     }
   }
@@ -183,8 +173,8 @@ export class PuppetOverlord {
 
   sendPuppetPacket() {
     if (!this.amIAlone) {
-      this.mapi.clientSide.sendPacket(
-        new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.mapi.clientLobby)
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby)
       );
     }
   }

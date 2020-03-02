@@ -30,6 +30,8 @@ import {
 import { EponaData } from './EponaData';
 import { EquestrianData_Impl } from './EquestrianData';
 import { OotOnlineStorage } from '../../OotOnlineStorage';
+import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
+import { InjectCore } from 'modloader64_api/CoreInjection';
 
 export function convertObjPointerToId(pointer: number): number {
   switch (pointer) {
@@ -61,15 +63,15 @@ class EquestrianClientStorage {
 }
 
 export class EquestrianOverlord {
-  ModLoader: IModLoaderAPI;
-  core: IOOTCore;
+  @ModLoaderAPIInject()
+  ModLoader!: IModLoaderAPI;
+  @InjectCore()
+  core!: IOOTCore;
   parent: IOotOnlineHelpers;
   epona: IActor | undefined;
   void!: Buffer;
 
-  constructor(parent: IOotOnlineHelpers, ml: IModLoaderAPI, core: IOOTCore) {
-    this.ModLoader = ml;
-    this.core = core;
+  constructor(parent: IOotOnlineHelpers) {
     this.parent = parent;
   }
 

@@ -18,7 +18,7 @@ export class KeyLogEntry{
             diff /= -1;
         }
         this.keyCount += diff;
-        this.timestamp = new Date().getMilliseconds();
+        this.timestamp = Date.now();
         return diff;
     }
 

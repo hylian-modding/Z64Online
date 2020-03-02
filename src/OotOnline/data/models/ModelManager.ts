@@ -31,6 +31,7 @@ import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
 import fs from 'fs';
 import { ModelThread } from './ModelThread';
+import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 
 export class FilePatch {
   offset: number;
@@ -54,7 +55,8 @@ export class RomPatch {
 }
 
 export class ModelManager {
-  ModLoader: IModLoaderAPI;
+  @ModLoaderAPIInject()
+  ModLoader!: IModLoaderAPI;
   clientStorage: OotOnlineStorageClient;
   parent: IOotOnlineHelpers;
   allocationManager: ModelAllocationManager;
@@ -67,11 +69,9 @@ export class ModelManager {
   customModelFileChildIcon = '';
 
   constructor(
-    ModLoader: IModLoaderAPI,
     clientStorage: OotOnlineStorageClient,
     parent: IOotOnlineHelpers
   ) {
-    this.ModLoader = ModLoader;
     this.clientStorage = clientStorage;
     this.parent = parent;
     this.allocationManager = new ModelAllocationManager();
@@ -184,15 +184,11 @@ export class ModelManager {
           .toString()
       );
       for (let i = 0; i < patch.length; i++) {
-        let time: number = Date.now();
         let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
         for (let j = 0; j < patch[i].data.length; j++) {
           buf[patch[i].data[j].offset] = patch[i].data[j].value;
         }
         this.recompressFileIntoRom(evt.rom, patch[i].index, buf);
-        let time2: number = Date.now();
-        let time3: number = time2 - time;
-        console.log("DMA entry #" + patch[i].index + " took " + time3 + "ms.");
       }
       let code_file: Buffer = this.decompressFileFromRom(evt.rom, code);
       adult_model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);

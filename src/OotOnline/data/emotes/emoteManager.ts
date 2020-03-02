@@ -2,6 +2,8 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { EventHandler } from "modloader64_api/EventHandler";
 import {OotOnlineEvents, OotOnline_Emote} from '@OotOnline/OotoAPI/OotoAPI';
+import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
+import { InjectCore } from "modloader64_api/CoreInjection";
 
 export class EmoteManager{
     private emote_trigger: number = 0x6011F0;
@@ -9,12 +11,12 @@ export class EmoteManager{
     currentEmoteID: number = -1;
     currentEmoteFrame: number = 0;
     masterEmoteList: Array<anim_binary_container> = [];
-    ModLoader: IModLoaderAPI;
-    core: IOOTCore;
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+    @InjectCore()
+    core!: IOOTCore;
 
-    constructor(ModLoader: IModLoaderAPI, core: IOOTCore){
-        this.ModLoader = ModLoader;
-        this.core = core;
+    constructor(){
     }
 
     @EventHandler(OotOnlineEvents.ON_REGISTER_EMOTE)

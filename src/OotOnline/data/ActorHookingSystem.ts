@@ -24,6 +24,8 @@ import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { v4 } from 'uuid';
 import { IOotOnlineHelpers, OotOnlineEvents } from '../OotoAPI/OotoAPI';
+import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
+import { InjectCore } from 'modloader64_api/CoreInjection';
 
 // Actor Hooking Stuff
 
@@ -45,19 +47,17 @@ export class ActorHookingManager {
   chusRemote: Map<string, IActor> = new Map<string, IActor>();
   chuProcessor!: ActorHookProcessor;
 
-  modloader: IModLoaderAPI;
-  core: IOOTCore;
+  @ModLoaderAPIInject()
+  ModLoader!: IModLoaderAPI;
+  @InjectCore()
+  core!: IOOTCore;
   parent: IOotOnlineHelpers;
 
   names: any;
 
   constructor(
-    modloader: IModLoaderAPI,
-    core: IOOTCore,
     parent: IOotOnlineHelpers
   ) {
-    this.modloader = modloader;
-    this.core = core;
     this.parent = parent;
     this.names = JSON.parse(
       fs.readFileSync(__dirname + '/crash/ACTOR_NAMES.json').toString()
@@ -68,7 +68,7 @@ export class ActorHookingManager {
   onActorSyncFile(evt: string) {
     let hook: ActorHookBase = require(evt);
     this.actorHookMap.set(hook.actorID, hook);
-    this.modloader.logger.info(
+    this.ModLoader.logger.info(
       'Loading actor hook for actor ' +
       this.names['0x' + hook.actorID.toString(16).toUpperCase()] +
       '.'
@@ -93,7 +93,7 @@ export class ActorHookingManager {
     this.bombProcessor = new ActorHookProcessor(
       this.core.actorManager.createIActorFromPointer(0x0),
       bombs,
-      this.modloader,
+      this.ModLoader,
       this.core
     );
 
@@ -104,7 +104,7 @@ export class ActorHookingManager {
     this.chuProcessor = new ActorHookProcessor(
       this.core.actorManager.createIActorFromPointer(0x0),
       chus,
-      this.modloader,
+      this.ModLoader,
       this.core
     );
   }
@@ -133,7 +133,7 @@ export class ActorHookingManager {
       );
       this.actorHookTicks.set(
         actor.actorUUID,
-        new ActorHookProcessor(actor, base, this.modloader, this.core)
+        new ActorHookProcessor(actor, base, this.ModLoader, this.core)
       );
     } else if (actor.actorID === BOMB_ID) {
       if (actor.rdramRead32(0x1e8) <= 10) {
@@ -142,24 +142,24 @@ export class ActorHookingManager {
       actor.actorUUID = v4();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.bombsLocal.set(actor.actorUUID, actor);
-      this.modloader.clientSide.sendPacket(
+      this.ModLoader.clientSide.sendPacket(
         new Ooto_SpawnActorPacket(
           actorData,
           this.core.global.scene,
           this.core.global.room,
-          this.modloader.clientLobby
+          this.ModLoader.clientLobby
         )
       );
     } else if (actor.actorID === BOMBCHU_ID) {
       actor.actorUUID = v4();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.chusLocal.set(actor.actorUUID, actor);
-      this.modloader.clientSide.sendPacket(
+      this.ModLoader.clientSide.sendPacket(
         new Ooto_SpawnActorPacket(
           actorData,
           this.core.global.scene,
           this.core.global.room,
-          this.modloader.clientLobby
+          this.ModLoader.clientLobby
         )
       );
     }
@@ -172,34 +172,34 @@ export class ActorHookingManager {
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
       console.log('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
-      this.modloader.clientSide.sendPacket(
+      this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
           this.core.global.scene,
           this.core.global.room,
-          this.modloader.clientLobby
+          this.ModLoader.clientLobby
         )
       );
       this.actorHookTicks.delete(actor.actorUUID);
     } else if (actor.actorID === BOMB_ID) {
       if (this.bombsLocal.has(actor.actorUUID)) {
-        this.modloader.clientSide.sendPacket(
+        this.ModLoader.clientSide.sendPacket(
           new Ooto_ActorDeadPacket(
             actor.actorUUID,
             this.core.global.scene,
             this.core.global.room,
-            this.modloader.clientLobby
+            this.ModLoader.clientLobby
           )
         );
         this.bombsLocal.delete(actor.actorUUID);
       }
     } else if (actor.actorID === BOMBCHU_ID) {
-      this.modloader.clientSide.sendPacket(
+      this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
           this.core.global.scene,
           this.core.global.room,
-          this.modloader.clientLobby
+          this.ModLoader.clientLobby
         )
       );
       this.chusLocal.delete(actor.actorUUID);
@@ -265,7 +265,7 @@ export class ActorHookingManager {
         if (hooks[i].isBehavior) {
           let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
           this.setActorBehavior(
-            this.modloader.emulator,
+            this.ModLoader.emulator,
             actor,
             hooks[i].offset,
             d
@@ -349,12 +349,12 @@ export class ActorHookingManager {
       case BOMBCHU_ID:
         spawn_param = 0x80600170;
         spawn_param_ = 0x600170;
-        this.modloader.emulator.rdramWrite8(0x600172, pos[0]);
-        this.modloader.emulator.rdramWrite8(0x600173, pos[1]);
-        this.modloader.emulator.rdramWrite8(0x600174, pos[4] + 100);
-        this.modloader.emulator.rdramWrite8(0x600175, pos[5] + 100);
-        this.modloader.emulator.rdramWrite8(0x600176, pos[8]);
-        this.modloader.emulator.rdramWrite8(0x600177, pos[9]);
+        this.ModLoader.emulator.rdramWrite8(0x600172, pos[0]);
+        this.ModLoader.emulator.rdramWrite8(0x600173, pos[1]);
+        this.ModLoader.emulator.rdramWrite8(0x600174, pos[4] + 100);
+        this.ModLoader.emulator.rdramWrite8(0x600175, pos[5] + 100);
+        this.ModLoader.emulator.rdramWrite8(0x600176, pos[8]);
+        this.ModLoader.emulator.rdramWrite8(0x600177, pos[9]);
         console.log('bombchu');
         return;
     }
