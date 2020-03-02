@@ -32,7 +32,6 @@ import {
   OotOnline_PlayerScene,
 } from './OotoAPI/OotoAPI';
 import { ActorHookingManager } from './data/ActorHookingSystem';
-import { EquestrianOverlord } from './data/eponaPuppet/EquestrianOverlord';
 import {
   applyEquipmentToContext,
   applyInventoryToContext,
@@ -100,7 +99,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Client variables
   overlord!: PuppetOverlord;
   actorHooks!: ActorHookingManager;
-  EquestrianCenter!: EquestrianOverlord;
   modelManager!: ModelManager;
   keys!: KeyLogManager;
   emotes!: EmoteManager;
@@ -112,7 +110,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.warpLookupTable.set(0x0003, 0x0169);
     this.overlord = new PuppetOverlord();
     this.actorHooks = new ActorHookingManager(this);
-    this.EquestrianCenter = new EquestrianOverlord(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
@@ -367,7 +364,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         if (this.LobbyConfig.actor_syncing) {
           this.actorHooks.onTick();
         }
-        this.EquestrianCenter.onTick();
         if (this.LobbyConfig.data_syncing) {
           this.autosaveSceneData();
           this.updateBottles();

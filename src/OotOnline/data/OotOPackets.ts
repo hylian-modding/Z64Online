@@ -6,7 +6,6 @@ import {
 import { PuppetData } from './linkPuppet/PuppetData';
 import {
   Age,
-  IInventoryFields,
   InventoryItem,
 } from 'modloader64_api/OOT/OOTAPI';
 import {
@@ -16,11 +15,6 @@ import {
   InventorySave,
 } from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
-import { IPosition } from 'modloader64_api/OOT/IPosition';
-import { IRotation } from 'modloader64_api/OOT/IRotation';
-import { EquestrianData } from './eponaPuppet/EquestrianData';
-import { EponaData } from './eponaPuppet/EponaData';
-import { OotOnlineStorage } from '../OotOnlineStorage';
 
 export class Ooto_PuppetPacket extends UDPPacket {
   data: PuppetData;
@@ -201,46 +195,6 @@ export class Ooto_ActorDeadPacket extends Packet {
   }
 }
 
-export class Ooto_EquestrianRegisterPacket extends Packet {
-  scene: number;
-  pos: IPosition;
-  rot: IRotation;
-
-  constructor(scene: number, pos: IPosition, rot: IRotation, lobby: string) {
-    super('Ooto_EquestrianRegisterPacket', 'OotOnline', lobby, false);
-    this.scene = scene;
-    this.pos = pos;
-    this.rot = rot;
-  }
-}
-
-export class Ooto_EquestrianPuppetListPacket extends Packet {
-  data: any;
-
-  constructor(d: any, lobby: string) {
-    super('Ooto_EquestrianPuppetListPacket', 'OotOnline', lobby, false);
-    this.data = d;
-  }
-}
-
-export class Ooto_EquestrianTickPacket extends UDPPacket {
-  edata: EponaData;
-
-  constructor(edata: EponaData, lobby: string) {
-    super('Ooto_EquestrianTickPacket', 'OotOnline', lobby, false);
-    this.edata = edata;
-  }
-}
-
-export class Ooto_EquestrianTickServerPacket extends Packet {
-  data: EquestrianData;
-
-  constructor(data: EquestrianData, lobby: string) {
-    super('Ooto_EquestrianTickServerPacket', 'OotOnline', lobby, false);
-    this.data = data;
-  }
-}
-
 export class Ooto_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
   room: number;
@@ -255,15 +209,6 @@ export class Ooto_SpawnActorPacket extends Packet {
     this.actorData = data;
     this.scene = scene;
     this.room = room;
-  }
-}
-
-export class Ooto_EquestrianNukeServerPacket extends Packet {
-  horse_to_remove: string;
-
-  constructor(horse_to_remove: string, lobby: string) {
-    super('Ooto_EquestrianNukeServerPacket', 'OotOnline', lobby, false);
-    this.horse_to_remove = horse_to_remove;
   }
 }
 
