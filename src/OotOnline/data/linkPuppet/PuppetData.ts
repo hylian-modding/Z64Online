@@ -1,31 +1,28 @@
-import IMemory from 'modloader64_api/IMemory';
 import {
-  ILink,
-  Tunic,
   Age,
   Shield,
   Sword,
   Strength,
+  IOOTCore,
 } from 'modloader64_api/OOT/OOTAPI';
-import { ISaveContext } from 'modloader64_api/OOT/OOTAPI';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { IPuppetData } from '../../OotoAPI/IPuppetData';
 
-export class PuppetData {
+export class PuppetData implements IPuppetData{
   pointer: number;
-  emulator: IMemory;
-  link: ILink;
-  save: ISaveContext;
+  ModLoader: IModLoaderAPI;
+  core: IOOTCore;
+
   private readonly copyFields: string[] = new Array<string>();
 
   constructor(
     pointer: number,
-    emulator: IMemory,
-    link: ILink,
-    save: ISaveContext
+    ModLoader: IModLoaderAPI,
+    core: IOOTCore
   ) {
     this.pointer = pointer;
-    this.emulator = emulator;
-    this.link = link;
-    this.save = save;
+    this.ModLoader = ModLoader;
+    this.core = core;
     this.copyFields.push('pos');
     this.copyFields.push('rot');
     this.copyFields.push('anim');
@@ -42,98 +39,98 @@ export class PuppetData {
   }
 
   get pos(): Buffer {
-    return this.link.position.getRawPos();
+    return this.core.link.position.getRawPos();
   }
 
   set pos(pos: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x24, pos);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x24, pos);
   }
 
   get anim(): Buffer {
-    return this.link.anim_data;
+    return this.core.link.anim_data;
   }
 
   set anim(anim: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x13c, anim);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x13c, anim);
   }
 
   get rot(): Buffer {
-    return this.link.rotation.getRawRot();
+    return this.core.link.rotation.getRawRot();
   }
 
   set rot(rot: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0xb4, rot);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0xb4, rot);
   }
 
   get age(): Age {
-    return this.save.age;
+    return this.core.save.age;
   }
 
   get sound(): number {
-    let id = this.link.current_sound_id;
-    this.link.current_sound_id = 0;
+    let id = this.core.link.current_sound_id;
+    this.core.link.current_sound_id = 0;
     return id;
   }
 
   set sound(s: number) {
-    this.emulator.rdramWrite16(this.pointer + 0x27e, s);
+    this.ModLoader.emulator.rdramWrite16(this.pointer + 0x27e, s);
   }
 
   get tunic_color(): Buffer {
-    let addr = 0x000f7ad8 + this.link.tunic * 3;
-    return this.emulator.rdramReadBuffer(addr, 0x3);
+    let addr = 0x000f7ad8 + this.core.link.tunic * 3;
+    return this.ModLoader.emulator.rdramReadBuffer(addr, 0x3);
   }
 
   set tunic_color(buf: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x252, buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x252, buf);
   }
 
   get strength_upgrade(): number {
     let id = 0;
     if (this.age === 0) {
-      if (this.save.inventory.strength > Strength.GORON_BRACELET) {
-        id = this.save.inventory.strength;
+      if (this.core.save.inventory.strength > Strength.GORON_BRACELET) {
+        id = this.core.save.inventory.strength;
       }
     } else {
-      if (this.save.inventory.strength >= Strength.GORON_BRACELET) {
-        id = this.save.inventory.strength;
+      if (this.core.save.inventory.strength >= Strength.GORON_BRACELET) {
+        id = this.core.save.inventory.strength;
       }
     }
     return id;
   }
 
   set strength_upgrade(num: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x251, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x251, num);
   }
 
   get gauntlet_color(): Buffer {
-    let addr: number = 0x0f7ae4 + 3 * (this.save.inventory.strength - 2);
-    return this.emulator.rdramReadBuffer(addr, 0x3);
+    let addr: number = 0x0f7ae4 + 3 * (this.core.save.inventory.strength - 2);
+    return this.ModLoader.emulator.rdramReadBuffer(addr, 0x3);
   }
 
   set gauntlet_color(buf: Buffer) {
-    this.emulator.rdramWriteBuffer(this.pointer + 0x256, buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x256, buf);
   }
 
   get areHandsClosed(): boolean {
-    return this.link.rdramRead32(0x68) > 0;
+    return this.core.link.rdramRead32(0x68) > 0;
   }
 
   set areHandsClosed(bool: boolean) {
-    this.emulator.rdramWrite8(this.pointer + 0x278, bool ? 1 : 0);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x278, bool ? 1 : 0);
   }
 
   get current_mask(): number {
-    return this.link.rdramRead8(0x014f);
+    return this.core.link.rdramRead8(0x014f);
   }
 
   set current_mask(num: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x27c, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x27c, num);
   }
 
   get left_hand(): number {
-    let num: number = this.link.rdramRead8(0x144);
-    let num2: number = this.link.rdramRead8(0x148);
+    let num: number = this.core.link.rdramRead8(0x144);
+    let num2: number = this.core.link.rdramRead8(0x148);
     let id = 0;
     if (this.age === 0) {
       switch (num) {
@@ -144,7 +141,7 @@ export class PuppetData {
           id = 1; // Master Sword
           break;
         case 5:
-          id = this.save.swords.biggoronSword ? 2 : 3; // Biggoron.
+          id = this.core.save.swords.biggoronSword ? 2 : 3; // Biggoron.
           break;
         case 7:
           id = 7; // Megaton Hammer.
@@ -189,17 +186,17 @@ export class PuppetData {
   }
 
   set left_hand(num: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x279, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x279, num);
   }
 
   set right_hand(num: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x27a, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x27a, num);
   }
 
   get right_hand(): number {
     let id = 0;
-    let shield: Shield = this.link.shield;
-    let num: number = this.link.rdramRead8(0x144);
+    let shield: Shield = this.core.link.shield;
+    let num: number = this.core.link.rdramRead8(0x144);
     let left_hand: number = this.left_hand;
     if (this.age === 0) {
       switch (num) {
@@ -276,9 +273,9 @@ export class PuppetData {
 
   get back_item(): number {
     let id = 0;
-    let sword: boolean = this.link.sword !== Sword.NONE;
-    let _sword: Sword = this.link.sword;
-    let shield: Shield = this.link.shield;
+    let sword: boolean = this.core.link.sword !== Sword.NONE;
+    let _sword: Sword = this.core.link.sword;
+    let shield: Shield = this.core.link.shield;
     let left_hand: number = this.left_hand;
     let right_hand: number = this.right_hand;
     if (this.age === 0) {
@@ -330,15 +327,15 @@ export class PuppetData {
   }
 
   set back_item(num: number) {
-    this.emulator.rdramWrite8(this.pointer + 0x27b, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x27b, num);
   }
 
   get shield_state(): number {
-    return this.emulator.rdramRead32(0x1db09c);
+    return this.ModLoader.emulator.rdramRead32(0x1db09c);
   }
 
   set shield_state(state: number) {
-    this.emulator.rdramWrite32(this.pointer + 0x284, state);
+    this.ModLoader.emulator.rdramWrite32(this.pointer + 0x284, state);
   }
 
   toJSON() {

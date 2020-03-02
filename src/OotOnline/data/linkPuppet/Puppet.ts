@@ -1,46 +1,39 @@
 import uuid from 'uuid';
-import { ILink, ISaveContext, Age } from 'modloader64_api/OOT/OOTAPI';
-import IMemory from 'modloader64_api/IMemory';
+import { Age, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
-import { ICommandBuffer, Command } from 'modloader64_api/OOT/ICommandBuffer';
+import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { IPuppet } from '../../OotoAPI/IPuppet';
 
-export class Puppet {
+export class Puppet implements IPuppet{
   player: INetworkPlayer;
   id: string;
   data: PuppetData;
-  commandBuffer: ICommandBuffer;
-  emulator: IMemory;
   isSpawned = false;
   isSpawning = false;
   isShoveled = false;
   scene: number;
   age: Age;
-  link: ILink;
+  core: IOOTCore;
   void!: Buffer;
   ModLoader: IModLoaderAPI;
 
   constructor(
     player: INetworkPlayer,
-    link: ILink,
-    save: ISaveContext,
-    emulator: IMemory,
+    core: IOOTCore,
     pointer: number,
-    commandBuffer: ICommandBuffer,
     ModLoader: IModLoaderAPI
   ) {
     this.player = player;
     this.id = uuid.v4();
-    this.commandBuffer = commandBuffer;
-    this.data = new PuppetData(pointer, emulator, link, save);
-    this.emulator = emulator;
+    this.data = new PuppetData(pointer, ModLoader, core);
     this.scene = 81;
     this.age = 1;
-    this.link = link;
     this.ModLoader = ModLoader;
+    this.core = core;
   }
 
   debug_movePuppetToPlayer() {
@@ -52,7 +45,7 @@ export class Puppet {
   }
 
   doNotDespawnMe() {
-    this.emulator.rdramWrite8(this.data.pointer + 0x3, 0xff);
+    this.ModLoader.emulator.rdramWrite8(this.data.pointer + 0x3, 0xff);
   }
 
   spawn() {
@@ -65,7 +58,7 @@ export class Puppet {
       this.isSpawning = true;
       this.data.pointer = 0x0;
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
-      this.commandBuffer.runCommand(
+      this.core.commandBuffer.runCommand(
         Command.SPAWN_ACTOR,
         0x80600140,
         (success: boolean, result: number) => {
@@ -76,7 +69,7 @@ export class Puppet {
             console.log(this.data.pointer.toString(16));
             this.doNotDespawnMe();
             bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
-            this.void = this.emulator.rdramReadBuffer(
+            this.void = this.ModLoader.emulator.rdramReadBuffer(
               this.data.pointer + 0x24,
               0xc
             );
@@ -99,7 +92,7 @@ export class Puppet {
   shovel() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        this.emulator.rdramWriteBuffer(this.data.pointer + 0x24, this.void);
+        this.ModLoader.emulator.rdramWriteBuffer(this.data.pointer + 0x24, this.void);
         console.log('Puppet ' + this.id + ' shoveled.');
         this.isShoveled = true;
       }
@@ -109,8 +102,8 @@ export class Puppet {
   despawn() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        this.emulator.rdramWrite32(this.data.pointer + 0x130, 0x0);
-        this.emulator.rdramWrite32(this.data.pointer + 0x134, 0x0);
+        this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x130, 0x0);
+        this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0x0);
         this.data.pointer = 0;
       }
       this.isSpawned = false;

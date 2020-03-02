@@ -6,8 +6,9 @@ import { Ooto_PuppetPacket, Ooto_SceneRequestPacket } from '../OotOPackets';
 import fs from 'fs';
 import {ModLoaderAPIInject} from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
+import { IPuppetOverlord } from '../../OotoAPI/IPuppetOverlord';
 
-export class PuppetOverlord {
+export class PuppetOverlord implements IPuppetOverlord{
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
   private awaiting_spawn: Puppet[] = new Array<Puppet>();
   fakeClientPuppet!: Puppet;
@@ -25,12 +26,9 @@ export class PuppetOverlord {
   ) {
     this.fakeClientPuppet = new Puppet(
       this.ModLoader.me,
-      this.core.link,
-      this.core.save,
-      this.ModLoader.emulator,
+      this.core,
       // The pointer here points to blank space, so should be fine.
       0x6011e8,
-      this.core.commandBuffer,
       this.ModLoader
     );
   }
@@ -110,11 +108,8 @@ export class PuppetOverlord {
         player.uuid,
         new Puppet(
           player,
-          this.core.link,
-          this.core.save,
-          this.ModLoader.emulator,
+          this.core,
           0x0,
-          this.core.commandBuffer,
           this.ModLoader
         )
       );
@@ -138,21 +133,7 @@ export class PuppetOverlord {
     }
   }
 
-  lookForStrandedPuppets() {
-    this.puppets.forEach(
-      (value: Puppet, key: string, map: Map<string, Puppet>) => {
-        if (
-          value.scene !== this.fakeClientPuppet.scene &&
-          value.isSpawned &&
-          !value.isShoveled
-        ) {
-          value.shovel();
-        }
-      }
-    );
-  }
-
-  lookForMissingPuppets() {
+  lookForMissingOrStrandedPuppets() {
     let check = false;
     this.puppets.forEach(
       (value: Puppet, key: string, map: Map<string, Puppet>) => {
@@ -161,6 +142,13 @@ export class PuppetOverlord {
             this.awaiting_spawn.push(value);
           }
           check = true;
+        }
+        if (
+          value.scene !== this.fakeClientPuppet.scene &&
+          value.isSpawned &&
+          !value.isShoveled
+        ) {
+          value.shovel();
         }
       }
     );
@@ -212,8 +200,7 @@ export class PuppetOverlord {
     ) {
       this.processNewPlayers();
       this.processAwaitingSpawns();
-      this.lookForStrandedPuppets();
-      this.lookForMissingPuppets();
+      this.lookForMissingOrStrandedPuppets();
     }
     this.sendPuppetPacket();
   }
