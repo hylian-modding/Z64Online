@@ -288,8 +288,6 @@ export class ModelManager {
     console.log('Done.');
   }
 
-  onPostInit() {}
-
   @ServerNetworkHandler('Ooto_AllocateModelPacket')
   onModelAllocate_server(packet: Ooto_AllocateModelPacket) {
     let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(

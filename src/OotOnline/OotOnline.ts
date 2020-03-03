@@ -56,7 +56,6 @@ import {
   Ooto_ClientFlagUpdate,
   Ooto_ClientSceneContextUpdate,
   Ooto_DownloadRequestPacket,
-  Ooto_PuppetPacket,
   Ooto_ScenePacket,
   Ooto_SceneRequestPacket,
   Ooto_ServerFlagUpdate,
@@ -78,6 +77,7 @@ import { ModelPlayer } from './data/models/ModelPlayer';
 import { CrashParser } from './data/crash/CrashParser';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
+import { HorseManager } from './data/eponaPuppet/HorseManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -91,28 +91,35 @@ interface IOotOnlineLobbyConfig {
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
+
   ModLoader!: ModLoader.IModLoaderAPI;
+  pluginName?: string | undefined;
   @InjectCore()
   core!: IOOTCore;
   LobbyConfig: IOotOnlineLobbyConfig = {} as IOotOnlineLobbyConfig;
 
   // Client variables
-  overlord!: PuppetOverlord;
-  actorHooks!: ActorHookingManager;
-  modelManager!: ModelManager;
-  keys!: KeyLogManager;
-  emotes!: EmoteManager;
+  overlord: PuppetOverlord;
+  horses: HorseManager;
+  actorHooks: ActorHookingManager;
+  modelManager: ModelManager;
+  keys: KeyLogManager;
+  emotes: EmoteManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
   warpLookupTable: Map<number, number> = new Map<number, number>();
 
   constructor() {
     this.warpLookupTable.set(0x0003, 0x0169);
-    this.overlord = new PuppetOverlord();
+    this.overlord = new PuppetOverlord(this);
     this.actorHooks = new ActorHookingManager(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
+    this.horses = new HorseManager(this);
+  }
+
+  preinit(): void {
   }
 
   warpToScene(scene: number) {
@@ -143,18 +150,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.core.save.magic_current = MagicQuantities.NORMAL;
   }
 
-  preinit(): void {
-  }
-
   init(): void {
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
   }
 
   postinit(): void {
-    //this.ModLoader.emulator.memoryDebugLogger(true);
-    this.overlord.postinit();
-    this.actorHooks.onPostInit();
-    this.modelManager.onPostInit();
     this.ModLoader.gui.openWindow(
       698,
       795,
@@ -359,10 +359,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         if (!this.clientStorage.first_time_sync) {
           return;
         }
-        this.overlord.onTick();
-        this.emotes.onTick();
         if (this.LobbyConfig.actor_syncing) {
-          this.actorHooks.onTick();
+          this.actorHooks.tick();
         }
         if (this.LobbyConfig.data_syncing) {
           this.autosaveSceneData();
@@ -450,14 +448,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
-  @EventHandler(EventsClient.ON_PLAYER_JOIN)
-  onPlayerJoin(player: INetworkPlayer) {
-    this.overlord.registerPuppet(player);
-  }
-
   @EventHandler(EventsClient.ON_PLAYER_LEAVE)
   onPlayerLeft(player: INetworkPlayer) {
-    this.overlord.unregisterPuppet(player);
     this.ModLoader.gui.tunnel.send(
       'OotOnline:onPlayerLeft',
       new GUITunnelPacket('OotOnline', 'OotOnline:onPlayerLeft', player)
@@ -494,15 +486,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Scene handling
   //------------------------------
 
-  @EventHandler(OotEvents.ON_LOADING_ZONE)
-  onLoadingZone(evt: any) {
-    this.overlord.localPlayerLoadingZone();
-  }
-
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: number) {
-    this.overlord.localPlayerLoadingZone();
-    this.overlord.localPlayerChangingScenes(scene, this.core.save.age);
     this.ModLoader.clientSide.sendPacket(
       new Ooto_ScenePacket(
         this.ModLoader.clientLobby,
@@ -584,7 +569,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       ] +
       '.'
     );
-    this.overlord.changePuppetScene(packet.player, packet.scene, packet.age);
     bus.emit(
       OotOnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
       new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
@@ -672,23 +656,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         }
       });
     } catch (err) { }
-  }
-
-  @ServerNetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_server(packet: Ooto_PuppetPacket) {
-    this.sendPacketToPlayersInScene(packet);
-  }
-
-  @NetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_client(packet: Ooto_PuppetPacket) {
-    if (
-      this.core.helper.isTitleScreen() ||
-      this.core.helper.isPaused() ||
-      this.core.helper.isLinkEnteringLoadingZone()
-    ) {
-      return;
-    }
-    this.overlord.processPuppetPacket(packet);
   }
 
   //------------------------------
@@ -1132,7 +1099,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(OotEvents.ON_AGE_CHANGE)
   onAgeChange(age: Age) {
-    this.overlord.localPlayerLoadingZone();
     let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
       this.core.global.scene,
       age,
@@ -1213,7 +1179,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_CRASH)
   onEmuCrash(evt: any) {
-    this.overlord.generateCrashDump();
     let dump_parse: CrashParser = new CrashParser();
     dump_parse.parse();
     fs.writeFileSync(

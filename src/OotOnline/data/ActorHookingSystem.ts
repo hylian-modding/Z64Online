@@ -26,6 +26,7 @@ import { v4 } from 'uuid';
 import { IOotOnlineHelpers, OotOnlineEvents } from '../OotoAPI/OotoAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
+import { Postinit } from 'modloader64_api/PluginLifecycle';
 
 // Actor Hooking Stuff
 
@@ -75,6 +76,7 @@ export class ActorHookingManager {
     );
   }
 
+  @Postinit()
   onPostInit() {
     let dir = path.join(__dirname, 'actors');
     fs.readdirSync(dir).forEach((file: string) => {
@@ -390,7 +392,7 @@ export class ActorHookingManager {
     );
   }
 
-  onTick() {
+  tick() {
     this.actorHookTicks.forEach((value: ActorHookProcessor, key: string) => {
       value.onTick();
     });

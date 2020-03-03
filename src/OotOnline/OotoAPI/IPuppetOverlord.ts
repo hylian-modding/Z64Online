@@ -7,7 +7,6 @@ import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
 import { IPuppet } from "@OotOnline/OotoAPI/IPuppet";
 
 export interface IPuppetOverlord {
-    fakeClientPuppet: IPuppet;
     readonly current_scene: number;
     postinit(): void;
     localPlayerLoadingZone(): void;
