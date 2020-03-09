@@ -357,7 +357,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   onTick(frame: number): void {
-    this.core.save.age = Age.ADULT;
+    //this.core.save.age = Age.ADULT;
     if (
       !this.core.helper.isTitleScreen() &&
       this.core.helper.isSceneNumberValid()
