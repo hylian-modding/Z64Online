@@ -32,6 +32,7 @@ import { Puppet } from '../linkPuppet/Puppet';
 import fs from 'fs';
 import { ModelThread } from './ModelThread';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
+import path from 'path';
 
 export class FilePatch {
   offset: number;

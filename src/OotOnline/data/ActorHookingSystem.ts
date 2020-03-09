@@ -22,7 +22,6 @@ import {
 } from 'modloader64_api/NetworkHandler';
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import { v4 } from 'uuid';
 import { IOotOnlineHelpers, OotOnlineEvents } from '../OotoAPI/OotoAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
@@ -141,7 +140,7 @@ export class ActorHookingManager {
       if (actor.rdramRead32(0x1e8) <= 10) {
         return;
       }
-      actor.actorUUID = v4();
+      actor.actorUUID = this.ModLoader.utils.getUUID();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.bombsLocal.set(actor.actorUUID, actor);
       this.ModLoader.clientSide.sendPacket(
@@ -153,7 +152,7 @@ export class ActorHookingManager {
         )
       );
     } else if (actor.actorID === BOMBCHU_ID) {
-      actor.actorUUID = v4();
+      actor.actorUUID = this.ModLoader.utils.getUUID();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.chusLocal.set(actor.actorUUID, actor);
       this.ModLoader.clientSide.sendPacket(

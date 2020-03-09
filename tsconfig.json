@@ -14,7 +14,7 @@
     "baseUrl": "./",
     "paths": {
       "@OotOnline/*": [
-        "src/OotOnline/*"
+        "./src/OotOnline/*"
       ]
     }
   },

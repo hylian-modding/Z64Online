@@ -1,4 +1,3 @@
-import uuid from 'uuid';
 import { Age, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
@@ -7,8 +6,9 @@ import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IPuppet } from '../../OotoAPI/IPuppet';
+import fse from 'fs-extra';
 
-export class Puppet implements IPuppet{
+export class Puppet implements IPuppet {
   player: INetworkPlayer;
   id: string;
   data: PuppetData;
@@ -28,12 +28,12 @@ export class Puppet implements IPuppet{
     ModLoader: IModLoaderAPI
   ) {
     this.player = player;
-    this.id = uuid.v4();
     this.data = new PuppetData(pointer, ModLoader, core);
     this.scene = 81;
     this.age = 1;
     this.ModLoader = ModLoader;
     this.core = core;
+    this.id = this.ModLoader.utils.getUUID();
   }
 
   debug_movePuppetToPlayer() {
@@ -51,32 +51,29 @@ export class Puppet implements IPuppet{
   spawn() {
     if (this.isShoveled) {
       this.isShoveled = false;
-      console.log('Puppet resurrected.');
+      this.ModLoader.logger.debug('Puppet resurrected.');
       return;
     }
     if (!this.isSpawned && !this.isSpawning) {
       this.isSpawning = true;
       this.data.pointer = 0x0;
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
-      this.core.commandBuffer.runCommand(
-        Command.SPAWN_ACTOR,
-        0x80600140,
-        (success: boolean, result: number) => {
-          if (success) {
-            console.log(result.toString(16));
-            this.data.pointer = result & 0x00ffffff;
-            console.log('Puppet spawned!');
-            console.log(this.data.pointer.toString(16));
-            this.doNotDespawnMe();
-            bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
-            this.void = this.ModLoader.emulator.rdramReadBuffer(
-              this.data.pointer + 0x24,
-              0xc
-            );
-            this.isSpawned = true;
-            this.isSpawning = false;
+      this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600140, (success: boolean, result: number) => {
+        if (success) {
+          this.data.pointer = result & 0x00ffffff;
+          this.doNotDespawnMe();
+          bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
+          this.void = this.ModLoader.emulator.rdramReadBuffer(
+            this.data.pointer + 0x24,
+            0xc
+          );
+          this.isSpawned = true;
+          this.isSpawning = false;
+          if (this.getAttachedHorse() > 0) {
+            this.ModLoader.logger.debug("Attached Horse Puppet: " + this.getAttachedHorse().toString(16));
           }
         }
+      }
       );
     }
   }
@@ -92,8 +89,12 @@ export class Puppet implements IPuppet{
   shovel() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
+        if (this.getAttachedHorse() > 0){
+          let horse: number = this.getAttachedHorse() & 0x00ffffff;
+          this.ModLoader.emulator.rdramWriteBuffer(horse + 0x24, this.void);
+        }
         this.ModLoader.emulator.rdramWriteBuffer(this.data.pointer + 0x24, this.void);
-        console.log('Puppet ' + this.id + ' shoveled.');
+        this.ModLoader.logger.debug('Puppet ' + this.id + ' shoveled.');
         this.isShoveled = true;
       }
     }
@@ -102,14 +103,23 @@ export class Puppet implements IPuppet{
   despawn() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
+        if (this.getAttachedHorse() > 0){
+          let horse: number = this.getAttachedHorse() & 0x00ffffff;
+          this.ModLoader.emulator.rdramWrite32(horse + 0x130, 0x0);
+          this.ModLoader.emulator.rdramWrite32(horse + 0x134, 0x0);
+        }
         this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x130, 0x0);
         this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0x0);
         this.data.pointer = 0;
       }
       this.isSpawned = false;
       this.isShoveled = false;
-      console.log('Puppet ' + this.id + ' despawned.');
+      this.ModLoader.logger.debug('Puppet ' + this.id + ' despawned.');
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED, this);
     }
+  }
+
+  getAttachedHorse(): number {
+    return this.ModLoader.emulator.rdramRead32(this.data.pointer + 0x011C);
   }
 }

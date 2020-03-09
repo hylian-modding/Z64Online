@@ -1,7 +1,7 @@
 #include <z64ovl/oot/u10.h>
 #include <z64ovl/z64ovl_helpers.h>
-#include <z64ovl/oot/defines_limbs.h>
-#include <z64ovl/oot/defines_oot.h>
+#include <z64ovl/defines_limbs.h>
+#include <z64ovl/defines_oot.h>
 
 #define get_addr_offset(l, o) ((uint32_t *)((uint32_t)l + (uint32_t)o))
 
@@ -64,7 +64,6 @@ typedef struct
     uint8_t passive;
     uint32_t shieldState; // 0x284
     uint8_t stunTimer;    // 0x288
-    uint8_t launchArrow;  // 0x289
 } pvp;
 
 typedef struct
@@ -75,7 +74,7 @@ typedef struct
     z64_collider_cylinder_main_t cylinder;
     z_link_puppet puppetData;
     pvp pvpData;
-    uint64_t end;
+    uint32_t end; // 0x294
 } entity_t;
 
 z64_collider_cylinder_init_t Collision =
@@ -118,6 +117,19 @@ uint8_t damagechart[] =
         0xFF, 0x60, 0x60, 0x60, 0x00, 0x00, 0xE3, 0xE4,
         0xE5, 0xE5, 0xE5, 0xE6, 0xFA, 0x00, 0xE6, 0x00};
 
+static uint32_t isZobjLoaded(z64_obj_ctxt_t *obj_ctxt, int32_t id)
+{
+    int32_t index = z_scene_object_get_index(obj_ctxt, id);
+    if (index < 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return z_scene_object_is_loaded(obj_ctxt, index);
+    }
+}
+
 static void init(entity_t *en, z64_global_t *global)
 {
     en->puppetData.age = global->link_age;
@@ -144,18 +156,14 @@ static void init(entity_t *en, z64_global_t *global)
         Collision.height = 0x0020;
     }
 
-    skelanime_init_mtx(global,
-                       &en->skelanime,
-                       en->puppetData.playasData.skeleton,
-                       0,
-                       0, 0, 0);
+    z_skelanime_init(global, 1, &en->skelanime, en->puppetData.playasData.skeleton, 0);
 
-    actor_anime_change(&en->skelanime, 0, 0.0, 0.0, 0, 0, 1);
-    actor_set_scale(&en->actor, 0.01f);
+    z_skelanime_change_anim(&en->skelanime, 0, 0.0, 0.0, 0, 0);
+    z_actor_set_scale(&en->actor, 0.01f);
 
-    actor_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
+    z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
 
-    external_func_80061ED4(AADDR(&en->actor, 0x98), &damagechart, &unkchart); // damage chart
+    z_actor_damage_table_init(AADDR(&en->actor, 0x98), &damagechart, &unkchart); // damage chart
 
     en->puppetData.bottleColor.r = 0xFF;
     en->puppetData.bottleColor.g = 0xFF;
@@ -167,15 +175,21 @@ static void init(entity_t *en, z64_global_t *global)
     en->puppetData.gauntletColor.b = 0xFF;
     en->puppetData.gauntletColor.a = 0xFF;
 
-    en->actor.damage_color_timer = 0x0;
     en->actor.health = 20;
     en->pvpData.prev_health = 20;
+    en->pvpData.passive = 0x1;
 
     en->actor.room_index = 0xFF;
     en->actor.flags = 0x00002431;
 
-    en->pvpData.passive = 0x1;
-    en->end = 0xDEADBEEFBEEFDEAD;
+    if (isZobjLoaded(&global->obj_ctxt, EPONA_OBJ))
+    {
+        uint32_t id_addr = 0x80600150;
+        uint16_t *seg2 = (uint16_t *)id_addr;
+        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos_2.x, en->actor.pos_2.y, en->actor.pos_2.z, en->actor.rot_2.x, en->actor.rot_2.y, en->actor.rot_2.z, en->actor.variable);
+    }
+
+    en->end = 0xDEADBEEF;
 }
 
 static void pvp_update(entity_t *en, z64_global_t *global)
@@ -183,8 +197,8 @@ static void pvp_update(entity_t *en, z64_global_t *global)
     if (en->pvpData.prev_health != en->actor.health)
         en->pvpData.prev_health = en->actor.health;
 
-    actor_update_health(&en->actor);
-    actor_collider_cylinder_update(&en->actor, &en->cylinder);
+    z_actor_update_health(&en->actor);
+    z_collider_cylinder_update(&en->actor, &en->cylinder);
 
     if (en->actor.health != en->pvpData.prev_health && en->pvpData.invincibility == 0) // Damage
     {
@@ -211,23 +225,17 @@ static void pvp_update(entity_t *en, z64_global_t *global)
 
     if (en->puppetData.heldItemLeft <= 1 || en->puppetData.heldItemLeft == 5)
     {
-        if (!((en->pvpData.shieldState == 0x00400000 || en->pvpData.shieldState == 0x00428000) && actor_angle_link_in_range(&en->actor, en->puppetData.heldItemRight == 2 ? 10922 : 8192)) && en->pvpData.invincibility == 0)
+        if (!((en->pvpData.shieldState == 0x00400000 || en->pvpData.shieldState == 0x00428000) && z_actor_player_in_range(&en->actor, en->puppetData.heldItemRight == 2 ? 10922 : 8192)) && en->pvpData.invincibility == 0)
         {
-            actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
+            z_collider_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
         }
     }
-    else if ((actor_angle_link_in_range(&en->actor, 16384)) && en->pvpData.invincibility == 0)
+    else if ((z_actor_player_in_range(&en->actor, 16384)) && en->pvpData.invincibility == 0)
     {
-        actor_collision_check_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
+        z_collider_set_ac(global, AADDR(global, 0x11E60), &en->cylinder);
     }
 
-    actor_collision_check_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
-}
-
-static void shoot_arrow(entity_t *en, z64_global_t *global)
-{
-    //z64_actor_t* arrow = actor_spawn(global->actor_ctxt, global, 0x0016, en->actor.pos_2.x, en->actor.pos_2.y, en->actor.pos_2.z, 0, 0, 0, 0xFFFFFFFF);
-    en->pvpData.launchArrow = 0;
+    z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
 }
 
 static void play(entity_t *en, z64_global_t *global)
@@ -240,13 +248,13 @@ static void play(entity_t *en, z64_global_t *global)
 
     if (en->pvpData.passive)
     {
-        actor_collider_cylinder_update(&en->actor, &en->cylinder);
-        actor_collision_check_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
+        z_collider_cylinder_update(&en->actor, &en->cylinder);
+        z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
     }
     else
+    {
         pvp_update(en, global); //Run only if pvp is enabled
-    if (en->pvpData.launchArrow)
-        shoot_arrow(en, global);
+    }
 }
 
 static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_list, vec3f_t *translation, vec3s_t *rotation, entity_t *en)
@@ -273,7 +281,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             if (en->puppetData.strengthUpgradeID > 1)
             {
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_WRIST_GAUNTLET_ZZ : OOT_ADULT_RIGHT_WRIST_GAUNTLET); // R-Forearm.
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_WRIST_GAUNTLET_ZZ : OOT_ADULT_RIGHT_WRIST_GAUNTLET); // R-Forearm.
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
             }
         }
@@ -284,7 +292,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
         {
             if (en->puppetData.strengthUpgradeID > 0)
             {
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_GORON_BRACELET_ZZ : OOT_CHILD_GORON_BRACELET); // Goron Bracelet
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_GORON_BRACELET_ZZ : OOT_CHILD_GORON_BRACELET); // Goron Bracelet
             }
         }
         else
@@ -292,7 +300,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             if (en->puppetData.strengthUpgradeID > 1)
             {
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_WRIST_GAUNTLET_ZZ : OOT_ADULT_LEFT_WRIST_GAUNTLET); // L-Forearm.
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_WRIST_GAUNTLET_ZZ : OOT_ADULT_LEFT_WRIST_GAUNTLET); // L-Forearm.
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
             }
         }
@@ -305,11 +313,11 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             {
                 if (en->puppetData.bootsID == 1)
                 {
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_BOOT_IRON_ZZ : OOT_ADULT_RIGHT_BOOT_IRON); // Iron boots right foot.
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_BOOT_IRON_ZZ : OOT_ADULT_RIGHT_BOOT_IRON); // Iron boots right foot.
                 }
                 else if (en->puppetData.bootsID == 2)
                 {
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_BOOT_HOVER_ZZ : OOT_ADULT_RIGHT_BOOT_HOVER); // Hover boots right foot.
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_BOOT_HOVER_ZZ : OOT_ADULT_RIGHT_BOOT_HOVER); // Hover boots right foot.
                 }
             }
         }
@@ -322,11 +330,11 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             {
                 if (en->puppetData.bootsID == 1)
                 {
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_BOOT_IRON_ZZ : OOT_ADULT_LEFT_BOOT_IRON); // Iron boots left foot.
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_BOOT_IRON_ZZ : OOT_ADULT_LEFT_BOOT_IRON); // Iron boots left foot.
                 }
                 else if (en->puppetData.bootsID == 2)
                 {
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_BOOT_HOVER_ZZ : OOT_ADULT_LEFT_BOOT_HOVER); // Hover boots left foot.
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_BOOT_HOVER_ZZ : OOT_ADULT_LEFT_BOOT_HOVER); // Hover boots left foot.
                 }
             }
         }
@@ -344,44 +352,44 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
              05 = Bottle.
              07 = Megaton Hammer
             */
-            matrix_translate3f(translation->x, translation->y, translation->z, 1);
-            matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
+            z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+            z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
             switch (en->puppetData.heldItemLeft)
             {
             case 0:
                 break;
             case 1:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_MASTER_SWORD_IN_HAND_ZZ : OOT_ADULT_MASTER_SWORD_IN_HAND);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_MASTER_SWORD_IN_HAND_ZZ : OOT_ADULT_MASTER_SWORD_IN_HAND);
                 break;
             case 2:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BIGGORON_SWORD_IN_HAND_ZZ : OOT_ADULT_BIGGORON_SWORD_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BIGGORON_SWORD_IN_HAND_ZZ : OOT_ADULT_BIGGORON_SWORD_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             case 3:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BROKEN_GIANTS_KNIFE_IN_HAND_ZZ : OOT_ADULT_BROKEN_GIANTS_KNIFE_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BROKEN_GIANTS_KNIFE_IN_HAND_ZZ : OOT_ADULT_BROKEN_GIANTS_KNIFE_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             case 4:
                 break;
             case 5:
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.bottleColor.r, en->puppetData.bottleColor.g, en->puppetData.bottleColor.b, en->puppetData.bottleColor.a);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BOTTLE_ZZ : OOT_ADULT_BOTTLE);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BOTTLE_ZZ : OOT_ADULT_BOTTLE);
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 break;
             case 7:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_MEGATON_HAMMER_ZZ : OOT_ADULT_MEGATON_HAMMER);
-                matrix_scale3f(0, 0, 0, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_MEGATON_HAMMER_ZZ : OOT_ADULT_MEGATON_HAMMER);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             }
-            matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-            matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+            z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+            z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
             if (en->puppetData.isHandClosed == 0)
             {
                 *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_OPEN_ZZ : OOT_ADULT_LEFT_HAND_OPEN;
                 if (en->puppetData.strengthUpgradeID > 1)
                 {
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_GAUNTLET_OPEN_ZZ : OOT_ADULT_LEFT_HAND_GAUNTLET_OPEN);
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_GAUNTLET_OPEN_ZZ : OOT_ADULT_LEFT_HAND_GAUNTLET_OPEN);
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 }
             }
@@ -391,7 +399,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 if (en->puppetData.strengthUpgradeID > 1)
                 {
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED_ZZ : OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED);
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED_ZZ : OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED);
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 }
             }
@@ -415,21 +423,21 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             case 0:
                 break;
             case 4:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_KOKIRI_SWORD_ZZ : OOT_CHILD_KOKIRI_SWORD);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_KOKIRI_SWORD_ZZ : OOT_CHILD_KOKIRI_SWORD);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 5:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.bottleColor.r, en->puppetData.bottleColor.g, en->puppetData.bottleColor.b, en->puppetData.bottleColor.a);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_BOTTLE_ZZ : OOT_CHILD_BOTTLE);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_BOTTLE_ZZ : OOT_CHILD_BOTTLE);
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 6:
                 break;
@@ -469,52 +477,52 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             case 0:
                 break;
             case 1:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_HYLIAN_SHIELD_IN_HAND_ZZ : OOT_ADULT_HYLIAN_SHIELD_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_HYLIAN_SHIELD_IN_HAND_ZZ : OOT_ADULT_HYLIAN_SHIELD_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 2:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_MIRROR_SHIELD_IN_HAND_ZZ : OOT_ADULT_MIRROR_SHIELD_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_MIRROR_SHIELD_IN_HAND_ZZ : OOT_ADULT_MIRROR_SHIELD_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 4:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_OCARINA_OF_TIME_IN_HAND_ZZ : OOT_ADULT_OCARINA_OF_TIME_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_OCARINA_OF_TIME_IN_HAND_ZZ : OOT_ADULT_OCARINA_OF_TIME_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 5:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_OCARINA_OF_TIME_IN_HAND_ZZ : OOT_ADULT_OCARINA_OF_TIME_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_OCARINA_OF_TIME_IN_HAND_ZZ : OOT_ADULT_OCARINA_OF_TIME_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 7:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_HOOK_SHOT_IN_HAND_ZZ : OOT_ADULT_HOOK_SHOT_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_HOOK_SHOT_IN_HAND_ZZ : OOT_ADULT_HOOK_SHOT_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 8:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BOW_IN_HAND_ZZ : OOT_ADULT_BOW_IN_HAND);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BOW_IN_HAND_ZZ : OOT_ADULT_BOW_IN_HAND);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             }
             if (en->puppetData.isHandClosed == 0)
@@ -523,7 +531,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 if (en->puppetData.strengthUpgradeID > 1)
                 {
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_HAND_GAUNTLET_OPEN_ZZ : OOT_ADULT_RIGHT_HAND_GAUNTLET_OPEN);
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_RIGHT_HAND_GAUNTLET_OPEN_ZZ : OOT_ADULT_RIGHT_HAND_GAUNTLET_OPEN);
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 }
             }
@@ -533,7 +541,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 if (en->puppetData.strengthUpgradeID > 1)
                 {
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                    draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED_ZZ : OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED);
+                    z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED_ZZ : OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED);
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 }
             }
@@ -554,36 +562,36 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             case 0:
                 break;
             case 3:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_DEKU_SHIELD_ZZ : OOT_CHILD_DEKU_SHIELD);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_DEKU_SHIELD_ZZ : OOT_CHILD_DEKU_SHIELD);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 4:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_FAIRY_OCARINA_ZZ : OOT_CHILD_FAIRY_OCARINA);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_FAIRY_OCARINA_ZZ : OOT_CHILD_FAIRY_OCARINA);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 5:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_OCARINA_OF_TIME_ZZ : OOT_CHILD_OCARINA_OF_TIME);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_OCARINA_OF_TIME_ZZ : OOT_CHILD_OCARINA_OF_TIME);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 9:
-                matrix_translate3f(translation->x, translation->y, translation->z, 1);
-                matrix_rotate3s(rotation->x, rotation->y, rotation->z, 1);
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_SLINGSHOT_ZZ : OOT_CHILD_SLINGSHOT);
-                matrix_scale3f(0, 0, 0, 1);
-                matrix_rotate3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                matrix_translate3f(-translation->x, translation->y, -translation->z, 1);
+                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_SLINGSHOT_ZZ : OOT_CHILD_SLINGSHOT);
+                z_matrix_scale_3f(0, 0, 0, 1);
+                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
+                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
             default:
                 break;
             }
@@ -609,7 +617,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             switch (en->puppetData.backItem)
             {
             case 0:
-                matrix_scale3f(0, 0, 0, 1);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             case 1:
                 *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BACK_HYLIAN_SHIELD_MASTER_SWORD_ZZ : OOT_ADULT_BACK_HYLIAN_SHIELD_MASTER_SWORD;
@@ -624,7 +632,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_ADULT_BACK_SHEATH_ZZ : OOT_ADULT_BACK_SHEATH;
                 break;
             default:
-                matrix_scale3f(0, 0, 0, 1);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             }
         }
@@ -642,7 +650,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             switch (en->puppetData.backItem)
             {
             case 0:
-                matrix_scale3f(0, 0, 0, 1);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             case 3:
                 *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_BACK_DEKU_SHIELD_KOKIRI_SWORD_ZZ : OOT_CHILD_BACK_DEKU_SHIELD_KOKIRI_SWORD;
@@ -660,7 +668,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 *display_list = en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_BACK_SHEATH_ZZ : OOT_CHILD_BACK_SHEATH;
                 break;
             default:
-                matrix_scale3f(0, 0, 0, 1);
+                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             }
         }
@@ -685,28 +693,28 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             case 0:
                 break;
             case 1:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_KEATON_ZZ : OOT_CHILD_MASK_KEATON);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_KEATON_ZZ : OOT_CHILD_MASK_KEATON);
                 break;
             case 2:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_SKULL_ZZ : OOT_CHILD_MASK_SKULL);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_SKULL_ZZ : OOT_CHILD_MASK_SKULL);
                 break;
             case 3:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_SPOOKY_ZZ : OOT_CHILD_MASK_SPOOKY);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_SPOOKY_ZZ : OOT_CHILD_MASK_SPOOKY);
                 break;
             case 4:
-                //draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_BUNNY_HOOD_ZZ : OOT_CHILD_MASK_BUNNY_HOOD);
+                //z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_BUNNY_HOOD_ZZ : OOT_CHILD_MASK_BUNNY_HOOD);
                 break;
             case 5:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_MASK_OF_TRUTH_ZZ : OOT_CHILD_MASK_MASK_OF_TRUTH);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_MASK_OF_TRUTH_ZZ : OOT_CHILD_MASK_MASK_OF_TRUTH);
                 break;
             case 6:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GORON_ZZ : OOT_CHILD_MASK_GORON);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GORON_ZZ : OOT_CHILD_MASK_GORON);
                 break;
             case 7:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_ZORA_ZZ : OOT_CHILD_MASK_ZORA);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_ZORA_ZZ : OOT_CHILD_MASK_ZORA);
                 break;
             case 8:
-                draw_dlist_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GERUDO_ZZ : OOT_CHILD_MASK_GERUDO);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GERUDO_ZZ : OOT_CHILD_MASK_GERUDO);
                 break;
             default:
                 break;
@@ -739,36 +747,29 @@ static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, ve
 
 static void draw(entity_t *en, z64_global_t *global)
 {
-/*     static Gfx cull_back_dl[] =
-        {
-            gsSPSetGeometryMode(G_CULL_BACK),
-            gsSPEndDisplayList(),
-        };
-
-    gMoveWd(global->common.gfx_ctxt->poly_opa.p++, G_MW_SEGMENT, G_MWO_SEGMENT_C, &cull_back_dl); */
     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
 
-    skelanime_draw_mtx(
-        global,
-        en->skelanime.limb_index,
-        en->skelanime.unk5,
-        en->skelanime.dlist_count,
-        &Animate, &otherCallback,
-        &en->actor);
+    z_skelanime_draw(global, &en->skelanime.limb_index, &en->actor, &en->skelanime, &Animate, &otherCallback);
 
     vec3f_t Scale[3] = {0.2, 0.2, 0.2};
     actor_shadow_circle(&en->actor.pos_2, Scale, 0x00FF, global);
 
     if (en->puppetData.soundid > 0)
     {
-        sound_play_position(global, &en->actor.pos_2, 0x41c80000, en->puppetData.soundid);
+        z_sfx_play_position(global, &en->actor.pos_2, 0x41c80000, en->puppetData.soundid);
         en->puppetData.soundid = 0;
     }
 }
 
 static void destroy(entity_t *en, z64_global_t *global)
 {
-    actor_collider_cylinder_free(global, &en->cylinder);
+    z_collider_cylinder_free(global, &en->cylinder);
+    if (en->actor.attached_b)
+    {
+        en->actor.attached_b->attached_a = 0;
+        z_actor_kill(en->actor.attached_b);
+        en->actor.attached_b = 0;
+    }
 }
 
 /* .data */

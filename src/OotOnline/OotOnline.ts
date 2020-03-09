@@ -77,7 +77,6 @@ import { ModelPlayer } from './data/models/ModelPlayer';
 import { CrashParser } from './data/crash/CrashParser';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
-import { HorseManager } from './data/eponaPuppet/HorseManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -90,6 +89,12 @@ interface IOotOnlineLobbyConfig {
   actor_syncing: boolean;
 }
 
+const enum SCENES{
+  LON_LON_RANCH = 0x0063,
+  HYRULE_FIELD = 0x0051,
+  FOREST_TEMPLE = 0x0003
+}
+
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   ModLoader!: ModLoader.IModLoaderAPI;
@@ -100,7 +105,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   // Client variables
   overlord: PuppetOverlord;
-  horses: HorseManager;
   actorHooks: ActorHookingManager;
   modelManager: ModelManager;
   keys: KeyLogManager;
@@ -110,13 +114,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   warpLookupTable: Map<number, number> = new Map<number, number>();
 
   constructor() {
-    this.warpLookupTable.set(0x0003, 0x0169);
+    this.warpLookupTable.set(SCENES.FOREST_TEMPLE, 0x0169);
+    this.warpLookupTable.set(SCENES.HYRULE_FIELD, 0x00CD);
+    this.warpLookupTable.set(SCENES.LON_LON_RANCH, 0x0157);
     this.overlord = new PuppetOverlord(this);
     this.actorHooks = new ActorHookingManager(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
-    this.horses = new HorseManager(this);
   }
 
   preinit(): void {
@@ -152,6 +157,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   init(): void {
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/horse-3.c"), dest: path.join(__dirname, "/payloads/E0/epona_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/epona_puppet.json") });
   }
 
   postinit(): void {
@@ -351,6 +357,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   onTick(frame: number): void {
+    this.core.save.age = Age.ADULT;
     if (
       !this.core.helper.isTitleScreen() &&
       this.core.helper.isSceneNumberValid()
@@ -382,6 +389,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             this.updateInventory();
             this.updateFlags();
             this.clientStorage.needs_update = false;
+/*             if (this.core.global.scene !== SCENES.LON_LON_RANCH){
+              this.warpToScene(SCENES.LON_LON_RANCH);
+            } */
           }
         }
       }
