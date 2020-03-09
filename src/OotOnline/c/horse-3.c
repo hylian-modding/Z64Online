@@ -29,82 +29,46 @@ const z64_collider_cylinder_init_t Collision =
         .y_shift = 0,
         .position = {.x = 0, .y = 0, .z = 0}};
 
+const uint32_t eyes[] = {EPONA_EYES_OPEN, EPONA_EYES_HALF, EPONA_EYES_CLOSED};
+
 typedef struct
 {
     z64_actor_t actor;
     z64_skelanime_weighted_t pony_skelanime;
-    uint8_t anim_id;
-    uint8_t isServerControlled;
-    uint8_t wasServerControlledLastFrame;
+    uint32_t anim;
+    uint32_t lastKnownAnim;
     uint16_t eye_index;
     uint32_t eye_texture;
-    uint8_t lastKnownAnim;
     z64_collider_cylinder_main_t cylinder;
     uint32_t end;
 } entity_t;
 
-const uint32_t anim_index[] = {
-    EPONA_RUN,
-    EPONA_JUMPING,
-    EPONA_HIGH_JUMP,
-    EPONA_WALKING,
-    EPONA_REARING,
-    EPONA_STOP_AND_REARING,
-    EPONA_SHAKE_HEAD,
-    EPONA_IDLE,
-    EPONA_SLOW_WALK
-};
-
-const uint32_t eyes[] = {EPONA_EYES_OPEN, EPONA_EYES_HALF, EPONA_EYES_CLOSED};
-
 static void init(entity_t *en, z64_global_t *global)
 {
-    en->isServerControlled = 0;
+    en->anim = EPONA_IDLE;
 
-    en->anim_id = 7;
-
-    skelanime_init_weighted(
-        &en->actor,
-        &en->pony_skelanime,
-        EPONA_SKL,
-        anim_index[en->anim_id],
-        0, 0, 0);
+    skelanime_init_weighted(&en->actor, &en->pony_skelanime, EPONA_SKL, 0, 0, 0, 0);
 
     z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
 
     en->end = 0xDEADBEEF;
 }
 
-static void setanim(entity_t *en, uint8_t anim_id)
+static void setanim(entity_t *en, uint8_t anim)
 {
-    en->anim_id = anim_id;
-    z_skelanime_anim_set(&en->pony_skelanime.skelanime, anim_index[en->anim_id]);
+    z_skelanime_anim_set(&en->pony_skelanime.skelanime, en->anim);
+    en->lastKnownAnim = anim;
 }
 
 static void play(entity_t *en, z64_global_t *global)
 {
-    // Server is driving, do nothing but relay server commands.
-    if (en->isServerControlled == 1)
+    if (en->lastKnownAnim != en->anim)
     {
-        if (en->lastKnownAnim != en->anim_id)
-        {
-            setanim(en, en->anim_id);
-        }
-        en->wasServerControlledLastFrame = 1;
-    }
-    else
-    {
-        // Server was controlling but is no longer. Reset everything.
-        if (en->wasServerControlledLastFrame == 1)
-        {
-            setanim(en, 7);
-            en->wasServerControlledLastFrame = 0;
-        }
+        setanim(en, en->anim);
     }
 
     // Run anims.
     z_skelanime_draw_table(&en->pony_skelanime.skelanime);
-    en->lastKnownAnim = en->anim_id;
 
     en->eye_texture = eyes[helper_eye_blink(&en->eye_index)];
     z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
