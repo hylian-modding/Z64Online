@@ -1,6 +1,6 @@
 {
   "name": "OotOnline",
-  "version": "2.0.82",
+  "version": "2.0.84",
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
   "scripts": {
@@ -16,5 +16,42 @@
   "bugs": {
     "url": "https://github.com/hylian-modding/OcarinaOfTimeOnline/issues"
   },
-  "homepage": "https://github.com/hylian-modding/OcarinaOfTimeOnline#readme"
+  "homepage": "https://github.com/hylian-modding/OcarinaOfTimeOnline#readme",
+  "modloader64_deps": {
+    "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib"
+  },
+  "dependencies": {
+    "adm-zip": "^0.4.14",
+    "copy-node-modules": "^1.1.1",
+    "eslint": "^6.8.0",
+    "buffer-json": "^2.0.0",
+    "bitwise": "^2.0.4",
+    "download-file": "^0.1.5",
+    "fs-extra": "^8.1.0",
+    "commander": "^4.1.1",
+    "find-remove": "^2.0.1",
+    "caseless": "^0.12.0",
+    "form-data": "^3.0.0",
+    "mkdir-recursive": "^0.4.0",
+    "is-elevated": "^3.0.0",
+    "modloader64_api": "^1.0.0",
+    "log4js": "^6.1.2",
+    "eventemitter2": "^6.0.0",
+    "nat-upnp": "^1.1.1",
+    "patch-package": "^6.2.1",
+    "request": "^2.88.2",
+    "recursive-readdir": "^2.2.2",
+    "module-alias": "^2.2.2",
+    "require-from-string": "^2.0.2",
+    "socket.io-client": "^2.3.0",
+    "typescript": "^3.8.3",
+    "socket.io-encrypt": "^0.1.1",
+    "socket.io": "^2.3.0",
+    "slash": "^3.0.0",
+    "strip-json-comments": "^3.0.1",
+    "source-map-support": "^0.5.16",
+    "tar": "^6.0.1",
+    "tough-cookie": "^3.0.1"
+  },
+  "devDependencies": {}
 }

@@ -4,14 +4,14 @@ import { INetworkPlayer, NetworkHandler, ServerNetworkHandler } from 'modloader6
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket } from '../OotOPackets';
 import fs from 'fs';
-import {ModLoaderAPIInject} from 'modloader64_api/ModLoaderAPIInjector';
+import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { IPuppetOverlord } from '../../OotoAPI/IPuppetOverlord';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { IOotOnlineHelpers } from '@OotOnline/OotoAPI/OotoAPI';
 
-export class PuppetOverlord implements IPuppetOverlord{
+export class PuppetOverlord implements IPuppetOverlord {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
   private awaiting_spawn: Puppet[] = new Array<Puppet>();
   fakeClientPuppet!: Puppet;
@@ -20,13 +20,13 @@ export class PuppetOverlord implements IPuppetOverlord{
     INetworkPlayer
   >();
   private parent: IOotOnlineHelpers;
-  
+
   @ModLoaderAPIInject()
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
 
-  constructor(parent: IOotOnlineHelpers){
+  constructor(parent: IOotOnlineHelpers) {
     this.parent = parent;
   }
 
@@ -204,6 +204,13 @@ export class PuppetOverlord implements IPuppetOverlord{
 
   @onTick()
   onTick() {
+    if (
+      this.core.helper.isTitleScreen() ||
+      !this.core.helper.isSceneNumberValid() ||
+      this.core.helper.isPaused()
+    ) {
+      return;
+    }
     if (
       !this.core.helper.isLinkEnteringLoadingZone() &&
       this.core.helper.isInterfaceShown()

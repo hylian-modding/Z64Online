@@ -62,8 +62,8 @@ typedef struct
     uint8_t prev_health;
     uint8_t invincibility;
     uint8_t passive;
-    uint32_t shieldState; // 0x284
-    uint8_t stunTimer;    // 0x288
+    uint32_t shieldState;
+    uint8_t stunTimer;
 } pvp;
 
 typedef struct
@@ -74,7 +74,7 @@ typedef struct
     z64_collider_cylinder_main_t cylinder;
     z_link_puppet puppetData;
     pvp pvpData;
-    uint32_t end; // 0x294
+    uint32_t end;
 } entity_t;
 
 z64_collider_cylinder_init_t Collision =

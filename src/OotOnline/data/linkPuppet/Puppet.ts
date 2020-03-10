@@ -69,9 +69,6 @@ export class Puppet implements IPuppet {
           );
           this.isSpawned = true;
           this.isSpawning = false;
-          if (this.getAttachedHorse() > 0) {
-            this.ModLoader.logger.debug("Attached Horse Puppet: " + this.getAttachedHorse().toString(16));
-          }
         }
       }
       );

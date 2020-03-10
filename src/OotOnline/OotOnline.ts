@@ -77,6 +77,7 @@ import { ModelPlayer } from './data/models/ModelPlayer';
 import { CrashParser } from './data/crash/CrashParser';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
+import { TextboxManip } from './data/textbox/TextboxManip';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -89,7 +90,7 @@ interface IOotOnlineLobbyConfig {
   actor_syncing: boolean;
 }
 
-const enum SCENES{
+const enum SCENES {
   LON_LON_RANCH = 0x0063,
   HYRULE_FIELD = 0x0051,
   FOREST_TEMPLE = 0x0003
@@ -109,6 +110,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   modelManager: ModelManager;
   keys: KeyLogManager;
   emotes: EmoteManager;
+  textboxes: TextboxManip;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
   warpLookupTable: Map<number, number> = new Map<number, number>();
@@ -122,6 +124,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.modelManager = new ModelManager(this.clientStorage, this);
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
+    this.textboxes = new TextboxManip();
   }
 
   preinit(): void {
@@ -389,7 +392,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             this.updateInventory();
             this.updateFlags();
             this.clientStorage.needs_update = false;
-/*             if (this.core.global.scene !== SCENES.LON_LON_RANCH){
+            /* if (this.core.global.scene !== SCENES.LON_LON_RANCH) {
               this.warpToScene(SCENES.LON_LON_RANCH);
             } */
           }

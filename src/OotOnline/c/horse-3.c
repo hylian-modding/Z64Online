@@ -52,6 +52,7 @@ static void init(entity_t *en, z64_global_t *global)
     z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
 
     en->end = 0xDEADBEEF;
+    //textbox_begin(global, 0x0200, &en->actor);
 }
 
 static void setanim(entity_t *en, uint8_t anim)

@@ -1,11 +1,14 @@
 {
   "name": "OotOnline",
-  "version": "2.0.83",
+  "version": "2.0.85",
   "description": "",
   "main": "OotOnline.js",
   "author": "denoflions",
   "credits": "\nASM: Ideka, glank.\nPuppet contributors: Psi-Hate, Drahsid.\nHelpful advice: Skawo, Noka, Clockwise.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
   "license": "GPL-3.0",
   "core": "OcarinaofTime",
-  "updateUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/update.json"
+  "updateUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/update.json",
+  "modloader64_deps": {
+    "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib"
+  }
 }
