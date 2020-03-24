@@ -1,0 +1,29 @@
+{
+    "adult": {
+        "Sheath": "0x00005130",
+        "Hilt.2": "0x000052B8",
+        "Blade.2": "0x000052C0",
+        "Hilt.3": "0x000052D0",
+        "Blade.3": "0x000052D8",
+        "Broken.Blade.3": "0x000052E8",
+        "Shield.2": "0x00005310",
+        "Shield.3": "0x00005320",
+        "Hammer": "0x00005300",
+        "Bottle": "0x00005178",
+        "Bow": "0x00005330",
+        "Ocarina.2": "0x00005350",
+        "Hookshot": "0x00005340"
+    },
+    "child": {
+        "Limb 19": "0x00005178",
+        "Hilt.1": "0x000052B8",
+        "Blade.1": "0x000052C4",
+        "Bottle": "0x000051D0",
+        "Shield.1": "0x000052F0",
+        "Shield.2": "0x00005278",
+        "Slingshot": "0x00005300",
+        "Ocarina.1": "0x00005310",
+        "Ocarina.2": "0x00005320",
+        "DekuStick": "0x000052F0"
+    }
+}

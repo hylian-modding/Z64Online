@@ -7,6 +7,7 @@ import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IPuppet } from '../../OotoAPI/IPuppet';
 import fse from 'fs-extra';
+import Vector3 from 'modloader64_api/math/Vector3';
 
 export class Puppet implements IPuppet {
   player: INetworkPlayer;
@@ -18,8 +19,9 @@ export class Puppet implements IPuppet {
   scene: number;
   age: Age;
   core: IOOTCore;
-  void!: Buffer;
+  void!: Vector3;
   ModLoader: IModLoaderAPI;
+  reload: any;
 
   constructor(
     player: INetworkPlayer,
@@ -63,10 +65,7 @@ export class Puppet implements IPuppet {
           this.data.pointer = result & 0x00ffffff;
           this.doNotDespawnMe();
           bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
-          this.void = this.ModLoader.emulator.rdramReadBuffer(
-            this.data.pointer + 0x24,
-            0xc
-          );
+          this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x24);
           this.isSpawned = true;
           this.isSpawning = false;
         }
@@ -86,11 +85,11 @@ export class Puppet implements IPuppet {
   shovel() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        if (this.getAttachedHorse() > 0){
+        if (this.getAttachedHorse() > 0) {
           let horse: number = this.getAttachedHorse() & 0x00ffffff;
-          this.ModLoader.emulator.rdramWriteBuffer(horse + 0x24, this.void);
+          this.ModLoader.math.rdramWriteV3(horse + 0x24, this.void);
         }
-        this.ModLoader.emulator.rdramWriteBuffer(this.data.pointer + 0x24, this.void);
+        this.ModLoader.math.rdramWriteV3(this.data.pointer + 0x24, this.void);
         this.ModLoader.logger.debug('Puppet ' + this.id + ' shoveled.');
         this.isShoveled = true;
       }
@@ -100,7 +99,7 @@ export class Puppet implements IPuppet {
   despawn() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        if (this.getAttachedHorse() > 0){
+        if (this.getAttachedHorse() > 0) {
           let horse: number = this.getAttachedHorse() & 0x00ffffff;
           this.ModLoader.emulator.rdramWrite32(horse + 0x130, 0x0);
           this.ModLoader.emulator.rdramWrite32(horse + 0x134, 0x0);
@@ -113,6 +112,7 @@ export class Puppet implements IPuppet {
       this.isShoveled = false;
       this.ModLoader.logger.debug('Puppet ' + this.id + ' despawned.');
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED, this);
+      clearInterval(this.reload);
     }
   }
 

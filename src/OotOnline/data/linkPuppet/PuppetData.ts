@@ -170,6 +170,7 @@ export class PuppetData implements IPuppetData{
           id = 5;
           break;
         case 6:
+          id = 6;
           break;
         case 0xff:
           if (num2 === 0x02) {

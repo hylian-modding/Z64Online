@@ -78,6 +78,7 @@ import { CrashParser } from './data/crash/CrashParser';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { TextboxManip } from './data/textbox/TextboxManip';
+import { UtilityActorHelper } from './data/utilityActorHelper';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -111,6 +112,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   keys: KeyLogManager;
   emotes: EmoteManager;
   textboxes: TextboxManip;
+  utility: UtilityActorHelper;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
   warpLookupTable: Map<number, number> = new Map<number, number>();
@@ -125,6 +127,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
     this.textboxes = new TextboxManip();
+    this.utility = new UtilityActorHelper();
   }
 
   preinit(): void {
@@ -161,6 +164,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   init(): void {
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/horse-3.c"), dest: path.join(__dirname, "/payloads/E0/epona_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/epona_puppet.json") });
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/utility.c"), dest: path.join(__dirname, "/payloads/E0/utility_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/utility_actor.json") });
   }
 
   postinit(): void {
@@ -197,6 +201,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       this.ModLoader.utils.setTimeoutFrames(() => {
         this.ModLoader.emulator.rdramWrite16(0x600150, evt.result);
         console.log('Setting epona puppet id to ' + evt.result + '.');
+      }, 20);
+    }else if (evt.file === "utility_actor.ovl"){
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        this.ModLoader.emulator.rdramWrite16(0x600190, evt.result);
+        console.log('Setting utility actor id to ' + evt.result + '.');
       }, 20);
     }
   }

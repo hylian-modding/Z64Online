@@ -740,8 +740,6 @@ static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, ve
         gMoveWd(opa->p++, G_MW_SEGMENT, G_MWO_SEGMENT_9, zh_seg2ram(0x06004000));
     }
 
-    gMoveWd(opa->p++, G_MW_SEGMENT, G_MWO_SEGMENT_C, 0x800F7A68);
-
     return 1;
 }
 

@@ -1,5 +1,6 @@
 import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 
 export enum OotOnlineEvents {
   PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
@@ -16,6 +17,7 @@ export enum OotOnlineEvents {
   CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims',
   CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult',
   CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild',
+  CUSTOM_MODEL_APPLIED_EQUIPMENT = "OotOnline:ApplyCustomEquipment",
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote'

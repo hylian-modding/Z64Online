@@ -6,6 +6,7 @@ export class Display_List_Command {
   addressAsString: string;
   actualFileOffsetCode: number;
   actualFileOffsetAddress: number;
+  actualCode: number;
 
   constructor(code: number, address: number, actualFileOffset: number) {
     this.code = toPaddedHexString(code, 8).toUpperCase();
@@ -16,6 +17,7 @@ export class Display_List_Command {
     if (this.is06()) {
       this.address -= 0x06000000;
     }
+    this.actualCode = code;
   }
 
   is06() {
