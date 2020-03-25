@@ -31,11 +31,11 @@ export class PuppetData implements IPuppetData{
     this.copyFields.push('back_item');
     this.copyFields.push('sound');
     this.copyFields.push('tunic_color');
+    this.copyFields.push('boot_id');
     this.copyFields.push('strength_upgrade');
     this.copyFields.push('gauntlet_color');
     this.copyFields.push('areHandsClosed');
     this.copyFields.push('current_mask');
-    this.copyFields.push('shield_state');
   }
 
   get pos(): Buffer {
@@ -73,7 +73,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set sound(s: number) {
-    this.ModLoader.emulator.rdramWrite16(this.pointer + 0x27e, s);
+    this.ModLoader.emulator.rdramWrite16(this.pointer + (0x250 + 0x2E), s);
   }
 
   get tunic_color(): Buffer {
@@ -82,7 +82,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set tunic_color(buf: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x252, buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x18), buf);
   }
 
   get strength_upgrade(): number {
@@ -100,7 +100,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set strength_upgrade(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x251, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x20), num);
   }
 
   get gauntlet_color(): Buffer {
@@ -112,20 +112,28 @@ export class PuppetData implements IPuppetData{
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x256, buf);
   }
 
+  get boot_id(): number {
+    return this.core.link.rdramRead8(0x013F);
+  }
+
+  set boot_id(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1F), num);
+  }
+
   get areHandsClosed(): boolean {
     return this.core.link.rdramRead32(0x68) > 0;
   }
 
   set areHandsClosed(bool: boolean) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x278, bool ? 1 : 0);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x29), bool ? 1 : 0);
   }
 
   get current_mask(): number {
-    return this.core.link.rdramRead8(0x014f);
+    return this.core.link.rdramRead8(0x014F);
   }
 
   set current_mask(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x27c, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2D), num);
   }
 
   get left_hand(): number {
@@ -187,11 +195,11 @@ export class PuppetData implements IPuppetData{
   }
 
   set left_hand(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x279, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2A), num);
   }
 
   set right_hand(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x27a, num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2B), num);
   }
 
   get right_hand(): number {
@@ -328,15 +336,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set back_item(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + 0x27b, num);
-  }
-
-  get shield_state(): number {
-    return this.ModLoader.emulator.rdramRead32(0x1db09c);
-  }
-
-  set shield_state(state: number) {
-    this.ModLoader.emulator.rdramWrite32(this.pointer + 0x284, state);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2C), num);
   }
 
   toJSON() {
