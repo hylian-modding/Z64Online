@@ -15,13 +15,19 @@ import {
   InventorySave,
 } from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
+import { HorseData } from './linkPuppet/HorseData';
 
 export class Ooto_PuppetPacket extends UDPPacket {
   data: PuppetData;
+  horse_data!: HorseData;
 
   constructor(puppetData: PuppetData, lobby: string) {
     super('Ooto_PuppetPacket', 'OotOnline', lobby, false);
     this.data = puppetData;
+  }
+
+  setHorseData(horse: HorseData){
+    this.horse_data = horse;
   }
 }
 

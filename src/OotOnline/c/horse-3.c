@@ -35,11 +35,11 @@ typedef struct
 {
     z64_actor_t actor;
     z64_skelanime_weighted_t pony_skelanime;
+    z64_collider_cylinder_main_t cylinder;
     uint32_t anim;
     uint32_t lastKnownAnim;
     uint16_t eye_index;
     uint32_t eye_texture;
-    z64_collider_cylinder_main_t cylinder;
     uint32_t end;
 } entity_t;
 
@@ -52,7 +52,6 @@ static void init(entity_t *en, z64_global_t *global)
     z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
 
     en->end = 0xDEADBEEF;
-    //textbox_begin(global, 0x0200, &en->actor);
 }
 
 static void setanim(entity_t *en, uint8_t anim)
@@ -70,6 +69,7 @@ static void play(entity_t *en, z64_global_t *global)
 
     // Run anims.
     z_skelanime_draw_table(&en->pony_skelanime.skelanime);
+    en->lastKnownAnim = en->anim;
 
     en->eye_texture = eyes[helper_eye_blink(&en->eye_index)];
     z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);

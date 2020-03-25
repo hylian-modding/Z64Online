@@ -10,6 +10,8 @@ import { IPuppetOverlord } from '../../OotoAPI/IPuppetOverlord';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { IOotOnlineHelpers } from '@OotOnline/OotoAPI/OotoAPI';
+import { IActor } from 'modloader64_api/OOT/IActor';
+import { HorseData } from './HorseData';
 
 export class PuppetOverlord implements IPuppetOverlord {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
@@ -20,6 +22,7 @@ export class PuppetOverlord implements IPuppetOverlord {
     INetworkPlayer
   >();
   private parent: IOotOnlineHelpers;
+  private Epona!: HorseData;
 
   @ModLoaderAPIInject()
   private ModLoader!: IModLoaderAPI;
@@ -170,9 +173,11 @@ export class PuppetOverlord implements IPuppetOverlord {
 
   sendPuppetPacket() {
     if (!this.amIAlone) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby)
-      );
+      let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
+      if (this.Epona !== undefined) {
+        packet.setHorseData(this.Epona);
+      }
+      this.ModLoader.clientSide.sendPacket(packet);
     }
   }
 
@@ -180,6 +185,9 @@ export class PuppetOverlord implements IPuppetOverlord {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       puppet.processIncomingPuppetData(packet.data);
+      if (packet.horse_data !== undefined) {
+        puppet.processIncomingHorseData(packet.horse_data);
+      }
     }
   }
 
@@ -276,8 +284,22 @@ export class PuppetOverlord implements IPuppetOverlord {
     this.generateCrashDump();
   }
 
-  @EventHandler("OotOnline:KillAllPuppets")
-  onKill(evt: any){
-    this.localPlayerLoadingZone();
+  @EventHandler(OotEvents.ON_ACTOR_SPAWN)
+  onEponaSpawned(actor: IActor) {
+    if (actor.actorID === 0x0014) {
+      // Epona spawned.
+      this.ModLoader.logger.debug("Epona spawned");
+      this.Epona = new HorseData(actor, this.fakeClientPuppet, this.core);
+    }
+  }
+
+  @EventHandler(OotEvents.ON_ACTOR_DESPAWN)
+  onEponaDespawned(actor: IActor) {
+    if (actor.actorID === 0x0014) {
+      // Epona despawned.
+      //@ts-ignore
+      this.Epona = undefined;
+      this.ModLoader.logger.debug("Epona despawned");
+    }
   }
 }
