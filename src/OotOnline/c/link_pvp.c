@@ -440,6 +440,11 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 6:
+                matrix_push();
+                z_matrix_translate_3f(translation->x + 200.0f, translation->y, translation->z, 1);
+                z_matrix_rotate_3s(rotation->x + 0x69E8, rotation->y, rotation->z + 0x458E, 1);
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_DEKU_STICK_ZZ : OOT_CHILD_DEKU_STICK);
+                matrix_pop();
                 break;
             default:
                 break;
@@ -747,7 +752,8 @@ static void draw(entity_t *en, z64_global_t *global)
 {
     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
 
-    z_skelanime_draw(global, &en->skelanime.limb_index, &en->actor, &en->skelanime, &Animate, &otherCallback);
+    //z_skelanime_draw(global, &en->skelanime.limb_index, &en->actor, &en->skelanime, &Animate, &otherCallback);
+    z_skelanime_draw(global, 0x12, en, &en->skelanime, &Animate, &otherCallback);
 
     vec3f_t Scale[3] = {0.2, 0.2, 0.2};
     actor_shadow_circle(&en->actor.pos_2, Scale, 0x00FF, global);

@@ -16,8 +16,8 @@
       "@OotOnline/*": [
         "./src/OotOnline/*"
       ],
-	  "Z64Lib/*": [
-        "./libs/Z64Lib/*"
+      "Z64Lib/*": [
+        "libs\\Z64Lib/*"
       ]
     }
   },
