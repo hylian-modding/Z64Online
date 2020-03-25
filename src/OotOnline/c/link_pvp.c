@@ -1,7 +1,7 @@
 #include <z64ovl/oot/u10.h>
 #include <z64ovl/z64ovl_helpers.h>
-#include "defines_limbs.h"
-#include "defines_oot.h"
+#include <z64ovl/defines_limbs.h>
+#include <z64ovl/defines_oot.h>
 
 #define get_addr_offset(l, o) ((uint32_t *)((uint32_t)l + (uint32_t)o))
 
@@ -441,12 +441,12 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 break;
             case 6:
-                matrix_push();
-                z_matrix_translate_3f(translation->x + 200.0f, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x + 0x69E8, rotation->y, rotation->z + 0x458E, 1);
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_DEKU_STICK_ZZ : OOT_CHILD_DEKU_STICK);
-                matrix_pop();
-                break;
+              /*matrix_push();
+              z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+              z_matrix_rotate_3s(0x8000, 0x0000, 0x4000, 1);
+              z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_DEKU_STICK));
+              matrix_pop();*/
+              break;
             default:
                 break;
             }
