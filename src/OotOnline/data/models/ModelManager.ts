@@ -67,8 +67,8 @@ export class ModelManager {
   customModelFileEquipment = '';
   customModelFileDesc = '';
   customModelFileAnims = '';
-  customModelRepointsAdult = __dirname + '/zobjs/adult_patch.zobj';
-  customModelRepointsChild = __dirname + '/zobjs/child_patch.zobj';
+  customModelRepointsAdult = __dirname + '/zobjs/adult.json';
+  customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
   cacheDir: string = "./cache";
