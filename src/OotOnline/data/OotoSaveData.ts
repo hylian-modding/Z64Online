@@ -29,7 +29,10 @@ export function isAdultTradeItem(item: InventoryItem) {
     item === InventoryItem.ODD_POTION ||
     item === InventoryItem.POACHERS_SAW ||
     item === InventoryItem.BROKEN_GORON_SWORD ||
-    item === InventoryItem.CLAIM_CHECK
+    item === InventoryItem.PRESCRIPTION ||
+    item === InventoryItem.EYEBALL_FROG ||
+    item === InventoryItem.EYE_DROPS ||
+    item === InventoryItem.CLAIM_CHECK 
   );
 }
 

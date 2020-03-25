@@ -13,6 +13,7 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   ];
   childModel: Buffer = Buffer.alloc(1);
   adultModel: Buffer = Buffer.alloc(1);
+  equipmentModel: Buffer = Buffer.alloc(1);
   adultIcon: Buffer = Buffer.alloc(1);
   childIcon: Buffer = Buffer.alloc(1);
   localization: any;

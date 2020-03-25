@@ -1,6 +1,6 @@
 {
   "name": "OotOnline",
-  "version": "2.0.82",
+  "version": "2.0.85",
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
   "scripts": {
@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/hylian-modding/OcarinaOfTimeOnline/issues"
   },
-  "homepage": "https://github.com/hylian-modding/OcarinaOfTimeOnline#readme"
+  "homepage": "https://github.com/hylian-modding/OcarinaOfTimeOnline#readme",
+  "modloader64_deps": {
+    "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib"
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }

@@ -4,6 +4,7 @@ import { EventHandler } from "modloader64_api/EventHandler";
 import {OotOnlineEvents, OotOnline_Emote} from '@OotOnline/OotoAPI/OotoAPI';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
+import { onTick } from "modloader64_api/PluginLifecycle";
 
 export class EmoteManager{
     private emote_trigger: number = 0x6011F0;
@@ -17,6 +18,8 @@ export class EmoteManager{
     core!: IOOTCore;
 
     constructor(){
+        // Dummy emote to eat slot 0.
+        this.masterEmoteList.push(new anim_binary_container(Buffer.alloc(1)));
     }
 
     @EventHandler(OotOnlineEvents.ON_REGISTER_EMOTE)
@@ -24,7 +27,8 @@ export class EmoteManager{
         this.masterEmoteList.push(new anim_binary_container(emote.buf));
     }
 
-    onTick(){
+    @onTick()
+    onTick(frame: number){
         if (this.isCurrentlyPlayingEmote){
             this.core.link.redeadFreeze = 0x3;
             this.core.link.anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
@@ -35,10 +39,10 @@ export class EmoteManager{
             }
         }else{
             let em: number = this.ModLoader.emulator.rdramRead8(this.emote_trigger);
-            if (em !== 0xFF){
+            if (em !== 0x0){
                 this.currentEmoteID = em;
-                this.ModLoader.emulator.rdramWrite8(this.emote_trigger, 0xFF);
-                this.currentEmoteFrame = 0;
+                this.ModLoader.emulator.rdramWrite8(this.emote_trigger, 0x0);
+                this.currentEmoteFrame = -1;
                 this.isCurrentlyPlayingEmote = true;
             }
         }

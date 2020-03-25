@@ -16,43 +16,48 @@ export class zzstatic_cache {
   skeleton!: Skeleton;
   hash!: string;
 
-  doRepoint(index: number, buf: Buffer): Buffer {
-    console.log('Loading ' + this.cache.length + ' repoints from cache.');
-    let rebase = 0x80800000;
+  doRepoint(index: number, buf: Buffer, rebase = 0x80800000): Buffer {
+    let copy: Buffer = Buffer.alloc(buf.byteLength);
+    buf.copy(copy);
+    //console.log('Loading ' + this.cache.length + ' repoints from cache.');
+    let header_start: number = copy.indexOf(Buffer.from("MODLOADER64"));
+    let modeByte: number = copy.readUInt8(header_start + 0xB);
     rebase += index * 0x37800;
     for (let i = 0; i < this.cache.length; i++) {
       try {
-        buf.writeUInt32BE(
+        copy.writeUInt32BE(
           rebase + this.cache[i].address,
           this.cache[i].actualFileOffsetAddress
         );
       } catch (err) {
-        console.log('Recorded an error!');
+        //console.log('Recorded an error!');
         continue;
       }
     }
-    let pointer_to_skeleton_pointer: number =
-      buf.readUInt32BE(0x500c) - 0x06000000;
-    let pointer_to_skeleton: number =
-      buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
-    buf.writeUInt32BE(
-      pointer_to_skeleton + rebase,
-      pointer_to_skeleton_pointer
-    );
-    buf.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
-    for (let i = 0; i < this.skeleton.bones.length; i++) {
-      buf.writeUInt32BE(
-        this.skeleton.bones[i].pointer + rebase,
-        this.skeleton.bones[i].actualFileOffset
+    if (modeByte !== 0x69) {
+      let pointer_to_skeleton_pointer: number =
+        copy.readUInt32BE(0x500c) - 0x06000000;
+      let pointer_to_skeleton: number =
+        copy.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
+      copy.writeUInt32BE(
+        pointer_to_skeleton + rebase,
+        pointer_to_skeleton_pointer
       );
+      copy.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
+      for (let i = 0; i < this.skeleton.bones.length; i++) {
+        copy.writeUInt32BE(
+          this.skeleton.bones[i].pointer + rebase,
+          this.skeleton.bones[i].actualFileOffset
+        );
+      }
     }
-    console.log('Repoint done');
-    return buf;
+    //console.log('Repoint done');
+    return copy;
   }
 }
 
 export class zzstatic {
-  constructor() {}
+  constructor() { }
 
   addToCache(c: zzstatic_cache) {
     let cache = new zzstatic_cache();
@@ -70,12 +75,13 @@ export class zzstatic {
     return ZZSTATIC_CACHE_DATA.get(hash) as zzstatic_cache;
   }
 
-  doRepoint(buf: Buffer, index: number): Buffer {
+  doRepoint(buf: Buffer, index: number, cache = true, rebase = 0x80800000): Buffer {
     let copy: Buffer = Buffer.alloc(buf.byteLength);
     buf.copy(copy);
     let zobj: Zobj = new Zobj(buf);
-    let rebase = 0x80800000;
-    rebase += index * 0x37800;
+    let r = rebase + (index * 0x37800);
+
+    console.log(r.toString(16));
 
     let zzCache: zzstatic_cache = new zzstatic_cache();
 
@@ -85,27 +91,29 @@ export class zzstatic {
       .digest('hex');
 
     if (ZZSTATIC_CACHE_DATA.has(hash)) {
-      return ZZSTATIC_CACHE_DATA.get(hash)!.doRepoint(index, buf);
-    }
-
-    if (zobj.isModLoaderZobj()) {
-      console.log('Valid ML64 zobj found. Starting process...');
-    } else {
-      process.exit(1);
+      return ZZSTATIC_CACHE_DATA.get(hash)!.doRepoint(index, buf, rebase);
     }
 
     let ALIAS_TABLE_START = 0x5090;
     let ALIAS_TABLE_END = 0x5380;
 
-    if (zobj.buf.readUInt8(0x500b) === 0x0) {
-      console.log('This is an adult ZOBJ.');
-    } else {
+    let header_start: number = zobj.buf.indexOf(Buffer.from("MODLOADER64"));
+
+    let modeByte: number = zobj.buf.readUInt8(header_start + 0xB);
+
+    if (modeByte === 0x0) {
+      //console.log('This is an adult ZOBJ.');
+    } else if (modeByte === 0x1) {
       ALIAS_TABLE_START = 0x50d0;
       ALIAS_TABLE_END = 0x5340;
-      console.log('This is an child ZOBJ.');
+      //console.log('This is a child ZOBJ.');
+    } else if (modeByte === 0x69) {
+      //console.log("This is an equipment ZOBJ.");
+      ALIAS_TABLE_START = 0x10;
+      ALIAS_TABLE_END = 0x300;
     }
 
-    console.log('Extracting alias table...');
+    //console.log('Extracting alias table...');
 
     let alias_table: Buffer = zobj.buf.slice(
       ALIAS_TABLE_START,
@@ -123,9 +131,7 @@ export class zzstatic {
       );
     }
 
-    console.log(
-      'Found ' + commands.length + ' total things in the alias table.'
-    );
+    //console.log('Found ' + commands.length + ' total things in the alias table.');
 
     let traverse: Display_List_Command[] = new Array<Display_List_Command>();
 
@@ -172,7 +178,7 @@ export class zzstatic {
       traverseDisplayList(commands[i]);
     }
 
-    console.log('Found ' + traverse.length + ' traversable nodes.');
+    //console.log('Found ' + traverse.length + ' traversable nodes.');
 
     let repoints: Display_List_Command[] = new Array<Display_List_Command>();
 
@@ -194,54 +200,33 @@ export class zzstatic {
 
     lookForRepoints();
 
-    let pointer_to_skeleton_pointer: number =
-      zobj.buf.readUInt32BE(0x500c) - 0x06000000;
-    let pointer_to_skeleton: number =
-      zobj.buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
+    if (modeByte !== 0x69) {
+      let pointer_to_skeleton_pointer: number =
+        zobj.buf.readUInt32BE(0x500c) - 0x06000000;
+      let pointer_to_skeleton: number =
+        zobj.buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
 
-    console.log('Looking in the closet...');
+      //console.log('Looking in the closet...');
 
-    let dem_bones: number = zobj.buf.readUInt8(
-      pointer_to_skeleton_pointer + 0x4
-    );
-    let spooky_scary: Skeleton = new Skeleton(dem_bones);
-
-    console.log('Found a skeleton with ' + dem_bones + ' bones.');
-
-    for (let i = 0; i < spooky_scary.total; i++) {
-      spooky_scary.bones.push(
-        new Skeleton_Entry(
-          zobj.buf.readUInt32BE(pointer_to_skeleton + 4 * i) - 0x06000000,
-          pointer_to_skeleton + 4 * i
-        )
+      let dem_bones: number = zobj.buf.readUInt8(
+        pointer_to_skeleton_pointer + 0x4
       );
-    }
+      let spooky_scary: Skeleton = new Skeleton(dem_bones);
 
-    for (let i = 0; i < spooky_scary.bones.length; i++) {
-      let lookingForFF = '';
-      let cur: number = spooky_scary.bones[i].pointer;
-      let dl: Display_List_Command = new Display_List_Command(
-        0xdeadbeef,
-        zobj.buf.readUInt32BE(cur + 0xc),
-        cur + 0xc - 0x4
-      );
-      if (dl.is06()) {
-        repoints.push(dl);
+      //console.log('Found a skeleton with ' + dem_bones + ' bones.');
+
+      for (let i = 0; i < spooky_scary.total; i++) {
+        spooky_scary.bones.push(
+          new Skeleton_Entry(
+            zobj.buf.readUInt32BE(pointer_to_skeleton + 4 * i) - 0x06000000,
+            pointer_to_skeleton + 4 * i
+          )
+        );
       }
-      let dl2: Display_List_Command = new Display_List_Command(
-        0xdeadbeef,
-        zobj.buf.readUInt32BE(cur + 0x8),
-        cur + 0x8 - 0x4
-      );
-      if (dl2.is06()) {
-        repoints.push(dl2);
-      }
-      lookingForFF = zobj.buf
-        .readUInt8(cur + 0x6)
-        .toString(16)
-        .toUpperCase();
-      cur += 0x10;
-      while (lookingForFF !== 'FF') {
+
+      for (let i = 0; i < spooky_scary.bones.length; i++) {
+        let lookingForFF = '';
+        let cur: number = spooky_scary.bones[i].pointer;
         let dl: Display_List_Command = new Display_List_Command(
           0xdeadbeef,
           zobj.buf.readUInt32BE(cur + 0xc),
@@ -263,35 +248,64 @@ export class zzstatic {
           .toString(16)
           .toUpperCase();
         cur += 0x10;
+        while (lookingForFF !== 'FF') {
+          let dl: Display_List_Command = new Display_List_Command(
+            0xdeadbeef,
+            zobj.buf.readUInt32BE(cur + 0xc),
+            cur + 0xc - 0x4
+          );
+          if (dl.is06()) {
+            repoints.push(dl);
+          }
+          let dl2: Display_List_Command = new Display_List_Command(
+            0xdeadbeef,
+            zobj.buf.readUInt32BE(cur + 0x8),
+            cur + 0x8 - 0x4
+          );
+          if (dl2.is06()) {
+            repoints.push(dl2);
+          }
+          lookingForFF = zobj.buf
+            .readUInt8(cur + 0x6)
+            .toString(16)
+            .toUpperCase();
+          cur += 0x10;
+        }
+        zobj.buf.writeUInt32BE(
+          spooky_scary.bones[i].pointer + r,
+          spooky_scary.bones[i].actualFileOffset
+        );
       }
-      zobj.buf.writeUInt32BE(
-        spooky_scary.bones[i].pointer + rebase,
-        spooky_scary.bones[i].actualFileOffset
+
+      let after_bones: number =
+        spooky_scary.bones[dem_bones - 1].actualFileOffset + 0x4;
+
+      repoints.push(
+        new Display_List_Command(
+          0xdeadbeef,
+          zobj.buf.readUInt32BE(after_bones),
+          after_bones - 0x4
+        )
       );
+      zobj.buf.writeUInt32BE(
+        pointer_to_skeleton + r,
+        pointer_to_skeleton_pointer
+      );
+      zobj.buf.writeUInt32BE(pointer_to_skeleton_pointer + r, 0x500c);
+      zzCache.skeleton = spooky_scary;
     }
 
-    let after_bones: number =
-      spooky_scary.bones[dem_bones - 1].actualFileOffset + 0x4;
-
-    repoints.push(
-      new Display_List_Command(
-        0xdeadbeef,
-        zobj.buf.readUInt32BE(after_bones),
-        after_bones - 0x4
-      )
-    );
-
     function doRepoints() {
-      console.log('Found ' + repoints.length + ' things in need of a repoint.');
+      //console.log('Found ' + repoints.length + ' things in need of a repoint.');
       for (let i = 0; i < repoints.length; i++) {
         try {
           zobj.buf.writeUInt32BE(
-            rebase + repoints[i].address,
+            r + repoints[i].address,
             repoints[i].actualFileOffsetAddress
           );
           zzCache.cache.push(repoints[i]);
         } catch (err) {
-          console.log('Recorded an error!');
+          //console.log('Recorded an error!');
           continue;
         }
       }
@@ -315,23 +329,18 @@ export class zzstatic {
     lookForRepoints();
     doRepoints();
 
-    zobj.buf.writeUInt32BE(
-      pointer_to_skeleton + rebase,
-      pointer_to_skeleton_pointer
-    );
-    zobj.buf.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
-
     hash = crypto
       .createHash('md5')
       .update(copy)
       .digest('hex');
 
     zzCache.hash = hash;
-    zzCache.skeleton = spooky_scary;
 
-    ZZSTATIC_CACHE_DATA.set(hash, zzCache);
+    if (cache) {
+      ZZSTATIC_CACHE_DATA.set(hash, zzCache);
+    }
 
-    console.log('Done!');
+    //console.log('Done!');
 
     return zobj.buf;
   }
