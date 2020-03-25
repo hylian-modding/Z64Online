@@ -1,7 +1,7 @@
 #include <z64ovl/oot/u10.h>
 #include <z64ovl/z64ovl_helpers.h>
-#include <z64ovl/defines_limbs.h>
-#include <z64ovl/defines_oot.h>
+#include "defines_limbs.h"
+#include "defines_oot.h"
 
 #define get_addr_offset(l, o) ((uint32_t *)((uint32_t)l + (uint32_t)o))
 
@@ -423,21 +423,22 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             case 0:
                 break;
             case 4:
+                /* Kokiri Sword */
+                matrix_push();
                 z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
                 z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_KOKIRI_SWORD_ZZ : OOT_CHILD_KOKIRI_SWORD);
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_KOKIRI_SWORD));
+                matrix_pop();
                 break;
             case 5:
+                /* Bottle */
+                gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.bottleColor.r, en->puppetData.bottleColor.g, en->puppetData.bottleColor.b, en->puppetData.bottleColor.a);
+                matrix_push();
                 z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
                 z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
-                gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.bottleColor.r, en->puppetData.bottleColor.g, en->puppetData.bottleColor.b, en->puppetData.bottleColor.a);
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_BOTTLE_ZZ : OOT_CHILD_BOTTLE);
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_BOTTLE));
+                matrix_pop();
                 gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 6:
                 matrix_push();
@@ -695,31 +696,31 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             */
             switch (en->puppetData.maskItem)
             {
-            case 0:
+            case OOT_MASK_ID_NONE:
                 break;
-            case 1:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_KEATON_ZZ : OOT_CHILD_MASK_KEATON);
+            case OOT_MASK_ID_KEATON:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_KEATON));
                 break;
-            case 2:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_SKULL_ZZ : OOT_CHILD_MASK_SKULL);
+            case OOT_MASK_ID_SKULL:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_SKULL));
                 break;
-            case 3:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_SPOOKY_ZZ : OOT_CHILD_MASK_SPOOKY);
+            case OOT_MASK_ID_SPOOKY:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_SPOOKY));
                 break;
-            case 4:
-                //z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_BUNNY_HOOD_ZZ : OOT_CHILD_MASK_BUNNY_HOOD);
+            case OOT_MASK_ID_BUNNY_HOOD:
+                //z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_BUNNY_HOOD));
                 break;
-            case 5:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GORON_ZZ : OOT_CHILD_MASK_GORON);
+            case OOT_MASK_ID_GORON:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_GORON));
                 break;
-            case 6:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_ZORA_ZZ : OOT_CHILD_MASK_ZORA);
+            case OOT_MASK_ID_ZORA:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_ZORA));
                 break;
-            case 7:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GERUDO_ZZ : OOT_CHILD_MASK_GERUDO);
+            case OOT_MASK_ID_GERUDO:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_GERUDO));
                 break;
-            case 8:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_MASK_OF_TRUTH_ZZ : OOT_CHILD_MASK_MASK_OF_TRUTH);
+            case OOT_MASK_ID_MASK_OF_TRUTH:
+                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_MASK_MASK_OF_TRUTH));
                 break;
             default:
                 break;
@@ -736,13 +737,13 @@ static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, ve
     z64_disp_buf_t *opa = &GFX_POLY_OPA;
     if (en->puppetData.playasData.isZZ)
     {
-        gMoveWd(opa->p++, G_MW_SEGMENT, G_MWO_SEGMENT_8, en->puppetData.playasData.eye_texture);
-        gMoveWd(opa->p++, G_MW_SEGMENT, G_MWO_SEGMENT_9, en->puppetData.playasData.base + 0x00004000);
+        gSPSegment(opa->p++, 8, en->puppetData.playasData.eye_texture);
+        gSPSegment(opa->p++, 9, en->puppetData.playasData.base + 0x00004000);
     }
     else
     {
-        gMoveWd(opa->p++, G_MW_SEGMENT, G_MWO_SEGMENT_8, zh_seg2ram(0x06000000));
-        gMoveWd(opa->p++, G_MW_SEGMENT, G_MWO_SEGMENT_9, zh_seg2ram(0x06004000));
+        gSPSegment(opa->p++, 8, zh_seg2ram(0x06000000));
+        gSPSegment(opa->p++, 9, zh_seg2ram(0x06004000));
     }
 
     return 1;

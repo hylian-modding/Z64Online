@@ -132,3 +132,5 @@
 #define OOT_CHILD_MASK_GERUDO_ZZ 0x00005200
 
 #define EPONA_OBJ 0x001A
+
+#define OOT_ZZ_PUPPET_DLIST(DLARG0) ((en->puppetData.playasData.isZZ) ? (en->puppetData.playasData.base + DLARG0##_ZZ) : (DLARG0))
