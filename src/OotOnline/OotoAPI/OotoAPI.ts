@@ -23,7 +23,7 @@ export enum OotOnlineEvents {
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote'
 }
 
-export interface OotOnline_Emote{
+export interface OotOnline_Emote {
   buf: Buffer;
 }
 
@@ -45,4 +45,9 @@ export interface IOotOnlineHelpers {
 
 export function OotOnlineAPI_EnableGhostMode() {
   bus.emit(OotOnlineEvents.GHOST_MODE, {});
+}
+
+export interface ICustomEquipment {
+  zobj: string;
+  txt: string;
 }

@@ -275,4 +275,9 @@ export class PuppetOverlord implements IPuppetOverlord {
   onEmuCrash(evt: any) {
     this.generateCrashDump();
   }
+
+  @EventHandler("OotOnline:KillAllPuppets")
+  onKill(evt: any){
+    this.localPlayerLoadingZone();
+  }
 }

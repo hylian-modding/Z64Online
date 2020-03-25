@@ -25,7 +25,7 @@ import {
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
 import { OotOnlineStorage } from '../../OotOnlineStorage';
-import { IOotOnlineHelpers, OotOnlineEvents } from '../../OotoAPI/OotoAPI';
+import { IOotOnlineHelpers, OotOnlineEvents, ICustomEquipment } from '../../OotoAPI/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -35,6 +35,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import path from 'path';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { ModelObject } from './ModelContainer';
+import { ModelEquipmentPackager } from './ModelEquipmentPackager';
 
 export class FilePatch {
   offset: number;
@@ -66,6 +67,7 @@ export class ModelManager {
   customModelFileAdult = '';
   customModelFileChild = '';
   customModelFileEquipment = '';
+  customModelFileDesc = '';
   customModelFileAnims = '';
   customModelRepointsAdult = __dirname + '/zobjs/adult_patch.zobj';
   customModelRepointsChild = __dirname + '/zobjs/child_patch.zobj';
@@ -119,8 +121,9 @@ export class ModelManager {
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_EQUIPMENT)
-  onCustomModel6(file: string) {
-    this.customModelFileEquipment = file;
+  onCustomModel6(data: ICustomEquipment) {
+    this.customModelFileEquipment = data.zobj;
+    this.customModelFileDesc = data.txt;
   }
 
   injectRawFileToRom(rom: Buffer, index: number, file: Buffer) {
@@ -250,10 +253,23 @@ export class ModelManager {
     let offset = 0xe65a0;
     this.ModLoader.logger.info('Loading new Link model (Child)...');
     let child_model: Buffer = fs.readFileSync(file);
-    let _child_model = this.ModLoader.utils.yaz0Encode(child_model);
+    let a_copy: Buffer = Buffer.alloc(child_model.byteLength);
+    child_model.copy(a_copy);
+
+    if (this.customModelFileEquipment !== '') {
+      Object.keys(this.equipmentMetadata).forEach((key: string) => {
+        if (this.equipmentChildMap.has(key)) {
+          this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
+          a_copy.writeUInt32BE(this.equipmentMetadata[key], this.equipmentChildMap.get(key)! + 0x4);
+        }
+      });
+    }
+
+    let _child_model = this.ModLoader.utils.yaz0Encode(a_copy);
     let child_zobj = this.getRawFileFromRom(evt.rom, child);
     this.ModLoader.utils.clearBuffer(child_zobj);
     _child_model.copy(child_zobj);
+    
     this.injectRawFileToRom(evt.rom, child, child_zobj);
 
     let patch: RomPatch[] = new Array<RomPatch>();
@@ -310,9 +326,10 @@ export class ModelManager {
     if (this.customModelFileEquipment !== '') {
       if (this.customModelFileAdult !== '' || this.customModelFileChild !== '') {
         this.ModLoader.logger.info("Loading new equipment models...");
+        let mm: ModelEquipmentPackager = new ModelEquipmentPackager(this.customModelFileEquipment, this.customModelFileDesc);
         let model = new ModelPlayer("Equipment");
-        this.clientStorage.equipmentModel = fs.readFileSync(this.customModelFileEquipment);
-        model.model.equipment = new ModelObject(fs.readFileSync(this.customModelFileEquipment));
+        this.clientStorage.equipmentModel = mm.process();
+        model.model.equipment = new ModelObject(this.clientStorage.equipmentModel);
         this.equipmentIndex = this.allocationManager.allocateSlot(model);
         let metaSize: number = model.model.equipment.zobj.readUInt32BE(0xC);
         this.equipmentMetadata = JSON.parse(model.model.equipment.zobj.slice(0x310, 0x310 + metaSize).toString());
@@ -676,9 +693,13 @@ export class ModelManager {
           let temp_equipmentMetadata: any = {};
           temp_equipmentMetadata = JSON.parse(model.model.equipment.zobj.slice(0x310, 0x310 + metaSize).toString());
           Object.keys(temp_equipmentMetadata).forEach((key: string) => {
-            if (this.equipmentAdultMap.has(key)) {
+            if (this.equipmentAdultMap.has(key) || this.equipmentChildMap.has(key)) {
               this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
-              this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+              if (puppet.age === Age.ADULT){
+                this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+              }else if (puppet.age === Age.CHILD){
+                this.ModLoader.emulator.rdramWrite32(addr + this.equipmentChildMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+              }
             }
           });
         } else {

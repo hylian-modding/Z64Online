@@ -17,7 +17,7 @@ export class zzstatic_cache {
   hash!: string;
 
   doRepoint(index: number, buf: Buffer, rebase = 0x80800000): Buffer {
-    console.log('Loading ' + this.cache.length + ' repoints from cache.');
+    //console.log('Loading ' + this.cache.length + ' repoints from cache.');
     let header_start: number = buf.indexOf(Buffer.from("MODLOADER64"));
     let modeByte: number = buf.readUInt8(header_start + 0xB);
     rebase += index * 0x37800;
@@ -28,7 +28,7 @@ export class zzstatic_cache {
           this.cache[i].actualFileOffsetAddress
         );
       } catch (err) {
-        console.log('Recorded an error!');
+        //console.log('Recorded an error!');
         continue;
       }
     }
@@ -49,7 +49,7 @@ export class zzstatic_cache {
         );
       }
     }
-    console.log('Repoint done');
+    //console.log('Repoint done');
     return buf;
   }
 }

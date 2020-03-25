@@ -94,7 +94,8 @@ interface IOotOnlineLobbyConfig {
 const enum SCENES {
   LON_LON_RANCH = 0x0063,
   HYRULE_FIELD = 0x0051,
-  FOREST_TEMPLE = 0x0003
+  FOREST_TEMPLE = 0x0003,
+  KAKARIKO_VILLAGE = 0x0052
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
@@ -121,6 +122,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.warpLookupTable.set(SCENES.FOREST_TEMPLE, 0x0169);
     this.warpLookupTable.set(SCENES.HYRULE_FIELD, 0x00CD);
     this.warpLookupTable.set(SCENES.LON_LON_RANCH, 0x0157);
+    this.warpLookupTable.set(SCENES.KAKARIKO_VILLAGE, 0x00DB);
     this.overlord = new PuppetOverlord(this);
     this.actorHooks = new ActorHookingManager(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
@@ -202,7 +204,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         this.ModLoader.emulator.rdramWrite16(0x600150, evt.result);
         console.log('Setting epona puppet id to ' + evt.result + '.');
       }, 20);
-    }else if (evt.file === "utility_actor.ovl"){
+    } else if (evt.file === "utility_actor.ovl") {
       this.ModLoader.utils.setTimeoutFrames(() => {
         this.ModLoader.emulator.rdramWrite16(0x600190, evt.result);
         console.log('Setting utility actor id to ' + evt.result + '.');
@@ -369,7 +371,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   onTick(frame: number): void {
-    //this.core.save.age = Age.ADULT;
     if (
       !this.core.helper.isTitleScreen() &&
       this.core.helper.isSceneNumberValid()
@@ -401,9 +402,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             this.updateInventory();
             this.updateFlags();
             this.clientStorage.needs_update = false;
-            /* if (this.core.global.scene !== SCENES.LON_LON_RANCH) {
-              this.warpToScene(SCENES.LON_LON_RANCH);
-            } */
           }
         }
       }
