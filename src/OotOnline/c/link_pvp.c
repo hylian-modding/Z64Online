@@ -752,7 +752,6 @@ static void draw(entity_t *en, z64_global_t *global)
 {
     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
 
-    //z_skelanime_draw(global, &en->skelanime.limb_index, &en->actor, &en->skelanime, &Animate, &otherCallback);
     z_skelanime_draw(global, 0x12, en, &en->skelanime, &Animate, &otherCallback);
 
     vec3f_t Scale[3] = {0.2, 0.2, 0.2};
