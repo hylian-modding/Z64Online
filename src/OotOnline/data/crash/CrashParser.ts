@@ -37,12 +37,16 @@ export class CrashParser {
         let p: number = actors[i];
         let id: number = dump.readUInt16BE(p);
         let _id: string = '0x' + id.toString(16).toUpperCase();
-        str.push(actor_names[_id].trim());
+        let actor_name: string = "unknown";
+        if (actor_names.hasOwnProperty(_id)){
+          actor_name = actor_names[_id].trim();
+        }
+        str.push(actor_name);
         let a: Buffer = Buffer.alloc(0x300);
         dump.copy(a, 0, p, p + 0x300);
         try {
           fs.writeFileSync(
-            './actors/' + actor_names[_id].trim().replace('/', '-') + '.bin',
+            './actors/' + actor_name.replace('/', '-') + '.bin',
             a
           );
         } catch (err) {}
