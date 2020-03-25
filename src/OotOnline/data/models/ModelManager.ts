@@ -50,8 +50,6 @@ export class FilePatch {
 export class RomPatch {
   index: number;
   data: FilePatch[] = new Array<FilePatch>();
-  hashOriginal!: string;
-  hash!: string;
 
   constructor(index: number) {
     this.index = index;
@@ -69,8 +67,8 @@ export class ModelManager {
   customModelFileEquipment = '';
   customModelFileDesc = '';
   customModelFileAnims = '';
-  customModelRepointsAdult = __dirname + '/zobjs/adult_patch.zobj';
-  customModelRepointsChild = __dirname + '/zobjs/child_patch.zobj';
+  customModelRepointsAdult = __dirname + '/zobjs/adult.json';
+  customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
   cacheDir: string = "./cache";
@@ -224,11 +222,7 @@ export class ModelManager {
     this.injectRawFileToRom(evt.rom, adult, adult_zobj);
 
     let patch: RomPatch[] = new Array<RomPatch>();
-    patch = JSON.parse(
-      this.ModLoader.utils
-        .yaz0Decode(fs.readFileSync(this.customModelRepointsAdult))
-        .toString()
-    );
+    patch = JSON.parse(fs.readFileSync(this.customModelRepointsAdult).toString());
     for (let i = 0; i < patch.length; i++) {
       let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
       for (let j = 0; j < patch[i].data.length; j++) {
@@ -273,11 +267,7 @@ export class ModelManager {
     this.injectRawFileToRom(evt.rom, child, child_zobj);
 
     let patch: RomPatch[] = new Array<RomPatch>();
-    patch = JSON.parse(
-      this.ModLoader.utils
-        .yaz0Decode(fs.readFileSync(this.customModelRepointsChild))
-        .toString()
-    );
+    patch = JSON.parse(fs.readFileSync(this.customModelRepointsChild).toString());
     for (let i = 0; i < patch.length; i++) {
       let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
       for (let j = 0; j < patch[i].data.length; j++) {
@@ -304,19 +294,6 @@ export class ModelManager {
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir);
     }
-    let patch: RomPatch[] = new Array<RomPatch>();
-    patch = JSON.parse(
-      this.ModLoader.utils
-        .yaz0Decode(fs.readFileSync(this.customModelRepointsAdult))
-        .toString()
-    );
-    fs.writeFileSync("./adult.json", JSON.stringify(patch, null, 2));
-    patch = JSON.parse(
-      this.ModLoader.utils
-        .yaz0Decode(fs.readFileSync(this.customModelRepointsChild))
-        .toString()
-    );
-    fs.writeFileSync("./child.json", JSON.stringify(patch, null, 2));
     if (this.customModelFileChild === '' && this.customModelFileAdult === '') {
       return;
     }
