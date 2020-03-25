@@ -105,7 +105,7 @@ export class zzstatic {
       //console.log('This is an adult ZOBJ.');
     } else if (modeByte === 0x1) {
       ALIAS_TABLE_START = 0x50d0;
-      ALIAS_TABLE_END = 0x5340;
+      ALIAS_TABLE_END = 0x53A8;
       //console.log('This is a child ZOBJ.');
     } else if (modeByte === 0x69) {
       //console.log("This is an equipment ZOBJ.");
