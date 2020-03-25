@@ -687,11 +687,11 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 1 = Keaton
                 2 = Skull
                 3 = Spooky
-                4 = Bunny hood
-                5 = Mask of Truth
-                6 = Goron
-                7 = Zora
-                8 = Gerudo
+                4 = Bunny Hood
+                5 = Goron
+                6 = Zora
+                7 = Gerudo
+                8 = Mask of Truth
             */
             switch (en->puppetData.maskItem)
             {
@@ -710,16 +710,16 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 //z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_BUNNY_HOOD_ZZ : OOT_CHILD_MASK_BUNNY_HOOD);
                 break;
             case 5:
-                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_MASK_OF_TRUTH_ZZ : OOT_CHILD_MASK_MASK_OF_TRUTH);
-                break;
-            case 6:
                 z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GORON_ZZ : OOT_CHILD_MASK_GORON);
                 break;
-            case 7:
+            case 6:
                 z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_ZORA_ZZ : OOT_CHILD_MASK_ZORA);
                 break;
-            case 8:
+            case 7:
                 z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_GERUDO_ZZ : OOT_CHILD_MASK_GERUDO);
+                break;
+            case 8:
+                z_cheap_proc_draw_opa(global, en->puppetData.playasData.isZZ ? en->puppetData.playasData.base + OOT_CHILD_MASK_MASK_OF_TRUTH_ZZ : OOT_CHILD_MASK_MASK_OF_TRUTH);
                 break;
             default:
                 break;
@@ -759,7 +759,7 @@ static void draw(entity_t *en, z64_global_t *global)
 
     if (en->puppetData.soundid > 0)
     {
-        z_sfx_play_position(global, &en->actor.pos_2, 0x41c80000, en->puppetData.soundid);
+        z_sfx_play_position(global, &en->actor.pos_2, 25.0, en->puppetData.soundid);
         en->puppetData.soundid = 0;
     }
 }
