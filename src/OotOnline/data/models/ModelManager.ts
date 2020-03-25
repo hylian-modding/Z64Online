@@ -294,19 +294,6 @@ export class ModelManager {
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir);
     }
-    let patch: RomPatch[] = new Array<RomPatch>();
-    patch = JSON.parse(
-      this.ModLoader.utils
-        .yaz0Decode(fs.readFileSync(this.customModelRepointsAdult))
-        .toString()
-    );
-    fs.writeFileSync("./adult.json", JSON.stringify(patch, null, 2));
-    patch = JSON.parse(
-      this.ModLoader.utils
-        .yaz0Decode(fs.readFileSync(this.customModelRepointsChild))
-        .toString()
-    );
-    fs.writeFileSync("./child.json", JSON.stringify(patch, null, 2));
     if (this.customModelFileChild === '' && this.customModelFileAdult === '') {
       return;
     }
