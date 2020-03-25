@@ -682,9 +682,7 @@ export class ModelManager {
     if (model.model.equipment !== undefined) {
       if (model.model.equipment.zobj.byteLength > 1) {
         if ((zobj_size + (model.model.equipment.zobj.byteLength - 0x800)) < allocation_size) {
-          let buf: Buffer = Buffer.alloc(model.model.equipment.zobj.byteLength);
-          model.model.equipment.zobj.copy(buf);
-          let zobj: Buffer = new zzstatic().doRepoint(buf, 0, false, 0x80000000 + addr + zobj_size - 0x800);
+          let zobj: Buffer = new zzstatic().doRepoint(model.model.equipment.zobj, 0, false, 0x80000000 + addr + zobj_size - 0x800);
           this.ModLoader.emulator.rdramWriteBuffer(
             addr + zobj_size,
             zobj.slice(0x800)

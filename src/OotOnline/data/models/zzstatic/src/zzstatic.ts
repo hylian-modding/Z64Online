@@ -17,13 +17,15 @@ export class zzstatic_cache {
   hash!: string;
 
   doRepoint(index: number, buf: Buffer, rebase = 0x80800000): Buffer {
+    let copy: Buffer = Buffer.alloc(buf.byteLength);
+    buf.copy(copy);
     //console.log('Loading ' + this.cache.length + ' repoints from cache.');
-    let header_start: number = buf.indexOf(Buffer.from("MODLOADER64"));
-    let modeByte: number = buf.readUInt8(header_start + 0xB);
+    let header_start: number = copy.indexOf(Buffer.from("MODLOADER64"));
+    let modeByte: number = copy.readUInt8(header_start + 0xB);
     rebase += index * 0x37800;
     for (let i = 0; i < this.cache.length; i++) {
       try {
-        buf.writeUInt32BE(
+        copy.writeUInt32BE(
           rebase + this.cache[i].address,
           this.cache[i].actualFileOffsetAddress
         );
@@ -34,23 +36,23 @@ export class zzstatic_cache {
     }
     if (modeByte !== 0x69) {
       let pointer_to_skeleton_pointer: number =
-        buf.readUInt32BE(0x500c) - 0x06000000;
+        copy.readUInt32BE(0x500c) - 0x06000000;
       let pointer_to_skeleton: number =
-        buf.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
-      buf.writeUInt32BE(
+        copy.readUInt32BE(pointer_to_skeleton_pointer) - 0x06000000;
+      copy.writeUInt32BE(
         pointer_to_skeleton + rebase,
         pointer_to_skeleton_pointer
       );
-      buf.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
+      copy.writeUInt32BE(pointer_to_skeleton_pointer + rebase, 0x500c);
       for (let i = 0; i < this.skeleton.bones.length; i++) {
-        buf.writeUInt32BE(
+        copy.writeUInt32BE(
           this.skeleton.bones[i].pointer + rebase,
           this.skeleton.bones[i].actualFileOffset
         );
       }
     }
     //console.log('Repoint done');
-    return buf;
+    return copy;
   }
 }
 
