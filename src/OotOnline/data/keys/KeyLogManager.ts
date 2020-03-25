@@ -22,6 +22,7 @@ export class KeyLogManager {
         this.indexes["FIRE_TEMPLE"] = VANILLA_KEY_INDEXES.FIRE_TEMPLE;
         this.indexes["WATER_TEMPLE"] = VANILLA_KEY_INDEXES.WATER_TEMPLE;
         this.indexes["SHADOW_TEMPLE"] = VANILLA_KEY_INDEXES.SHADOW_TEMPLE;
+        this.indexes["SPIRIT_TEMPLE"] = VANILLA_KEY_INDEXES.SPIRIT_TEMPLE;
         this.indexes["BOTTOM_OF_THE_WELL"] = VANILLA_KEY_INDEXES.BOTTOM_OF_THE_WELL;
         this.indexes["GERUDO_TRAINING_GROUND"] = VANILLA_KEY_INDEXES.GERUDO_TRAINING_GROUND;
         this.indexes["GERUDO_FORTRESS"] = VANILLA_KEY_INDEXES.GERUDO_FORTRESS;
@@ -57,17 +58,9 @@ export class KeyLogManager {
             this.parent
         ) as OotOnlineStorage;
         if (packet.delta > 0) {
-            if (storage.changelog.length > 0) {
-                if (packet.timestamp > storage.changelog[storage.changelog.length - 1].timestamp) {
-                    let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
-                    storage.changelog.push(s);
-                    this.ModLoader.serverSide.sendPacket(new Ooto_KeyDeltaServerPacket(s, packet.lobby, packet.player));
-                }
-            } else {
-                let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
-                storage.changelog.push(s);
-                this.ModLoader.serverSide.sendPacket(new Ooto_KeyDeltaServerPacket(s, packet.lobby, packet.player));
-            }
+            let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
+            storage.changelog.push(s);
+            this.ModLoader.serverSide.sendPacket(new Ooto_KeyDeltaServerPacket(s, packet.lobby, packet.player));
         }
     }
 

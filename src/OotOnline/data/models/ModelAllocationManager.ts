@@ -6,20 +6,34 @@ import { zzstatic } from './zzstatic/src/zzstatic';
 
 export class ModelAllocationManager {
   MAX_MODELS = 36;
-  models: ModelPlayer[] = new Array<ModelPlayer>(this.MAX_MODELS);
+  private models: ModelPlayer[] = new Array<ModelPlayer>(this.MAX_MODELS);
 
   constructor() {
     // These two are reserved.
-    this.models[0] = new ModelPlayer('Adult Link');
-    this.models[0].model.adult = new zzstatic().doRepoint(
+    this.models[0] = new ModelPlayer("Adult");
+    this.models[0].model.setAdult(new zzstatic().doRepoint(
       fs.readFileSync(__dirname + '/zobjs/AdultLink.zobj'),
       0
-    );
-    this.models[1] = new ModelPlayer('Child Link');
-    this.models[1].model.child = new zzstatic().doRepoint(
+    ));
+    this.models[1] = new ModelPlayer("Child");
+    this.models[1].model.setChild(new zzstatic().doRepoint(
       fs.readFileSync(__dirname + '/zobjs/ChildLink.zobj'),
       1
-    );
+    ));
+  }
+
+  getModelInSlot(index: number){
+    return this.models[index];
+  }
+
+  getAvailableSlots(): number{
+    let n: number = 0;
+    for (let i = 0; i < this.models.length; i++) {
+      if (this.models[i] === undefined) {
+        n++;
+      }
+    }
+    return n;
   }
 
   allocateSlot(model: ModelPlayer): number {
