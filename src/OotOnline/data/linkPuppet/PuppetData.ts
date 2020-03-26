@@ -82,7 +82,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set tunic_color(buf: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x18), buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x19), buf);
   }
 
   get strength_upgrade(): number {
@@ -109,7 +109,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set gauntlet_color(buf: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x256, buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x21), buf);
   }
 
   get boot_id(): number {
