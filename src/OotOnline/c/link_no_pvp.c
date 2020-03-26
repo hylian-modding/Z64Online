@@ -417,8 +417,6 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             case OOT_ACTION_DEKU_STICK:
                 /* Deku Stick */
                 matrix_push();
-                z_matrix_translate_3f(-428.26f, 267.20f, -33.82f, 1);
-                z_matrix_rotate_3s(ROT16(180), ROT16(0), ROT16(90), 1);
                 z_matrix_scale_3f(1.0f, en->puppetData.dekuStickLength, 1.0f, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_DEKU_STICK));
                 matrix_pop();
