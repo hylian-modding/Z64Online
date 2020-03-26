@@ -79,6 +79,7 @@ import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager'
 import { EmoteManager } from './data/emotes/emoteManager';
 import { TextboxManip } from './data/textbox/TextboxManip';
 import { UtilityActorHelper } from './data/utilityActorHelper';
+import { IActor } from 'modloader64_api/OOT/IActor';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -136,17 +137,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   warpToScene(scene: number) {
-    this.ModLoader.emulator.rdramWrite16(0x60018E, 0x000F);
-    this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600180, () => {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.core.commandBuffer.runWarp(this.warpLookupTable.get(scene)!, 0, () => {
-          this.ModLoader.utils.setTimeoutFrames(() => {
-            this.ModLoader.emulator.rdramWrite16(0x60018E, 0x0010);
-            this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600180);
-          }, 20);
-        });
-      }, 60);
-    });
+    this.core.commandBuffer.runWarp(this.warpLookupTable.get(scene)!, 0);
   }
 
   debuggingBombs() {
