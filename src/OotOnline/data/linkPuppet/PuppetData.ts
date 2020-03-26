@@ -37,6 +37,7 @@ export class PuppetData implements IPuppetData{
     this.copyFields.push('areHandsClosed');
     this.copyFields.push('current_mask');
     this.copyFields.push('stick_length');
+    this.copyFields.push('action_param');
   }
 
   get stick_length(): number {
@@ -143,6 +144,14 @@ export class PuppetData implements IPuppetData{
 
   set current_mask(num: number) {
     this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2D), num);
+  }
+
+  get action_param(): number {
+    return this.core.link.rdramRead8(0x0144);
+  }
+
+  set action_param(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x34), num);
   }
 
   get left_hand(): number {
