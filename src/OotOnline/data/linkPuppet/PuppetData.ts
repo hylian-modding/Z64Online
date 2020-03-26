@@ -36,6 +36,15 @@ export class PuppetData implements IPuppetData{
     this.copyFields.push('gauntlet_color');
     this.copyFields.push('areHandsClosed');
     this.copyFields.push('current_mask');
+    this.copyFields.push('stick_length');
+  }
+
+  get stick_length(): number {
+    return this.core.link.rdramReadF32(0x084C);
+  }
+
+  set stick_length(num: number) {
+    this.ModLoader.emulator.rdramWriteF32(this.pointer + (0x250 + 0x30), num);
   }
 
   get pos(): Buffer {

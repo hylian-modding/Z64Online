@@ -32,6 +32,7 @@ typedef struct
     uint8_t backItem;
     uint8_t maskItem;
     uint16_t soundid;
+    float dekuStickLength;
 } z_link_puppet;
 
 typedef struct
@@ -253,6 +254,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
              05 = Bottle.
              07 = Megaton Hammer
             */
+            matrix_push();
             z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
             z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
             switch (en->puppetData.heldItemLeft)
@@ -282,8 +284,8 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             }
-            z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-            z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
+            matrix_pop();
+
             if (en->puppetData.isHandClosed == 0)
             {
                 *display_list = OOT_ZZ_PUPPET_DLIST(OOT_ADULT_LEFT_HAND_OPEN);
@@ -339,7 +341,10 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 break;
             case 6:
                 /* Deku Stick */
+                matrix_push();
+                z_matrix_scale_3f(1.0f, en->puppetData.dekuStickLength, 1.0f, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_DEKU_STICK));
+                matrix_pop();
                 break;
             default:
                 break;
