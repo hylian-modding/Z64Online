@@ -157,8 +157,6 @@ static void init(entity_t *en, z64_global_t *global)
     en->puppetData.gauntletColor = white;
 
     en->actor.health = 20;
-    en->pvpData.prev_health = 20;
-    en->pvpData.passive = 0x1;
 
     en->actor.room_index = 0xFF;
     en->actor.flags = 0x00002431;
@@ -210,7 +208,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             {
                 /* Set Environment to Gauntlet Color */
                 gDPSetEnvColor(
-                  opa.p++
+                  opa->p++
                   , en->puppetData.gauntletColor.r
                   , en->puppetData.gauntletColor.g
                   , en->puppetData.gauntletColor.b
@@ -219,7 +217,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_RIGHT_WRIST_GAUNTLET));
                 /* Restore Environment Color */
                 gDPSetEnvColor(
-                  opa.p++
+                  opa->p++
                   , en->puppetData.tunicColor.r
                   , en->puppetData.tunicColor.g
                   , en->puppetData.tunicColor.b
@@ -245,7 +243,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             {
                 /* Set Environment to Gauntlet Color */
                 gDPSetEnvColor(
-                  opa.p++
+                  opa->p++
                   , en->puppetData.gauntletColor.r
                   , en->puppetData.gauntletColor.g
                   , en->puppetData.gauntletColor.b
@@ -254,7 +252,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_LEFT_WRIST_GAUNTLET));
                 /* Restore Environment Color */
                 gDPSetEnvColor(
-                  opa.p++
+                  opa->p++
                   , en->puppetData.tunicColor.r
                   , en->puppetData.tunicColor.g
                   , en->puppetData.tunicColor.b
@@ -689,7 +687,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
 
 static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, vec3s_t *rotation, entity_t *en)
 {
-    z64_disp_buf_t* opa = &ZQDL(global, poly_opa)
+    z64_disp_buf_t* opa = &ZQDL(global, poly_opa);
     if (en->puppetData.playasData.isZZ)
     {
         gSPSegment(opa->p++, 8, en->puppetData.playasData.eye_texture);

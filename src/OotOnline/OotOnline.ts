@@ -164,7 +164,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   init(): void {
-    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_no_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/horse-3.c"), dest: path.join(__dirname, "/payloads/E0/epona_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/epona_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/utility.c"), dest: path.join(__dirname, "/payloads/E0/utility_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/utility_actor.json") });
   }
