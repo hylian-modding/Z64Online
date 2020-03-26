@@ -5,24 +5,6 @@
 
 #define get_addr_offset(l, o) ((uint32_t *)((uint32_t)l + (uint32_t)o))
 
-enum HIT_EFFECTS
-{
-    BLUEBLOOD = 0,
-    WOODSMOKE = 1,
-    WOODSMOKEGREENBLOOD = 2,
-    BOSSPOGREENSMOKE = 3,
-    BUBBLE = 4,
-    BOOM = 5,
-    DEKUNUTFLASH = 6,
-    FLASHREDBLOOD = 7,
-    BILIBIRI = 8,
-    TORCHCLASH = 9,
-    NONE = 10,
-    PEEHAT = 11,
-    ROCKHIT = 12,
-    WOOD = 13
-};
-
 typedef struct
 {
     uint8_t isZZ;
@@ -84,24 +66,6 @@ z64_collider_cylinder_init_t Collision =
         .y_shift = 0,
         .position = {.x = 0, .y = 0, .z = 0}};
 
-uint32_t unkchart[] =
-    {
-        0x0100000F, 0x001E1E00};
-
-/*
-    F = 4
-    E = 2
-    1 = 1
-    D = 13
-*/
-
-uint8_t damagechart[] =
-    {
-        0x10, 0xF2, 0x11, 0xF2, 0x11, 0xF2, 0xE2, 0x01,
-        0x11, 0xE2, 0xE4, 0xF2, 0xD2, 0xF4, 0xF2, 0xF2,
-        0xFF, 0x60, 0x60, 0x60, 0x00, 0x00, 0xE3, 0xE4,
-        0xE5, 0xE5, 0xE5, 0xE6, 0xFA, 0x00, 0xE6, 0x00};
-
 static uint32_t isZobjLoaded(z64_obj_ctxt_t *obj_ctxt, int32_t id)
 {
     int32_t index = z_scene_object_get_index(obj_ctxt, id);
@@ -151,15 +115,8 @@ static void init(entity_t *en, z64_global_t *global)
 
     z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
 
-    z_actor_damage_table_init(AADDR(&en->actor, 0x98), &damagechart, &unkchart); // damage chart
-
     en->puppetData.bottleColor = white;
     en->puppetData.gauntletColor = white;
-
-    en->actor.health = 20;
-
-    en->actor.room_index = 0xFF;
-    en->actor.flags = 0x00002431;
 
     if (isZobjLoaded(&global->obj_ctxt, EPONA_OBJ))
     {
@@ -178,12 +135,15 @@ static void play(entity_t *en, z64_global_t *global)
         const uint32_t eyes[3] = {en->puppetData.playasData.base + 0x00000000, en->puppetData.playasData.base + 0x00000800, en->puppetData.playasData.base + 0x00001000};
         en->puppetData.playasData.eye_texture = eyes[helper_eye_blink(&en->puppetData.playasData.eye_index)];
     }
+
+    z_collider_cylinder_update(&en->actor, &en->cylinder);
+    z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
 }
 
 static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_list, vec3f_t *translation, vec3s_t *rotation, entity_t *en)
 {
     /* Initialize Limb and Transformations */
-    z64_disp_buf_t* opa = &ZQDL(global, poly_opa);
+    z64_disp_buf_t *opa = &ZQDL(global, poly_opa);
     limb_number -= 1;
     if (limb_number == LIMB_ROOT)
     {
@@ -208,21 +168,11 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             {
                 /* Set Environment to Gauntlet Color */
                 gDPSetEnvColor(
-                  opa->p++
-                  , en->puppetData.gauntletColor.r
-                  , en->puppetData.gauntletColor.g
-                  , en->puppetData.gauntletColor.b
-                  , en->puppetData.gauntletColor.a
-                );
+                    opa->p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_RIGHT_WRIST_GAUNTLET));
                 /* Restore Environment Color */
                 gDPSetEnvColor(
-                  opa->p++
-                  , en->puppetData.tunicColor.r
-                  , en->puppetData.tunicColor.g
-                  , en->puppetData.tunicColor.b
-                  , en->puppetData.tunicColor.a
-                );
+                    opa->p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
             }
         }
     }
@@ -243,21 +193,11 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             {
                 /* Set Environment to Gauntlet Color */
                 gDPSetEnvColor(
-                  opa->p++
-                  , en->puppetData.gauntletColor.r
-                  , en->puppetData.gauntletColor.g
-                  , en->puppetData.gauntletColor.b
-                  , en->puppetData.gauntletColor.a
-                );
+                    opa->p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_LEFT_WRIST_GAUNTLET));
                 /* Restore Environment Color */
                 gDPSetEnvColor(
-                  opa->p++
-                  , en->puppetData.tunicColor.r
-                  , en->puppetData.tunicColor.g
-                  , en->puppetData.tunicColor.b
-                  , en->puppetData.tunicColor.a
-                );
+                    opa->p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
             }
         }
     }
@@ -502,7 +442,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 if (en->puppetData.strengthUpgradeID > 1)
                 {
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.gauntletColor.r, en->puppetData.gauntletColor.g, en->puppetData.gauntletColor.b, en->puppetData.gauntletColor.a);
-                    z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_LEFT_HAND_GAUNTLET_CLOSED));
+                    z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_RIGHT_HAND_GAUNTLET_CLOSED));
                     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 }
             }
@@ -687,7 +627,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
 
 static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, vec3s_t *rotation, entity_t *en)
 {
-    z64_disp_buf_t* opa = &ZQDL(global, poly_opa);
+    z64_disp_buf_t *opa = &ZQDL(global, poly_opa);
     if (en->puppetData.playasData.isZZ)
     {
         gSPSegment(opa->p++, 8, en->puppetData.playasData.eye_texture);
