@@ -33,8 +33,6 @@ typedef struct
     uint8_t maskItem;
     uint16_t soundid;
     float dekuStickLength;
-    uint8_t actionParam;
-    uint8_t heldItemCategoryLeft;
 } z_link_puppet;
 
 typedef struct
@@ -141,64 +139,6 @@ static void play(entity_t *en, z64_global_t *global)
 
     z_collider_cylinder_update(&en->actor, &en->cylinder);
     z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
-}
-
-static int set_left_hand_cat(entity_t* en, z64_global_t* gl)
-{
-  if (
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_EMPTY ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_FISH ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_BLUE_FIRE ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_BUGS ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_POE ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_POE_BIG ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_LETTER ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_POTION_RED ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_POTION_BLUE ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_POTION_GREEN ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_MILK_FULL ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_MILK_HALF ||
-    en->puppetData.actionParam == OOT_ACTION_BOTTLE_FAIRY
-  )
-  {
-    return OOT_ITEM_CATEGORY_BOTTLE;
-  }
-  else if (
-    en->puppetData.actionParam == OOT_ACTION_SWORD_1 ||
-    en->puppetData.actionParam == OOT_ACTION_SWORD_2 ||
-    en->puppetData.actionParam == OOT_ACTION_SWORD_3 ||
-    en->puppetData.actionParam == OOT_ACTION_DEKU_STICK ||
-    en->puppetData.actionParam == OOT_ACTION_MEGATON_HAMMER ||
-    en->puppetData.actionParam == OOT_ACTION_BOOMERANG
-  )
-  {
-    return OOT_ITEM_CATEGORY_WEAPON;
-  }
-  else
-  {
-    return OOT_ITEM_CATEGORY_PROP;
-  }
-}
-
-static int set_right_hand_cat(entity_t* en, z64_global_t* gl)
-{
-  if (
-    en->puppetData.actionParam == OOT_ACTION_DEKU_STICK ||
-    en->puppetData.actionParam == OOT_ACTION_MEGATON_HAMMER ||
-    en->puppetData.actionParam == OOT_ACTION_FAIRY_BOW ||
-    en->puppetData.actionParam == OOT_ACTION_FIRE_ARROWS ||
-    en->puppetData.actionParam == OOT_ACTION_ICE_ARROWS ||
-    en->puppetData.actionParam == OOT_ACTION_LIGHT_ARROWS ||
-    en->puppetData.actionParam == OOT_ACTION_FAIRY_SLINGSHOT ||
-    en->puppetData.actionParam == OOT_ACTION_SHIELD
-  )
-  {
-    return OOT_ITEM_CATEGORY_WEAPON;
-  }
-  else
-  {
-    return OOT_ITEM_CATEGORY_PROP;
-  }
 }
 
 static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_list, vec3f_t *translation, vec3s_t *rotation, entity_t *en)
@@ -326,11 +266,9 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 break;
             case 2:
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_BIGGORON_SWORD_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             case 3:
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_BROKEN_GIANTS_KNIFE_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             case 4:
                 break;
@@ -341,7 +279,6 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 break;
             case 7:
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_MEGATON_HAMMER));
-                z_matrix_scale_3f(0, 0, 0, 1);
                 break;
             }
             matrix_pop();
@@ -373,7 +310,6 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
         }
         else
         {
-            /* OOT_AGE_CHILD */
             /*
              LEFT HAND IDS:
              00 = Nothing.
@@ -385,59 +321,47 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             matrix_push();
             z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
             z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
-            switch (en->puppetData.actionParam)
+            switch (en->puppetData.heldItemLeft)
             {
-            case OOT_ACTION_NONE:
+            case 0:
                 /* Nothing */
                 break;
-            case OOT_ACTION_SWORD_1:
+            case 4:
                 /* Kokiri Sword */
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_KOKIRI_SWORD));
                 break;
-            case OOT_ACTION_BOTTLE_EMPTY:
+            case 5:
                 /* Bottle */
-                /* Set Environment Color */
-                gDPSetEnvColor(
-                  opa->p++
-                  , en->puppetData.bottleColor.r
-                  , en->puppetData.bottleColor.g
-                  , en->puppetData.bottleColor.b
-                  , en->puppetData.bottleColor.a
-                );
+                gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.bottleColor.r, en->puppetData.bottleColor.g, en->puppetData.bottleColor.b, en->puppetData.bottleColor.a);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_BOTTLE));
-                /* Restore Environment Color */
-                gDPSetEnvColor(
-                  opa->p++
-                  , en->puppetData.tunicColor.r
-                  , en->puppetData.tunicColor.g
-                  , en->puppetData.tunicColor.b
-                  , en->puppetData.tunicColor.a
-                );
+                gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
                 break;
-            case OOT_ACTION_DEKU_STICK:
+            case 6:
                 /* Deku Stick */
                 matrix_push();
+                z_matrix_translate_3f(-428.26f, 267.20f, -33.82f, 1);
+                z_matrix_rotate_3s(ROT16(180), ROT16(0), ROT16(90), 1);
                 z_matrix_scale_3f(1.0f, en->puppetData.dekuStickLength, 1.0f, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_DEKU_STICK));
                 matrix_pop();
-                break;
-            case OOT_ACTION_BOOMERANG:
-                /* Kokiri Sword */
-                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_BOOMERANG));
                 break;
             default:
                 break;
             }
             matrix_pop();
 
-            /* Detect Hand */
-            uint32_t child_hand_left[3] = {
-              OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_OPEN),
-              OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_CLOSED),
-              OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_BOTTLE)
-            };
-
-            *display_list = child_hand_left[set_left_hand_cat(en, global)];
+            if (en->puppetData.isHandClosed == 0)
+            {
+                *display_list = OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_OPEN);
+            }
+            else if (en->puppetData.isHandClosed == 1)
+            {
+                *display_list = OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_CLOSED);
+            }
+            else
+            {
+                *display_list = OOT_ZZ_PUPPET_DLIST(OOT_CHILD_LEFT_HAND_BOTTLE);
+            }
         }
     }
 
@@ -454,59 +378,34 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
         */
         if (en->puppetData.age == OOT_AGE_ADULT)
         {
+            matrix_push();
+            z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
+            z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
             switch (en->puppetData.heldItemRight)
             {
             case 0:
                 break;
             case 1:
-                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_HYLIAN_SHIELD_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 2:
-                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_MIRROR_SHIELD_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 4:
-                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_OCARINA_OF_TIME_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 5:
-                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_OCARINA_OF_TIME_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 7:
-                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_HOOK_SHOT_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             case 8:
-                z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
-                z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_ADULT_BOW_IN_HAND));
-                z_matrix_scale_3f(0, 0, 0, 1);
-                z_matrix_rotate_3s(-rotation->x, -rotation->y, -rotation->z, 1);
-                z_matrix_translate_3f(-translation->x, translation->y, -translation->z, 1);
                 break;
             }
+            matrix_pop();
+            
             if (en->puppetData.isHandClosed == 0)
             {
                 *display_list = OOT_ZZ_PUPPET_DLIST(OOT_ADULT_RIGHT_HAND_OPEN);
@@ -538,6 +437,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
             05 = Ocarina of Time
             09 = Slingshot.
         */
+
             matrix_push();
             z_matrix_translate_3f(translation->x, translation->y, translation->z, 1);
             z_matrix_rotate_3s(rotation->x, rotation->y, rotation->z, 1);
@@ -555,23 +455,18 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_OCARINA_OF_TIME));
                 break;
             case 9:
-                z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_SLINGSHOT_STRING));
                 z_cheap_proc_draw_opa(global, OOT_ZZ_PUPPET_DLIST(OOT_CHILD_SLINGSHOT));
             default:
                 break;
             }
             matrix_pop();
 
-            /* Detect Hand */
-            uint32_t child_hand_right[3] = {
-              OOT_ZZ_PUPPET_DLIST(OOT_CHILD_RIGHT_HAND_OPEN),
-              OOT_ZZ_PUPPET_DLIST(OOT_CHILD_RIGHT_HAND_CLOSED),
-            };
-
-            *display_list = child_hand_right[set_right_hand_cat(en, global)];
+            if (en->puppetData.isHandClosed == 0)
+                *display_list = OOT_ZZ_PUPPET_DLIST(OOT_CHILD_RIGHT_HAND_OPEN);
+            else
+                *display_list = OOT_ZZ_PUPPET_DLIST(OOT_CHILD_RIGHT_HAND_CLOSED);
         }
     }
-
     else if (limb_number == LIMB_SHEATH) // Sheath
     {
         /*
@@ -645,7 +540,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
     }
     else if (limb_number == LIMB_HEAD)
     {
-        if (en->puppetData.age == OOT_CHILD)
+        if (en->puppetData.age == OOT_AGE_CHILD)
         {
             /*
                 0 = No mask.
