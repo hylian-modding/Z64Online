@@ -121,7 +121,7 @@ export class ActorHookingManager {
       this.ModLoader,
       this.core
     );
-    
+
     let nl = new ActorHookBase();
     nl.actorID = NL_ID;
     this.NLProcessor = new ActorHookProcessor(
@@ -205,7 +205,7 @@ export class ActorHookingManager {
           this.ModLoader.clientLobby
         )
       );
-    }else if (actor.actorID === NL_ID){
+    } else if (actor.actorID === NL_ID) {
       actor.actorUUID = this.ModLoader.utils.getUUID();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.NLLocal.set(actor.actorUUID, actor);
@@ -217,7 +217,7 @@ export class ActorHookingManager {
           this.ModLoader.clientLobby
         )
       );
-    }else if (actor.actorID === DEKU_NUTS){
+    } else if (actor.actorID === DEKU_NUTS) {
       /* actor.actorUUID = this.ModLoader.utils.getUUID();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.DekuNutsLocal.set(actor.actorUUID, actor);
@@ -270,7 +270,7 @@ export class ActorHookingManager {
         )
       );
       this.chusLocal.delete(actor.actorUUID);
-    }else if (actor.actorID === NL_ID){
+    } else if (actor.actorID === NL_ID) {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
@@ -280,7 +280,7 @@ export class ActorHookingManager {
         )
       );
       this.NLLocal.delete(actor.actorUUID);
-    }else if (actor.actorID === DEKU_NUTS){
+    } else if (actor.actorID === DEKU_NUTS) {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
@@ -406,7 +406,7 @@ export class ActorHookingManager {
           packet.actorData.hooks[i].data
         );
       }
-    }else if (this.NLRemote.has(packet.actorData.actor.actorUUID)){
+    } else if (this.NLRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.NLRemote.get(
         packet.actorData.actor.actorUUID
       )!;
@@ -414,7 +414,7 @@ export class ActorHookingManager {
       actor.position.x = packet.actorData.actor.position.x;
       actor.position.y = packet.actorData.actor.position.y;
       actor.position.z = packet.actorData.actor.position.z;
-    }else if (this.DekuNutsRemote.has(packet.actorData.actor.actorUUID)){
+    } else if (this.DekuNutsRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.DekuNutsRemote.get(
         packet.actorData.actor.actorUUID
       )!;
@@ -435,7 +435,7 @@ export class ActorHookingManager {
       this.bombsRemote.delete(packet.actorUUID);
     } else if (this.chusRemote.has(packet.actorUUID)) {
       this.chusRemote.delete(packet.actorUUID);
-    } else if (this.NLRemote.has(packet.actorUUID)){
+    } else if (this.NLRemote.has(packet.actorUUID)) {
       this.NLRemote.delete(packet.actorUUID);
     }
   }
@@ -527,9 +527,9 @@ export class ActorHookingManager {
             actor.rdramWrite8(0x118, 0x80);
             actor.redeadFreeze = 0x10;
             this.chusRemote.set(actor.actorUUID, actor);
-          }else if (packet.actorData.actor.actorID === NL_ID){
+          } else if (packet.actorData.actor.actorID === NL_ID) {
             this.NLRemote.set(actor.actorUUID, actor);
-          }else if (packet.actorData.actor.actorID === DEKU_NUTS){
+          } else if (packet.actorData.actor.actorID === DEKU_NUTS) {
             actor.redeadFreeze = 0x10;
             this.DekuNutsRemote.set(actor.actorUUID, actor);
           }
@@ -552,16 +552,15 @@ export class ActorHookingManager {
     dins.writeUInt32BE(0x0, 0x1AC);
     tools.recompressFileIntoRom(evt.rom, 166, dins);
 
-    // Make Nayru's Love not move to Link.
+    // Rip assets from the real Nayru's love for the puppet.
     let nayru: Buffer = tools.decompressFileFromRom(evt.rom, 242);
-    //nayru.writeUInt32BE(0x0, 0x44);
-    //nayru.writeUInt32BE(0x0, 0x4C);
-    //nayru.writeUInt32BE(0x0, 0x54);
-    nayru.writeUInt32BE(0x0, 0x6A8);
-    nayru.writeUInt32BE(0x0, 0x6B0);
-    nayru.writeUInt32BE(0x0, 0x6D8);
-    //nayru.writeUInt32BE(0x0, 0x0);
-    //nayru.writeUInt32BE(0x0, 0x0);
+    let texture: Buffer = nayru.slice(0xC90, (0xC90 + 0x800));
+    let matrix: Buffer = nayru.slice(0x1490, (0x1490 + 0x140));
+    this.ModLoader.utils.setTimeoutFrames(() => {
+      this.ModLoader.logger.debug("Copying Nayru's Love assets from ROM...");
+      this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D000, texture);
+      this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D800, matrix);
+    }, 100);
     tools.recompressFileIntoRom(evt.rom, 242, nayru);
   }
 

@@ -1,25 +1,12 @@
 import { ModelPlayer } from './ModelPlayer';
-import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
-import fs from 'fs';
-import { zzstatic } from './zzstatic/src/zzstatic';
 
 export class ModelAllocationManager {
   MAX_MODELS = 36;
-  private models: ModelPlayer[] = new Array<ModelPlayer>(this.MAX_MODELS);
+  RESERVED_SLOTS = 2;
+  models: ModelPlayer[] = new Array<ModelPlayer>(this.MAX_MODELS);
 
   constructor() {
-    // These two are reserved.
-    this.models[0] = new ModelPlayer("Adult");
-    this.models[0].model.setAdult(new zzstatic().doRepoint(
-      fs.readFileSync(__dirname + '/zobjs/AdultLink.zobj'),
-      0
-    ));
-    this.models[1] = new ModelPlayer("Child");
-    this.models[1].model.setChild(new zzstatic().doRepoint(
-      fs.readFileSync(__dirname + '/zobjs/ChildLink.zobj'),
-      1
-    ));
   }
 
   getModelInSlot(index: number){
@@ -28,7 +15,7 @@ export class ModelAllocationManager {
 
   getAvailableSlots(): number{
     let n: number = 0;
-    for (let i = 0; i < this.models.length; i++) {
+    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         n++;
       }
@@ -38,7 +25,7 @@ export class ModelAllocationManager {
 
   allocateSlot(model: ModelPlayer): number {
     let index = -1;
-    for (let i = 0; i < this.models.length; i++) {
+    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         index = i;
         break;
@@ -56,7 +43,7 @@ export class ModelAllocationManager {
   }
 
   isPlayerAllocated(player: INetworkPlayer): boolean {
-    for (let i = 0; i < this.models.length; i++) {
+    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         continue;
       }
@@ -68,7 +55,7 @@ export class ModelAllocationManager {
   }
 
   getPlayerAllocation(player: INetworkPlayer): ModelPlayer {
-    for (let i = 0; i < this.models.length; i++) {
+    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         continue;
       }

@@ -158,6 +158,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_no_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/horse-3.c"), dest: path.join(__dirname, "/payloads/E0/epona_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/epona_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/utility.c"), dest: path.join(__dirname, "/payloads/E0/utility_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/utility_actor.json") });
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/Magic_Dark_Puppet.c"), dest: path.join(__dirname, "/payloads/E0/nayru_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/nayru_puppet.json") });
   }
 
   postinit(): void {
@@ -188,17 +189,22 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     if (evt.file === 'link_puppet.ovl') {
       this.ModLoader.utils.setTimeoutFrames(() => {
         this.ModLoader.emulator.rdramWrite16(0x600140, evt.result);
-        console.log('Setting link puppet id to ' + evt.result + '.');
+        this.ModLoader.logger.debug('Setting link puppet id to ' + evt.result + '.');
       }, 20);
     } else if (evt.file === 'epona_puppet.ovl') {
       this.ModLoader.utils.setTimeoutFrames(() => {
         this.ModLoader.emulator.rdramWrite16(0x600150, evt.result);
-        console.log('Setting epona puppet id to ' + evt.result + '.');
+        this.ModLoader.logger.debug('Setting epona puppet id to ' + evt.result + '.');
       }, 20);
     } else if (evt.file === "utility_actor.ovl") {
       this.ModLoader.utils.setTimeoutFrames(() => {
         this.ModLoader.emulator.rdramWrite16(0x600190, evt.result);
-        console.log('Setting utility actor id to ' + evt.result + '.');
+        this.ModLoader.logger.debug('Setting utility actor id to ' + evt.result + '.');
+      }, 20);
+    } else if (evt.file === "nayru_puppet.ovl") {
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        this.ModLoader.emulator.rdramWrite16(0x6001A0, evt.result);
+        this.ModLoader.logger.debug('Setting Nayru puppet id to ' + evt.result + '.');
       }, 20);
     }
   }
@@ -533,6 +539,19 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         )
       );
     }
+    /*     this.ModLoader.utils.setTimeoutFrames(() => {
+          this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x806001A0, (success: boolean, result: number) => {
+            if (success) {
+              fs.writeFileSync("./ram_dump.bin", this.ModLoader.emulator.rdramReadBuffer(0x0, (16 * 1024 * 1024)));
+              console.log("SPAWNED ACTOR " + result.toString(16));
+              let actor: IActor = this.core.actorManager.createIActorFromPointer(result);
+              actor.room = 0xFF;
+              actor.position.x = this.core.link.position.x;
+              actor.position.y = this.core.link.position.y;
+              actor.position.z = this.core.link.position.z;
+            }
+          });
+        }, 20); */
   }
 
   @EventHandler(OotEvents.ON_ROOM_CHANGE)

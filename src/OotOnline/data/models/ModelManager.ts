@@ -36,6 +36,7 @@ import path from 'path';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { ModelObject } from './ModelContainer';
 import { ModelEquipmentPackager } from './ModelEquipmentPackager';
+import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
 
 export class FilePatch {
   offset: number;
@@ -289,8 +290,26 @@ export class ModelManager {
     this.clientStorage.childModel = child_model;
   }
 
+
+  setupPuppetModels(evt: any){
+    this.ModLoader.logger.info("Setting up puppet models...");
+    let puppet_child: Buffer = Buffer.alloc(0x37800);
+    this.decompressFileFromRom(evt.rom, 503).copy(puppet_child);
+    let puppet_adult: Buffer = Buffer.alloc(0x37800);
+    this.decompressFileFromRom(evt.rom, 502).copy(puppet_adult);
+    puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
+    puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
+    let a = new ModelPlayer("Adult");
+    a.model.adult = new ModelObject(new zzstatic().doRepoint(puppet_adult, 0));
+    let c = new ModelPlayer("Child");
+    c.model.child = new ModelObject(new zzstatic().doRepoint(puppet_child, 1));
+    this.allocationManager.models[0] = a;
+    this.allocationManager.models[1] = c;
+  }
+
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
+    this.setupPuppetModels(evt);
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir);
     }
