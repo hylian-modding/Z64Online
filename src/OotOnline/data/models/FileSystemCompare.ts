@@ -26,9 +26,23 @@ export class FileSystemCompare{
         }
     }
 
+    dumpDirty(rom: Buffer){
+        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+        let total: number = 1509;
+        let target: string = "./dirty";
+        if (!fse.existsSync(target)){
+            fse.mkdirSync(target);
+        }
+        for (let i = 0; i < total; i++){
+            console.log(i);
+            let buf: Buffer = tools.decompressFileFromRom(rom, i);
+            fse.writeFileSync(path.join(target, i + ".bin"), buf);
+        }
+    }
+
     compare(){
         let v: string = "./vanilla";
-        let d: string = "./dirty"; //haha poopy
+        let d: string = "./dirty";
         let dest: string = "./patches";
         if (!fse.existsSync(dest)){
             fse.mkdirSync(dest);

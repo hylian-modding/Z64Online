@@ -455,7 +455,6 @@ export class ActorHookingManager {
     switch (packet.actorData.actor.actorID) {
       case BOMB_ID:
         spawn_param = 0x80600160;
-        console.log('bomb');
         break;
       case BOMBCHU_ID:
         spawn_param = 0x80600170;
@@ -471,7 +470,6 @@ export class ActorHookingManager {
         this.ModLoader.emulator.rdramWrite16(0x600174, this.ModLoader.emulator.rdramRead16(0x60019F));
         this.ModLoader.emulator.rdramWrite8(0x600176, pos[8]);
         this.ModLoader.emulator.rdramWrite8(0x600177, pos[9]);
-        console.log('bombchu');
         break;
       case FW_ID:
         this.ModLoader.emulator.rdramWrite16(0x600180, FW_ID);
@@ -484,7 +482,8 @@ export class ActorHookingManager {
       case NL_ID:
         this.ModLoader.emulator.rdramWrite16(0x600180, NL_ID);
         spawn_param = 0x80600180;
-        break;
+        //break;
+        return; // Keep this dead for now.
       case DEKU_NUTS:
         spawn_param = 0x806001A2;
         this.ModLoader.emulator.rdramWrite8(0x6001A4, pos[0]);
@@ -561,7 +560,6 @@ export class ActorHookingManager {
       this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D000, texture);
       this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D800, matrix);
     }, 100);
-    tools.recompressFileIntoRom(evt.rom, 242, nayru);
   }
 
   tick() {

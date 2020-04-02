@@ -74,12 +74,11 @@ import { ModelManager } from './data/models/ModelManager';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
-import { CrashParser } from './data/crash/CrashParser';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { TextboxManip } from './data/textbox/TextboxManip';
 import { UtilityActorHelper } from './data/utilityActorHelper';
-import { IActor } from 'modloader64_api/OOT/IActor';
+import { CrashParserActorTable } from './data/crash/CrashParser';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -1209,12 +1208,17 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_CRASH)
   onEmuCrash(evt: any) {
-    let dump_parse: CrashParser = new CrashParser();
-    dump_parse.parse();
     fs.writeFileSync(
       './Ooto_storagedump.json',
       JSON.stringify(this.clientStorage, null, 2)
     );
+  }
+
+  @EventHandler(ModLoader.ModLoaderEvents.ON_RECEIVED_CRASH_LOG)
+  onServerReceivedCrashlog(evt: any){
+    let cp: CrashParserActorTable = new CrashParserActorTable();
+    let html: string = cp.parse(evt.dump);
+    fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
   }
 }
 

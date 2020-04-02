@@ -37,6 +37,7 @@ import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { ModelObject } from './ModelContainer';
 import { ModelEquipmentPackager } from './ModelEquipmentPackager';
 import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
+import { FileSystemCompare } from './FileSystemCompare';
 
 export class FilePatch {
   offset: number;
@@ -264,7 +265,7 @@ export class ModelManager {
     let child_zobj = this.getRawFileFromRom(evt.rom, child);
     this.ModLoader.utils.clearBuffer(child_zobj);
     _child_model.copy(child_zobj);
-    
+
     this.injectRawFileToRom(evt.rom, child, child_zobj);
 
     let patch: RomPatch[] = new Array<RomPatch>();
@@ -291,7 +292,7 @@ export class ModelManager {
   }
 
 
-  setupPuppetModels(evt: any){
+  setupPuppetModels(evt: any) {
     this.ModLoader.logger.info("Setting up puppet models...");
     let puppet_child: Buffer = Buffer.alloc(0x37800);
     this.decompressFileFromRom(evt.rom, 503).copy(puppet_child);
@@ -632,33 +633,35 @@ export class ModelManager {
     if (
       !this.clientStorage.playerModelCache.hasOwnProperty(puppet.player.uuid)
     ) {
-      if (puppet.age === Age.ADULT) {
-        this.ModLoader.emulator.rdramWriteBuffer(
-          0x800000,
-          this.allocationManager.getModelInSlot(0).model.adult.zobj
-        );
-      } else {
-        this.ModLoader.emulator.rdramWriteBuffer(
-          0x837800,
-          this.allocationManager.getModelInSlot(1).model.child.zobj
-        );
-      }
+      this.ModLoader.emulator.rdramWriteBuffer(
+        0x800000,
+        this.allocationManager.getModelInSlot(0).model.adult.zobj
+      );
+      this.ModLoader.emulator.rdramWriteBuffer(
+        0x837800,
+        this.allocationManager.getModelInSlot(1).model.child.zobj
+      );
       this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }
     if (!this.allocationManager.isPlayerAllocated(puppet.player)) {
-      this.allocationManager.allocateSlot((this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer));
+      let slot = this.allocationManager.allocateSlot((this.clientStorage.playerModelCache[puppet.player.uuid] as ModelPlayer));
+      this.ModLoader.logger.info("Trying to allocate model block " + slot + ".");
       this.ModLoader.logger.info(this.allocationManager.getAvailableSlots() + " model blocks left!");
     }
+    this.ModLoader.logger.info("Getting model for player " + puppet.player.nickname + "...");
     let model: ModelPlayer = this.allocationManager.getPlayerAllocation(
       puppet.player
     );
     let index: number = this.allocationManager.getModelIndex(model);
+    this.ModLoader.logger.info("This model is assigned to model block " + index + ".");
     let allocation_size = 0x37800;
     let addr: number = 0x800000 + allocation_size * index;
+    this.ModLoader.logger.info("Model block " + index + " starts at address 0x" + addr.toString(16) + ".");
     let zobj_size: number = allocation_size;
     if (puppet.age === Age.ADULT && model.model.adult !== undefined) {
       if (model.model.adult.zobj.byteLength > 1) {
+        this.ModLoader.logger.info("Writing adult model into model block " + index + ".");
         this.ModLoader.emulator.rdramWriteBuffer(
           addr,
           new zzstatic().doRepoint(model.model.adult.zobj, index)
@@ -668,6 +671,7 @@ export class ModelManager {
     }
     if (puppet.age === Age.CHILD && model.model.child !== undefined) {
       if (model.model.child.zobj.byteLength > 1) {
+        this.ModLoader.logger.info("Writing child model into model block " + index + ".");
         this.ModLoader.emulator.rdramWriteBuffer(
           addr,
           new zzstatic().doRepoint(model.model.child.zobj, index)
@@ -689,9 +693,9 @@ export class ModelManager {
           Object.keys(temp_equipmentMetadata).forEach((key: string) => {
             if (this.equipmentAdultMap.has(key) || this.equipmentChildMap.has(key)) {
               this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
-              if (puppet.age === Age.ADULT){
+              if (puppet.age === Age.ADULT) {
                 this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
-              }else if (puppet.age === Age.CHILD){
+              } else if (puppet.age === Age.CHILD) {
                 this.ModLoader.emulator.rdramWrite32(addr + this.equipmentChildMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
               }
             }

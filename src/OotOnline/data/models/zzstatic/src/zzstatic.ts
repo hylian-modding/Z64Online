@@ -81,7 +81,7 @@ export class zzstatic {
     let zobj: Zobj = new Zobj(buf);
     let r = rebase + (index * 0x37800);
 
-    console.log(r.toString(16));
+    //console.log(r.toString(16));
 
     let zzCache: zzstatic_cache = new zzstatic_cache();
 
