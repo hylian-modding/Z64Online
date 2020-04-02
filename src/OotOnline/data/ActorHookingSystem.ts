@@ -10,7 +10,7 @@ import {
 } from './ActorHookBase';
 import fs from 'fs';
 import path from 'path';
-import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import {
   Ooto_ActorPacket,
   Ooto_ActorDeadPacket,
@@ -26,11 +26,16 @@ import { IOotOnlineHelpers, OotOnlineEvents } from '../OotoAPI/OotoAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
 const BOMBCHU_ID = 0x00da;
+const FW_ID = 0x009E;
+const DF_ID = 0x009F;
+const NL_ID = 0x00F4;
+const DEKU_NUTS = 0x0056;
 
 export class ActorHookingManager {
   actorHookMap: Map<number, ActorHookBase> = new Map<number, ActorHookBase>();
@@ -46,6 +51,14 @@ export class ActorHookingManager {
   chusLocal: Map<string, IActor> = new Map<string, IActor>();
   chusRemote: Map<string, IActor> = new Map<string, IActor>();
   chuProcessor!: ActorHookProcessor;
+  // Nayru's Love
+  NLLocal: Map<string, IActor> = new Map<string, IActor>();
+  NLRemote: Map<string, IActor> = new Map<string, IActor>();
+  NLProcessor!: ActorHookProcessor;
+  // Deku Nuts
+  DekuNutsLocal: Map<string, IActor> = new Map<string, IActor>();
+  DekuNutsRemote: Map<string, IActor> = new Map<string, IActor>();
+  DekuNutsProcessor!: ActorHookProcessor;
 
   @ModLoaderAPIInject()
   ModLoader!: IModLoaderAPI;
@@ -108,6 +121,24 @@ export class ActorHookingManager {
       this.ModLoader,
       this.core
     );
+
+    let nl = new ActorHookBase();
+    nl.actorID = NL_ID;
+    this.NLProcessor = new ActorHookProcessor(
+      this.core.actorManager.createIActorFromPointer(0x0),
+      nl,
+      this.ModLoader,
+      this.core
+    );
+
+    let dn = new ActorHookBase();
+    dn.actorID = DEKU_NUTS;
+    this.DekuNutsProcessor = new ActorHookProcessor(
+      this.core.actorManager.createIActorFromPointer(0x0),
+      dn,
+      this.ModLoader,
+      this.core
+    );
   }
 
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)
@@ -163,6 +194,41 @@ export class ActorHookingManager {
           this.ModLoader.clientLobby
         )
       );
+    } else if (actor.actorID === FW_ID || actor.actorID === DF_ID) {
+      actor.actorUUID = this.ModLoader.utils.getUUID();
+      let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_SpawnActorPacket(
+          actorData,
+          this.core.global.scene,
+          this.core.global.room,
+          this.ModLoader.clientLobby
+        )
+      );
+    } else if (actor.actorID === NL_ID) {
+      actor.actorUUID = this.ModLoader.utils.getUUID();
+      let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
+      this.NLLocal.set(actor.actorUUID, actor);
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_SpawnActorPacket(
+          actorData,
+          this.core.global.scene,
+          this.core.global.room,
+          this.ModLoader.clientLobby
+        )
+      );
+    } else if (actor.actorID === DEKU_NUTS) {
+      /* actor.actorUUID = this.ModLoader.utils.getUUID();
+      let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
+      this.DekuNutsLocal.set(actor.actorUUID, actor);
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_SpawnActorPacket(
+          actorData,
+          this.core.global.scene,
+          this.core.global.room,
+          this.ModLoader.clientLobby
+        )
+      ); */
     }
   }
 
@@ -204,6 +270,26 @@ export class ActorHookingManager {
         )
       );
       this.chusLocal.delete(actor.actorUUID);
+    } else if (actor.actorID === NL_ID) {
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_ActorDeadPacket(
+          actor.actorUUID,
+          this.core.global.scene,
+          this.core.global.room,
+          this.ModLoader.clientLobby
+        )
+      );
+      this.NLLocal.delete(actor.actorUUID);
+    } else if (actor.actorID === DEKU_NUTS) {
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_ActorDeadPacket(
+          actor.actorUUID,
+          this.core.global.scene,
+          this.core.global.room,
+          this.ModLoader.clientLobby
+        )
+      );
+      this.DekuNutsLocal.delete(actor.actorUUID);
     }
   }
 
@@ -213,6 +299,10 @@ export class ActorHookingManager {
     this.bombsRemote.clear();
     this.chusLocal.clear();
     this.chusRemote.clear();
+    this.NLLocal.clear();
+    this.NLRemote.clear();
+    this.DekuNutsLocal.clear();
+    this.DekuNutsRemote.clear();
     this.actorHookTicks.clear();
   }
 
@@ -316,6 +406,26 @@ export class ActorHookingManager {
           packet.actorData.hooks[i].data
         );
       }
+    } else if (this.NLRemote.has(packet.actorData.actor.actorUUID)) {
+      let actor: IActor = this.NLRemote.get(
+        packet.actorData.actor.actorUUID
+      )!;
+
+      actor.position.x = packet.actorData.actor.position.x;
+      actor.position.y = packet.actorData.actor.position.y;
+      actor.position.z = packet.actorData.actor.position.z;
+    } else if (this.DekuNutsRemote.has(packet.actorData.actor.actorUUID)) {
+      let actor: IActor = this.DekuNutsRemote.get(
+        packet.actorData.actor.actorUUID
+      )!;
+
+      actor.position.x = packet.actorData.actor.position.x;
+      actor.position.y = packet.actorData.actor.position.y;
+      actor.position.z = packet.actorData.actor.position.z;
+
+      actor.rotation.x = packet.actorData.actor.rotation.x;
+      actor.rotation.y = packet.actorData.actor.rotation.y;
+      actor.rotation.z = packet.actorData.actor.rotation.z;
     }
   }
 
@@ -325,6 +435,8 @@ export class ActorHookingManager {
       this.bombsRemote.delete(packet.actorUUID);
     } else if (this.chusRemote.has(packet.actorUUID)) {
       this.chusRemote.delete(packet.actorUUID);
+    } else if (this.NLRemote.has(packet.actorUUID)) {
+      this.NLRemote.delete(packet.actorUUID);
     }
   }
 
@@ -339,25 +451,55 @@ export class ActorHookingManager {
       return;
     }
     let spawn_param = 0;
-    let spawn_param_ = 0;
     let pos = this.core.link.position.getRawPos();
     switch (packet.actorData.actor.actorID) {
       case BOMB_ID:
         spawn_param = 0x80600160;
-        spawn_param_ = 0x600160;
         console.log('bomb');
         break;
       case BOMBCHU_ID:
         spawn_param = 0x80600170;
-        spawn_param_ = 0x600170;
         this.ModLoader.emulator.rdramWrite8(0x600172, pos[0]);
         this.ModLoader.emulator.rdramWrite8(0x600173, pos[1]);
-        this.ModLoader.emulator.rdramWrite8(0x600174, pos[4] + 100);
-        this.ModLoader.emulator.rdramWrite8(0x600175, pos[5] + 100);
+
+        this.ModLoader.emulator.rdramWrite8(0x60019F, pos[4]);
+        this.ModLoader.emulator.rdramWrite8(0x6001A0, pos[5]);
+        var f: number = this.ModLoader.emulator.rdramReadF32(0x60019F);
+        f += 100.0;
+        this.ModLoader.emulator.rdramWriteF32(0x60019F, f);
+
+        this.ModLoader.emulator.rdramWrite16(0x600174, this.ModLoader.emulator.rdramRead16(0x60019F));
         this.ModLoader.emulator.rdramWrite8(0x600176, pos[8]);
         this.ModLoader.emulator.rdramWrite8(0x600177, pos[9]);
         console.log('bombchu');
-        return;
+        break;
+      case FW_ID:
+        this.ModLoader.emulator.rdramWrite16(0x600180, FW_ID);
+        spawn_param = 0x80600180;
+        break;
+      case DF_ID:
+        this.ModLoader.emulator.rdramWrite16(0x600180, DF_ID);
+        spawn_param = 0x80600180;
+        break;
+      case NL_ID:
+        this.ModLoader.emulator.rdramWrite16(0x600180, NL_ID);
+        spawn_param = 0x80600180;
+        break;
+      case DEKU_NUTS:
+        spawn_param = 0x806001A2;
+        this.ModLoader.emulator.rdramWrite8(0x6001A4, pos[0]);
+        this.ModLoader.emulator.rdramWrite8(0x6001A5, pos[1]);
+
+        this.ModLoader.emulator.rdramWrite8(0x6001A6, pos[4]);
+        this.ModLoader.emulator.rdramWrite8(0x6001A7, pos[5]);
+        var f: number = this.ModLoader.emulator.rdramReadF32(0x6001A6);
+        f += 100.0;
+        this.ModLoader.emulator.rdramWriteF32(0x60019F, f);
+
+        this.ModLoader.emulator.rdramWrite16(0x600174, this.ModLoader.emulator.rdramRead16(0x60019F));
+        this.ModLoader.emulator.rdramWrite8(0x6001A8, pos[8]);
+        this.ModLoader.emulator.rdramWrite8(0x6001A9, pos[9]);
+        break;
     }
     this.core.commandBuffer.runCommand(
       Command.SPAWN_ACTOR,
@@ -385,10 +527,41 @@ export class ActorHookingManager {
             actor.rdramWrite8(0x118, 0x80);
             actor.redeadFreeze = 0x10;
             this.chusRemote.set(actor.actorUUID, actor);
+          } else if (packet.actorData.actor.actorID === NL_ID) {
+            this.NLRemote.set(actor.actorUUID, actor);
+          } else if (packet.actorData.actor.actorID === DEKU_NUTS) {
+            actor.redeadFreeze = 0x10;
+            this.DekuNutsRemote.set(actor.actorUUID, actor);
           }
         }
       }
     );
+  }
+
+  @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
+  onRomPatched(evt: any) {
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+
+    // Make Din's Fire not move to Link.
+    let dins: Buffer = tools.decompressFileFromRom(evt.rom, 166);
+    dins.writeUInt32BE(0x0, 0x150);
+    dins.writeUInt32BE(0x0, 0x158);
+    dins.writeUInt32BE(0x0, 0x160);
+    dins.writeUInt32BE(0x0, 0x19C);
+    dins.writeUInt32BE(0x0, 0x1A4);
+    dins.writeUInt32BE(0x0, 0x1AC);
+    tools.recompressFileIntoRom(evt.rom, 166, dins);
+
+    // Rip assets from the real Nayru's love for the puppet.
+    let nayru: Buffer = tools.decompressFileFromRom(evt.rom, 242);
+    let texture: Buffer = nayru.slice(0xC90, (0xC90 + 0x800));
+    let matrix: Buffer = nayru.slice(0x1490, (0x1490 + 0x140));
+    this.ModLoader.utils.setTimeoutFrames(() => {
+      this.ModLoader.logger.debug("Copying Nayru's Love assets from ROM...");
+      this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D000, texture);
+      this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D800, matrix);
+    }, 100);
+    tools.recompressFileIntoRom(evt.rom, 242, nayru);
   }
 
   tick() {
@@ -402,6 +575,17 @@ export class ActorHookingManager {
     this.chusLocal.forEach((value: IActor, key: string) => {
       this.chuProcessor.actor = value;
       this.chuProcessor.onTick();
+    });
+    this.NLLocal.forEach((value: IActor, key: string) => {
+      this.NLProcessor.actor = value;
+      value.position.x = this.core.link.position.x;
+      value.position.y = this.core.link.position.y;
+      value.position.z = this.core.link.position.z;
+      this.NLProcessor.onTick();
+    });
+    this.DekuNutsLocal.forEach((value: IActor, key: string) => {
+      this.DekuNutsProcessor.actor = value;
+      this.DekuNutsProcessor.onTick();
     });
   }
 }

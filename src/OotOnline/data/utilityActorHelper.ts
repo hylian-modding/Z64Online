@@ -18,9 +18,6 @@ export class UtilityActorHelper {
         this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600190, (success: boolean, result: number) => {
             if (success) {
                 this.linkObjPointer = this.ModLoader.emulator.rdramRead32(result + 0x13C);
-                if (this.core.save.age === Age.CHILD){
-                    this.ModLoader.emulator.rdramWrite32(this.linkObjPointer + 0x52C4, 0x806011F4);
-                }
             }
         });
     }
