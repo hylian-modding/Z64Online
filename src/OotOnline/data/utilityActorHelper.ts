@@ -15,11 +15,11 @@ export class UtilityActorHelper {
 
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
-        this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600190, (success: boolean, result: number) => {
+        /* this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600190, (success: boolean, result: number) => {
             if (success) {
                 this.linkObjPointer = this.ModLoader.emulator.rdramRead32(result + 0x13C);
             }
-        });
+        }); */
     }
 
 }

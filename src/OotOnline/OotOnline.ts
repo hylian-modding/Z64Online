@@ -181,6 +181,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     status.partyMax = 30;
     status.partySize = 1;
     this.ModLoader.gui.setDiscordStatus(status);
+    bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
   }
 
   @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)

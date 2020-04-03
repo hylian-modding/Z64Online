@@ -628,6 +628,19 @@ export class ModelManager {
     });
   }
 
+  @EventHandler("OotOnline:WriteDefaultPuppetZobjs")
+  onWriteRequest(evt: any) {
+    this.ModLoader.logger.debug("Writing default models...");
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.getModelInSlot(0).model.adult.zobj
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.getModelInSlot(1).model.child.zobj
+    );
+  }
+
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: Puppet) {
     if (
