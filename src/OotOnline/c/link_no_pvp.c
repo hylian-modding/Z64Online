@@ -33,6 +33,7 @@ typedef struct
     uint8_t maskItem;
     uint16_t soundid;
     float dekuStickLength;
+    uint8_t actionParam;
 } z_link_puppet;
 
 typedef struct
@@ -405,7 +406,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 break;
             }
             matrix_pop();
-            
+
             if (en->puppetData.isHandClosed == 0)
             {
                 *display_list = OOT_ZZ_PUPPET_DLIST(OOT_ADULT_RIGHT_HAND_OPEN);
@@ -608,6 +609,14 @@ static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, ve
 
 static void draw(entity_t *en, z64_global_t *global)
 {
+
+/*     z64_disp_buf_t *opa = &ZQDL(global, poly_opa);
+    static Gfx cull_back_dl[] = {
+        gsSPSetGeometryMode(G_CULL_BACK),
+        gsSPEndDisplayList()};
+
+    gSPSegment(opa->p++, 0x0C, &cull_back_dl); */
+
     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
 
     z_skelanime_draw(global, 0x12, en, &en->skelanime, &Animate, &otherCallback);

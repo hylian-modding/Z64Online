@@ -302,4 +302,11 @@ export class PuppetOverlord implements IPuppetOverlord {
       this.ModLoader.logger.debug("Epona despawned");
     }
   }
+
+  @EventHandler("OotOnline:RoguePuppet")
+  onRoguePuppet(puppet: Puppet) {
+    if (this.puppets.has(puppet.player.uuid)){
+      this.puppets.delete(puppet.player.uuid);
+    }
+  }
 }

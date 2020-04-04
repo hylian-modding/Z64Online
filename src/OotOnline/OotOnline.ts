@@ -79,6 +79,7 @@ import { EmoteManager } from './data/emotes/emoteManager';
 import { TextboxManip } from './data/textbox/TextboxManip';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
+import { IActor } from 'modloader64_api/OOT/IActor';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -95,7 +96,8 @@ const enum SCENES {
   LON_LON_RANCH = 0x0063,
   HYRULE_FIELD = 0x0051,
   FOREST_TEMPLE = 0x0003,
-  KAKARIKO_VILLAGE = 0x0052
+  KAKARIKO_VILLAGE = 0x0052,
+  TOWER_COLLAPSE = 0x001A
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
@@ -123,6 +125,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.warpLookupTable.set(SCENES.HYRULE_FIELD, 0x00CD);
     this.warpLookupTable.set(SCENES.LON_LON_RANCH, 0x0157);
     this.warpLookupTable.set(SCENES.KAKARIKO_VILLAGE, 0x00DB);
+    this.warpLookupTable.set(SCENES.TOWER_COLLAPSE, 0x0134);
     this.overlord = new PuppetOverlord(this);
     this.actorHooks = new ActorHookingManager(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
@@ -181,7 +184,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     status.partyMax = 30;
     status.partySize = 1;
     this.ModLoader.gui.setDiscordStatus(status);
-    bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
+    //bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
   }
 
   @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
