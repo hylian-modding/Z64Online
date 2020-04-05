@@ -18,7 +18,7 @@ import {
   Ooto_DownloadAllModelsPacket,
   Ooto_IconAllocatePacket,
 } from '../OotOPackets';
-import { Age, OotEvents } from 'modloader64_api/OOT/OOTAPI';
+import { Age, OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
   ServerNetworkHandler,
   INetworkPlayer,
@@ -33,12 +33,13 @@ import fs from 'fs';
 import { ModelThread } from './ModelThread';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import path from 'path';
-import { Postinit } from 'modloader64_api/PluginLifecycle';
+import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { ModelObject } from './ModelContainer';
 import { ModelEquipmentPackager } from './ModelEquipmentPackager';
 import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
 import { FileSystemCompare } from './FileSystemCompare';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { InjectCore } from 'modloader64_api/CoreInjection';
 
 export class FilePatch {
   offset: number;
@@ -62,6 +63,8 @@ export class RomPatch {
 export class ModelManager {
   @ModLoaderAPIInject()
   ModLoader!: IModLoaderAPI;
+  @InjectCore()
+  core!: IOOTCore
   clientStorage: OotOnlineStorageClient;
   parent: IOotOnlineHelpers;
   allocationManager: ModelAllocationManager;
@@ -79,6 +82,8 @@ export class ModelManager {
   equipmentChildMap: Map<string, number> = new Map<string, number>();
   equipmentIndex = -1;
   equipmentMetadata: any = {};
+  colorProxies: Array<number> = [];
+  lastSeenTunic: number = 0;
 
   constructor(
     clientStorage: OotOnlineStorageClient,
@@ -187,6 +192,18 @@ export class ModelManager {
     }
   }
 
+  @onTick()
+  onTick() {
+    if (this.lastSeenTunic !== this.core.link.tunic) {
+      this.lastSeenTunic = this.core.link.tunic;
+      let addr = 0x000f7ad8 + this.core.link.tunic * 3;
+      let color: Buffer = this.ModLoader.emulator.rdramReadBuffer(addr, 0x3);
+      for (let i = 0; i < this.colorProxies.length; i++) {
+        this.ModLoader.emulator.rdramWriteBuffer(this.colorProxies[i], color);
+      }
+    }
+  }
+
   loadAdultModel(evt: any, file: string) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
     let adult = 502;
@@ -200,7 +217,23 @@ export class ModelManager {
       Object.keys(this.equipmentMetadata).forEach((key: string) => {
         if (this.equipmentAdultMap.has(key)) {
           this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
-          a_copy.writeUInt32BE(this.equipmentMetadata[key], this.equipmentAdultMap.get(key)! + 0x4);
+          let model = this.allocationManager.getModelInSlot(this.equipmentIndex)
+          let offset: number = model.model.equipment.zobj.byteLength;
+          let proxy: Buffer = fs.readFileSync(path.join(__dirname, "color_fix_dlist_template.bin"));
+          let target: number = proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
+          proxy.writeUInt32BE(this.equipmentMetadata[key], target);
+
+          // Expand the buffer.
+          let replacement: Buffer = Buffer.alloc(model.model.equipment.zobj.byteLength + proxy.byteLength);
+          model.model.equipment.zobj.copy(replacement);
+          model.model.equipment.zobj = replacement;
+
+          proxy.copy(model.model.equipment.zobj, offset);
+          let allocation_size = 0x37800;
+          let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
+          addr += offset;
+          a_copy.writeUInt32BE(addr, this.equipmentAdultMap.get(key)! + 0x4);
+          this.colorProxies.push(addr + 0x14);
         }
       });
     }
@@ -238,7 +271,23 @@ export class ModelManager {
       Object.keys(this.equipmentMetadata).forEach((key: string) => {
         if (this.equipmentChildMap.has(key)) {
           this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
-          a_copy.writeUInt32BE(this.equipmentMetadata[key], this.equipmentChildMap.get(key)! + 0x4);
+          let model = this.allocationManager.getModelInSlot(this.equipmentIndex)
+          let offset: number = model.model.equipment.zobj.byteLength;
+          let proxy: Buffer = fs.readFileSync(path.join(__dirname, "color_fix_dlist_template.bin"));
+          let target: number = proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
+          proxy.writeUInt32BE(this.equipmentMetadata[key], target);
+
+          // Expand the buffer.
+          let replacement: Buffer = Buffer.alloc(model.model.equipment.zobj.byteLength + proxy.byteLength);
+          model.model.equipment.zobj.copy(replacement);
+          model.model.equipment.zobj = replacement;
+
+          proxy.copy(model.model.equipment.zobj, offset);
+          let allocation_size = 0x37800;
+          let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
+          addr += offset;
+          a_copy.writeUInt32BE(addr, this.equipmentChildMap.get(key)! + 0x4);
+          this.colorProxies.push(addr + 0x14);
         }
       });
     }
@@ -296,21 +345,26 @@ export class ModelManager {
     let anim = 7;
 
     if (this.customModelFileEquipment !== '') {
-      if (this.customModelFileAdult !== '' || this.customModelFileChild !== '') {
-        this.ModLoader.logger.info("Loading new equipment models...");
-        let mm: ModelEquipmentPackager = new ModelEquipmentPackager(this.customModelFileEquipment, this.customModelFileDesc);
-        let model = new ModelPlayer("Equipment");
-        this.clientStorage.equipmentModel = mm.process();
-        model.model.equipment = new ModelObject(this.clientStorage.equipmentModel);
-        this.equipmentIndex = this.allocationManager.allocateSlot(model);
-        let metaSize: number = model.model.equipment.zobj.readUInt32BE(0xC);
-        this.equipmentMetadata = JSON.parse(model.model.equipment.zobj.slice(0x310, 0x310 + metaSize).toString());
-        let allocation_size = 0x37800;
-        let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
-        Object.keys(this.equipmentMetadata).forEach((key: string) => {
-          this.equipmentMetadata[key] += addr;
-        });
-      }
+      this.ModLoader.logger.info("Loading new equipment models...");
+      let mm: ModelEquipmentPackager = new ModelEquipmentPackager(this.customModelFileEquipment, this.customModelFileDesc);
+      let model = new ModelPlayer("Equipment");
+      this.clientStorage.equipmentModel = mm.process();
+      model.model.equipment = new ModelObject(this.clientStorage.equipmentModel);
+      this.equipmentIndex = this.allocationManager.allocateSlot(model);
+      let metaSize: number = model.model.equipment.zobj.readUInt32BE(0xC);
+      this.equipmentMetadata = JSON.parse(model.model.equipment.zobj.slice(0x310, 0x310 + metaSize).toString());
+      let allocation_size = 0x37800;
+      let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
+      Object.keys(this.equipmentMetadata).forEach((key: string) => {
+        this.equipmentMetadata[key] += addr;
+      });
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_AllocateModelPacket(
+          zlib.deflateSync(this.clientStorage.equipmentModel),
+          0x69,
+          this.ModLoader.clientLobby
+        )
+      );
     }
 
     if (this.customModelFileAdult !== '') {
@@ -371,16 +425,6 @@ export class ModelManager {
         new Ooto_IconAllocatePacket(
           zlib.deflateSync(this.clientStorage.childIcon),
           Age.CHILD,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
-
-    if (this.clientStorage.equipmentModel.byteLength > 1) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_AllocateModelPacket(
-          zlib.deflateSync(this.clientStorage.equipmentModel),
-          0x69,
           this.ModLoader.clientLobby
         )
       );
