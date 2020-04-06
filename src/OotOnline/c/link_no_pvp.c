@@ -205,7 +205,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
     }
 
     /* Right Foot */
-    else if (limb_number == LIMB_FOOR_R)
+    else if (limb_number == LIMB_FOOT_R)
     {
         if (en->puppetData.age == OOT_ADULT)
         {
