@@ -210,6 +210,10 @@ export class PuppetOverlord implements IPuppetOverlord {
     );
   }
 
+  isCurrentlyWarping(){
+    return this.core.link.rdramRead32(0x69C) === 0x00030000;
+  }
+
   @onTick()
   onTick() {
     if (
@@ -221,7 +225,8 @@ export class PuppetOverlord implements IPuppetOverlord {
     }
     if (
       !this.core.helper.isLinkEnteringLoadingZone() &&
-      this.core.helper.isInterfaceShown()
+      this.core.helper.isInterfaceShown() &&
+      !this.isCurrentlyWarping()
     ) {
       this.processNewPlayers();
       this.processAwaitingSpawns();

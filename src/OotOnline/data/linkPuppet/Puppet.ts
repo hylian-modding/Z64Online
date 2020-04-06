@@ -85,13 +85,11 @@ export class Puppet implements IPuppet {
 
   processIncomingPuppetData(data: PuppetData) {
     if (this.isSpawned && !this.isShoveled) {
-      console.log(this.ModLoader.emulator.rdramRead32(this.data.pointer + DEADBEEF_OFFSET).toString(16));
       if (this.ModLoader.emulator.rdramRead32(this.data.pointer + DEADBEEF_OFFSET) === 0xDEADBEEF) {
         Object.keys(data).forEach((key: string) => {
           (this.data as any)[key] = (data as any)[key];
         });
       } else {
-        fs.writeFileSync(path.resolve("./p.bin"), this.ModLoader.emulator.rdramReadBuffer(this.data.pointer, 0x800));
         this.ModLoader.logger.error("Rogue puppet detected. Destroying...");
         bus.emit("OotOnline:RoguePuppet", this);
       }

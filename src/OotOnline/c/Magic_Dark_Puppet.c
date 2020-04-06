@@ -46,7 +46,7 @@ static void draw_diamond(entity_t *en, z64_global_t *gl)
 	z64_gfx_t *gfx_ctxt = (gl->common).gfx_ctxt;
 	uint32_t gp_frames = gl->gameplay_frames;
 	z64_disp_buf_t *xlu = &ZQDL(gl, poly_xlu);
-	external_func_80093D84(gfx_ctxt);
+	z_rcp_append_preset_xlu_80093D84(gfx_ctxt);
 	uint8_t alpha = (uint8_t)((float)en->opacity * 0.6f) & 0xFF;
 	z_matrix_scale_3f((en->actor).scale.x, (en->actor).scale.y, (en->actor).scale.z, 1);
 	z_matrix_yaw((en->actor).rot_2.y * 0.0001f, 1);
