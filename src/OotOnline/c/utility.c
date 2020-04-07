@@ -16,6 +16,9 @@
 #define ANIM_IDLE 0
 #define ANIM_HAPPY 1
 #define ANIM_SAD 2
+#define ANIM_IDLE2 3
+#define ANIM_HOP 4
+#define ANIM_KABOOM 5
 
 const z64_collider_cylinder_init_t Collision =
 {
@@ -45,11 +48,18 @@ typedef struct
     z64_debug_text_t dbg_txt;
     z64_debug_text_t money_txt;
     z64_inputHandler_t inputHandler;
+    bool toggleFollow;
+    vec3f_t initialFollowPosition;
+    vec3f_t targetFollowPosition;
+    float targetFollowTime;
+    int blastoffFrames;
+    float blastoffTime;
     float scaledTimeAlive;
     int anim_state;
     int last_anim_state;
-    float animTime;
+    float anim_time;
     vec3f_t resetPosition;
+    z64_rot_t resetRot;
     uint32_t end; /* Instance End */
 } entity_t;
 
@@ -97,19 +107,19 @@ static void ActorAnimate(entity_t* en) {
     float deltaTime, p;
 
     if (en->anim_state > 0) {
-        deltaTime = en->scaledTimeAlive - en->animTime;
+        deltaTime = en->scaledTimeAlive - en->anim_time;
         p = deltaTime / 1.75f;
     }  
 
     if (en->anim_state != en->last_anim_state) {
         en->last_anim_state = en->anim_state;
-        en->animTime = en->scaledTimeAlive;
+        en->anim_time = en->scaledTimeAlive;
         z_actor_set_scale(&en->actor, 0.015f);
         en->scale_counter = 0;
         en->scale_flag = -1;
     }
 
-    if (p >= 1) {
+    if (p >= 1 && en->anim_state != ANIM_IDLE2) {
         en->anim_state = ANIM_IDLE;
         en->actor.pos_2 = en->resetPosition;
         z_actor_set_scale(&en->actor, 0.015f);
@@ -117,11 +127,12 @@ static void ActorAnimate(entity_t* en) {
 
     if (en->anim_state == ANIM_IDLE) {
         en->resetPosition = en->actor.pos_2;
+        en->resetRot = en->actor.rot_2;
         en->actor.scale.x -= (float)(en->scale_counter * 0.00001f);
         en->actor.scale.y += (float)(en->scale_counter * 0.00001f);
         en->actor.scale.z -= (float)(en->scale_counter * 0.00001f);
     }
-    else if (en->anim_state == ANIM_HAPPY) {
+     else if (en->anim_state == ANIM_HAPPY) {
         if (p <= 0.1f) { // Prepare to jump
             p = PFOP(p, 0, 0.1f);
             en->actor.scale.x = 0.015f + (0.005 * p);
@@ -130,7 +141,7 @@ static void ActorAnimate(entity_t* en) {
         }
         else if (p <= 0.6f) { // Jump and half spin
             p = PFOP(p, 0.1, 0.5f);
-            en->actor.pos_2.y = 15 * p;
+            en->actor.pos_2.y = en->resetPosition.y + (15 * p);
             en->actor.rot_2.y = (en->actor).rot_toward_link_y + ((405 * DEG2S) * p);
             en->actor.scale.x = 0.015f + (0.005f * (1 - p));
             en->actor.scale.y = 0.015f + (0.005f * p);
@@ -138,7 +149,7 @@ static void ActorAnimate(entity_t* en) {
         }
         else if (p <= 0.75f) { // Fall
             p = PFOP(p, 0.6f, 0.15f);
-            en->actor.pos_2.y = 15 * (1 - p);
+            en->actor.pos_2.y = en->resetPosition.y + (15 * (1 - p));
             en->actor.rot_2.y = (en->actor).rot_toward_link_y + ((405 * DEG2S) - ((52 * DEG2S) * p));
             en->actor.scale.y = 0.015f + (0.005f * (1 - p));
         }
@@ -194,6 +205,53 @@ static void ActorAnimate(entity_t* en) {
             en->actor.scale.z = 0.015f + (0.005f * (1 - p));
         }
     }
+    else if (en->anim_state == ANIM_IDLE2) {
+        p = deltaTime / 3.0f;
+
+        if (p >= 1) {
+            en->anim_state = ANIM_IDLE;
+            en->actor.pos_2 = en->resetPosition;
+            z_actor_set_scale(&en->actor, 0.015f);
+        }
+
+        if (p < 0.3333) { // Look left and squeeze
+            p = PFOP(p, 0, 0.3333f);
+            p = p * p * p;
+
+            en->actor.scale.x = 0.015f - (0.0025f * p);
+            en->actor.scale.y = 0.015f + (0.002f * p);
+            en->actor.scale.z = 0.015f - (0.0025f * p);
+
+            en->actor.rot_2.y = en->resetRot.y - ((50 * DEG2S) * p);
+        }
+        else if (p < 0.5f) { // Center
+            p = PFOP(p, 0.3333f, 0.16666f);
+
+            en->actor.scale.x = 0.015f - (0.0025f * (1 - p));
+            en->actor.scale.y = 0.015f + (0.002f * (1 - p));
+            en->actor.scale.z = 0.015f - (0.0025f * (1 - p));
+
+            en->actor.rot_2.y = en->resetRot.y - ((50 * DEG2S) * (1 - p));
+        }
+        else if (p < 0.6666f) { // Look right
+            p = PFOP(p, 0.5f, 0.16666f);
+
+            en->actor.scale.x = 0.015f - (0.0025f * p);
+            en->actor.scale.y = 0.015f + (0.002f * p);
+            en->actor.scale.z = 0.015f - (0.0025f * p);
+
+            en->actor.rot_2.y = en->resetRot.y + ((50 * DEG2S) * p);
+        }
+        else if (p < 1.0f) { // Center
+            p = PFOP(p, 0.6666f, 0.3333f);
+
+            en->actor.scale.x = 0.015f - (0.0025f * (1 - p));
+            en->actor.scale.y = 0.015f + (0.002f * (1 - p));
+            en->actor.scale.z = 0.015f - (0.0025f * (1 - p));
+
+            en->actor.rot_2.y = en->resetRot.y + ((50 * DEG2S) * (1 - p));
+        }
+    }
 }
 
 static void menu_input_update(entity_t *en, z64_global_t *global)
@@ -244,20 +302,29 @@ static void menu_input_update(entity_t *en, z64_global_t *global)
 
 static void init(entity_t *en, z64_global_t *global)
 {
+    //AVAL(BANK_RUPEES, int16_t, 0) = 8999;
     en->actor.text_id = 0x0006;
     z_actor_set_scale(&en->actor, 0.015f);
     z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
     construct_z64_inputHandler_t(&en->inputHandler, &global->common.input[0].raw);
+    en->toggleFollow = false;
+    en->targetFollowTime = 0;
+    en->initialFollowPosition = en->actor.pos_2;
+    en->targetFollowPosition = en->actor.pos_2;
+    en->scaledTimeAlive = 0;
+    en->blastoffTime = 0;
+    en->blastoffFrames = 0;
     en->scale_counter = 0;
     en->scale_flag = -1;
     en->anim_state = 0;
     en->last_anim_state = 0;
-    en->animTime = 0;
+    en->anim_time = 0;
     en->end = 0xDEADBEEF;
 }
 
 static void play(entity_t *en, z64_global_t *global)
 {
+    z64_actor_t* rupee;
     z64_player_t* Link = zh_get_player(global);
     /* Set Z-Target Position*/
     en->actor.pos_3 = en->actor.pos_2;
@@ -272,18 +339,53 @@ static void play(entity_t *en, z64_global_t *global)
         /* Checks if the player responded to the textbox */
         if (player_responded_to_textbox(global) == 1)
         {
+            vec3f_t data = vec3f_zero;
+            uint32_t smoke_inner_color = 0xFFFFFFFF;
+	        uint32_t smoke_outer_color = 0x00969696;
+            if (AVAL(BANK_RUPEES, int16_t, 0) % 420 == 0) {
+                smoke_inner_color = 0x007E00FF;
+                smoke_outer_color = 0x00003600;
+            }
             int v = zh_player_textbox_selection(global);
-            if (v == 0) {
+            if (v == 0) { 
                 ChangeBankRupees(en, global, en->rupee_amount.composite); /* Withdraw */
                 en->anim_state = ANIM_SAD;
-                en->animTime = en->scaledTimeAlive;
+                en->anim_time = en->scaledTimeAlive;
                 z_actor_play_sfx2(&en->actor, NA_SE_EN_PO_SISTER_DEAD);
+                z_effect_spawn_dead_db(
+                    global
+                    , &en->actor.pos_2
+                    , &data
+                    , &data
+                    , 250
+                    , 0
+                    , RED32(smoke_inner_color), GREEN32(smoke_inner_color), BLUE32(smoke_inner_color)
+                    , ALPHA32(smoke_inner_color)
+                    , RED24(smoke_outer_color), GREEN24(smoke_outer_color), BLUE24(smoke_outer_color)
+                    , 10
+                    , 15 /* Frames */
+                    , 10
+                );
             }
             else {
                 ChangeBankRupees(en, global, -en->rupee_amount.composite); /* Deposit */
                 en->anim_state = ANIM_HAPPY;
-                en->animTime = en->scaledTimeAlive;
+                en->anim_time = en->scaledTimeAlive;
                 z_actor_play_sfx2(&en->actor, NA_SE_EN_PO_LAUGH);
+                z_effect_spawn_dead_db(
+                    global
+                    , &en->actor.pos_2
+                    , &data
+                    , &data
+                    , 250
+                    , 0
+                    , RED32(smoke_inner_color), GREEN32(smoke_inner_color), BLUE32(smoke_inner_color)
+                    , ALPHA32(smoke_inner_color)
+                    , RED24(smoke_outer_color), GREEN24(smoke_outer_color), BLUE24(smoke_outer_color)
+                    , 1
+                    , 30 /* Frames */
+                    , 1
+                );
             }
 
             en->rupee_amount.hundreds = 0;
@@ -292,6 +394,110 @@ static void play(entity_t *en, z64_global_t *global)
         }
     }
     else en->playerIsBusy = 0;
+
+    if (en->actor.dist_from_link_xz > 500.0f && en->scaledTimeAlive - en->anim_time > 6.0f + math_rand_f32(10.0f)) {
+        en->anim_state = ANIM_IDLE2;
+        en->anim_time = en->scaledTimeAlive;
+    }
+
+    /*if (en->cylinder.base.colliding_actor->actor_id == 0x0016) { // TODO? -> results in crash
+        en->anim_state = ANIM_HAPPY;
+        en->anim_time = en->scaledTimeAlive;
+        z_actor_play_sfx2(&en->actor, NA_SE_EN_PO_SISTER_DEAD);
+    }*/
+
+    if (en->toggleFollow && en->anim_state != ANIM_KABOOM) {
+        if (en->actor.dist_from_link_xz > 75.0f && en->targetFollowTime == 0) {
+            en->initialFollowPosition = en->actor.pos_2;
+            en->targetFollowPosition = vec3f_add(Link->actor.pos_2, Link->actor.vel_1);
+            en->targetFollowTime = en->scaledTimeAlive;
+            en->anim_state = ANIM_HOP;
+            z_actor_play_sfx2(&en->actor, NA_SE_EN_STAL_JUMP);
+            int idx = z_lib_math_rand_s16_offset(0, 5);
+            idx = idx < 3 ? idx : idx + 0x10;
+            z_item_drop(global, &en->actor.pos_2, idx);
+        }
+
+        if (en->targetFollowTime != 0) {
+            float d = en->scaledTimeAlive - en->targetFollowTime;
+            float p = d / 0.5f;
+
+            if (p >= 1) {
+                en->targetFollowTime = 0;
+                en->anim_state = ANIM_IDLE;
+                en->actor.rot_2.x = 0;
+            }
+            else {
+                int sp34, sp24;
+                vec3f_t temp = en->actor.pos_2;
+                temp.y += 10.0f;
+
+                float result = math_raycast(&global->col_ctxt, &sp34, &sp24, &en->actor, &temp);
+
+                en->actor.pos_2 = vec3f_add(en->initialFollowPosition, vec3f_mul_f(vec3f_sub(en->targetFollowPosition, en->initialFollowPosition), p));
+                if (p < 0.25f) {
+                    p = PFOP(p, 0, 0.25f);
+                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result : en->initialFollowPosition.y;
+                    en->actor.rot_2.x = (DEG2S * 45.0f) * p;
+                }
+                else if (p < 0.666f) {
+                    p = PFOP(p, 0.25f, 0.416f);
+                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result + (30 * p) : Link->actor.pos_2.y + (30 * p);
+                    en->actor.rot_2.x = (DEG2S * 45.0f) * (1 - p);
+                }
+                else if (p < 0.9f) {
+                    p = PFOP(p, 0.666f, 0.234f);
+                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result + (30 * (1 - p)) : Link->actor.pos_2.y + (30 * (1 - p));
+                    en->actor.rot_2.x = (DEG2S * -45.0f) * p;
+                }
+                else {
+                    p = PFOP(p, 0.9f, 0.1f);
+                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result : Link->actor.pos_2.y;
+                    en->actor.rot_2.x = (DEG2S * -45.0f) * (1 - p);
+                }
+            }
+        }
+    }
+
+    if (AVAL(BANK_RUPEES, int16_t, 0) > 9000) { // BLAST OFF
+        en->anim_state = 0;
+        en->anim_time = 0;
+        if (!en->blastoffTime) {
+            en->blastoffTime = en->scaledTimeAlive;
+            en->anim_state = ANIM_KABOOM;
+        }
+        else {
+            vec3f_t temp = vec3f_zero;
+            float delta = en->scaledTimeAlive - en->blastoffTime;
+            if (delta <= 5) {
+                if (en->blastoffFrames == 80) z_sfx_play_system(NA_SE_SY_WARNING_COUNT_E, &en->actor.pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+                else if (en->blastoffFrames % 20 == 0) z_sfx_play_system(NA_SE_SY_WARNING_COUNT_N, &en->actor.pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+            }
+            else if (delta <= 30) {   
+                if (en->blastoffFrames == 100) {
+                    rupee = z_actor_spawn(&global->actor_ctxt, global, 0x131, en->actor.pos_2.x, en->actor.pos_2.y + 60.0f, en->actor.pos_2.z, 0, 0, 0, 0x0001);
+                    for (int i = 0; i <= 36; i++) {
+                        int idx = z_lib_math_rand_s16_offset(0, 5);
+                        idx = idx < 3 ? idx : idx + 0x10;
+                        temp = vec3f_new_f(z_cos(DTOR(i * 10.0f)) * 4.0f * i, z_sin(i) * 5.0f, z_sin(DTOR(i * 10.0f)) * 4.0f * i);
+                        temp = vec3f_add(temp, en->actor.pos_2);
+                        temp.y = Link->actor.pos_2.y + 5.0f;
+                        z_item_drop(global, &en->actor.pos_2, idx);
+                    }
+                }
+                if (en->blastoffFrames % 5 == 0) {
+                    z_actor_play_sfx2(en, NA_SE_IT_BOMB_EXPLOSION);
+                    effect_spawn_bomb2(global, &en->actor.pos_2, &temp, &temp, 33.0f, 0x14);
+                }
+                en->actor.pos_2.y += 3 * delta;
+                en->actor.rot_2.y += (3 * DEG2S) * delta;
+            }
+            else {
+                z_actor_kill(en);
+            }
+            en->blastoffFrames++;
+        }
+    }
 
     menu_input_update(en, global);
     z_collider_cylinder_update(&en->actor, &en->cylinder);
@@ -303,10 +509,10 @@ static void draw(entity_t *en, z64_global_t *global)
     en->scale_counter += en->scale_flag;
     if (ABS(en->scale_counter) >= 5) en->scale_flag = -en->scale_flag;
 
-    (en->actor).rot_2.y = (en->actor).rot_toward_link_y;
+    if (en->actor.dist_from_link_xz <= 500.0f) (en->actor).rot_2.y = (en->actor).rot_toward_link_y;
     ActorAnimate(en);
 
-    vec3f_t scale = vec3f_new_f(0.3f, 0.3f, 0.3f);
+    vec3f_t scale = vec3f_new_f(en->actor.scale.x * 17.5f, en->actor.scale.y * 17.5f, en->actor.scale.z * 17.5f);
 
     if (player_talk_state(AADDR(global, 0x20D8)) == 4)
     {
@@ -317,8 +523,8 @@ static void draw(entity_t *en, z64_global_t *global)
       debug_set_text_rgba(&en->dbg_txt, 255, 255, 255, 255);
       debug_set_text_xy(&en->dbg_txt, 3, 7);
       debug_set_text_string(&en->dbg_txt, "Bank Balance: %d", AVAL(BANK_RUPEES, int16_t, 0));
-      debug_set_text_xy(&en->dbg_txt, 3, 8);
-      debug_set_text_string(&en->dbg_txt, "Amount: ");
+      debug_set_text_xy(&en->dbg_txt, 9, 8);
+      debug_set_text_string(&en->dbg_txt, "Amount:");
       ovl->p = (Gfx*)debug_update_text_struct(&en->dbg_txt);
 
       /* Money Handler */
