@@ -40,12 +40,12 @@ export class PuppetData implements IPuppetData{
     this.copyFields.push('current_mask');
     this.copyFields.push('stick_length');
     this.copyFields.push('action_param');
-    this.copyFields.push("xzvel");
+    /* this.copyFields.push("xzvel");
     this.copyFields.push("state_flags_1");
     this.copyFields.push("left_state");
     this.copyFields.push("right_state");
     this.copyFields.push("gi_obtain");
-    this.copyFields.push("gi_obj");
+    this.copyFields.push("gi_obj"); */
   }
 
   get stick_length(): number {

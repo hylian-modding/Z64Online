@@ -69,20 +69,33 @@ export class Ooto_SubscreenSyncPacket extends Packet {
   }
 }
 
+export class Ooto_BankSyncPacket extends Packet{
+  savings: number;
+
+  constructor(saving: number, lobby: string){
+    super('Ooto_BankSyncPacket', 'OotOnline', lobby, true);
+    this.savings = saving;
+  }
+}
+
 export class Ooto_DownloadResponsePacket extends Packet {
   subscreen: Ooto_SubscreenSyncPacket;
   flags: Ooto_ServerFlagUpdate;
+  bank: Ooto_BankSyncPacket;
 
   constructor(
     subscreen: Ooto_SubscreenSyncPacket,
     scenes: Ooto_ServerFlagUpdate,
+    bank: Ooto_BankSyncPacket,
     lobby: string
   ) {
     super('Ooto_DownloadResponsePacket', 'OotOnline', lobby, false);
     this.subscreen = subscreen;
     this.flags = scenes;
+    this.bank = bank;
+    packetHelper.cloneDestination(this, this.subscreen);
     packetHelper.cloneDestination(this, this.flags);
-    packetHelper.cloneDestination(this, this.flags);
+    packetHelper.cloneDestination(this, this.bank);
   }
 }
 

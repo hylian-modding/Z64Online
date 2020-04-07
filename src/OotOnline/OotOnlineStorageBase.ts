@@ -28,4 +28,5 @@ export class OotOnlineStorageBase {
   equipmentStorage: EquipmentSave = new EquipmentSave();
   questStorage: QuestSave = new QuestSave();
   changelog: Array<SavedLogEntry> = new Array<SavedLogEntry>();
+  bank: number = 0;
 }

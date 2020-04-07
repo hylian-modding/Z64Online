@@ -1,2 +1,0 @@
-Base Offset: 0x00000800
-00001D80 : Postbox

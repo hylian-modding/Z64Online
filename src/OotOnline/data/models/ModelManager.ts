@@ -180,9 +180,11 @@ export class ModelManager {
       let addr: number = 0x800000 + allocation_size * this.equipmentIndex;
       this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(model.model.equipment.zobj, this.equipmentIndex));
     }
-    let buf: Buffer = fs.readFileSync(global.ModLoader["startdir"] + "/Postbox_lut_repoint.zobj");
-    this.ModLoader.emulator.rdramWriteBuffer(0x7FE0E0, buf);
-    fs.writeFileSync(global.ModLoader["startdir"] + "/ram_dump.bin", this.ModLoader.emulator.rdramReadBuffer(0x0, (16 * 1024 * 1024)));
+    let buf: Buffer = fs.readFileSync(path.join(__dirname, "/Postbox_lut_repoint.zobj"));
+    this.ModLoader.utils.setTimeoutFrames(()=>{
+      this.ModLoader.logger.debug("Writing postbox...");
+      this.ModLoader.emulator.rdramWriteBuffer(0x7FE0E0, buf);
+    }, 100);
   }
 
   @EventHandler(OotEvents.ON_LOADING_ZONE)
@@ -340,7 +342,7 @@ export class ModelManager {
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
     // CTRL+F DELETE THIS SHIT LATER.
-    let mep: ModelEquipmentPackager = new ModelEquipmentPackager(global.ModLoader["startdir"] + "/Postbox.zobj", global.ModLoader["startdir"] + "/Postbox_display_lists.txt");
+    let mep: ModelEquipmentPackager = new ModelEquipmentPackager(path.join(__dirname + "/Postbox.zobj"), path.join(__dirname, "/Postbox_display_lists.txt"));
     let buf: Buffer = mep.process();
     let buf2: Buffer = new zzstatic().doRepoint(buf, 0, false, 0x807FE0E0);
     let size: number = buf2.byteLength;
@@ -349,7 +351,7 @@ export class ModelManager {
     }
     let buf3: Buffer = Buffer.alloc(size);
     buf2.copy(buf3);
-    fs.writeFileSync(global.ModLoader["startdir"] + "/Postbox_lut_repoint.zobj", buf3);
+    fs.writeFileSync(path.join(__dirname, "/Postbox_lut_repoint.zobj"), buf3);
     this.setupPuppetModels(evt);
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir);

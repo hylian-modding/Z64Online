@@ -64,6 +64,7 @@ import {
   Ooto_DownloadResponsePacket,
   Ooto_DownloadResponsePacket2,
   Ooto_SceneGUIPacket,
+  Ooto_BankSyncPacket,
 } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
@@ -240,6 +241,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         this.ModLoader.clientLobby
       )
     );
+    if (this.utility.lastKnownBalance !== this.ModLoader.emulator.rdramRead16(0x8011B874)) {
+      this.utility.lastKnownBalance = this.ModLoader.emulator.rdramRead16(0x8011B874);
+      this.ModLoader.clientSide.sendPacket(new Ooto_BankSyncPacket(this.utility.lastKnownBalance, this.ModLoader.clientLobby));
+    }
     this.clientStorage.needs_update = false;
   }
 
@@ -432,6 +437,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p)
       );
     }, 1000);
+    this.utility.makeRamDump();
   }
 
   //------------------------------
@@ -784,6 +790,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             storage.skulltulaStorage,
             packet.lobby
           ),
+          new Ooto_BankSyncPacket(storage.bank, packet.lobby),
           packet.lobby
         ),
         packet.player
@@ -814,6 +821,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.core.save.itemFlags = packet.flags.items;
     this.core.save.infTable = packet.flags.inf;
     this.core.save.skulltulaFlags = packet.flags.skulltulas;
+    this.clientStorage.bank = packet.bank.savings;
+    this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
     this.clientStorage.first_time_sync = true;
   }
 
@@ -1091,6 +1100,24 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
+  @ServerNetworkHandler("Ooto_BankSyncPacket")
+  onBankUpdate_server(packet: Ooto_BankSyncPacket) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      this
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    storage.bank = packet.savings;
+  }
+
+  @NetworkHandler("Ooto_BankSyncPacket")
+  onBankUpdate(packet: Ooto_BankSyncPacket){
+    this.clientStorage.bank = packet.savings;
+    this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
+  }
+
   // Healing
   healPlayer() {
     if (
@@ -1219,7 +1246,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_RECEIVED_CRASH_LOG)
-  onServerReceivedCrashlog(evt: any){
+  onServerReceivedCrashlog(evt: any) {
     let cp: CrashParserActorTable = new CrashParserActorTable();
     let html: string = cp.parse(evt.dump);
     fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
