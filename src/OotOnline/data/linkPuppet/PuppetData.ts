@@ -9,7 +9,7 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IPuppetData } from '../../OotoAPI/IPuppetData';
 import { bus } from 'modloader64_api/EventHandler';
 
-export class PuppetData implements IPuppetData{
+export class PuppetData implements IPuppetData {
   pointer: number;
   ModLoader: IModLoaderAPI;
   core: IOOTCore;
@@ -337,6 +337,9 @@ export class PuppetData implements IPuppetData{
               break;
           }
         }
+      }
+      if (left_hand === 2) {
+        id = 0;
       }
     } else {
       switch (num) {
