@@ -41,7 +41,8 @@ export class PuppetOverlord implements IPuppetOverlord {
       this.core,
       // The pointer here points to blank space, so should be fine.
       0x6011e8,
-      this.ModLoader
+      this.ModLoader,
+      this.parent
     );
   }
 
@@ -122,7 +123,8 @@ export class PuppetOverlord implements IPuppetOverlord {
           player,
           this.core,
           0x0,
-          this.ModLoader
+          this.ModLoader,
+          this.parent
         )
       );
       this.ModLoader.logger.info(

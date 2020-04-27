@@ -37,7 +37,6 @@ import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { ModelObject } from './ModelContainer';
 import { ModelEquipmentPackager } from './ModelEquipmentPackager';
 import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
-import { FileSystemCompare } from './FileSystemCompare';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 
@@ -180,15 +179,10 @@ export class ModelManager {
       let addr: number = 0x800000 + allocation_size * this.equipmentIndex;
       this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(model.model.equipment.zobj, this.equipmentIndex));
     }
-    let buf: Buffer = fs.readFileSync(path.join(__dirname, "/Postbox_lut_repoint.zobj"));
-    this.ModLoader.utils.setTimeoutFrames(()=>{
-      this.ModLoader.logger.debug("Writing postbox...");
-      this.ModLoader.emulator.rdramWriteBuffer(0x7FE0E0, buf);
-    }, 100);
   }
 
   @EventHandler(OotEvents.ON_LOADING_ZONE)
-  onSceneChange(evt: any) {
+  onLoadingZone(evt: any) {
     if (this.customModelFileEquipment !== '') {
       let model = this.allocationManager.getModelInSlot(this.equipmentIndex);
       let allocation_size = 0x37800;
@@ -339,24 +333,13 @@ export class ModelManager {
     this.allocationManager.models[1] = c;
   }
 
+  @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
+  onRomPatchedPre(evt: any) {
+    this.setupPuppetModels(evt);
+  }
+
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
-    // CTRL+F DELETE THIS SHIT LATER.
-    let mep: ModelEquipmentPackager = new ModelEquipmentPackager(path.join(__dirname + "/Postbox.zobj"), path.join(__dirname, "/Postbox_display_lists.txt"));
-    let buf: Buffer = mep.process();
-    let buf2: Buffer = new zzstatic().doRepoint(buf, 0, false, 0x807FE0E0);
-    let size: number = buf2.byteLength;
-    while (size % 0x10 !== 0) {
-      size++;
-    }
-    let buf3: Buffer = Buffer.alloc(size);
-    buf2.copy(buf3);
-    fs.writeFileSync(path.join(__dirname, "/Postbox_lut_repoint.zobj"), buf3);
-    this.setupPuppetModels(evt);
-    if (!fs.existsSync(this.cacheDir)) {
-      fs.mkdirSync(this.cacheDir);
-    }
-
     this.ModLoader.logger.info('Starting custom model setup...');
     let anim = 7;
 
@@ -445,7 +428,6 @@ export class ModelManager {
         )
       );
     }
-
     this.ModLoader.logger.info('Done.');
 
     /*     let code_file: Buffer = this.decompressFileFromRom(evt.rom, 27);
@@ -682,6 +664,8 @@ export class ModelManager {
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: Puppet) {
+    let puppet_spawn_params_ptr: number = 0x80600140;
+    let puppet_spawn_variable_offset: number = 0xE;
     this.ModLoader.emulator.rdramWriteBuffer(
       0x800000,
       this.allocationManager.getModelInSlot(0).model.adult.zobj
@@ -690,7 +674,7 @@ export class ModelManager {
       0x837800,
       this.allocationManager.getModelInSlot(1).model.child.zobj
     );
-    this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
+    this.ModLoader.emulator.rdramWritePtr16(puppet_spawn_params_ptr, puppet_spawn_variable_offset, puppet.age);
     if (
       !this.clientStorage.playerModelCache.hasOwnProperty(puppet.player.uuid)
     ) {
@@ -773,8 +757,34 @@ export class ModelManager {
       }
     }
     if (passed) {
-      this.ModLoader.emulator.rdramWrite16(0x60014e, index);
+      this.ModLoader.emulator.rdramWritePtr16(puppet_spawn_params_ptr, puppet_spawn_variable_offset, index);
     }
+  }
+
+  @EventHandler(OotEvents.ON_SCENE_CHANGE)
+  onSceneChange(scene: number) {
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.getModelInSlot(0).model.adult.zobj
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.getModelInSlot(1).model.child.zobj
+    );
+    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
+  }
+
+  @EventHandler(EventsClient.ON_INJECT_FINISHED)
+  onLoaded(evt: any) {
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.getModelInSlot(0).model.adult.zobj
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.getModelInSlot(1).model.child.zobj
+    );
+    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)

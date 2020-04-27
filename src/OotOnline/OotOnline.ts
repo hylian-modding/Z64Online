@@ -25,6 +25,7 @@ import {
   MagicQuantities,
   IInventory,
   Age,
+  IOvlPayloadResult,
 } from 'modloader64_api/OOT/OOTAPI';
 import {
   IOotOnlineHelpers,
@@ -77,10 +78,10 @@ import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
-import { TextboxManip } from './data/textbox/TextboxManip';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
-import { IActor } from 'modloader64_api/OOT/IActor';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { FlagExceptionManager } from './data/FlagExceptionManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -98,7 +99,8 @@ const enum SCENES {
   HYRULE_FIELD = 0x0051,
   FOREST_TEMPLE = 0x0003,
   KAKARIKO_VILLAGE = 0x0052,
-  TOWER_COLLAPSE = 0x001A
+  TOWER_COLLAPSE = 0x001A,
+  GUARD_HOUSE = 0x004D
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
@@ -115,32 +117,23 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   modelManager: ModelManager;
   keys: KeyLogManager;
   emotes: EmoteManager;
-  textboxes: TextboxManip;
   utility: UtilityActorHelper;
+  flagExceptions: FlagExceptionManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
-  warpLookupTable: Map<number, number> = new Map<number, number>();
+  offset: number = -1;
 
   constructor() {
-    this.warpLookupTable.set(SCENES.FOREST_TEMPLE, 0x0169);
-    this.warpLookupTable.set(SCENES.HYRULE_FIELD, 0x00CD);
-    this.warpLookupTable.set(SCENES.LON_LON_RANCH, 0x0157);
-    this.warpLookupTable.set(SCENES.KAKARIKO_VILLAGE, 0x00DB);
-    this.warpLookupTable.set(SCENES.TOWER_COLLAPSE, 0x0134);
     this.overlord = new PuppetOverlord(this);
     this.actorHooks = new ActorHookingManager(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
-    this.textboxes = new TextboxManip();
     this.utility = new UtilityActorHelper();
+    this.flagExceptions = new FlagExceptionManager();
   }
 
   preinit(): void {
-  }
-
-  warpToScene(scene: number) {
-    this.core.commandBuffer.runWarp(this.warpLookupTable.get(scene)!, 0);
   }
 
   debuggingBombs() {
@@ -160,8 +153,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   init(): void {
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_no_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/horse-3.c"), dest: path.join(__dirname, "/payloads/E0/epona_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/epona_puppet.json") });
-    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/utility.c"), dest: path.join(__dirname, "/payloads/E0/utility_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/utility_actor.json") });
-    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/Magic_Dark_Puppet.c"), dest: path.join(__dirname, "/payloads/E0/nayru_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/nayru_puppet.json") });
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/bank.c"), dest: path.join(__dirname, "/payloads/E0/bank_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/bank_actor.json") });
+    //bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/Magic_Dark_Puppet.c"), dest: path.join(__dirname, "/payloads/E0/nayru_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/nayru_puppet.json") });
   }
 
   postinit(): void {
@@ -185,32 +178,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     status.partyMax = 30;
     status.partySize = 1;
     this.ModLoader.gui.setDiscordStatus(status);
-    bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
-  }
-
-  @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
-  onPayload(evt: any) {
-    if (evt.file === 'link_puppet.ovl') {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x600140, evt.result);
-        this.ModLoader.logger.debug('Setting link puppet id to ' + evt.result + '.');
-      }, 20);
-    } else if (evt.file === 'epona_puppet.ovl') {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x600150, evt.result);
-        this.ModLoader.logger.debug('Setting epona puppet id to ' + evt.result + '.');
-      }, 20);
-    } else if (evt.file === "utility_actor.ovl") {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x600190, evt.result);
-        this.ModLoader.logger.debug('Setting utility actor id to ' + evt.result + '.');
-      }, 20);
-    } else if (evt.file === "nayru_puppet.ovl") {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x6001A0, evt.result);
-        this.ModLoader.logger.debug('Setting Nayru puppet id to ' + evt.result + '.');
-      }, 20);
-    }
+    //bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
   }
 
   @EventHandler(OotOnlineEvents.GHOST_MODE)
@@ -345,7 +313,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
-  updateBottles() {
+  updateBottles(onlyfillCache = false) {
     let bottles: InventoryItem[] = [
       this.core.save.inventory.bottle_1,
       this.core.save.inventory.bottle_2,
@@ -356,9 +324,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       if (bottles[i] !== this.clientStorage.bottleCache[i]) {
         this.clientStorage.bottleCache[i] = bottles[i];
         this.ModLoader.logger.info('Bottle update.');
-        this.ModLoader.clientSide.sendPacket(
-          new Ooto_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby)
-        );
+        if (!onlyfillCache) {
+          this.ModLoader.clientSide.sendPacket(
+            new Ooto_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby)
+          );
+        }
       }
     }
   }
@@ -437,7 +407,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p)
       );
     }, 1000);
-    this.utility.makeRamDump();
   }
 
   //------------------------------
@@ -548,19 +517,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         )
       );
     }
-    /*     this.ModLoader.utils.setTimeoutFrames(() => {
-          this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x806001A0, (success: boolean, result: number) => {
-            if (success) {
-              fs.writeFileSync("./ram_dump.bin", this.ModLoader.emulator.rdramReadBuffer(0x0, (16 * 1024 * 1024)));
-              console.log("SPAWNED ACTOR " + result.toString(16));
-              let actor: IActor = this.core.actorManager.createIActorFromPointer(result);
-              actor.room = 0xFF;
-              actor.position.x = this.core.link.position.x;
-              actor.position.y = this.core.link.position.y;
-              actor.position.z = this.core.link.position.z;
-            }
-          });
-        }, 20); */
   }
 
   @EventHandler(OotEvents.ON_ROOM_CHANGE)
@@ -824,6 +780,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.clientStorage.bank = packet.bank.savings;
     this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
     this.clientStorage.first_time_sync = true;
+    this.updateBottles(true);
   }
 
   // I am giving the server data.
@@ -832,6 +789,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.clientStorage.first_time_sync = true;
     this.ModLoader.logger.info('The lobby is mine!');
     this.clientStorage.needs_update = true;
+    this.updateBottles(true);
   }
 
   @ServerNetworkHandler('Ooto_SubscreenSyncPacket')
@@ -1113,7 +1071,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   @NetworkHandler("Ooto_BankSyncPacket")
-  onBankUpdate(packet: Ooto_BankSyncPacket){
+  onBankUpdate(packet: Ooto_BankSyncPacket) {
     this.clientStorage.bank = packet.savings;
     this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
   }
@@ -1243,6 +1201,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       './Ooto_storagedump.json',
       JSON.stringify(this.clientStorage, null, 2)
     );
+    this.utility.makeRamDump();
   }
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_RECEIVED_CRASH_LOG)
@@ -1250,6 +1209,39 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     let cp: CrashParserActorTable = new CrashParserActorTable();
     let html: string = cp.parse(evt.dump);
     fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
+  }
+
+  @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
+  onPayload(evt: any) {
+    if (path.parse(evt.file).ext === ".ovl") {
+      let result: IOvlPayloadResult = evt.result;
+      this.clientStorage.overlayCache[evt.file] = result;
+    }
+    if (evt.file === "link_no_pvp.ovl") {
+      let result: IOvlPayloadResult = evt.result;
+      this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
+    }
+  }
+
+  @EventHandler(EventsClient.ON_INJECT_FINISHED)
+  onStartupFinished(evt: any){
+    //this.core.toggleMapSelectKeybind();
+  }
+  
+  @EventHandler(ModLoader.ModLoaderEvents.ON_ROM_PATCHED)
+  onRom(evt: any){
+    let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+    let file_select_ovl: Buffer = tools.decompressFileFromRom(evt.rom, 32);
+    let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
+    if (expected_hash !== hash){
+      this.ModLoader.logger.info("File select overlay is modified. Is this rando? Checking known hashes...");
+      // This is valid as of OotR 5.2.
+      let last_known_rando_hash: string = "88ab625338286690db601e02171aa8b6";
+      if (last_known_rando_hash === hash){
+        this.ModLoader.logger.info("I'm fairly certain this is rando. Setting up some compatibility stuff.");
+      }
+    }
   }
 }
 

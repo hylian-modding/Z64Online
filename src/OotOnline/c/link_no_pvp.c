@@ -124,7 +124,7 @@ static void init(entity_t *en, z64_global_t *global)
     {
         uint32_t id_addr = 0x80600150;
         uint16_t *seg2 = (uint16_t *)id_addr;
-        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos_2.x, en->actor.pos_2.y, en->actor.pos_2.z, en->actor.rot_2.x, en->actor.rot_2.y, en->actor.rot_2.z, en->actor.variable);
+        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, en->actor.variable);
     }
 
     en->end = 0xDEADBEEF;
@@ -622,11 +622,11 @@ static void draw(entity_t *en, z64_global_t *global)
     z_skelanime_draw(global, 0x12, en, &en->skelanime, &Animate, &otherCallback);
 
     vec3f_t Scale[3] = {0.2, 0.2, 0.2};
-    actor_shadow_circle(&en->actor.pos_2, Scale, 0x00FF, global);
+    actor_shadow_circle(&en->actor.pos, Scale, 0x00FF, global);
 
     if (en->puppetData.soundid > 0)
     {
-        z_sfx_play_position(global, &en->actor.pos_2, 25.0, en->puppetData.soundid);
+        z_sfx_play_position(global, &en->actor.pos, 25.0, en->puppetData.soundid);
         en->puppetData.soundid = 0;
     }
 }
@@ -644,7 +644,7 @@ static void destroy(entity_t *en, z64_global_t *global)
 
 /* .data */
 const z64_actor_init_t init_vars = {
-    .number = 0x01,
+    .number = 0x05,
     .padding = 0x00,
     .type = 0x4,
     .room = 0xFF,

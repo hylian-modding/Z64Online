@@ -26,7 +26,7 @@ export class UtilityActorHelper {
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
         //@ts-ignore
-        this.currentBank = undefined;
+        /* this.currentBank = undefined;
         if (this.sceneList.hasOwnProperty(scene) || this.ModLoader.emulator.rdramRead8(0x80718000)) {
             this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600190, (success: boolean, result: number) => {
                 if (success) {
@@ -45,12 +45,12 @@ export class UtilityActorHelper {
                     this.currentBank = actor;
                 }
             });
-        }
+        } */
     }
 
     @onTick()
     onTick() {
-        if (this.ModLoader.emulator.rdramRead8(0x80718002) === 1 && this.currentBank !== undefined) {
+        /* if (this.ModLoader.emulator.rdramRead8(0x80718002) === 1 && this.currentBank !== undefined) {
             if (this.sceneList.hasOwnProperty(this.core.global.scene)) {
                 this.currentBank.position.x = this.sceneList[this.core.global.scene].x;
                 this.currentBank.position.y = this.sceneList[this.core.global.scene].y;
@@ -61,7 +61,7 @@ export class UtilityActorHelper {
                 this.currentBank = undefined;
             }
             this.ModLoader.emulator.rdramWrite8(0x80718002, 0);
-        }
+        } */
     }
 
     makeRamDump() {
