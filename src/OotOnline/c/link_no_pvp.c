@@ -122,7 +122,8 @@ static void init(entity_t *en, z64_global_t *global)
 
     if (isZobjLoaded(&global->obj_ctxt, EPONA_OBJ))
     {
-        uint32_t id_addr = 0x80600150;
+        uint32_t* param_pointer = (uint32_t*) 0x80600150;
+        uint32_t id_addr = *param_pointer;
         uint16_t *seg2 = (uint16_t *)id_addr;
         z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, en->actor.variable);
     }

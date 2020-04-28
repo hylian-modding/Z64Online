@@ -238,6 +238,11 @@ export class ModelManager {
     }
     let _adult_model = this.ModLoader.utils.yaz0Encode(a_copy);
     let adult_zobj = this.getRawFileFromRom(evt.rom, adult);
+    let hash: string = this.ModLoader.utils.hashBuffer(adult_zobj);
+    if (hash !== "af7b1c1859551ebde12bfe0ac91d7e9b") {
+      this.ModLoader.logger.warn("The adult zobj in this rom isn't vanilla. Stopping custom model processing.");
+      return;
+    }
     this.ModLoader.utils.clearBuffer(adult_zobj);
     _adult_model.copy(adult_zobj);
     this.injectRawFileToRom(evt.rom, adult, adult_zobj);
@@ -293,6 +298,11 @@ export class ModelManager {
 
     let _child_model = this.ModLoader.utils.yaz0Encode(a_copy);
     let child_zobj = this.getRawFileFromRom(evt.rom, child);
+    let hash: string = this.ModLoader.utils.hashBuffer(child_zobj);
+    if (hash !== "ba03f6066c6531a08e21826b4ac2b977") {
+      this.ModLoader.logger.warn("The child zobj in this rom isn't vanilla. Stopping custom model processing.");
+      return;
+    }
     this.ModLoader.utils.clearBuffer(child_zobj);
     _child_model.copy(child_zobj);
 

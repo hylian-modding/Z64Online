@@ -81,7 +81,7 @@ import { EmoteManager } from './data/emotes/emoteManager';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
-import { FlagExceptionManager } from './data/FlagExceptionManager';
+import { FlagExceptionManager, FLAG_TYPE } from './data/FlagExceptionManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -92,6 +92,11 @@ export const SKULLTULA_ARR_SIZE = 0x18;
 interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
   actor_syncing: boolean;
+  key_syncing: boolean;
+}
+
+class OotOnlineConfigCategory {
+  mapTracker: boolean = false;
 }
 
 const enum SCENES {
@@ -103,7 +108,7 @@ const enum SCENES {
   GUARD_HOUSE = 0x004D
 }
 
-class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
+class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPluginServerConfig {
 
   ModLoader!: ModLoader.IModLoaderAPI;
   pluginName?: string | undefined;
@@ -122,6 +127,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
   offset: number = -1;
+  config!: OotOnlineConfigCategory;
 
   constructor() {
     this.overlord = new PuppetOverlord(this);
@@ -131,9 +137,12 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.emotes = new EmoteManager();
     this.utility = new UtilityActorHelper();
     this.flagExceptions = new FlagExceptionManager();
+    //this.flagExceptions.setupGenericDesync(FLAG_TYPE.SCENE, 0, 0);
   }
 
   preinit(): void {
+    this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
+    this.ModLoader.config.setData("OotOnline", "mapTracker", false);
   }
 
   debuggingBombs() {
@@ -158,11 +167,13 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   }
 
   postinit(): void {
-    this.ModLoader.gui.openWindow(
-      698,
-      795,
-      path.resolve(path.join(__dirname, 'gui', 'map.html'))
-    );
+    if (this.config.mapTracker) {
+      this.ModLoader.gui.openWindow(
+        698,
+        795,
+        path.resolve(path.join(__dirname, 'gui', 'map.html'))
+      );
+    }
     this.clientStorage.scene_keys = JSON.parse(
       fs.readFileSync(__dirname + '/data/scene_numbers.json').toString()
     );
@@ -186,6 +197,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.LobbyConfig.actor_syncing = false;
     this.LobbyConfig.data_syncing = false;
     this.clientStorage.first_time_sync = true;
+    this.LobbyConfig.key_syncing = false;
   }
 
   updateInventory() {
@@ -270,8 +282,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     ) {
       let live_scene_chests: Buffer = this.core.global.liveSceneData_chests;
       let live_scene_switches: Buffer = this.core.global.liveSceneData_switch;
-      let live_scene_collect: Buffer = this.core.global
-        .liveSceneData_collectable;
+      let live_scene_collect: Buffer = this.core.global.liveSceneData_collectable;
       let live_scene_clear: Buffer = this.core.global.liveSceneData_clear;
       let live_scene_temp: Buffer = this.core.global.liveSceneData_temp;
       let save_scene_data: Buffer = this.core.global.getSaveDataForCurrentScene();
@@ -297,7 +308,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       } else {
         return;
       }
-
       this.core.global.writeSaveDataForCurrentScene(save_scene_data);
 
       this.ModLoader.clientSide.sendPacket(
@@ -348,7 +358,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onTick(frame: number): void {
     if (
       !this.core.helper.isTitleScreen() &&
-      this.core.helper.isSceneNumberValid()
+      this.core.helper.isSceneNumberValid() &&
+      this.core.helper.isInterfaceShown()
     ) {
       if (!this.core.helper.isPaused()) {
         if (!this.clientStorage.first_time_sync) {
@@ -361,7 +372,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           this.autosaveSceneData();
           this.updateBottles();
           this.updateSkulltulas();
-          this.keys.update();
+          if (this.LobbyConfig.key_syncing){
+            this.keys.update();
+          }
           let state = this.core.link.state;
           if (
             state === LinkState.BUSY ||
@@ -417,12 +430,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onLobbySetup(lobby: LobbyData): void {
     lobby.data['OotOnline:data_syncing'] = true;
     lobby.data['OotOnline:actor_syncing'] = true;
+    lobby.data['OotOnline:key_syncing'] = false;;
   }
 
   @EventHandler(EventsClient.ON_LOBBY_JOIN)
   onJoinedLobby(lobby: LobbyData): void {
     this.LobbyConfig.actor_syncing = lobby.data['OotOnline:actor_syncing'];
     this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
+    this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
   }
 
@@ -1220,28 +1235,30 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     if (evt.file === "link_no_pvp.ovl") {
       let result: IOvlPayloadResult = evt.result;
       this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
+    } else if (evt.file === "horse-3.ovl") {
+      let result: IOvlPayloadResult = evt.result;
+      this.ModLoader.emulator.rdramWrite32(0x80600150, result.params);
     }
   }
 
   @EventHandler(EventsClient.ON_INJECT_FINISHED)
-  onStartupFinished(evt: any){
+  onStartupFinished(evt: any) {
     //this.core.toggleMapSelectKeybind();
   }
-  
+
   @EventHandler(ModLoader.ModLoaderEvents.ON_ROM_PATCHED)
-  onRom(evt: any){
+  onRom(evt: any) {
     let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
     let file_select_ovl: Buffer = tools.decompressFileFromRom(evt.rom, 32);
     let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
-    if (expected_hash !== hash){
-      this.ModLoader.logger.info("File select overlay is modified. Is this rando? Checking known hashes...");
-      // This is valid as of OotR 5.2.
-      let last_known_rando_hash: string = "88ab625338286690db601e02171aa8b6";
-      if (last_known_rando_hash === hash){
-        this.ModLoader.logger.info("I'm fairly certain this is rando. Setting up some compatibility stuff.");
-      }
+    if (expected_hash !== hash) {
+      this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
     }
+  }
+
+  getServerURL(): string {
+    return "192.99.70.23:8000";
   }
 }
 

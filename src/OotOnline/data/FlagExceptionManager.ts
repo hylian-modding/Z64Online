@@ -9,13 +9,13 @@ export const enum FLAG_TYPE {
     SKULLTULA
 }
 
-export interface IFlagExceptionContainer{
+export interface IFlagExceptionContainer {
     byte: number;
     bit: number;
     doException(original: Buffer, incoming: Buffer): Buffer;
 }
 
-export class FlagExceptionContainer implements IFlagExceptionContainer{
+export class FlagExceptionContainer implements IFlagExceptionContainer {
     byte: number;
     bit: number;
 
@@ -34,6 +34,20 @@ export class FlagExceptionContainer implements IFlagExceptionContainer{
     }
 }
 
+export class FlagOverrideContainer implements IFlagExceptionContainer {
+    byte: number;
+    bit: number;
+
+    constructor(byte: number, bit: number) {
+        this.byte = byte;
+        this.bit = bit;
+    }
+
+    doException(original: Buffer, incoming: Buffer): Buffer {
+        return incoming;
+    }
+}
+
 export class FlagExceptionManager {
     private map: Map<FLAG_TYPE, Map<number, Array<IFlagExceptionContainer>>> = new Map<FLAG_TYPE, Map<number, Array<IFlagExceptionContainer>>>();
 
@@ -45,15 +59,22 @@ export class FlagExceptionManager {
         this.map.set(FLAG_TYPE.SKULLTULA, new Map<number, Array<IFlagExceptionContainer>>());
     }
 
-    setupGenericDesync(type: FLAG_TYPE, byte: number, bit: number){
-        if (!this.map.get(type)!.has(byte)){
+    setupGenericDesync(type: FLAG_TYPE, byte: number, bit: number) {
+        if (!this.map.get(type)!.has(byte)) {
             this.map.get(type)!.set(byte, []);
         }
         this.map.get(type)!.get(byte)!.push(new FlagExceptionContainer(byte, bit));
     }
 
-    setupCustomHandler(type: FLAG_TYPE, ex: IFlagExceptionContainer){
-        if (!this.map.get(type)!.has(ex.byte)){
+    setupGenericOverride(type: FLAG_TYPE, byte: number, bit: number){
+        if (!this.map.get(type)!.has(byte)) {
+            this.map.get(type)!.set(byte, []);
+        }
+        this.map.get(type)!.get(byte)!.push(new FlagOverrideContainer(byte, bit));
+    }
+
+    setupCustomHandler(type: FLAG_TYPE, ex: IFlagExceptionContainer) {
+        if (!this.map.get(type)!.has(ex.byte)) {
             this.map.get(type)!.set(ex.byte, []);
         }
         this.map.get(type)!.get(ex.byte)!.push(ex);
