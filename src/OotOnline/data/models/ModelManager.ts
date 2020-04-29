@@ -325,16 +325,31 @@ export class ModelManager {
   }
 
   setupPuppetModels(evt: any) {
-    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
-    this.ModLoader.logger.info("Setting up puppet models...");
-    let puppet_child: Buffer = Buffer.alloc(0x37800);
-    tools.decompressFileFromRom(evt.rom, 503).copy(puppet_child);
-    let puppet_adult: Buffer = Buffer.alloc(0x37800);
-    tools.decompressFileFromRom(evt.rom, 502).copy(puppet_adult);
-    puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
-    puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
-    fs.writeFileSync(path.join(__dirname, "child.zobj"), this.trimBuffer(puppet_child));
-    fs.writeFileSync(path.join(__dirname, "adult.zobj"), this.trimBuffer(puppet_adult));
+    if (!fs.existsSync(this.cacheDir)) {
+      fs.mkdirSync(this.cacheDir);
+    }
+    let child_path: string = path.join(this.cacheDir, "child.zobj");
+    let adult_path: string = path.join(this.cacheDir, "adult.zobj");
+
+    let puppet_child: Buffer = Buffer.alloc(1);
+    let puppet_adult: Buffer = Buffer.alloc(1);
+
+    if (fs.existsSync(child_path) && fs.existsSync(adult_path)) {
+      puppet_child = fs.readFileSync(child_path);
+      puppet_adult = fs.readFileSync(adult_path);
+    } else {
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+      this.ModLoader.logger.info("Setting up puppet models...");
+      puppet_child = Buffer.alloc(0x37800);
+      tools.decompressFileFromRom(evt.rom, 503).copy(puppet_child);
+      puppet_adult = Buffer.alloc(0x37800);
+      tools.decompressFileFromRom(evt.rom, 502).copy(puppet_adult);
+      puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
+      puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
+      fs.writeFileSync(child_path, this.trimBuffer(puppet_child));
+      fs.writeFileSync(adult_path, this.trimBuffer(puppet_adult));
+    }
+
     let a = new ModelPlayer("Adult");
     a.model.adult = new ModelObject(this.trimBuffer(new zzstatic().doRepoint(puppet_adult, 0)));
     let c = new ModelPlayer("Child");
@@ -386,7 +401,8 @@ export class ModelManager {
         )
       );
     } else {
-      this.loadAdultModel(evt, path.join(__dirname, "adult.zobj"));
+      let adult_path: string = path.join(this.cacheDir, "adult.zobj");
+      this.loadAdultModel(evt, adult_path);
     }
 
     if (this.customModelFileChild !== '') {
@@ -399,7 +415,8 @@ export class ModelManager {
         )
       );
     } else {
-      this.loadChildModel(evt, path.join(__dirname, "child.zobj"));
+      let child_path: string = path.join(this.cacheDir, "child.zobj");
+      this.loadChildModel(evt, child_path);
     }
 
     if (this.customModelFileAnims !== '') {

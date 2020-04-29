@@ -316,4 +316,9 @@ export class PuppetOverlord implements IPuppetOverlord {
       this.puppets.delete(puppet.player.uuid);
     }
   }
+
+  @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
+  onReset(evt: any){
+    this.localPlayerLoadingZone();
+  }
 }

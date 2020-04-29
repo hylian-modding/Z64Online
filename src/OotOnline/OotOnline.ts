@@ -1257,6 +1257,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     }
   }
 
+  @EventHandler(ModLoader.ModLoaderEvents.ON_SOFT_RESET_PRE)
+  onReset(evt: any){
+    this.clientStorage.first_time_sync = false;
+  }
+
   getServerURL(): string {
     return "192.99.70.23:8000";
   }
