@@ -57,7 +57,7 @@ export class KeyLogManager {
             packet.lobby,
             this.parent
         ) as OotOnlineStorage;
-        if (packet.delta > 0) {
+        if (packet.delta !== 0) {
             let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
             storage.changelog.push(s);
             this.ModLoader.serverSide.sendPacket(new Ooto_KeyDeltaServerPacket(s, packet.lobby, packet.player));

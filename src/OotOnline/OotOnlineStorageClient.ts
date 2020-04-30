@@ -16,7 +16,8 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   equipmentModel: Buffer = Buffer.alloc(1);
   adultIcon: Buffer = Buffer.alloc(1);
   childIcon: Buffer = Buffer.alloc(1);
-  localization: any;
-  scene_keys: any;
+  overlayCache: any = {};
+  localization: any = {};
+  scene_keys: any = {};
   first_time_sync = false;
 }

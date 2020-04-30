@@ -94,7 +94,7 @@ static void destroy(entity_t *en, z64_global_t *global)
 
 /* .data */
 const z64_actor_init_t init_vars = {
-    .number = 0x03,
+    .number = 0x05,
     .padding = 0x00,
     .type = 0x4,
     .room = 0x00,

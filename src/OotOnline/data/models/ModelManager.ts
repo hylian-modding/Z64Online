@@ -18,7 +18,7 @@ import {
   Ooto_DownloadAllModelsPacket,
   Ooto_IconAllocatePacket,
 } from '../OotOPackets';
-import { Age, OotEvents } from 'modloader64_api/OOT/OOTAPI';
+import { Age, OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
   ServerNetworkHandler,
   INetworkPlayer,
@@ -33,11 +33,12 @@ import fs from 'fs';
 import { ModelThread } from './ModelThread';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import path from 'path';
-import { Postinit } from 'modloader64_api/PluginLifecycle';
+import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { ModelObject } from './ModelContainer';
 import { ModelEquipmentPackager } from './ModelEquipmentPackager';
 import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
-import { FileSystemCompare } from './FileSystemCompare';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { InjectCore } from 'modloader64_api/CoreInjection';
 
 export class FilePatch {
   offset: number;
@@ -61,6 +62,8 @@ export class RomPatch {
 export class ModelManager {
   @ModLoaderAPIInject()
   ModLoader!: IModLoaderAPI;
+  @InjectCore()
+  core!: IOOTCore
   clientStorage: OotOnlineStorageClient;
   parent: IOotOnlineHelpers;
   allocationManager: ModelAllocationManager;
@@ -78,6 +81,8 @@ export class ModelManager {
   equipmentChildMap: Map<string, number> = new Map<string, number>();
   equipmentIndex = -1;
   equipmentMetadata: any = {};
+  colorProxies: Array<number> = [];
+  lastSeenTunic: number = 0;
 
   constructor(
     clientStorage: OotOnlineStorageClient,
@@ -151,34 +156,19 @@ export class ModelManager {
     return buf;
   }
 
-  decompressFileFromRom(rom: Buffer, index: number): Buffer {
-    let dma = 0x7430;
-    let offset: number = index * 0x10;
-    let start: number = rom.readUInt32BE(dma + offset + 0x8);
-    let end: number = rom.readUInt32BE(dma + offset + 0xc);
-    let size: number = end - start;
-    let isFileCompressed = true;
-    if (end === 0) {
-      isFileCompressed = false;
-      size =
-        rom.readUInt32BE(dma + offset + 0x4) - rom.readUInt32BE(dma + offset);
-      end = start + size;
+  trimBuffer(buffer: Buffer) {
+    var pos = 0
+    for (var i = buffer.length - 1; i >= 0; i--) {
+      if (buffer[i] !== 0x00) {
+        pos = i
+        break
+      }
     }
-    let buf: Buffer = Buffer.alloc(size);
-    rom.copy(buf, 0, start, end);
-    if (isFileCompressed) {
-      buf = this.ModLoader.utils.yaz0Decode(buf);
+    pos++;
+    while (pos % 0x10 !== 0) {
+      pos++;
     }
-    return buf;
-  }
-
-  recompressFileIntoRom(rom: Buffer, index: number, file: Buffer): Buffer {
-    let dma = 0x7430;
-    let offset: number = index * 0x10;
-    let start: number = rom.readUInt32BE(dma + offset + 0x8);
-    let buf: Buffer = this.ModLoader.utils.yaz0Encode(file);
-    buf.copy(rom, start);
-    return buf;
+    return buffer.slice(0, pos)
   }
 
   @Postinit()
@@ -192,7 +182,7 @@ export class ModelManager {
   }
 
   @EventHandler(OotEvents.ON_LOADING_ZONE)
-  onSceneChange(evt: any) {
+  onLoadingZone(evt: any) {
     if (this.customModelFileEquipment !== '') {
       let model = this.allocationManager.getModelInSlot(this.equipmentIndex);
       let allocation_size = 0x37800;
@@ -201,7 +191,20 @@ export class ModelManager {
     }
   }
 
+  @onTick()
+  onTick() {
+    if (this.lastSeenTunic !== this.core.link.tunic) {
+      this.lastSeenTunic = this.core.link.tunic;
+      let addr = 0x000f7ad8 + this.core.link.tunic * 3;
+      let color: Buffer = this.ModLoader.emulator.rdramReadBuffer(addr, 0x3);
+      for (let i = 0; i < this.colorProxies.length; i++) {
+        this.ModLoader.emulator.rdramWriteBuffer(this.colorProxies[i], color);
+      }
+    }
+  }
+
   loadAdultModel(evt: any, file: string) {
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
     let adult = 502;
     let code = 27;
     let offset = 0xe65a0;
@@ -213,12 +216,33 @@ export class ModelManager {
       Object.keys(this.equipmentMetadata).forEach((key: string) => {
         if (this.equipmentAdultMap.has(key)) {
           this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
-          a_copy.writeUInt32BE(this.equipmentMetadata[key], this.equipmentAdultMap.get(key)! + 0x4);
+          let model = this.allocationManager.getModelInSlot(this.equipmentIndex)
+          let offset: number = model.model.equipment.zobj.byteLength;
+          let proxy: Buffer = fs.readFileSync(path.join(__dirname, "color_fix_dlist_template.bin"));
+          let target: number = proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
+          proxy.writeUInt32BE(this.equipmentMetadata[key], target);
+
+          // Expand the buffer.
+          let replacement: Buffer = Buffer.alloc(model.model.equipment.zobj.byteLength + proxy.byteLength);
+          model.model.equipment.zobj.copy(replacement);
+          model.model.equipment.zobj = replacement;
+
+          proxy.copy(model.model.equipment.zobj, offset);
+          let allocation_size = 0x37800;
+          let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
+          addr += offset;
+          a_copy.writeUInt32BE(addr, this.equipmentAdultMap.get(key)! + 0x4);
+          this.colorProxies.push(addr + 0x14);
         }
       });
     }
     let _adult_model = this.ModLoader.utils.yaz0Encode(a_copy);
     let adult_zobj = this.getRawFileFromRom(evt.rom, adult);
+    let hash: string = this.ModLoader.utils.hashBuffer(adult_zobj);
+    if (hash !== "af7b1c1859551ebde12bfe0ac91d7e9b") {
+      this.ModLoader.logger.warn("The adult zobj in this rom isn't vanilla. Stopping custom model processing.");
+      return;
+    }
     this.ModLoader.utils.clearBuffer(adult_zobj);
     _adult_model.copy(adult_zobj);
     this.injectRawFileToRom(evt.rom, adult, adult_zobj);
@@ -226,24 +250,19 @@ export class ModelManager {
     let patch: RomPatch[] = new Array<RomPatch>();
     patch = JSON.parse(fs.readFileSync(this.customModelRepointsAdult).toString());
     for (let i = 0; i < patch.length; i++) {
-      let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
+      let buf: Buffer = tools.decompressFileFromRom(evt.rom, patch[i].index);
       for (let j = 0; j < patch[i].data.length; j++) {
         buf[patch[i].data[j].offset] = patch[i].data[j].value;
       }
-      let hash: string = this.ModLoader.utils.hashBuffer(buf);
-      if (fs.existsSync(path.join(this.cacheDir, hash))) {
-        this.ModLoader.logger.debug("Loading file " + patch[i].index + " from cache.");
-        this.injectRawFileToRom(evt.rom, patch[i].index, fs.readFileSync(path.join(this.cacheDir, hash)));
-      } else {
-        fs.writeFileSync(path.join(this.cacheDir, hash), this.recompressFileIntoRom(evt.rom, patch[i].index, buf));
-      }
+      tools.recompressFileIntoRom(evt.rom, patch[i].index, buf);
     }
-    let code_file: Buffer = this.decompressFileFromRom(evt.rom, code);
+    let code_file: Buffer = tools.decompressFileFromRom(evt.rom, code);
     adult_model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
     this.clientStorage.adultModel = adult_model;
   }
 
   loadChildModel(evt: any, file: string) {
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
     let child = 503;
     let code = 27;
     let offset = 0xe65a0;
@@ -256,13 +275,34 @@ export class ModelManager {
       Object.keys(this.equipmentMetadata).forEach((key: string) => {
         if (this.equipmentChildMap.has(key)) {
           this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
-          a_copy.writeUInt32BE(this.equipmentMetadata[key], this.equipmentChildMap.get(key)! + 0x4);
+          let model = this.allocationManager.getModelInSlot(this.equipmentIndex)
+          let offset: number = model.model.equipment.zobj.byteLength;
+          let proxy: Buffer = fs.readFileSync(path.join(__dirname, "color_fix_dlist_template.bin"));
+          let target: number = proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
+          proxy.writeUInt32BE(this.equipmentMetadata[key], target);
+
+          // Expand the buffer.
+          let replacement: Buffer = Buffer.alloc(model.model.equipment.zobj.byteLength + proxy.byteLength);
+          model.model.equipment.zobj.copy(replacement);
+          model.model.equipment.zobj = replacement;
+
+          proxy.copy(model.model.equipment.zobj, offset);
+          let allocation_size = 0x37800;
+          let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
+          addr += offset;
+          a_copy.writeUInt32BE(addr, this.equipmentChildMap.get(key)! + 0x4);
+          this.colorProxies.push(addr + 0x14);
         }
       });
     }
 
     let _child_model = this.ModLoader.utils.yaz0Encode(a_copy);
     let child_zobj = this.getRawFileFromRom(evt.rom, child);
+    let hash: string = this.ModLoader.utils.hashBuffer(child_zobj);
+    if (hash !== "ba03f6066c6531a08e21826b4ac2b977") {
+      this.ModLoader.logger.warn("The child zobj in this rom isn't vanilla. Stopping custom model processing.");
+      return;
+    }
     this.ModLoader.utils.clearBuffer(child_zobj);
     _child_model.copy(child_zobj);
 
@@ -271,79 +311,112 @@ export class ModelManager {
     let patch: RomPatch[] = new Array<RomPatch>();
     patch = JSON.parse(fs.readFileSync(this.customModelRepointsChild).toString());
     for (let i = 0; i < patch.length; i++) {
-      let buf: Buffer = this.decompressFileFromRom(evt.rom, patch[i].index);
+      let buf: Buffer = tools.decompressFileFromRom(evt.rom, patch[i].index);
       for (let j = 0; j < patch[i].data.length; j++) {
         buf[patch[i].data[j].offset] = patch[i].data[j].value;
       }
-
-      let hash: string = this.ModLoader.utils.hashBuffer(buf);
-      if (fs.existsSync(path.join(this.cacheDir, hash))) {
-        this.ModLoader.logger.debug("Loading file " + patch[i].index + " from cache.");
-        this.injectRawFileToRom(evt.rom, patch[i].index, fs.readFileSync(path.join(this.cacheDir, hash)));
-      } else {
-        fs.writeFileSync(path.join(this.cacheDir, hash), this.recompressFileIntoRom(evt.rom, patch[i].index, buf));
-      }
+      tools.recompressFileIntoRom(evt.rom, patch[i].index, buf);
     }
 
-    let code_file: Buffer = this.decompressFileFromRom(evt.rom, code);
+    let code_file: Buffer = tools.decompressFileFromRom(evt.rom, code);
     child_model.writeUInt32BE(code_file.readUInt32BE(offset + 0x4), 0x500c);
 
     this.clientStorage.childModel = child_model;
   }
 
-
   setupPuppetModels(evt: any) {
-    this.ModLoader.logger.info("Setting up puppet models...");
-    let puppet_child: Buffer = Buffer.alloc(0x37800);
-    this.decompressFileFromRom(evt.rom, 503).copy(puppet_child);
-    let puppet_adult: Buffer = Buffer.alloc(0x37800);
-    this.decompressFileFromRom(evt.rom, 502).copy(puppet_adult);
-    puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
-    puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
+    if (!fs.existsSync(this.cacheDir)) {
+      fs.mkdirSync(this.cacheDir);
+    }
+    let child_path: string = path.join(this.cacheDir, "child.zobj");
+    let adult_path: string = path.join(this.cacheDir, "adult.zobj");
+
+    let puppet_child: Buffer = Buffer.alloc(1);
+    let puppet_adult: Buffer = Buffer.alloc(1);
+
+    if (fs.existsSync(child_path) && fs.existsSync(adult_path)) {
+      puppet_child = fs.readFileSync(child_path);
+      puppet_adult = fs.readFileSync(adult_path);
+    } else {
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+      this.ModLoader.logger.info("Setting up puppet models...");
+      puppet_child = Buffer.alloc(0x37800);
+      tools.decompressFileFromRom(evt.rom, 503).copy(puppet_child);
+      puppet_adult = Buffer.alloc(0x37800);
+      tools.decompressFileFromRom(evt.rom, 502).copy(puppet_adult);
+      puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
+      puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
+      fs.writeFileSync(child_path, this.trimBuffer(puppet_child));
+      fs.writeFileSync(adult_path, this.trimBuffer(puppet_adult));
+    }
+
     let a = new ModelPlayer("Adult");
-    a.model.adult = new ModelObject(new zzstatic().doRepoint(puppet_adult, 0));
+    a.model.adult = new ModelObject(this.trimBuffer(new zzstatic().doRepoint(puppet_adult, 0)));
     let c = new ModelPlayer("Child");
-    c.model.child = new ModelObject(new zzstatic().doRepoint(puppet_child, 1));
+    c.model.child = new ModelObject(this.trimBuffer(new zzstatic().doRepoint(puppet_child, 1)));
     this.allocationManager.models[0] = a;
     this.allocationManager.models[1] = c;
   }
 
+  @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
+  onRomPatchedPre(evt: any) {
+    this.setupPuppetModels(evt);
+  }
+
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
-    this.setupPuppetModels(evt);
-    if (!fs.existsSync(this.cacheDir)) {
-      fs.mkdirSync(this.cacheDir);
-    }
-    if (this.customModelFileChild === '' && this.customModelFileAdult === '') {
-      return;
-    }
     this.ModLoader.logger.info('Starting custom model setup...');
     let anim = 7;
 
     if (this.customModelFileEquipment !== '') {
-      if (this.customModelFileAdult !== '' || this.customModelFileChild !== '') {
-        this.ModLoader.logger.info("Loading new equipment models...");
-        let mm: ModelEquipmentPackager = new ModelEquipmentPackager(this.customModelFileEquipment, this.customModelFileDesc);
-        let model = new ModelPlayer("Equipment");
-        this.clientStorage.equipmentModel = mm.process();
-        model.model.equipment = new ModelObject(this.clientStorage.equipmentModel);
-        this.equipmentIndex = this.allocationManager.allocateSlot(model);
-        let metaSize: number = model.model.equipment.zobj.readUInt32BE(0xC);
-        this.equipmentMetadata = JSON.parse(model.model.equipment.zobj.slice(0x310, 0x310 + metaSize).toString());
-        let allocation_size = 0x37800;
-        let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
-        Object.keys(this.equipmentMetadata).forEach((key: string) => {
-          this.equipmentMetadata[key] += addr;
-        });
-      }
+      this.ModLoader.logger.info("Loading new equipment models...");
+      let mm: ModelEquipmentPackager = new ModelEquipmentPackager(this.customModelFileEquipment, this.customModelFileDesc);
+      let model = new ModelPlayer("Equipment");
+      this.clientStorage.equipmentModel = mm.process();
+      model.model.equipment = new ModelObject(this.clientStorage.equipmentModel);
+      this.equipmentIndex = this.allocationManager.allocateSlot(model);
+      let metaSize: number = model.model.equipment.zobj.readUInt32BE(0xC);
+      this.equipmentMetadata = JSON.parse(model.model.equipment.zobj.slice(0x310, 0x310 + metaSize).toString());
+      let allocation_size = 0x37800;
+      let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
+      Object.keys(this.equipmentMetadata).forEach((key: string) => {
+        this.equipmentMetadata[key] += addr;
+      });
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_AllocateModelPacket(
+          zlib.deflateSync(this.clientStorage.equipmentModel),
+          0x69,
+          this.ModLoader.clientLobby
+        )
+      );
     }
 
     if (this.customModelFileAdult !== '') {
       this.loadAdultModel(evt, this.customModelFileAdult);
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_AllocateModelPacket(
+          zlib.deflateSync(this.clientStorage.adultModel),
+          Age.ADULT,
+          this.ModLoader.clientLobby
+        )
+      );
+    } else {
+      let adult_path: string = path.join(this.cacheDir, "adult.zobj");
+      this.loadAdultModel(evt, adult_path);
     }
 
     if (this.customModelFileChild !== '') {
       this.loadChildModel(evt, this.customModelFileChild);
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_AllocateModelPacket(
+          zlib.deflateSync(this.clientStorage.childModel),
+          Age.CHILD,
+          this.ModLoader.clientLobby
+        )
+      );
+    } else {
+      let child_path: string = path.join(this.cacheDir, "child.zobj");
+      this.loadChildModel(evt, child_path);
     }
 
     if (this.customModelFileAnims !== '') {
@@ -360,52 +433,6 @@ export class ModelManager {
       this.clientStorage.adultIcon = fs.readFileSync(
         this.customModelFileAdultIcon
       );
-    }
-
-    if (this.customModelFileChildIcon !== '') {
-      this.ModLoader.logger.info('Loading custom map icon (Child) ...');
-      this.clientStorage.childIcon = fs.readFileSync(
-        this.customModelFileChildIcon
-      );
-    }
-
-    if (this.clientStorage.adultModel.byteLength > 1) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_AllocateModelPacket(
-          zlib.deflateSync(this.clientStorage.adultModel),
-          Age.ADULT,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
-    if (this.clientStorage.childModel.byteLength > 1) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_AllocateModelPacket(
-          zlib.deflateSync(this.clientStorage.childModel),
-          Age.CHILD,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
-    if (this.clientStorage.equipmentModel.byteLength > 1) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_AllocateModelPacket(
-          zlib.deflateSync(this.clientStorage.equipmentModel),
-          0x69,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
-    if (this.clientStorage.childIcon.byteLength > 1) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_IconAllocatePacket(
-          zlib.deflateSync(this.clientStorage.childIcon),
-          Age.CHILD,
-          this.ModLoader.clientLobby
-        )
-      );
-    }
-    if (this.clientStorage.adultIcon.byteLength > 1) {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_IconAllocatePacket(
           zlib.deflateSync(this.clientStorage.adultIcon),
@@ -415,7 +442,28 @@ export class ModelManager {
       );
     }
 
+    if (this.customModelFileChildIcon !== '') {
+      this.ModLoader.logger.info('Loading custom map icon (Child) ...');
+      this.clientStorage.childIcon = fs.readFileSync(
+        this.customModelFileChildIcon
+      );
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_IconAllocatePacket(
+          zlib.deflateSync(this.clientStorage.childIcon),
+          Age.CHILD,
+          this.ModLoader.clientLobby
+        )
+      );
+    }
     this.ModLoader.logger.info('Done.');
+
+    /*     let code_file: Buffer = this.decompressFileFromRom(evt.rom, 27);
+        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+        let dark_link = tools.decompressFileFromRom(evt.rom, 70);
+        dark_link.writeUInt16BE(code_file.readUInt16BE(0xe65a0), 0x005E);
+        dark_link.writeUInt16BE(code_file.readUInt16BE(0xe65a0 + 0x2), 0x006E);
+        dark_link.writeUInt8(0x0014, 0x2039);
+        tools.recompressFileIntoRom(evt.rom, 70, dark_link); */
   }
 
   @ServerNetworkHandler('Ooto_AllocateModelPacket')
@@ -643,18 +691,20 @@ export class ModelManager {
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: Puppet) {
+    let puppet_spawn_params_ptr: number = 0x80600140;
+    let puppet_spawn_variable_offset: number = 0xE;
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.getModelInSlot(0).model.adult.zobj
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.getModelInSlot(1).model.child.zobj
+    );
+    this.ModLoader.emulator.rdramWritePtr16(puppet_spawn_params_ptr, puppet_spawn_variable_offset, puppet.age);
     if (
       !this.clientStorage.playerModelCache.hasOwnProperty(puppet.player.uuid)
     ) {
-      this.ModLoader.emulator.rdramWriteBuffer(
-        0x800000,
-        this.allocationManager.getModelInSlot(0).model.adult.zobj
-      );
-      this.ModLoader.emulator.rdramWriteBuffer(
-        0x837800,
-        this.allocationManager.getModelInSlot(1).model.child.zobj
-      );
-      this.ModLoader.emulator.rdramWrite16(0x60014e, puppet.age);
       return;
     }
     if (!this.allocationManager.isPlayerAllocated(puppet.player)) {
@@ -672,6 +722,7 @@ export class ModelManager {
     let addr: number = 0x800000 + allocation_size * index;
     this.ModLoader.logger.info("Model block " + index + " starts at address 0x" + addr.toString(16) + ".");
     let zobj_size: number = allocation_size;
+    let passed: boolean = false;
     if (puppet.age === Age.ADULT && model.model.adult !== undefined) {
       if (model.model.adult.zobj.byteLength > 1) {
         this.ModLoader.logger.info("Writing adult model into model block " + index + ".");
@@ -680,6 +731,7 @@ export class ModelManager {
           new zzstatic().doRepoint(model.model.adult.zobj, index)
         );
         zobj_size = model.model.adult.zobj.byteLength;
+        passed = true;
       }
     }
     if (puppet.age === Age.CHILD && model.model.child !== undefined) {
@@ -690,10 +742,23 @@ export class ModelManager {
           new zzstatic().doRepoint(model.model.child.zobj, index)
         );
         zobj_size = model.model.child.zobj.byteLength;
+        passed = true;
       }
     }
     if (model.model.equipment !== undefined) {
       if (model.model.equipment.zobj.byteLength > 1) {
+        if (puppet.age === Age.ADULT && model.model.adult.zobj.byteLength <= 1) {
+          let adult_model: Buffer = fs.readFileSync(path.join(__dirname, "adult.zobj"));
+          zobj_size = adult_model.byteLength;
+          this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(adult_model, index));
+          passed = true;
+        }
+        if (puppet.age === Age.CHILD && model.model.child.zobj.byteLength <= 1) {
+          let child_model: Buffer = fs.readFileSync(path.join(__dirname, "child.zobj"));
+          zobj_size = child_model.byteLength;
+          this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(child_model, index));
+          passed = true;
+        }
         if ((zobj_size + (model.model.equipment.zobj.byteLength - 0x800)) < allocation_size) {
           let zobj: Buffer = new zzstatic().doRepoint(model.model.equipment.zobj, 0, false, 0x80000000 + addr + zobj_size - 0x800);
           this.ModLoader.emulator.rdramWriteBuffer(
@@ -718,7 +783,35 @@ export class ModelManager {
         }
       }
     }
-    this.ModLoader.emulator.rdramWrite16(0x60014e, index);
+    if (passed) {
+      this.ModLoader.emulator.rdramWritePtr16(puppet_spawn_params_ptr, puppet_spawn_variable_offset, index);
+    }
+  }
+
+  @EventHandler(OotEvents.ON_SCENE_CHANGE)
+  onSceneChange(scene: number) {
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.getModelInSlot(0).model.adult.zobj
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.getModelInSlot(1).model.child.zobj
+    );
+    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
+  }
+
+  @EventHandler(EventsClient.ON_INJECT_FINISHED)
+  onLoaded(evt: any) {
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x800000,
+      this.allocationManager.getModelInSlot(0).model.adult.zobj
+    );
+    this.ModLoader.emulator.rdramWriteBuffer(
+      0x837800,
+      this.allocationManager.getModelInSlot(1).model.child.zobj
+    );
+    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)

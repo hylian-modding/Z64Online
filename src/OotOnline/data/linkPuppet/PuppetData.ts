@@ -7,8 +7,9 @@ import {
 } from 'modloader64_api/OOT/OOTAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IPuppetData } from '../../OotoAPI/IPuppetData';
+import { bus } from 'modloader64_api/EventHandler';
 
-export class PuppetData implements IPuppetData{
+export class PuppetData implements IPuppetData {
   pointer: number;
   ModLoader: IModLoaderAPI;
   core: IOOTCore;
@@ -31,13 +32,21 @@ export class PuppetData implements IPuppetData{
     this.copyFields.push('back_item');
     this.copyFields.push('sound');
     this.copyFields.push('tunic_color');
+    this.copyFields.push('tunic_id');
+    this.copyFields.push('sword_id');
+    this.copyFields.push('shield_id');
     this.copyFields.push('boot_id');
     this.copyFields.push('strength_upgrade');
     this.copyFields.push('gauntlet_color');
-    this.copyFields.push('areHandsClosed');
     this.copyFields.push('current_mask');
     this.copyFields.push('stick_length');
     this.copyFields.push('action_param');
+    /* this.copyFields.push("xzvel");
+    this.copyFields.push("state_flags_1");
+    this.copyFields.push("left_state");
+    this.copyFields.push("right_state");
+    this.copyFields.push("gi_obtain");
+    this.copyFields.push("gi_obj"); */
   }
 
   get stick_length(): number {
@@ -61,7 +70,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set anim(anim: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x13c, anim);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x13C, anim);
   }
 
   get rot(): Buffer {
@@ -69,7 +78,7 @@ export class PuppetData implements IPuppetData{
   }
 
   set rot(rot: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0xb4, rot);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0xB4, rot);
   }
 
   get age(): Age {
@@ -122,6 +131,46 @@ export class PuppetData implements IPuppetData{
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x21), buf);
   }
 
+  get gi_obtain(): number {
+    return this.core.link.rdramRead8(0x0852);
+  }
+
+  set gi_obtain(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x3E), num);
+  }
+
+  get gi_obj(): number {
+    return this.core.link.rdramRead32(0x01A0);
+  }
+
+  set gi_obj(num: number) {
+    this.ModLoader.emulator.rdramWrite32(this.pointer + (0x250 + 0x40), num);
+  }
+
+  get tunic_id(): number {
+    return this.core.link.rdramRead8(0x013C);
+  }
+
+  set tunic_id(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1C), num);
+  }
+
+  get sword_id(): number {
+    return this.core.link.rdramRead8(0x013D);
+  }
+
+  set sword_id(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1D), num);
+  }
+
+  get shield_id(): number {
+    return this.core.link.rdramRead8(0x013E);
+  }
+
+  set shield_id(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1E), num);
+  }
+
   get boot_id(): number {
     return this.core.link.rdramRead8(0x013F);
   }
@@ -130,12 +179,12 @@ export class PuppetData implements IPuppetData{
     this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1F), num);
   }
 
-  get areHandsClosed(): boolean {
-    return this.core.link.rdramRead32(0x68) > 0;
+  get xzvel(): number {
+    return this.core.link.rdramReadF32(0x68);
   }
 
-  set areHandsClosed(bool: boolean) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x29), bool ? 1 : 0);
+  set xzvel(num: number) {
+    this.ModLoader.emulator.rdramWriteF32(this.pointer + 0x68, num);
   }
 
   get current_mask(): number {
@@ -144,6 +193,30 @@ export class PuppetData implements IPuppetData{
 
   set current_mask(num: number) {
     this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2D), num);
+  }
+
+  get left_state(): number {
+    return this.core.link.rdramRead8(0x014C);
+  }
+
+  set left_state(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x3C), num);
+  }
+
+  get right_state(): number {
+    return this.core.link.rdramRead8(0x014D);
+  }
+
+  set right_state(num: number) {
+    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x3D), num);
+  }
+
+  get state_flags_1(): number {
+    return this.core.link.rdramRead32(0x066C);
+  }
+
+  set state_flags_1(num: number) {
+    this.ModLoader.emulator.rdramWrite32(this.pointer + (0x250 + 0x38), num);
   }
 
   get action_param(): number {
@@ -264,6 +337,9 @@ export class PuppetData implements IPuppetData{
               break;
           }
         }
+      }
+      if (left_hand === 2) {
+        id = 0;
       }
     } else {
       switch (num) {

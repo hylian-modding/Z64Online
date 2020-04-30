@@ -56,7 +56,6 @@ export class CrashParserActorTable {
         if (a.isPuppet) {
           console.log(a.name);
           console.log((dump.slice(p, p + 0x800).indexOf(Buffer.from("DEADBEEF", 'hex')).toString(16)));
-          fs.writeFileSync("./" + a.name + ".bin", dump.slice(p, p + 0x800));
           a.modelslot = ((dump.readUInt32BE(p + 0x26C) - 0x80000000) - 0x800000) / 0x37800;
           if (a.modelslot < 0) {
             a.modelslot = 0;

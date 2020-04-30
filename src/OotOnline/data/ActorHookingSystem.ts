@@ -543,23 +543,27 @@ export class ActorHookingManager {
 
     // Make Din's Fire not move to Link.
     let dins: Buffer = tools.decompressFileFromRom(evt.rom, 166);
-    dins.writeUInt32BE(0x0, 0x150);
-    dins.writeUInt32BE(0x0, 0x158);
-    dins.writeUInt32BE(0x0, 0x160);
-    dins.writeUInt32BE(0x0, 0x19C);
-    dins.writeUInt32BE(0x0, 0x1A4);
-    dins.writeUInt32BE(0x0, 0x1AC);
+    let dhash: string = this.ModLoader.utils.hashBuffer(dins);
+    if (dhash === "b08f7991b2beda5394e4a94cff15b50c"){
+      this.ModLoader.logger.info("Patching Din's Fire...");
+      dins.writeUInt32BE(0x0, 0x150);
+      dins.writeUInt32BE(0x0, 0x158);
+      dins.writeUInt32BE(0x0, 0x160);
+      dins.writeUInt32BE(0x0, 0x19C);
+      dins.writeUInt32BE(0x0, 0x1A4);
+      dins.writeUInt32BE(0x0, 0x1AC);
+    }
     tools.recompressFileIntoRom(evt.rom, 166, dins);
-
-    // Rip assets from the real Nayru's love for the puppet.
-    let nayru: Buffer = tools.decompressFileFromRom(evt.rom, 242);
-    let texture: Buffer = nayru.slice(0xC90, (0xC90 + 0x800));
-    let matrix: Buffer = nayru.slice(0x1490, (0x1490 + 0x140));
-    this.ModLoader.utils.setTimeoutFrames(() => {
-      this.ModLoader.logger.debug("Copying Nayru's Love assets from ROM...");
-      this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D000, texture);
-      this.ModLoader.emulator.rdramWriteBuffer(0x80837800 + 0x2D800, matrix);
-    }, 100);
+    
+    // Change Zelda's actor category from 'NPC' to 'Chest'.
+    // This fixes Ganon's Tower Collapse.
+    let buf: Buffer = tools.decompressFileFromRom(evt.rom, 369);
+    let zhash: string = this.ModLoader.utils.hashBuffer(buf);
+    if (zhash === "3560a2ed96d71e375f79fb53e55d1011"){
+      this.ModLoader.logger.info("Patching Zelda...");
+      buf.writeUInt8(0x0B, 0x7236);
+    }
+    tools.recompressFileIntoRom(evt.rom, 369, buf);
   }
 
   tick() {

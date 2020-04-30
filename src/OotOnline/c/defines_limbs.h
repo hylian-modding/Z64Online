@@ -23,7 +23,7 @@
 #define LIMB_LOW_AFFECTOR 2 /* No Display List */
 #define LIMB_THIGH_R 3 /* Right Thigh */
 #define LIMB_SHIN_R 4 /* Right Shin */
-#define LIMB_FOOR_R 5 /* Right Foot */
+#define LIMB_FOOT_R 5 /* Right Foot */
 #define LIMB_THIGH_L 6 /* Left Thigh */
 #define LIMB_SHIN_L 7 /* Left Shin */
 #define LIMB_FOOT_L 8 /* Left Foot */

@@ -1,6 +1,7 @@
 import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
 
 export enum OotOnlineEvents {
   PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
@@ -41,6 +42,7 @@ export class OotOnline_PlayerScene {
 
 export interface IOotOnlineHelpers {
   sendPacketToPlayersInScene(packet: IPacketHeader): void;
+  clientStorage: OotOnlineStorageClient;
 }
 
 export function OotOnlineAPI_EnableGhostMode() {

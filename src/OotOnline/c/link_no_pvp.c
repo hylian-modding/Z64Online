@@ -33,6 +33,7 @@ typedef struct
     uint8_t maskItem;
     uint16_t soundid;
     float dekuStickLength;
+    uint8_t actionParam;
 } z_link_puppet;
 
 typedef struct
@@ -121,9 +122,10 @@ static void init(entity_t *en, z64_global_t *global)
 
     if (isZobjLoaded(&global->obj_ctxt, EPONA_OBJ))
     {
-        uint32_t id_addr = 0x80600150;
+        uint32_t* param_pointer = (uint32_t*) 0x80600150;
+        uint32_t id_addr = *param_pointer;
         uint16_t *seg2 = (uint16_t *)id_addr;
-        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos_2.x, en->actor.pos_2.y, en->actor.pos_2.z, en->actor.rot_2.x, en->actor.rot_2.y, en->actor.rot_2.z, en->actor.variable);
+        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, en->actor.variable);
     }
 
     en->end = 0xDEADBEEF;
@@ -204,7 +206,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
     }
 
     /* Right Foot */
-    else if (limb_number == LIMB_FOOR_R)
+    else if (limb_number == LIMB_FOOT_R)
     {
         if (en->puppetData.age == OOT_ADULT)
         {
@@ -405,7 +407,7 @@ static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_
                 break;
             }
             matrix_pop();
-            
+
             if (en->puppetData.isHandClosed == 0)
             {
                 *display_list = OOT_ZZ_PUPPET_DLIST(OOT_ADULT_RIGHT_HAND_OPEN);
@@ -608,16 +610,24 @@ static void otherCallback(z64_global_t *global, uint8_t limb, uint32_t dlist, ve
 
 static void draw(entity_t *en, z64_global_t *global)
 {
+
+/*     z64_disp_buf_t *opa = &ZQDL(global, poly_opa);
+    static Gfx cull_back_dl[] = {
+        gsSPSetGeometryMode(G_CULL_BACK),
+        gsSPEndDisplayList()};
+
+    gSPSegment(opa->p++, 0x0C, &cull_back_dl); */
+
     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
 
     z_skelanime_draw(global, 0x12, en, &en->skelanime, &Animate, &otherCallback);
 
     vec3f_t Scale[3] = {0.2, 0.2, 0.2};
-    actor_shadow_circle(&en->actor.pos_2, Scale, 0x00FF, global);
+    actor_shadow_circle(&en->actor.pos, Scale, 0x00FF, global);
 
     if (en->puppetData.soundid > 0)
     {
-        z_sfx_play_position(global, &en->actor.pos_2, 25.0, en->puppetData.soundid);
+        z_sfx_play_position(global, &en->actor.pos, 25.0, en->puppetData.soundid);
         en->puppetData.soundid = 0;
     }
 }
@@ -635,7 +645,7 @@ static void destroy(entity_t *en, z64_global_t *global)
 
 /* .data */
 const z64_actor_init_t init_vars = {
-    .number = 0x01,
+    .number = 0x05,
     .padding = 0x00,
     .type = 0x4,
     .room = 0xFF,

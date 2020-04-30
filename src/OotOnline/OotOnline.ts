@@ -25,6 +25,7 @@ import {
   MagicQuantities,
   IInventory,
   Age,
+  IOvlPayloadResult,
 } from 'modloader64_api/OOT/OOTAPI';
 import {
   IOotOnlineHelpers,
@@ -64,6 +65,7 @@ import {
   Ooto_DownloadResponsePacket,
   Ooto_DownloadResponsePacket2,
   Ooto_SceneGUIPacket,
+  Ooto_BankSyncPacket,
 } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
@@ -76,9 +78,10 @@ import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModelPlayer } from './data/models/ModelPlayer';
 import { Ooto_KeyRebuildPacket, KeyLogManager } from './data/keys/KeyLogManager';
 import { EmoteManager } from './data/emotes/emoteManager';
-import { TextboxManip } from './data/textbox/TextboxManip';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { FlagExceptionManager, FLAG_TYPE } from './data/FlagExceptionManager';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -89,16 +92,23 @@ export const SKULLTULA_ARR_SIZE = 0x18;
 interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
   actor_syncing: boolean;
+  key_syncing: boolean;
+}
+
+class OotOnlineConfigCategory {
+  mapTracker: boolean = false;
 }
 
 const enum SCENES {
   LON_LON_RANCH = 0x0063,
   HYRULE_FIELD = 0x0051,
   FOREST_TEMPLE = 0x0003,
-  KAKARIKO_VILLAGE = 0x0052
+  KAKARIKO_VILLAGE = 0x0052,
+  TOWER_COLLAPSE = 0x001A,
+  GUARD_HOUSE = 0x004D
 }
 
-class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
+class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPluginServerConfig {
 
   ModLoader!: ModLoader.IModLoaderAPI;
   pluginName?: string | undefined;
@@ -112,31 +122,27 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   modelManager: ModelManager;
   keys: KeyLogManager;
   emotes: EmoteManager;
-  textboxes: TextboxManip;
   utility: UtilityActorHelper;
+  flagExceptions: FlagExceptionManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
-  warpLookupTable: Map<number, number> = new Map<number, number>();
+  offset: number = -1;
+  config!: OotOnlineConfigCategory;
 
   constructor() {
-    this.warpLookupTable.set(SCENES.FOREST_TEMPLE, 0x0169);
-    this.warpLookupTable.set(SCENES.HYRULE_FIELD, 0x00CD);
-    this.warpLookupTable.set(SCENES.LON_LON_RANCH, 0x0157);
-    this.warpLookupTable.set(SCENES.KAKARIKO_VILLAGE, 0x00DB);
     this.overlord = new PuppetOverlord(this);
     this.actorHooks = new ActorHookingManager(this);
     this.modelManager = new ModelManager(this.clientStorage, this);
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
-    this.textboxes = new TextboxManip();
     this.utility = new UtilityActorHelper();
+    this.flagExceptions = new FlagExceptionManager();
+    //this.flagExceptions.setupGenericDesync(FLAG_TYPE.SCENE, 0, 0);
   }
 
   preinit(): void {
-  }
-
-  warpToScene(scene: number) {
-    this.core.commandBuffer.runWarp(this.warpLookupTable.get(scene)!, 0);
+    this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
+    this.ModLoader.config.setData("OotOnline", "mapTracker", false);
   }
 
   debuggingBombs() {
@@ -156,16 +162,18 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   init(): void {
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/link_no_pvp.c"), dest: path.join(__dirname, "/payloads/E0/link_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/link_puppet.json") });
     bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/horse-3.c"), dest: path.join(__dirname, "/payloads/E0/epona_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/epona_puppet.json") });
-    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/utility.c"), dest: path.join(__dirname, "/payloads/E0/utility_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/utility_actor.json") });
-    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/Magic_Dark_Puppet.c"), dest: path.join(__dirname, "/payloads/E0/nayru_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/nayru_puppet.json") });
+    bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/bank.c"), dest: path.join(__dirname, "/payloads/E0/bank_actor.ovl"), meta: path.join(__dirname, "/payloads/E0/bank_actor.json") });
+    //bus.emit("CatBinding:CompileActor", { file: path.join(__dirname, "/c/Magic_Dark_Puppet.c"), dest: path.join(__dirname, "/payloads/E0/nayru_puppet.ovl"), meta: path.join(__dirname, "/payloads/E0/nayru_puppet.json") });
   }
 
   postinit(): void {
-    this.ModLoader.gui.openWindow(
-      698,
-      795,
-      path.resolve(path.join(__dirname, 'gui', 'map.html'))
-    );
+    if (this.config.mapTracker) {
+      this.ModLoader.gui.openWindow(
+        698,
+        795,
+        path.resolve(path.join(__dirname, 'gui', 'map.html'))
+      );
+    }
     this.clientStorage.scene_keys = JSON.parse(
       fs.readFileSync(__dirname + '/data/scene_numbers.json').toString()
     );
@@ -181,32 +189,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     status.partyMax = 30;
     status.partySize = 1;
     this.ModLoader.gui.setDiscordStatus(status);
-    bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
-  }
-
-  @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
-  onPayload(evt: any) {
-    if (evt.file === 'link_puppet.ovl') {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x600140, evt.result);
-        this.ModLoader.logger.debug('Setting link puppet id to ' + evt.result + '.');
-      }, 20);
-    } else if (evt.file === 'epona_puppet.ovl') {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x600150, evt.result);
-        this.ModLoader.logger.debug('Setting epona puppet id to ' + evt.result + '.');
-      }, 20);
-    } else if (evt.file === "utility_actor.ovl") {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x600190, evt.result);
-        this.ModLoader.logger.debug('Setting utility actor id to ' + evt.result + '.');
-      }, 20);
-    } else if (evt.file === "nayru_puppet.ovl") {
-      this.ModLoader.utils.setTimeoutFrames(() => {
-        this.ModLoader.emulator.rdramWrite16(0x6001A0, evt.result);
-        this.ModLoader.logger.debug('Setting Nayru puppet id to ' + evt.result + '.');
-      }, 20);
-    }
+    //bus.emit("CatBinding:SetDir", path.resolve(global.ModLoader["startdir"], "src", "OotOnline", "c"));
   }
 
   @EventHandler(OotOnlineEvents.GHOST_MODE)
@@ -214,6 +197,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.LobbyConfig.actor_syncing = false;
     this.LobbyConfig.data_syncing = false;
     this.clientStorage.first_time_sync = true;
+    this.LobbyConfig.key_syncing = false;
   }
 
   updateInventory() {
@@ -237,6 +221,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         this.ModLoader.clientLobby
       )
     );
+    if (this.utility.lastKnownBalance !== this.ModLoader.emulator.rdramRead16(0x8011B874)) {
+      this.utility.lastKnownBalance = this.ModLoader.emulator.rdramRead16(0x8011B874);
+      this.ModLoader.clientSide.sendPacket(new Ooto_BankSyncPacket(this.utility.lastKnownBalance, this.ModLoader.clientLobby));
+    }
     this.clientStorage.needs_update = false;
   }
 
@@ -294,8 +282,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     ) {
       let live_scene_chests: Buffer = this.core.global.liveSceneData_chests;
       let live_scene_switches: Buffer = this.core.global.liveSceneData_switch;
-      let live_scene_collect: Buffer = this.core.global
-        .liveSceneData_collectable;
+      let live_scene_collect: Buffer = this.core.global.liveSceneData_collectable;
       let live_scene_clear: Buffer = this.core.global.liveSceneData_clear;
       let live_scene_temp: Buffer = this.core.global.liveSceneData_temp;
       let save_scene_data: Buffer = this.core.global.getSaveDataForCurrentScene();
@@ -321,7 +308,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       } else {
         return;
       }
-
       this.core.global.writeSaveDataForCurrentScene(save_scene_data);
 
       this.ModLoader.clientSide.sendPacket(
@@ -337,7 +323,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
-  updateBottles() {
+  updateBottles(onlyfillCache = false) {
     let bottles: InventoryItem[] = [
       this.core.save.inventory.bottle_1,
       this.core.save.inventory.bottle_2,
@@ -348,9 +334,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       if (bottles[i] !== this.clientStorage.bottleCache[i]) {
         this.clientStorage.bottleCache[i] = bottles[i];
         this.ModLoader.logger.info('Bottle update.');
-        this.ModLoader.clientSide.sendPacket(
-          new Ooto_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby)
-        );
+        if (!onlyfillCache) {
+          this.ModLoader.clientSide.sendPacket(
+            new Ooto_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby)
+          );
+        }
       }
     }
   }
@@ -370,7 +358,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onTick(frame: number): void {
     if (
       !this.core.helper.isTitleScreen() &&
-      this.core.helper.isSceneNumberValid()
+      this.core.helper.isSceneNumberValid() &&
+      this.core.helper.isInterfaceShown()
     ) {
       if (!this.core.helper.isPaused()) {
         if (!this.clientStorage.first_time_sync) {
@@ -383,7 +372,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
           this.autosaveSceneData();
           this.updateBottles();
           this.updateSkulltulas();
-          this.keys.update();
+          if (this.LobbyConfig.key_syncing){
+            this.keys.update();
+          }
           let state = this.core.link.state;
           if (
             state === LinkState.BUSY ||
@@ -439,12 +430,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
   onLobbySetup(lobby: LobbyData): void {
     lobby.data['OotOnline:data_syncing'] = true;
     lobby.data['OotOnline:actor_syncing'] = true;
+    lobby.data['OotOnline:key_syncing'] = false;;
   }
 
   @EventHandler(EventsClient.ON_LOBBY_JOIN)
   onJoinedLobby(lobby: LobbyData): void {
     this.LobbyConfig.actor_syncing = lobby.data['OotOnline:actor_syncing'];
     this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
+    this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
   }
 
@@ -539,19 +532,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
         )
       );
     }
-    /*     this.ModLoader.utils.setTimeoutFrames(() => {
-          this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x806001A0, (success: boolean, result: number) => {
-            if (success) {
-              fs.writeFileSync("./ram_dump.bin", this.ModLoader.emulator.rdramReadBuffer(0x0, (16 * 1024 * 1024)));
-              console.log("SPAWNED ACTOR " + result.toString(16));
-              let actor: IActor = this.core.actorManager.createIActorFromPointer(result);
-              actor.room = 0xFF;
-              actor.position.x = this.core.link.position.x;
-              actor.position.y = this.core.link.position.y;
-              actor.position.z = this.core.link.position.z;
-            }
-          });
-        }, 20); */
   }
 
   @EventHandler(OotEvents.ON_ROOM_CHANGE)
@@ -781,6 +761,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
             storage.skulltulaStorage,
             packet.lobby
           ),
+          new Ooto_BankSyncPacket(storage.bank, packet.lobby),
           packet.lobby
         ),
         packet.player
@@ -811,7 +792,10 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.core.save.itemFlags = packet.flags.items;
     this.core.save.infTable = packet.flags.inf;
     this.core.save.skulltulaFlags = packet.flags.skulltulas;
+    this.clientStorage.bank = packet.bank.savings;
+    this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
     this.clientStorage.first_time_sync = true;
+    this.updateBottles(true);
   }
 
   // I am giving the server data.
@@ -820,6 +804,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     this.clientStorage.first_time_sync = true;
     this.ModLoader.logger.info('The lobby is mine!');
     this.clientStorage.needs_update = true;
+    this.updateBottles(true);
   }
 
   @ServerNetworkHandler('Ooto_SubscreenSyncPacket')
@@ -1088,6 +1073,24 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
     }
   }
 
+  @ServerNetworkHandler("Ooto_BankSyncPacket")
+  onBankUpdate_server(packet: Ooto_BankSyncPacket) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      this
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    storage.bank = packet.savings;
+  }
+
+  @NetworkHandler("Ooto_BankSyncPacket")
+  onBankUpdate(packet: Ooto_BankSyncPacket) {
+    this.clientStorage.bank = packet.savings;
+    this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
+  }
+
   // Healing
   healPlayer() {
     if (
@@ -1213,13 +1216,54 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers {
       './Ooto_storagedump.json',
       JSON.stringify(this.clientStorage, null, 2)
     );
+    this.utility.makeRamDump();
   }
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_RECEIVED_CRASH_LOG)
-  onServerReceivedCrashlog(evt: any){
+  onServerReceivedCrashlog(evt: any) {
     let cp: CrashParserActorTable = new CrashParserActorTable();
     let html: string = cp.parse(evt.dump);
     fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
+  }
+
+  @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
+  onPayload(evt: any) {
+    if (path.parse(evt.file).ext === ".ovl") {
+      let result: IOvlPayloadResult = evt.result;
+      this.clientStorage.overlayCache[evt.file] = result;
+    }
+    if (evt.file === "link_no_pvp.ovl") {
+      let result: IOvlPayloadResult = evt.result;
+      this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
+    } else if (evt.file === "horse-3.ovl") {
+      let result: IOvlPayloadResult = evt.result;
+      this.ModLoader.emulator.rdramWrite32(0x80600150, result.params);
+    }
+  }
+
+  @EventHandler(EventsClient.ON_INJECT_FINISHED)
+  onStartupFinished(evt: any) {
+    //this.core.toggleMapSelectKeybind();
+  }
+
+  @EventHandler(ModLoader.ModLoaderEvents.ON_ROM_PATCHED)
+  onRom(evt: any) {
+    let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+    let file_select_ovl: Buffer = tools.decompressFileFromRom(evt.rom, 32);
+    let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
+    if (expected_hash !== hash) {
+      this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
+    }
+  }
+
+  @EventHandler(ModLoader.ModLoaderEvents.ON_SOFT_RESET_PRE)
+  onReset(evt: any){
+    this.clientStorage.first_time_sync = false;
+  }
+
+  getServerURL(): string {
+    return "192.99.70.23:8000";
   }
 }
 

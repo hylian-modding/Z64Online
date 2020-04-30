@@ -41,7 +41,8 @@ export class PuppetOverlord implements IPuppetOverlord {
       this.core,
       // The pointer here points to blank space, so should be fine.
       0x6011e8,
-      this.ModLoader
+      this.ModLoader,
+      this.parent
     );
   }
 
@@ -122,7 +123,8 @@ export class PuppetOverlord implements IPuppetOverlord {
           player,
           this.core,
           0x0,
-          this.ModLoader
+          this.ModLoader,
+          this.parent
         )
       );
       this.ModLoader.logger.info(
@@ -210,6 +212,10 @@ export class PuppetOverlord implements IPuppetOverlord {
     );
   }
 
+  isCurrentlyWarping(){
+    return this.core.link.rdramRead32(0x69C) === 0x00030000;
+  }
+
   @onTick()
   onTick() {
     if (
@@ -221,7 +227,8 @@ export class PuppetOverlord implements IPuppetOverlord {
     }
     if (
       !this.core.helper.isLinkEnteringLoadingZone() &&
-      this.core.helper.isInterfaceShown()
+      this.core.helper.isInterfaceShown() &&
+      !this.isCurrentlyWarping()
     ) {
       this.processNewPlayers();
       this.processAwaitingSpawns();
@@ -301,5 +308,17 @@ export class PuppetOverlord implements IPuppetOverlord {
       this.Epona = undefined;
       this.ModLoader.logger.debug("Epona despawned");
     }
+  }
+
+  @EventHandler("OotOnline:RoguePuppet")
+  onRoguePuppet(puppet: Puppet) {
+    if (this.puppets.has(puppet.player.uuid)){
+      this.puppets.delete(puppet.player.uuid);
+    }
+  }
+
+  @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
+  onReset(evt: any){
+    this.localPlayerLoadingZone();
   }
 }
