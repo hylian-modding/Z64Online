@@ -9,6 +9,6 @@
   "core": "OcarinaofTime",
   "updateUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/update.json",
   "modloader64_deps": {
-    "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib"
+    "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
   }
 }

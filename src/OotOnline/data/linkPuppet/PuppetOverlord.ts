@@ -9,7 +9,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { IPuppetOverlord } from '../../OotoAPI/IPuppetOverlord';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient } from 'modloader64_api/EventHandler';
-import { IOotOnlineHelpers } from '@OotOnline/OotoAPI/OotoAPI';
+import { IOotOnlineHelpers, OotOnlineEvents } from '@OotOnline/OotoAPI/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 
@@ -23,6 +23,7 @@ export class PuppetOverlord implements IPuppetOverlord {
   >();
   private parent: IOotOnlineHelpers;
   private Epona!: HorseData;
+  private queuedSpawn: boolean = false;
 
   @ModLoaderAPIInject()
   private ModLoader!: IModLoaderAPI;
@@ -141,7 +142,7 @@ export class PuppetOverlord implements IPuppetOverlord {
   }
 
   processAwaitingSpawns() {
-    if (this.awaiting_spawn.length > 0) {
+    if (this.awaiting_spawn.length > 0 && !this.queuedSpawn) {
       let puppet: Puppet = this.awaiting_spawn.shift() as Puppet;
       puppet.spawn();
     }
@@ -320,5 +321,17 @@ export class PuppetOverlord implements IPuppetOverlord {
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
   onReset(evt: any){
     this.localPlayerLoadingZone();
+  }
+
+  @EventHandler(OotOnlineEvents.PLAYER_PUPPET_SPAWNED)
+  onSpawn(puppet: Puppet){
+    this.ModLoader.logger.debug("Unlocking puppet spawner.")
+    this.queuedSpawn = false;
+  }
+
+  @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
+  onPreSpawn(puppet: Puppet){
+    this.ModLoader.logger.debug("Locking puppet spawner.")
+    this.queuedSpawn = true;
   }
 }

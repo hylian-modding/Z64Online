@@ -17,10 +17,7 @@
         "./src/OotOnline/*"
       ],
       "Z64Lib/*": [
-        "./libs/Z64Lib/*"
-      ],
-      "AudioAPI/*": [
-        "./libs/AudioAPI/*"
+        "libs\\Z64Lib/*"
       ]
     }
   },
@@ -29,7 +26,8 @@
     "test/**/*.ts",
     "mods/**/*.ts",
     "cores/**/*.ts",
-    "bin/paker.ts"
+    "bin/paker.ts",
+    "tools/**/*.ts"
   ],
   "exclude": [
     "node_modules",
