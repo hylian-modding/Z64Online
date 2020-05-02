@@ -18,7 +18,7 @@ export class ModelThreadWorker {
       __dirname,
       path.parse(myArgs[0]).name + '.zzcache'
     );
-    fs.writeFileSync(outf, decrypter.encrypt(Buffer.from(JSON.stringify(cache, null, 2))));
+    fs.writeFileSync(outf, Buffer.from(JSON.stringify(cache, null, 2)));
   }
 }
 
