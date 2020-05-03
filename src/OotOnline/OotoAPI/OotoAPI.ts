@@ -1,6 +1,5 @@
 import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
-import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
 
 export enum OotOnlineEvents {
@@ -19,6 +18,11 @@ export enum OotOnlineEvents {
   CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult',
   CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild',
   CUSTOM_MODEL_APPLIED_EQUIPMENT = "OotOnline:ApplyCustomEquipment",
+  CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK = "OotOnline:CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK",
+  CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK = "OotOnline:CUSTOM_MODEL_APPLIED_ADULT_MATRIX_MATRIX_SHIELD_BACK",
+  CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK = "OotOnline:CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK",
+  CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK = "OotOnline:CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK",
+  CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD = "OotOnline:CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD",
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote'

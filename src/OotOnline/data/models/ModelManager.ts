@@ -39,6 +39,7 @@ import { ModelEquipmentPackager } from './ModelEquipmentPackager';
 import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
+import { MatrixTranslate } from './MatrixTranslate';
 
 export class FilePatch {
   offset: number;
@@ -77,12 +78,13 @@ export class ModelManager {
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
   cacheDir: string = "./cache";
-  equipmentAdultMap: Map<string, number> = new Map<string, number>();
-  equipmentChildMap: Map<string, number> = new Map<string, number>();
+  equipmentAdultMap: Map<string, Array<number>> = new Map<string, Array<number>>();
+  equipmentChildMap: Map<string, Array<number>> = new Map<string, Array<number>>();
   equipmentIndex = -1;
   equipmentMetadata: any = {};
   colorProxies: Array<number> = [];
   lastSeenTunic: number = 0;
+  matrices: Map<string, Buffer> = new Map<string, Buffer>();
 
   constructor(
     clientStorage: OotOnlineStorageClient,
@@ -93,11 +95,47 @@ export class ModelManager {
     this.allocationManager = new ModelAllocationManager();
     let d: any = JSON.parse(fs.readFileSync(path.join(__dirname, "DlistMap.json")).toString());
     Object.keys(d.adult).forEach((key: string) => {
-      this.equipmentAdultMap.set(key, parseInt(d.adult[key]));
+      this.equipmentAdultMap.set(key, []);
+      Object.keys(d.adult[key]).forEach((i: string) => {
+        this.equipmentAdultMap.get(key)!.push(parseInt(d.adult[key][i]));
+      })
     });
     Object.keys(d.child).forEach((key: string) => {
-      this.equipmentChildMap.set(key, parseInt(d.child[key]));
+      this.equipmentChildMap.set(key, []);
+      Object.keys(d.child[key]).forEach((i: string) => {
+        this.equipmentChildMap.get(key)!.push(parseInt(d.child[key][i]));
+      })
     });
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK)
+  CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK(arr: number[]) {
+    let mt: MatrixTranslate = new MatrixTranslate();
+    this.matrices.set(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK, mt.guMtxF2L(mt.guRTSF(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6])));
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK)
+  CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK(arr: number[]) {
+    let mt: MatrixTranslate = new MatrixTranslate();
+    this.matrices.set(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK, mt.guMtxF2L(mt.guRTSF(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6])));
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK)
+  CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK(arr: number[]) {
+    let mt: MatrixTranslate = new MatrixTranslate();
+    this.matrices.set(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK, mt.guMtxF2L(mt.guRTSF(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6])));
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK)
+  CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK(arr: number[]) {
+    let mt: MatrixTranslate = new MatrixTranslate();
+    this.matrices.set(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK, mt.guMtxF2L(mt.guRTSF(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6])));
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD)
+  CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD(arr: number[]) {
+    let mt: MatrixTranslate = new MatrixTranslate();
+    this.matrices.set(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD, mt.guMtxF2L(mt.guRTSF(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6])));
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
@@ -175,9 +213,11 @@ export class ModelManager {
   loadEquipment() {
     if (this.customModelFileEquipment !== '') {
       let model = this.allocationManager.getModelInSlot(this.equipmentIndex);
+      fs.writeFileSync(global.ModLoader["startdir"] + "/test.zobj", model.model.equipment.zobj);
       let allocation_size = 0x37800;
       let addr: number = 0x800000 + allocation_size * this.equipmentIndex;
-      this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(model.model.equipment.zobj, this.equipmentIndex));
+      let buf: Buffer = new zzstatic().doRepoint(model.model.equipment.zobj, this.equipmentIndex);
+      this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
     }
   }
 
@@ -203,16 +243,18 @@ export class ModelManager {
     }
   }
 
+  s: number = 0;
+
   loadAdultModel(evt: any, file: string) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
     let adult = 502;
     let code = 27;
-    let offset = 0xe65a0;
     this.ModLoader.logger.info('Loading new Link model (Adult)...');
     let adult_model: Buffer = fs.readFileSync(file);
     let a_copy: Buffer = Buffer.alloc(adult_model.byteLength);
     adult_model.copy(a_copy);
     if (this.customModelFileEquipment !== '') {
+      let ms_blade_addr: number = -1;
       Object.keys(this.equipmentMetadata).forEach((key: string) => {
         if (this.equipmentAdultMap.has(key)) {
           this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
@@ -231,10 +273,73 @@ export class ModelManager {
           let allocation_size = 0x37800;
           let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
           addr += offset;
-          a_copy.writeUInt32BE(addr, this.equipmentAdultMap.get(key)! + 0x4);
+          offset += proxy.byteLength;
+          for (let i = 0; i < this.equipmentAdultMap.get(key)!.length; i++) {
+            a_copy.writeUInt32BE(addr, this.equipmentAdultMap.get(key)![i] + 0x4);
+          }
           this.colorProxies.push(addr + 0x14);
+          if (key === "Hilt.2") {
+            let toki: Buffer = tools.decompressFileFromRom(evt.rom, 126);
+            let thash: string = this.ModLoader.utils.hashBuffer(toki);
+            if (thash === "3503c9424b64bb7d087b6e291cec85d1") {
+              let matrix_proxy: Buffer = fs.readFileSync(path.join(__dirname, "matrix_wrapper.bin"));
+              let matrix_offset: number = matrix_proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
+              let dlist_hilt_offset: number = matrix_proxy.indexOf(Buffer.from("BADF00D0", 'hex'));
+              let dlist_blade_offset: number = matrix_proxy.indexOf(Buffer.from('FF15F00D', 'hex'));
+              let mt = new MatrixTranslate();
+              let md = mt.guRTSF(0.0, 0.0, -90.0, -130.0, 582.0, 34.0, 0.4);
+              let matrix_data: Buffer = mt.guMtxF2L(md);
+              let replacement2 = Buffer.alloc(model.model.equipment.zobj.byteLength + matrix_proxy.byteLength + matrix_data.byteLength);
+              model.model.equipment.zobj.copy(replacement2);
+              model.model.equipment.zobj = replacement2;
+              matrix_data.copy(model.model.equipment.zobj, offset);
+              let addr2 = 0x80800000 + allocation_size * this.equipmentIndex;
+              addr2 += offset;
+              console.log(addr2.toString(16));
+              matrix_proxy.writeUInt32BE(addr2, matrix_offset);
+              addr2 += matrix_data.byteLength;
+              offset += matrix_data.byteLength;
+              ms_blade_addr = offset + dlist_blade_offset;
+              matrix_proxy.writeUInt32BE(addr, dlist_hilt_offset);
+              matrix_proxy.writeUInt32BE(addr, dlist_blade_offset);
+              matrix_proxy.copy(model.model.equipment.zobj, offset);
+              offset += matrix_proxy.byteLength;
+
+              fs.writeFileSync(global.ModLoader["startdir"] + "/wtf.bin", model.model.equipment.zobj);
+              let temp: Buffer = Buffer.alloc(4);
+              temp.writeUInt32BE(addr2, 0);
+              toki.writeUInt16BE(temp.readUInt16BE(0), 0x462);
+              toki.writeUInt16BE(temp.readUInt16BE(2), 0x466);
+              this.ModLoader.logger.info("Patching ovl_Bg_Toki_Swd...");
+
+/*               setTimeout(() => {
+                setInterval(() => {
+                  let a = 0x80876B78;
+                  let mt = new MatrixTranslate();
+                  let md = mt.guRTSF(0.0, 0.0, this.s, -130.0, 582.0, 34.0, 0.4, 0.4, 0.4);
+                  let matrix_data: Buffer = mt.guMtxF2L(md);
+                  this.ModLoader.emulator.rdramWriteBuffer(a, matrix_data);
+                  this.s--;
+                }, 5 * 1000);
+              }, 30 * 1000); */
+            }
+            tools.recompressFileIntoRom(evt.rom, 126, toki);
+          } else if (key === "Blade.2") {
+            model.model.equipment.zobj.writeUInt32BE(addr, ms_blade_addr);
+          }
         }
       });
+      // Load any matrix data.
+      if (this.matrices.has(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK)) {
+        this.ModLoader.logger.debug("Applying sword back matrix...");
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK)!.copy(a_copy, 0x5010);
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK)!.copy(adult_model, 0x5010);
+      }
+      if (this.matrices.has(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK)) {
+        this.ModLoader.logger.debug("Applying shield back matrix...");
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK)!.copy(a_copy, 0x5050);
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK)!.copy(adult_model, 0x5050);
+      }
     }
     let _adult_model = this.ModLoader.utils.yaz0Encode(a_copy);
     let adult_zobj = this.getRawFileFromRom(evt.rom, adult);
@@ -257,8 +362,9 @@ export class ModelManager {
       tools.recompressFileIntoRom(evt.rom, patch[i].index, buf);
     }
     let code_file: Buffer = tools.decompressFileFromRom(evt.rom, code);
-    adult_model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
+    adult_model.writeUInt32BE(code_file.readUInt32BE(0xe65a0), 0x500c);
     this.clientStorage.adultModel = adult_model;
+    //new ManifestMapper().map("adult-link.txt");
   }
 
   loadChildModel(evt: any, file: string) {
@@ -290,10 +396,25 @@ export class ModelManager {
           let allocation_size = 0x37800;
           let addr: number = 0x80800000 + allocation_size * this.equipmentIndex;
           addr += offset;
-          a_copy.writeUInt32BE(addr, this.equipmentChildMap.get(key)! + 0x4);
+          for (let i = 0; i < this.equipmentChildMap.get(key)!.length; i++) {
+            a_copy.writeUInt32BE(addr, this.equipmentChildMap.get(key)![i] + 0x4);
+          }
           this.colorProxies.push(addr + 0x14);
         }
       });
+      // Load any matrix data.
+      if (this.matrices.has(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK)) {
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK)!.copy(a_copy, 0x5010);
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK)!.copy(child_model, 0x5010);
+      }
+      if (this.matrices.has(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK)) {
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK)!.copy(a_copy, 0x5050);
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK)!.copy(child_model, 0x5050);
+      }
+      if (this.matrices.has(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD)) {
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD)!.copy(a_copy, 0x5090);
+        this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD)!.copy(child_model, 0x5090);
+      }
     }
 
     let _child_model = this.ModLoader.utils.yaz0Encode(a_copy);
@@ -772,9 +893,13 @@ export class ModelManager {
             if (this.equipmentAdultMap.has(key) || this.equipmentChildMap.has(key)) {
               this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
               if (puppet.age === Age.ADULT) {
-                this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                for (let i = 0; i < this.equipmentAdultMap.get(key)!.length; i++) {
+                  this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)![i] + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                }
               } else if (puppet.age === Age.CHILD) {
-                this.ModLoader.emulator.rdramWrite32(addr + this.equipmentChildMap.get(key)! + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                for (let i = 0; i < this.equipmentChildMap.get(key)!.length; i++) {
+                  this.ModLoader.emulator.rdramWrite32(addr + this.equipmentChildMap.get(key)![i] + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                }
               }
             }
           });
