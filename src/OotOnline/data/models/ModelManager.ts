@@ -40,6 +40,7 @@ import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { MatrixTranslate } from './MatrixTranslate';
+import { ManifestMapper } from './ManifestMapper';
 
 export class FilePatch {
   offset: number;
@@ -282,50 +283,39 @@ export class ModelManager {
             let toki: Buffer = tools.decompressFileFromRom(evt.rom, 126);
             let thash: string = this.ModLoader.utils.hashBuffer(toki);
             if (thash === "3503c9424b64bb7d087b6e291cec85d1") {
-              let matrix_proxy: Buffer = fs.readFileSync(path.join(__dirname, "matrix_wrapper.bin"));
-              let matrix_offset: number = matrix_proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
-              let dlist_hilt_offset: number = matrix_proxy.indexOf(Buffer.from("BADF00D0", 'hex'));
-              let dlist_blade_offset: number = matrix_proxy.indexOf(Buffer.from('FF15F00D', 'hex'));
-              let mt = new MatrixTranslate();
-              let md = mt.guRTSF(0.0, 0.0, -90.0, -130.0, 582.0, 34.0, 0.4);
-              let matrix_data: Buffer = mt.guMtxF2L(md);
-              let replacement2 = Buffer.alloc(model.model.equipment.zobj.byteLength + matrix_proxy.byteLength + matrix_data.byteLength);
-              model.model.equipment.zobj.copy(replacement2);
-              model.model.equipment.zobj = replacement2;
-              matrix_data.copy(model.model.equipment.zobj, offset);
-              let addr2 = 0x80800000 + allocation_size * this.equipmentIndex;
-              addr2 += offset;
-              console.log(addr2.toString(16));
-              matrix_proxy.writeUInt32BE(addr2, matrix_offset);
-              addr2 += matrix_data.byteLength;
-              offset += matrix_data.byteLength;
-              ms_blade_addr = offset + dlist_blade_offset;
-              matrix_proxy.writeUInt32BE(addr, dlist_hilt_offset);
-              matrix_proxy.writeUInt32BE(addr, dlist_blade_offset);
-              matrix_proxy.copy(model.model.equipment.zobj, offset);
-              offset += matrix_proxy.byteLength;
-
-              fs.writeFileSync(global.ModLoader["startdir"] + "/wtf.bin", model.model.equipment.zobj);
-              let temp: Buffer = Buffer.alloc(4);
-              temp.writeUInt32BE(addr2, 0);
-              toki.writeUInt16BE(temp.readUInt16BE(0), 0x462);
-              toki.writeUInt16BE(temp.readUInt16BE(2), 0x466);
-              this.ModLoader.logger.info("Patching ovl_Bg_Toki_Swd...");
-
-/*               setTimeout(() => {
-                setInterval(() => {
-                  let a = 0x80876B78;
-                  let mt = new MatrixTranslate();
-                  let md = mt.guRTSF(0.0, 0.0, this.s, -130.0, 582.0, 34.0, 0.4, 0.4, 0.4);
-                  let matrix_data: Buffer = mt.guMtxF2L(md);
-                  this.ModLoader.emulator.rdramWriteBuffer(a, matrix_data);
-                  this.s--;
-                }, 5 * 1000);
-              }, 30 * 1000); */
+              /*               let matrix_proxy: Buffer = fs.readFileSync(path.join(__dirname, "matrix_wrapper.bin"));
+                            let matrix_offset: number = matrix_proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
+                            let dlist_hilt_offset: number = matrix_proxy.indexOf(Buffer.from("BADF00D0", 'hex'));
+                            let dlist_blade_offset: number = matrix_proxy.indexOf(Buffer.from('FF15F00D', 'hex'));
+                            let mt = new MatrixTranslate();
+                            let md = mt.guRTSF(0.0, 0.0, -90.0, -130.0, 582.0, 34.0, 0.4);
+                            let matrix_data: Buffer = mt.guMtxF2L(md);
+                            let replacement2 = Buffer.alloc(model.model.equipment.zobj.byteLength + matrix_proxy.byteLength + matrix_data.byteLength);
+                            model.model.equipment.zobj.copy(replacement2);
+                            model.model.equipment.zobj = replacement2;
+                            matrix_data.copy(model.model.equipment.zobj, offset);
+                            let addr2 = 0x80800000 + allocation_size * this.equipmentIndex;
+                            addr2 += offset;
+                            matrix_proxy.writeUInt32BE(addr2, matrix_offset);
+                            addr2 += matrix_data.byteLength;
+                            offset += matrix_data.byteLength;
+                            ms_blade_addr = offset + dlist_blade_offset;
+                            matrix_proxy.writeUInt32BE(addr, dlist_hilt_offset);
+                            matrix_proxy.writeUInt32BE(addr, dlist_blade_offset);
+                            matrix_proxy.copy(model.model.equipment.zobj, offset);
+                            offset += matrix_proxy.byteLength;
+              
+                            fs.writeFileSync(global.ModLoader["startdir"] + "/wtf.bin", model.model.equipment.zobj);
+                            let temp: Buffer = Buffer.alloc(4);
+                            temp.writeUInt32BE(addr2, 0);
+                            toki.writeUInt16BE(temp.readUInt16BE(0), 0x462);
+                            toki.writeUInt16BE(temp.readUInt16BE(2), 0x466);
+                            fs.writeFileSync(global.ModLoader["startdir"] + "/toki.ovl", toki);
+                            this.ModLoader.logger.info("Patching ovl_Bg_Toki_Swd..."); */
             }
             tools.recompressFileIntoRom(evt.rom, 126, toki);
           } else if (key === "Blade.2") {
-            model.model.equipment.zobj.writeUInt32BE(addr, ms_blade_addr);
+            /* model.model.equipment.zobj.writeUInt32BE(addr, ms_blade_addr); */
           }
         }
       });
