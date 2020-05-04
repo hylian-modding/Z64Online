@@ -17,17 +17,26 @@ import {
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 
-export class Ooto_PuppetPacket extends UDPPacket {
+export class Ooto_PuppetPacket{
   data: PuppetData;
   horse_data!: HorseData;
 
   constructor(puppetData: PuppetData, lobby: string) {
-    super('Ooto_PuppetPacket', 'OotOnline', lobby, false);
     this.data = puppetData;
   }
 
   setHorseData(horse: HorseData){
     this.horse_data = horse;
+  }
+}
+
+export class Ooto_PuppetWrapperPacket extends UDPPacket{
+
+  data: string;
+
+  constructor(packet: Ooto_PuppetPacket, lobby: string) {
+    super('Ooto_PuppetPacket', 'OotOnline', lobby, false);
+    this.data = JSON.stringify(packet);
   }
 }
 

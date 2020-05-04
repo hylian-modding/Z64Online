@@ -2,7 +2,7 @@ import { Puppet } from './Puppet';
 import { IOOTCore, Age, OotEvents } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer, NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
-import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket } from '../OotOPackets';
+import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_PuppetWrapperPacket } from '../OotOPackets';
 import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
@@ -180,16 +180,17 @@ export class PuppetOverlord implements IPuppetOverlord {
       if (this.Epona !== undefined) {
         packet.setHorseData(this.Epona);
       }
-      this.ModLoader.clientSide.sendPacket(packet);
+      this.ModLoader.clientSide.sendPacket(new Ooto_PuppetWrapperPacket(packet, this.ModLoader.clientLobby));
     }
   }
 
-  processPuppetPacket(packet: Ooto_PuppetPacket) {
+  processPuppetPacket(packet: Ooto_PuppetWrapperPacket) {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
-      puppet.processIncomingPuppetData(packet.data);
-      if (packet.horse_data !== undefined) {
-        puppet.processIncomingHorseData(packet.horse_data);
+      let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
+      puppet.processIncomingPuppetData(actualPacket.data);
+      if (actualPacket.horse_data !== undefined) {
+        puppet.processIncomingHorseData(actualPacket.horse_data);
       }
     }
   }
@@ -266,12 +267,12 @@ export class PuppetOverlord implements IPuppetOverlord {
   }
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_server(packet: Ooto_PuppetPacket) {
+  onPuppetData_server(packet: Ooto_PuppetWrapperPacket) {
     this.parent.sendPacketToPlayersInScene(packet);
   }
 
   @NetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_client(packet: Ooto_PuppetPacket) {
+  onPuppetData_client(packet: Ooto_PuppetWrapperPacket) {
     if (
       this.core.helper.isTitleScreen() ||
       this.core.helper.isPaused() ||
