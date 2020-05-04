@@ -214,7 +214,6 @@ export class ModelManager {
   loadEquipment() {
     if (this.customModelFileEquipment !== '') {
       let model = this.allocationManager.getModelInSlot(this.equipmentIndex);
-      fs.writeFileSync(global.ModLoader["startdir"] + "/test.zobj", model.model.equipment.zobj);
       let allocation_size = 0x37800;
       let addr: number = 0x800000 + allocation_size * this.equipmentIndex;
       let buf: Buffer = new zzstatic().doRepoint(model.model.equipment.zobj, this.equipmentIndex);
@@ -859,13 +858,13 @@ export class ModelManager {
     if (model.model.equipment !== undefined) {
       if (model.model.equipment.zobj.byteLength > 1) {
         if (puppet.age === Age.ADULT && model.model.adult.zobj.byteLength <= 1) {
-          let adult_model: Buffer = fs.readFileSync(path.join(__dirname, "adult.zobj"));
+          let adult_model: Buffer = fs.readFileSync(path.join(this.cacheDir, "adult.zobj"));
           zobj_size = adult_model.byteLength;
           this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(adult_model, index));
           passed = true;
         }
         if (puppet.age === Age.CHILD && model.model.child.zobj.byteLength <= 1) {
-          let child_model: Buffer = fs.readFileSync(path.join(__dirname, "child.zobj"));
+          let child_model: Buffer = fs.readFileSync(path.join(this.cacheDir, "child.zobj"));
           zobj_size = child_model.byteLength;
           this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic().doRepoint(child_model, index));
           passed = true;
@@ -883,12 +882,16 @@ export class ModelManager {
             if (this.equipmentAdultMap.has(key) || this.equipmentChildMap.has(key)) {
               this.ModLoader.logger.info("Loading dlist replacement for " + key + ".");
               if (puppet.age === Age.ADULT) {
-                for (let i = 0; i < this.equipmentAdultMap.get(key)!.length; i++) {
-                  this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)![i] + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                if (this.equipmentAdultMap.has(key)) {
+                  for (let i = 0; i < this.equipmentAdultMap.get(key)!.length; i++) {
+                    this.ModLoader.emulator.rdramWrite32(addr + this.equipmentAdultMap.get(key)![i] + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                  }
                 }
               } else if (puppet.age === Age.CHILD) {
-                for (let i = 0; i < this.equipmentChildMap.get(key)!.length; i++) {
-                  this.ModLoader.emulator.rdramWrite32(addr + this.equipmentChildMap.get(key)![i] + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                if (this.equipmentChildMap.has(key)) {
+                  for (let i = 0; i < this.equipmentChildMap.get(key)!.length; i++) {
+                    this.ModLoader.emulator.rdramWrite32(addr + this.equipmentChildMap.get(key)![i] + 0x4, zobj.readUInt32BE(temp_equipmentMetadata[key] + 0x4));
+                  }
                 }
               }
             }
