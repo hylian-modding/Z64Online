@@ -93,7 +93,7 @@ export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
 
-interface IOotOnlineLobbyConfig {
+export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
   actor_syncing: boolean;
   key_syncing: boolean;
@@ -434,7 +434,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   onLobbySetup(lobby: LobbyData): void {
     lobby.data['OotOnline:data_syncing'] = true;
     lobby.data['OotOnline:actor_syncing'] = true;
-    lobby.data['OotOnline:key_syncing'] = false;;
+    lobby.data['OotOnline:key_syncing'] = true;
   }
 
   @EventHandler(EventsClient.ON_LOBBY_JOIN)
@@ -787,7 +787,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     // Clear inventory.
     this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x24, 0xFF));
     // Clear c-button and b.
-    this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0068, Buffer.alloc(0x7, 0xFF));
+    //this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0068, Buffer.alloc(0x4, 0xFF));
     this.core.link.sword = Sword.NONE;
     this.core.link.shield = Shield.NONE;
     this.core.link.boots = Boots.KOKIRI;
