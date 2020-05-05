@@ -785,7 +785,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   onDownloadPacket_client(packet: Ooto_DownloadResponsePacket) {
     this.ModLoader.logger.info('Retrieving savegame from server...');
     // Clear inventory.
-    this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x24, 0xFF));
+    this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x18, 0xFF));
     // Clear c-button and b.
     //this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0068, Buffer.alloc(0x4, 0xFF));
     this.core.link.sword = Sword.NONE;
