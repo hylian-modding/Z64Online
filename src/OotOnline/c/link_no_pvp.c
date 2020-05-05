@@ -128,11 +128,14 @@ static void init(entity_t *en, z64_global_t *global)
         z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, en->actor.variable);
     }
 
+    en->actor.flags = 0x0E000075;
     en->end = 0xDEADBEEF;
 }
 
 static void play(entity_t *en, z64_global_t *global)
 {
+    en->actor.pos_focus = en->actor.pos;
+    en->actor.rot_focus = en->actor.rot;
     if (en->puppetData.playasData.isZZ)
     {
         const uint32_t eyes[3] = {en->puppetData.playasData.base + 0x00000000, en->puppetData.playasData.base + 0x00000800, en->puppetData.playasData.base + 0x00001000};
