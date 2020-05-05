@@ -26,6 +26,10 @@ import {
   IInventory,
   Age,
   IOvlPayloadResult,
+  Sword,
+  Shield,
+  Boots,
+  Tunic,
 } from 'modloader64_api/OOT/OOTAPI';
 import {
   IOotOnlineHelpers,
@@ -372,7 +376,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
           this.autosaveSceneData();
           this.updateBottles();
           this.updateSkulltulas();
-          if (this.LobbyConfig.key_syncing){
+          if (this.LobbyConfig.key_syncing) {
             this.keys.update();
           }
           let state = this.core.link.state;
@@ -780,7 +784,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   @NetworkHandler('Ooto_DownloadResponsePacket')
   onDownloadPacket_client(packet: Ooto_DownloadResponsePacket) {
     this.ModLoader.logger.info('Retrieving savegame from server...');
-    applyInventoryToContext(packet.subscreen.inventory, this.core.save);
+    // Clear inventory.
+    this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x24, 0xFF));
+    // Clear c-button and b.
+    this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0068, Buffer.alloc(0x7, 0xFF));
+    this.core.link.sword = Sword.NONE;
+    this.core.link.shield = Shield.NONE;
+    this.core.link.boots = Boots.KOKIRI;
+    this.core.link.tunic = Tunic.KOKIRI;
+    applyInventoryToContext(packet.subscreen.inventory, this.core.save, true);
     applyEquipmentToContext(packet.subscreen.equipment, this.core.save);
     applyQuestSaveToContext(packet.subscreen.quest, this.core.save);
     applyDungeonItemDataToContext(
@@ -795,7 +807,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.clientStorage.bank = packet.bank.savings;
     this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
     this.clientStorage.first_time_sync = true;
-    this.updateBottles(true);
   }
 
   // I am giving the server data.
@@ -1258,7 +1269,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   }
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_SOFT_RESET_PRE)
-  onReset(evt: any){
+  onReset(evt: any) {
     this.clientStorage.first_time_sync = false;
   }
 
