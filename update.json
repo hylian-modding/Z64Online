@@ -1,4 +1,5 @@
 {
-    "version": "2.0.95",
-    "url": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/OotOnline.pak"
+    "version": "2.0.97",
+    "url": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/OotOnline.pak",
+	"devurl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/dev/OotOnline.pak"
 }
