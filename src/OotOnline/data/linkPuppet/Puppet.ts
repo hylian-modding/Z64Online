@@ -65,9 +65,9 @@ export class Puppet implements IPuppet {
       return;
     }
     if (!this.isSpawned && !this.isSpawning) {
+      bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       (this.parent.clientStorage.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.clientStorage.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
         if (success) {
           this.data.pointer = result & 0x00ffffff;
@@ -77,10 +77,10 @@ export class Puppet implements IPuppet {
             this.doNotDespawnMe(horse);
             this.horse = new HorseData(this.core.link, this, this.core);
           }
-          bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
           this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x24);
           this.isSpawned = true;
           this.isSpawning = false;
+          bus.emit(OotOnlineEvents.PLAYER_PUPPET_SPAWNED, this);
         }
         return {};
       });

@@ -7,6 +7,7 @@ import { OotOnlineStorage } from "../../OotOnlineStorage";
 import { OotOnlineStorageClient } from "../../OotOnlineStorageClient";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
+import { IOotOnlineLobbyConfig } from "@OotOnline/OotOnline";
 
 export class KeyLogManager {
     indexes: any = {};
@@ -66,10 +67,14 @@ export class KeyLogManager {
 
     @NetworkHandler("Ooto_KeyDeltaServerPacket")
     onPacketClient(packet: Ooto_KeyDeltaServerPacket) {
+        if (!((this.parent as any)["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
+            return;
+        }
         if (packet.originalUser.uuid === this.ModLoader.me.uuid) {
             return;
         }
         let storage: OotOnlineStorageClient = (this.parent as any)["clientStorage"];
+
         storage.changelog.push(packet.entry);
         if (this.core.save.keyManager.getKeyCountForIndex(packet.entry.index) === 0xFF) {
             this.core.save.keyManager.setKeyCountByIndex(packet.entry.index, 0);
@@ -83,6 +88,9 @@ export class KeyLogManager {
 
     @NetworkHandler("Ooto_KeyRebuildPacket")
     onPacketRebuild(packet: Ooto_KeyRebuildPacket) {
+        if (!((this.parent as any)["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
+            return;
+        }
         Object.keys(this.indexes).forEach((key: string) => {
             let index: number = this.indexes[key];
             let entry: KeyLogEntry = this.bases.get(index)!;
