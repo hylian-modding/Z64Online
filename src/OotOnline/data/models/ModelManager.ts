@@ -511,8 +511,10 @@ export class ModelManager {
         )
       );
     } else {
-      let adult_path: string = path.join(this.cacheDir, "adult.zobj");
-      this.loadAdultModel(evt, adult_path);
+      if (this.customModelFileEquipment !== '') {
+        let adult_path: string = path.join(this.cacheDir, "adult.zobj");
+        this.loadAdultModel(evt, adult_path);
+      }
     }
 
     if (this.customModelFileChild !== '') {
@@ -525,8 +527,10 @@ export class ModelManager {
         )
       );
     } else {
-      let child_path: string = path.join(this.cacheDir, "child.zobj");
-      this.loadChildModel(evt, child_path);
+      if (this.customModelFileEquipment !== '') {
+        let child_path: string = path.join(this.cacheDir, "child.zobj");
+        this.loadChildModel(evt, child_path);
+      }
     }
 
     if (this.customModelFileAnims !== '') {
