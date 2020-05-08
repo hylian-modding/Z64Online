@@ -93,6 +93,8 @@ export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
 
+let GHOST_MODE_TRIGGERED: boolean = false;
+
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
   actor_syncing: boolean;
@@ -202,6 +204,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.LobbyConfig.data_syncing = false;
     this.clientStorage.first_time_sync = true;
     this.LobbyConfig.key_syncing = false;
+    GHOST_MODE_TRIGGERED = true;
   }
 
   updateInventory() {
@@ -443,6 +446,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
     this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
+    if (GHOST_MODE_TRIGGERED){
+      bus.emit(OotOnlineEvents.GHOST_MODE, true);
+    }
   }
 
   //------------------------------
