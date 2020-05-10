@@ -243,11 +243,13 @@ export class Ooto_SpawnActorPacket extends Packet {
 export class Ooto_AllocateModelPacket extends Packet {
   model: Buffer;
   age: Age;
+  hash: string;
 
-  constructor(model: Buffer, age: Age, lobby: string) {
+  constructor(model: Buffer, age: Age, lobby: string, hash: string) {
     super('Ooto_AllocateModelPacket', 'OotOnline', lobby, true);
     this.model = model;
     this.age = age;
+    this.hash = hash;
   }
 }
 
@@ -274,11 +276,13 @@ export class Ooto_BottleUpdatePacket extends Packet {
 export class Ooto_IconAllocatePacket extends Packet {
   icon: Buffer;
   age: Age;
+  hash: string;
 
-  constructor(buf: Buffer, age: Age, lobby: string) {
+  constructor(buf: Buffer, age: Age, lobby: string, hash: string) {
     super('Ooto_IconAllocatePacket', 'OotOnline', lobby, true);
     this.icon = buf;
     this.age = age;
+    this.hash = hash;
   }
 }
 
