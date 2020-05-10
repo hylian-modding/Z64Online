@@ -1238,9 +1238,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_RECEIVED_CRASH_LOG)
   onServerReceivedCrashlog(evt: any) {
-    let cp: CrashParserActorTable = new CrashParserActorTable();
-    let html: string = cp.parse(evt.dump);
-    fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
+    //let cp: CrashParserActorTable = new CrashParserActorTable();
+    //let html: string = cp.parse(evt.dump);
+    //fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
   }
 
   @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
