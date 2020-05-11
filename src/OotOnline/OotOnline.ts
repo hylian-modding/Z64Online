@@ -1280,13 +1280,15 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   onActorSpawned(actor: IActor){
     // 0x87 = Forest Temple Elevator.
     // 0x102 = Windmill Blades.
-    if (actor.actorID === 0x0087 || actor.actorID === 0x102){
-      (this.clientStorage.overlayCache["mido_meme.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["mido_meme.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
-        let mido: IActor = this.core.actorManager.createIActorFromPointer(result);
+    if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8){
+      (this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
+        let ff: IActor = this.core.actorManager.createIActorFromPointer(result);
         if (actor.actorID === 0x0087){
-          mido.rdramWriteBuffer(0x24, Buffer.from("433B788243690000C4BAC599", 'hex'));
+          ff.rdramWriteBuffer(0x24, Buffer.from("433B788243690000C4BAC599", 'hex'));
         }else if (actor.actorID === 0x102){
-          mido.rdramWriteBuffer(0x24, Buffer.from("43751CE2432000004436C483", 'hex'));
+          ff.rdramWriteBuffer(0x24, Buffer.from("43751CE2432000004436C483", 'hex'));
+        }else if (actor.actorID === 0xF8){
+          ff.rdramWriteBuffer(0x24, Buffer.from("44130FE344CA2000C39B683C", 'hex'));
         }
         this.ModLoader.logger.debug("Summoning the bugfix actor...");
         return {};

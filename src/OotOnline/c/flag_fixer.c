@@ -28,11 +28,13 @@ void bit_reset(char bit, char *byte)
 
 static void windmill(entity_t *en, z64_global_t *global)
 {
-    uint32_t* data = AADDR(Z64GL_SAVE_CONTEXT, 0xEE1);
-    if (bit_test(5, *data) > 0){
+    uint32_t *data = AADDR(Z64GL_SAVE_CONTEXT, 0xEE1);
+    if (bit_test(5, *data) > 0)
+    {
         // Windmill is going fast.
-        z64_player_t* player = zh_get_player(global);
-        if (player->state_flags_1 < 1){
+        z64_player_t *player = zh_get_player(global);
+        if (player->state_flags_1 < 1)
+        {
             // Player is in control.
             bit_reset(5, data);
         }
@@ -53,6 +55,20 @@ static void elevator(entity_t *en, z64_global_t *global)
     }
 }
 
+static void zelda_guards(entity_t *en, z64_global_t *global)
+{
+    uint8_t *p = AADDR(Z64GL_SAVE_CONTEXT, 0xEE5);
+    // Player is within 100 units of the actor.
+    if (en->actor.dist_from_link_xz < 100)
+    {
+        // Guard flag is set.
+        if (bit_test(0, *p) > 0)
+        {
+            bit_reset(0, p);
+        }
+    }
+}
+
 static void play(entity_t *en, z64_global_t *global)
 {
     if (global->scene_index == 0x3)
@@ -62,6 +78,10 @@ static void play(entity_t *en, z64_global_t *global)
     else if (global->scene_index == 0x52)
     {
         windmill(en, global);
+    }
+    else if (global->scene_index == 0x5F)
+    {
+        zelda_guards(en, global);
     }
 }
 
