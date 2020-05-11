@@ -86,6 +86,7 @@ import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { FlagExceptionManager, FLAG_TYPE } from './data/FlagExceptionManager';
+import { IActor } from 'modloader64_api/OOT/IActor';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -103,15 +104,6 @@ export interface IOotOnlineLobbyConfig {
 
 class OotOnlineConfigCategory {
   mapTracker: boolean = false;
-}
-
-const enum SCENES {
-  LON_LON_RANCH = 0x0063,
-  HYRULE_FIELD = 0x0051,
-  FOREST_TEMPLE = 0x0003,
-  KAKARIKO_VILLAGE = 0x0052,
-  TOWER_COLLAPSE = 0x001A,
-  GUARD_HOUSE = 0x004D
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPluginServerConfig {
@@ -1281,6 +1273,25 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
 
   getServerURL(): string {
     return "192.99.70.23:8000";
+  }
+
+  // This spawns the helper actor to fix some flag issues.
+  @EventHandler(OotEvents.ON_ACTOR_SPAWN)
+  onActorSpawned(actor: IActor){
+    // 0x87 = Forest Temple Elevator.
+    // 0x102 = Windmill Blades.
+    if (actor.actorID === 0x0087 || actor.actorID === 0x102){
+      (this.clientStorage.overlayCache["mido_meme.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["mido_meme.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
+        let mido: IActor = this.core.actorManager.createIActorFromPointer(result);
+        if (actor.actorID === 0x0087){
+          mido.rdramWriteBuffer(0x24, Buffer.from("433B788243690000C4BAC599", 'hex'));
+        }else if (actor.actorID === 0x102){
+          mido.rdramWriteBuffer(0x24, Buffer.from("43751CE2432000004436C483", 'hex'));
+        }
+        this.ModLoader.logger.debug("Summoning the bugfix actor...");
+        return {};
+      });
+    }
   }
 }
 
