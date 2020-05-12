@@ -174,6 +174,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
   collect: Buffer;
   clear: Buffer;
   temp: Buffer;
+  scene: number;
 
   constructor(
     chests: Buffer,
@@ -181,7 +182,8 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     collect: Buffer,
     clear: Buffer,
     temp: Buffer,
-    lobby: string
+    lobby: string,
+    scene: number
   ) {
     super('Ooto_ClientSceneContextUpdate', 'OotOnline', lobby, false);
     this.chests = chests;
@@ -189,6 +191,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     this.collect = collect;
     this.clear = clear;
     this.temp = temp;
+    this.scene = scene;
   }
 }
 
@@ -243,11 +246,13 @@ export class Ooto_SpawnActorPacket extends Packet {
 export class Ooto_AllocateModelPacket extends Packet {
   model: Buffer;
   age: Age;
+  hash: string;
 
-  constructor(model: Buffer, age: Age, lobby: string) {
+  constructor(model: Buffer, age: Age, lobby: string, hash: string) {
     super('Ooto_AllocateModelPacket', 'OotOnline', lobby, true);
     this.model = model;
     this.age = age;
+    this.hash = hash;
   }
 }
 
@@ -274,11 +279,13 @@ export class Ooto_BottleUpdatePacket extends Packet {
 export class Ooto_IconAllocatePacket extends Packet {
   icon: Buffer;
   age: Age;
+  hash: string;
 
-  constructor(buf: Buffer, age: Age, lobby: string) {
+  constructor(buf: Buffer, age: Age, lobby: string, hash: string) {
     super('Ooto_IconAllocatePacket', 'OotOnline', lobby, true);
     this.icon = buf;
     this.age = age;
+    this.hash = hash;
   }
 }
 

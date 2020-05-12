@@ -86,12 +86,15 @@ import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { FlagExceptionManager, FLAG_TYPE } from './data/FlagExceptionManager';
+import { IActor } from 'modloader64_api/OOT/IActor';
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
 export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
+
+let GHOST_MODE_TRIGGERED: boolean = false;
 
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
@@ -101,15 +104,6 @@ export interface IOotOnlineLobbyConfig {
 
 class OotOnlineConfigCategory {
   mapTracker: boolean = false;
-}
-
-const enum SCENES {
-  LON_LON_RANCH = 0x0063,
-  HYRULE_FIELD = 0x0051,
-  FOREST_TEMPLE = 0x0003,
-  KAKARIKO_VILLAGE = 0x0052,
-  TOWER_COLLAPSE = 0x001A,
-  GUARD_HOUSE = 0x004D
 }
 
 class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPluginServerConfig {
@@ -202,6 +196,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.LobbyConfig.data_syncing = false;
     this.clientStorage.first_time_sync = true;
     this.LobbyConfig.key_syncing = false;
+    GHOST_MODE_TRIGGERED = true;
   }
 
   updateInventory() {
@@ -321,7 +316,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
           live_scene_collect,
           live_scene_clear,
           live_scene_temp,
-          this.ModLoader.clientLobby
+          this.ModLoader.clientLobby,
+          this.core.global.scene
         )
       );
     }
@@ -443,6 +439,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
     this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
+    if (GHOST_MODE_TRIGGERED){
+      bus.emit(OotOnlineEvents.GHOST_MODE, true);
+    }
   }
 
   //------------------------------
@@ -1053,11 +1052,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   onSceneContextSync_client(packet: Ooto_ClientSceneContextUpdate) {
     if (
       this.core.helper.isTitleScreen() ||
-      !this.core.helper.isSceneNumberValid()
+      !this.core.helper.isSceneNumberValid() ||
+      this.core.helper.isLinkEnteringLoadingZone()
     ) {
       return;
     }
-
+    if (this.core.global.scene !== packet.scene){
+      return;
+    }
     let buf1: Buffer = this.core.global.liveSceneData_chests;
     if (Object.keys(this.parseFlagChanges(packet.chests, buf1) > 0)) {
       this.core.global.liveSceneData_chests = buf1;
@@ -1232,9 +1234,9 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_RECEIVED_CRASH_LOG)
   onServerReceivedCrashlog(evt: any) {
-    let cp: CrashParserActorTable = new CrashParserActorTable();
-    let html: string = cp.parse(evt.dump);
-    fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
+    //let cp: CrashParserActorTable = new CrashParserActorTable();
+    //let html: string = cp.parse(evt.dump);
+    //fs.writeFileSync("./crashlogs/" + evt.name + ".html", html);
   }
 
   @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
@@ -1275,6 +1277,27 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
 
   getServerURL(): string {
     return "192.99.70.23:8000";
+  }
+
+  // This spawns the helper actor to fix some flag issues.
+  @EventHandler(OotEvents.ON_ACTOR_SPAWN)
+  onActorSpawned(actor: IActor){
+    // 0x87 = Forest Temple Elevator.
+    // 0x102 = Windmill Blades.
+    if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8){
+      (this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
+        let ff: IActor = this.core.actorManager.createIActorFromPointer(result);
+        if (actor.actorID === 0x0087){
+          ff.rdramWriteBuffer(0x24, Buffer.from("433B788243690000C4BAC599", 'hex'));
+        }else if (actor.actorID === 0x102){
+          ff.rdramWriteBuffer(0x24, Buffer.from("43751CE2432000004436C483", 'hex'));
+        }else if (actor.actorID === 0xF8){
+          ff.rdramWriteBuffer(0x24, Buffer.from("44130FE344CA2000C39B683C", 'hex'));
+        }
+        this.ModLoader.logger.debug("Summoning the bugfix actor...");
+        return {};
+      });
+    }
   }
 }
 
