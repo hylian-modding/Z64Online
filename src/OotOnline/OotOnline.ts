@@ -316,7 +316,8 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
           live_scene_collect,
           live_scene_clear,
           live_scene_temp,
-          this.ModLoader.clientLobby
+          this.ModLoader.clientLobby,
+          this.core.global.scene
         )
       );
     }
@@ -1051,11 +1052,14 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   onSceneContextSync_client(packet: Ooto_ClientSceneContextUpdate) {
     if (
       this.core.helper.isTitleScreen() ||
-      !this.core.helper.isSceneNumberValid()
+      !this.core.helper.isSceneNumberValid() ||
+      this.core.helper.isLinkEnteringLoadingZone()
     ) {
       return;
     }
-
+    if (this.core.global.scene !== packet.scene){
+      return;
+    }
     let buf1: Buffer = this.core.global.liveSceneData_chests;
     if (Object.keys(this.parseFlagChanges(packet.chests, buf1) > 0)) {
       this.core.global.liveSceneData_chests = buf1;

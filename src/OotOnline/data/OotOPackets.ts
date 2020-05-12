@@ -174,6 +174,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
   collect: Buffer;
   clear: Buffer;
   temp: Buffer;
+  scene: number;
 
   constructor(
     chests: Buffer,
@@ -181,7 +182,8 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     collect: Buffer,
     clear: Buffer,
     temp: Buffer,
-    lobby: string
+    lobby: string,
+    scene: number
   ) {
     super('Ooto_ClientSceneContextUpdate', 'OotOnline', lobby, false);
     this.chests = chests;
@@ -189,6 +191,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     this.collect = collect;
     this.clear = clear;
     this.temp = temp;
+    this.scene = scene;
   }
 }
 
