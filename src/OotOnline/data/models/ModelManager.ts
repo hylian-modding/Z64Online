@@ -937,7 +937,6 @@ export class ModelManager {
       0x837800,
       this.allocationManager.getModelInSlot(1).model.child.zobj
     );
-    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
   }
 
   @EventHandler(EventsClient.ON_INJECT_FINISHED)
@@ -950,7 +949,6 @@ export class ModelManager {
       0x837800,
       this.allocationManager.getModelInSlot(1).model.child.zobj
     );
-    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)
