@@ -58,6 +58,9 @@ export class KeyLogManager {
             packet.lobby,
             this.parent
         ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
         if (packet.delta !== 0) {
             let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
             storage.changelog.push(s);
