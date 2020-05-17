@@ -55,6 +55,7 @@ import {
   mergeDungeonItemData,
   OotoDungeonItemContext,
   IDungeonItemSave,
+  OotO_SceneStruct,
 } from './data/OotoSaveData';
 import { PuppetOverlord } from './data/linkPuppet/PuppetOverlord';
 import {
@@ -70,6 +71,7 @@ import {
   Ooto_DownloadResponsePacket2,
   Ooto_SceneGUIPacket,
   Ooto_BankSyncPacket,
+  OotO_isRandoPacket,
 } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
@@ -85,7 +87,6 @@ import { EmoteManager } from './data/emotes/emoteManager';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { CrashParserActorTable } from './data/crash/CrashParser';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
-import { FlagExceptionManager, FLAG_TYPE } from './data/FlagExceptionManager';
 import { IActor } from 'modloader64_api/OOT/IActor';
 
 export const SCENE_ARR_SIZE = 0xb0c;
@@ -121,7 +122,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
   keys: KeyLogManager;
   emotes: EmoteManager;
   utility: UtilityActorHelper;
-  flagExceptions: FlagExceptionManager;
   // Storage
   clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
   offset: number = -1;
@@ -134,8 +134,6 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.keys = new KeyLogManager(this);
     this.emotes = new EmoteManager();
     this.utility = new UtilityActorHelper();
-    this.flagExceptions = new FlagExceptionManager();
-    //this.flagExceptions.setupGenericDesync(FLAG_TYPE.SCENE, 0, 0);
   }
 
   preinit(): void {
@@ -264,11 +262,11 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.ModLoader.logger.info('updateFlags()');
     this.ModLoader.clientSide.sendPacket(
       new Ooto_ClientFlagUpdate(
-        scenes,
-        events,
-        items,
-        inf,
-        skulltulas,
+        this.clientStorage.sceneStorage,
+        this.clientStorage.eventStorage,
+        this.clientStorage.itemFlagStorage,
+        this.clientStorage.infStorage,
+        this.clientStorage.skulltulaStorage,
         this.ModLoader.clientLobby
       )
     );
@@ -439,7 +437,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
     this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
     this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
-    if (GHOST_MODE_TRIGGERED){
+    if (GHOST_MODE_TRIGGERED) {
       bus.emit(OotOnlineEvents.GHOST_MODE, true);
     }
   }
@@ -919,41 +917,69 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     if (storage === null) {
       return;
     }
-    Object.keys(packet.scenes).forEach((key: string) => {
-      let k = parseInt(key);
-      let value = packet.scenes[k];
-      if (storage.sceneStorage[k] !== value) {
-        storage.sceneStorage[k] |= value;
+    for (let i = 0; i < packet.scenes.byteLength; i += 0x1C) {
+      let struct = new OotO_SceneStruct(packet.scenes.slice(i, i + 0x1C));
+      let cur = new OotO_SceneStruct(storage.sceneStorage.slice(i, i + 0x1C));
+      for (let j = 0; j < struct.chests.byteLength; j++) {
+        if (struct.chests[j] !== cur.chests[i]) {
+          cur.chests[j] |= struct.chests[j];
+        }
       }
-    });
-    Object.keys(packet.events).forEach((key: string) => {
-      let k = parseInt(key);
-      let value = packet.events[k];
-      if (storage.eventStorage[k] !== value) {
-        storage.eventStorage[k] |= value;
+      for (let j = 0; j < struct.collectible.byteLength; j++) {
+        if (struct.collectible[j] !== cur.collectible[i]) {
+          cur.collectible[j] |= struct.collectible[j];
+        }
       }
-    });
-    Object.keys(packet.items).forEach((key: string) => {
-      let k = parseInt(key);
-      let value = packet.items[k];
-      if (storage.itemFlagStorage[k] !== value) {
-        storage.itemFlagStorage[k] |= value;
+      for (let j = 0; j < struct.room_clear.byteLength; j++) {
+        if (struct.room_clear[j] !== cur.room_clear[i]) {
+          cur.room_clear[j] |= struct.room_clear[j];
+        }
       }
-    });
-    Object.keys(packet.inf).forEach((key: string) => {
-      let k = parseInt(key);
-      let value = packet.inf[k];
-      if (storage.infStorage[k] !== value) {
-        storage.infStorage[k] |= value;
+      for (let j = 0; j < struct.switches.byteLength; j++) {
+        if (struct.switches[j] !== cur.switches[i]) {
+          cur.switches[j] |= struct.switches[j];
+        }
       }
-    });
-    Object.keys(packet.skulltulas).forEach((key: string) => {
-      let k = parseInt(key);
-      let value = packet.skulltulas[k];
-      if (storage.skulltulaStorage[k] !== value) {
-        storage.skulltulaStorage[k] |= value;
+      for (let j = 0; j < struct.visited_floors.byteLength; j++) {
+        if (struct.visited_floors[j] !== cur.visited_floors[i]) {
+          cur.visited_floors[j] |= struct.visited_floors[j];
+        }
       }
-    });
+      for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
+        if (struct.visited_rooms[j] !== cur.visited_rooms[i]) {
+          cur.visited_rooms[j] |= struct.visited_rooms[j];
+        }
+      }
+      for (let j = 0; j < struct.unused.byteLength; j++) {
+        if (struct.unused[j] !== cur.unused[i]) {
+          cur.unused[j] = struct.unused[j];
+        }
+      }
+    }
+    for (let i = 0; i < packet.events.byteLength; i++) {
+      let value = packet.events[i];
+      if (storage.eventStorage[i] !== value) {
+        storage.eventStorage[i] |= value;
+      }
+    }
+    for (let i = 0; i < packet.items.byteLength; i++) {
+      let value = packet.items[i];
+      if (storage.itemFlagStorage[i] !== value) {
+        storage.itemFlagStorage[i] |= value;
+      }
+    }
+    for (let i = 0; i < packet.inf.byteLength; i++) {
+      let value = packet.inf[i];
+      if (storage.infStorage[i] !== value) {
+        storage.infStorage[i] |= value;
+      }
+    }
+    for (let i = 0; i < packet.skulltulas.byteLength; i++) {
+      let value = packet.skulltulas[i];
+      if (storage.skulltulaStorage[i] !== value) {
+        storage.skulltulaStorage[i] |= value;
+      }
+    }
     this.ModLoader.serverSide.sendPacket(
       new Ooto_ServerFlagUpdate(
         storage.sceneStorage,
@@ -968,75 +994,109 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
 
   @NetworkHandler('Ooto_ServerFlagUpdate')
   onSceneFlagSync_client(packet: Ooto_ServerFlagUpdate) {
-    let scenes: Buffer = this.core.save.permSceneData;
-    let events: Buffer = this.core.save.eventFlags;
-    let items: Buffer = this.core.save.itemFlags;
-    let inf: Buffer = this.core.save.infTable;
-    let skulltulas: Buffer = this.core.save.skulltulaFlags;
 
-    let incoming_scenes: Buffer = packet.scenes;
-    let incoming_events: Buffer = packet.events;
-    let incoming_items: Buffer = packet.items;
-    let incoming_inf: Buffer = packet.inf;
-    let incoming_skulltulas: Buffer = packet.skulltulas;
+    this.ModLoader.utils.clearBuffer(this.clientStorage.sceneStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.eventStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.itemFlagStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.infStorage);
+    this.ModLoader.utils.clearBuffer(this.clientStorage.skulltulaStorage);
 
-    let scene_arr: any = this.parseFlagChanges(
-      scenes,
+    let scene_data = this.core.save.permSceneData;
+    let event_data = this.core.save.eventFlags;
+    let item_data = this.core.save.itemFlags;
+    let inf_data = this.core.save.infTable;
+    let skulltula_data = this.core.save.skulltulaFlags;
+
+    this.parseFlagChanges(
+      scene_data,
       this.clientStorage.sceneStorage
     );
-    let event_arr: any = this.parseFlagChanges(
-      events,
+    this.parseFlagChanges(
+      event_data,
       this.clientStorage.eventStorage
     );
-    let items_arr: any = this.parseFlagChanges(
-      items,
+    this.parseFlagChanges(
+      item_data,
       this.clientStorage.itemFlagStorage
     );
-    let inf_arr: any = this.parseFlagChanges(
-      inf,
+    this.parseFlagChanges(
+      inf_data,
       this.clientStorage.infStorage
     );
-    let skulltulas_arr: any = this.parseFlagChanges(
-      skulltulas,
+    this.parseFlagChanges(
+      skulltula_data,
       this.clientStorage.skulltulaStorage
     );
 
-    scene_arr = this.parseFlagChanges(
-      incoming_scenes,
-      this.clientStorage.sceneStorage
-    );
-    event_arr = this.parseFlagChanges(
-      incoming_events,
-      this.clientStorage.eventStorage
-    );
-    items_arr = this.parseFlagChanges(
-      incoming_items,
-      this.clientStorage.itemFlagStorage
-    );
-    inf_arr = this.parseFlagChanges(
-      incoming_inf,
-      this.clientStorage.infStorage
-    );
-    skulltulas_arr = this.parseFlagChanges(
-      incoming_skulltulas,
-      this.clientStorage.skulltulaStorage
-    );
+    for (let i = 0; i < packet.scenes.byteLength; i += 0x1C) {
+      let struct = new OotO_SceneStruct(packet.scenes.slice(i, i + 0x1C));
+      let cur = new OotO_SceneStruct(this.clientStorage.sceneStorage.slice(i, i + 0x1C));
+      for (let j = 0; j < struct.chests.byteLength; j++) {
+        if (struct.chests[j] !== cur.chests[i]) {
+          cur.chests[j] |= struct.chests[j];
+        }
+      }
+      for (let j = 0; j < struct.collectible.byteLength; j++) {
+        if (struct.collectible[j] !== cur.collectible[i]) {
+          cur.collectible[j] |= struct.collectible[j];
+        }
+      }
+      for (let j = 0; j < struct.room_clear.byteLength; j++) {
+        if (struct.room_clear[j] !== cur.room_clear[i]) {
+          cur.room_clear[j] |= struct.room_clear[j];
+        }
+      }
+      for (let j = 0; j < struct.switches.byteLength; j++) {
+        if (struct.switches[j] !== cur.switches[i]) {
+          cur.switches[j] |= struct.switches[j];
+        }
+      }
+      for (let j = 0; j < struct.visited_floors.byteLength; j++) {
+        if (struct.visited_floors[j] !== cur.visited_floors[i]) {
+          cur.visited_floors[j] |= struct.visited_floors[j];
+        }
+      }
+      for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
+        if (struct.visited_rooms[j] !== cur.visited_rooms[i]) {
+          cur.visited_rooms[j] |= struct.visited_rooms[j];
+        }
+      }
+      for (let j = 0; j < struct.unused.byteLength; j++) {
+        if (struct.unused[j] !== cur.unused[i]) {
+          cur.unused[j] = struct.unused[j];
+        }
+      }
+    }
+    for (let i = 0; i < packet.events.byteLength; i++) {
+      let value = packet.events[i];
+      if (this.clientStorage.eventStorage[i] !== value) {
+        this.clientStorage.eventStorage[i] |= value;
+      }
+    }
+    for (let i = 0; i < packet.items.byteLength; i++) {
+      let value = packet.items[i];
+      if (this.clientStorage.itemFlagStorage[i] !== value) {
+        this.clientStorage.itemFlagStorage[i] |= value;
+      }
+    }
+    for (let i = 0; i < packet.inf.byteLength; i++) {
+      let value = packet.inf[i];
+      if (this.clientStorage.infStorage[i] !== value) {
+        this.clientStorage.infStorage[i] |= value;
+      }
+    }
+    for (let i = 0; i < packet.skulltulas.byteLength; i++) {
+      let value = packet.skulltulas[i];
+      if (this.clientStorage.skulltulaStorage[i] !== value) {
+        this.clientStorage.skulltulaStorage[i] |= value;
+      }
+    }
 
-    if (Object.keys(scene_arr).length > 0) {
-      this.core.save.permSceneData = this.clientStorage.sceneStorage;
-    }
-    if (Object.keys(event_arr).length > 0) {
-      this.core.save.eventFlags = this.clientStorage.eventStorage;
-    }
-    if (Object.keys(items_arr).length > 0) {
-      this.core.save.itemFlags = this.clientStorage.itemFlagStorage;
-    }
-    if (Object.keys(inf_arr).length > 0) {
-      this.core.save.infTable = this.clientStorage.infStorage;
-    }
-    if (Object.keys(skulltulas_arr).length > 0) {
-      this.core.save.skulltulaFlags = this.clientStorage.skulltulaStorage;
-    }
+    this.core.save.permSceneData = this.clientStorage.sceneStorage;
+    this.core.save.eventFlags = this.clientStorage.eventStorage;
+    this.core.save.itemFlags = this.clientStorage.itemFlagStorage;
+    this.core.save.infTable = this.clientStorage.infStorage;
+    this.core.save.skulltulaFlags = this.clientStorage.skulltulaStorage;
   }
 
   //------------------------------
@@ -1057,7 +1117,7 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     ) {
       return;
     }
-    if (this.core.global.scene !== packet.scene){
+    if (this.core.global.scene !== packet.scene) {
       return;
     }
     let buf1: Buffer = this.core.global.liveSceneData_chests;
@@ -1267,7 +1327,12 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
     let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
     if (expected_hash !== hash) {
       this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
+      this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
     }
+  }
+
+  @ServerNetworkHandler("OotO_isRandoPacket")
+  onRandoPacket(packet: OotO_isRandoPacket) {
   }
 
   @EventHandler(ModLoader.ModLoaderEvents.ON_SOFT_RESET_PRE)
@@ -1281,17 +1346,17 @@ class OotOnline implements ModLoader.IPlugin, IOotOnlineHelpers, ModLoader.IPlug
 
   // This spawns the helper actor to fix some flag issues.
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)
-  onActorSpawned(actor: IActor){
+  onActorSpawned(actor: IActor) {
     // 0x87 = Forest Temple Elevator.
     // 0x102 = Windmill Blades.
-    if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8){
-      (this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
+    if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8) {
+      (this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
         let ff: IActor = this.core.actorManager.createIActorFromPointer(result);
-        if (actor.actorID === 0x0087){
+        if (actor.actorID === 0x0087) {
           ff.rdramWriteBuffer(0x24, Buffer.from("433B788243690000C4BAC599", 'hex'));
-        }else if (actor.actorID === 0x102){
+        } else if (actor.actorID === 0x102) {
           ff.rdramWriteBuffer(0x24, Buffer.from("43751CE2432000004436C483", 'hex'));
-        }else if (actor.actorID === 0xF8){
+        } else if (actor.actorID === 0xF8) {
           ff.rdramWriteBuffer(0x24, Buffer.from("44130FE344CA2000C39B683C", 'hex'));
         }
         this.ModLoader.logger.debug("Summoning the bugfix actor...");
