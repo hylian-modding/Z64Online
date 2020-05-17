@@ -15,8 +15,8 @@ import { zzstatic } from './zzstatic/src/zzstatic';
 import zlib from 'zlib';
 import {
   Ooto_AllocateModelPacket,
-  Ooto_DownloadAllModelsPacket,
   Ooto_IconAllocatePacket,
+  OotO_GiveModelPacket,
 } from '../OotOPackets';
 import { Age, OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
@@ -78,6 +78,7 @@ export class ModelManager {
   customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
+  customIconsFile = '';
   cacheDir: string = "./cache";
   equipmentAdultMap: Map<string, Array<number>> = new Map<string, Array<number>>();
   equipmentChildMap: Map<string, Array<number>> = new Map<string, Array<number>>();
@@ -86,7 +87,6 @@ export class ModelManager {
   colorProxies: Array<number> = [];
   lastSeenTunic: number = 0;
   matrices: Map<string, Buffer> = new Map<string, Buffer>();
-  serverModelCache: Map<string, Buffer> = new Map<string, Buffer>();
 
   constructor(
     clientStorage: OotOnlineStorageClient,
@@ -108,6 +108,11 @@ export class ModelManager {
         this.equipmentChildMap.get(key)!.push(parseInt(d.child[key][i]));
       })
     });
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_ICONS_APPLIED)
+  CUSTOM_ICONS_APPLIED(file: string) {
+    this.customIconsFile = file;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK)
@@ -354,7 +359,6 @@ export class ModelManager {
     let code_file: Buffer = tools.decompressFileFromRom(evt.rom, code);
     adult_model.writeUInt32BE(code_file.readUInt32BE(0xe65a0), 0x500c);
     this.clientStorage.adultModel = adult_model;
-    //new ManifestMapper().map("adult-link.txt");
   }
 
   loadChildModel(evt: any, file: string) {
@@ -580,6 +584,15 @@ export class ModelManager {
         )
       );
     }
+
+    if (this.customIconsFile !== '') {
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+      let icons: Buffer = tools.decompressFileFromRom(evt.rom, 8);
+      this.ModLoader.utils.clearBuffer(icons);
+      fs.readFileSync(this.customIconsFile).copy(icons);
+      tools.recompressFileIntoRom(evt.rom, 8, icons);
+    }
+
     this.ModLoader.logger.info('Done.');
 
     /*     let code_file: Buffer = this.decompressFileFromRom(evt.rom, 27);
@@ -593,42 +606,6 @@ export class ModelManager {
 
   @ServerNetworkHandler('Ooto_AllocateModelPacket')
   onModelAllocate_server(packet: Ooto_AllocateModelPacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      packet.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    this.serverModelCache.set(packet.hash, packet.model);
-    if (!storage.playerModelCache.hasOwnProperty(packet.player.uuid)) {
-      storage.playerModelCache[packet.player.uuid] = new ModelPlayerProxy(packet.player.uuid);
-    }
-    if (packet.age === Age.CHILD) {
-      storage.playerModelCache[
-        packet.player.uuid
-      ].childKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom child model for player ' +
-        packet.player.nickname +
-        '.'
-      );
-    } else if (packet.age === Age.ADULT) {
-      storage.playerModelCache[
-        packet.player.uuid
-      ].adultKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom adult model for player ' +
-        packet.player.nickname +
-        '.'
-      );
-    } else if (packet.age === 0x69) {
-      storage.playerModelCache[
-        packet.player.uuid
-      ].equipmentKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom equipment model(s) for player ' +
-        packet.player.nickname +
-        '.'
-      );
-    }
   }
 
   @NetworkHandler('Ooto_AllocateModelPacket')
@@ -679,34 +656,6 @@ export class ModelManager {
 
   @ServerNetworkHandler('Ooto_IconAllocatePacket')
   onIconAllocateServer(packet: Ooto_IconAllocatePacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      packet.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    this.serverModelCache.set(packet.hash, packet.icon);
-    if (!storage.playerModelCache.hasOwnProperty(packet.player.uuid)) {
-      storage.playerModelCache[packet.player.uuid] = new ModelPlayerProxy(packet.player.uuid);
-    }
-    if (packet.age === Age.ADULT) {
-      (storage.playerModelCache[
-        packet.player.uuid
-      ] as ModelPlayerProxy).iconAdultKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom icon for (Adult) player ' +
-        packet.player.nickname +
-        '.'
-      );
-    }
-    if (packet.age === Age.CHILD) {
-      (storage.playerModelCache[
-        packet.player.uuid
-      ] as ModelPlayerProxy).iconChildKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom icon for (Child) player ' +
-        packet.player.nickname +
-        '.'
-      );
-    }
   }
 
   @NetworkHandler('Ooto_IconAllocatePacket')
@@ -762,49 +711,76 @@ export class ModelManager {
 
   @EventHandler(EventsServer.ON_LOBBY_JOIN)
   onPlayerJoin_server(evt: EventServerJoined) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      evt.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    let cache: any = {};
-    Object.keys(storage.playerModelCache).forEach((uuid: string) => {
-      cache[uuid] = (storage.playerModelCache[uuid] as ModelPlayerProxy).generateModelPlayer(this.serverModelCache);
-    });
-    this.ModLoader.serverSide.sendPacketToSpecificPlayer(
-      new Ooto_DownloadAllModelsPacket(cache, evt.lobby),
-      evt.player
-    );
+    this.ModLoader.serverSide.sendPacket(new OotO_GiveModelPacket(evt.lobby, evt.player));
   }
 
-  @NetworkHandler('Ooto_DownloadAllModelsPacket')
-  onModelDownload(packet: Ooto_DownloadAllModelsPacket) {
-    Object.keys(packet.models).forEach((key: string) => {
-      this.clientStorage.playerModelCache[key] = new ModelPlayer(key);
-      if (packet.models[key].model.adult.zobj.byteLength > 1) {
-        (this.clientStorage.playerModelCache[key] as ModelPlayer).model.setAdult(zlib.inflateSync(packet.models[key].model.adult.zobj));
-        let thread: ModelThread = new ModelThread(
-          this.clientStorage.playerModelCache[key].model.adult.zobj,
-          this.ModLoader
+  @NetworkHandler("OotO_GiveModelPacket")
+  onPlayerJoin_client(packet: OotO_GiveModelPacket) {
+    if (packet.target.uuid !== this.ModLoader.me.uuid) {
+      if (this.customModelFileAdult !== '') {
+        let def = zlib.deflateSync(this.clientStorage.adultModel);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_AllocateModelPacket(
+            def,
+            Age.ADULT,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ), packet.target
         );
-        thread.startThread();
       }
-      if (packet.models[key].model.child.zobj.byteLength > 1) {
-        (this.clientStorage.playerModelCache[key] as ModelPlayer).model.setChild(zlib.inflateSync(packet.models[key].model.child.zobj));
-        let thread: ModelThread = new ModelThread(
-          this.clientStorage.playerModelCache[key].model.child.zobj,
-          this.ModLoader
+
+      if (this.customModelFileChild !== '') {
+        let def = zlib.deflateSync(this.clientStorage.childModel);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_AllocateModelPacket(
+            def,
+            Age.CHILD,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
         );
-        thread.startThread();
       }
-      if (packet.models[key].model.equipment.zobj.byteLength > 1) {
-        (this.clientStorage.playerModelCache[key] as ModelPlayer).model.setEquipment(zlib.inflateSync(packet.models[key].model.equipment.zobj));
-        let thread: ModelThread = new ModelThread(
-          this.clientStorage.playerModelCache[key].model.equipment.zobj,
-          this.ModLoader
+
+      if (this.customModelFileEquipment !== '') {
+        let def = zlib.deflateSync(this.clientStorage.equipmentModel);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_AllocateModelPacket(
+            def,
+            0x69,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
         );
-        thread.startThread();
       }
-    });
+
+      if (this.customModelFileAdultIcon !== '') {
+        let def = zlib.deflateSync(this.clientStorage.adultIcon);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_IconAllocatePacket(
+            def,
+            Age.ADULT,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
+        );
+      }
+
+      if (this.customModelFileChildIcon !== '') {
+        let def = zlib.deflateSync(this.clientStorage.childIcon);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_IconAllocatePacket(
+            def,
+            Age.CHILD,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
+        );
+      }
+    }
   }
 
   @EventHandler("OotOnline:WriteDefaultPuppetZobjs")

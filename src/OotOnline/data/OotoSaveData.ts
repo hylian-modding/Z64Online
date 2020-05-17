@@ -32,11 +32,11 @@ export function isAdultTradeItem(item: InventoryItem) {
     item === InventoryItem.PRESCRIPTION ||
     item === InventoryItem.EYEBALL_FROG ||
     item === InventoryItem.EYE_DROPS ||
-    item === InventoryItem.CLAIM_CHECK 
+    item === InventoryItem.CLAIM_CHECK
   );
 }
 
-export interface IDungeonItemSave extends IDungeonItemManager {}
+export interface IDungeonItemSave extends IDungeonItemManager { }
 
 export class OotoDungeonItemContainer implements IDungeonItemContainer {
   bossKey = false;
@@ -710,7 +710,7 @@ export function applyEquipmentToContext(
 }
 
 // Combine the four API interfaces into one.
-export interface IEquipmentSave extends ISwords, IShields, ITunics, IBoots {}
+export interface IEquipmentSave extends ISwords, IShields, ITunics, IBoots { }
 
 export class EquipmentSave implements IEquipmentSave {
   kokiriSword = false;
@@ -939,5 +939,41 @@ export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
   }
   if (incoming.double_defense > save.double_defense) {
     save.double_defense = incoming.double_defense;
+  }
+}
+
+export class OotO_SceneStruct {
+  buf: Buffer;
+
+  constructor(buf: Buffer) {
+    this.buf = buf;
+  }
+
+  get chests(): Buffer {
+    return this.buf.slice(0x0, 0x4);
+  }
+
+  get switches(): Buffer {
+    return this.buf.slice(0x4, 0x8);
+  }
+
+  get room_clear(): Buffer {
+    return this.buf.slice(0x8, 0xC);
+  }
+
+  get collectible(): Buffer {
+    return this.buf.slice(0xC, 0x10);
+  }
+
+  get unused(): Buffer {
+    return this.buf.slice(0x10, 0x14);
+  }
+
+  get visited_rooms(): Buffer {
+    return this.buf.slice(0x14, 0x18);
+  }
+
+  get visited_floors(): Buffer {
+    return this.buf.slice(0x18, 0x1C);
   }
 }
