@@ -982,6 +982,23 @@
   {
     "data": [
       {
+        "offset": 4419,
+        "value": 0
+      },
+      {
+        "offset": 4422,
+        "value": 81
+      },
+      {
+        "offset": 4423,
+        "value": 232
+      }
+    ],
+    "index": 346
+  },
+  {
+    "data": [
+      {
         "offset": 3683,
         "value": 0
       },
