@@ -69,19 +69,28 @@ static void zelda_guards(entity_t *en, z64_global_t *global)
     }
 }
 
+static void ingo_is_a_bastard(entity_t *en, z64_global_t *global)
+{
+    uint8_t *p = AADDR(0x80600000, 0x144);
+    *p = 0x1;
+}
+
 static void play(entity_t *en, z64_global_t *global)
 {
-    if (global->scene_index == 0x3)
+    switch (global->scene_index)
     {
+    case 0x3: // Forest Temple
         elevator(en, global);
-    }
-    else if (global->scene_index == 0x52)
-    {
+        break;
+    case 0x52: // Kakariko Village
         windmill(en, global);
-    }
-    else if (global->scene_index == 0x5F)
-    {
+        break;
+    case 0x5F: // Hyrule Castle
         zelda_guards(en, global);
+        break;
+    case 0x63: // Lon Lon Ranch
+        ingo_is_a_bastard(en, global);
+        break;
     }
 }
 

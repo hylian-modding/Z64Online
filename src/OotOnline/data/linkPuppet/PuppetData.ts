@@ -6,10 +6,9 @@ import {
   IOOTCore,
 } from 'modloader64_api/OOT/OOTAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { IPuppetData } from '../../OotoAPI/IPuppetData';
 import { bus } from 'modloader64_api/EventHandler';
 
-export class PuppetData implements IPuppetData {
+export class PuppetData {
   pointer: number;
   ModLoader: IModLoaderAPI;
   core: IOOTCore;

@@ -27,6 +27,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 
 // Actor Hooking Stuff
 
@@ -37,7 +38,18 @@ const DF_ID = 0x009F;
 const NL_ID = 0x00F4;
 const DEKU_NUTS = 0x0056;
 
-export class ActorHookingManager {
+export class ActorHookingManagerServer {
+
+  @ParentReference()
+  parent!: IOotOnlineHelpers;
+
+  @ServerNetworkHandler('Ooto_ActorPacket')
+  onActorPacketServer(packet: Ooto_ActorPacket) {
+    this.parent.sendPacketToPlayersInScene(packet);
+  }
+}
+
+export class ActorHookingManagerClient {
   actorHookMap: Map<number, ActorHookBase> = new Map<number, ActorHookBase>();
   actorHookTicks: Map<string, ActorHookProcessor> = new Map<
     string,
@@ -64,14 +76,11 @@ export class ActorHookingManager {
   ModLoader!: IModLoaderAPI;
   @InjectCore()
   core!: IOOTCore;
-  parent: IOotOnlineHelpers;
-
+  @ParentReference()
+  parent!: IOotOnlineHelpers;
   names: any;
 
-  constructor(
-    parent: IOotOnlineHelpers
-  ) {
-    this.parent = parent;
+  constructor() {
     this.names = JSON.parse(
       fs.readFileSync(__dirname + '/crash/ACTOR_NAMES.json').toString()
     );
@@ -143,7 +152,7 @@ export class ActorHookingManager {
 
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)
   onActorSpawned(actor: IActor) {
-    if (!(this.parent as any).LobbyConfig.actor_syncing) {
+    if (!(this.parent as any).client.LobbyConfig.actor_syncing) {
       return;
     }
     if (
@@ -234,7 +243,7 @@ export class ActorHookingManager {
 
   @EventHandler(OotEvents.ON_ACTOR_DESPAWN)
   onActorDespawned(actor: IActor) {
-    if (!(this.parent as any).LobbyConfig.actor_syncing) {
+    if (!(this.parent as any).client.LobbyConfig.actor_syncing) {
       return;
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
@@ -324,11 +333,6 @@ export class ActorHookingManager {
     let pointer = emulator.dereferencePointer(behavior_start);
     let behavior_result = pointer + behavior;
     actor.rdramWrite32(offset, behavior_result + 0x80000000);
-  }
-
-  @ServerNetworkHandler('Ooto_ActorPacket')
-  onActorPacketServer(packet: Ooto_ActorPacket) {
-    this.parent.sendPacketToPlayersInScene(packet);
   }
 
   @NetworkHandler('Ooto_ActorPacket')
@@ -544,7 +548,7 @@ export class ActorHookingManager {
     // Make Din's Fire not move to Link.
     let dins: Buffer = tools.decompressFileFromRom(evt.rom, 166);
     let dhash: string = this.ModLoader.utils.hashBuffer(dins);
-    if (dhash === "b08f7991b2beda5394e4a94cff15b50c"){
+    if (dhash === "b08f7991b2beda5394e4a94cff15b50c") {
       this.ModLoader.logger.info("Patching Din's Fire...");
       dins.writeUInt32BE(0x0, 0x150);
       dins.writeUInt32BE(0x0, 0x158);
@@ -554,12 +558,12 @@ export class ActorHookingManager {
       dins.writeUInt32BE(0x0, 0x1AC);
     }
     tools.recompressFileIntoRom(evt.rom, 166, dins);
-    
+
     // Change Zelda's actor category from 'NPC' to 'Chest'.
     // This fixes Ganon's Tower Collapse.
     let buf: Buffer = tools.decompressFileFromRom(evt.rom, 369);
     let zhash: string = this.ModLoader.utils.hashBuffer(buf);
-    if (zhash === "3560a2ed96d71e375f79fb53e55d1011"){
+    if (zhash === "3560a2ed96d71e375f79fb53e55d1011") {
       this.ModLoader.logger.info("Patching Zelda...");
       buf.writeUInt8(0x0B, 0x7236);
     }

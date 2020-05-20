@@ -1,5 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
+import { toPaddedHexString } from './zzstatic/src/data/toPaddedHexString';
 
 export class ManifestMapper {
     map(file: string) {
@@ -59,4 +60,43 @@ export class ManifestMapper {
         def += "#define " + curMark + " " + "0x" + (offset).toString(16).toUpperCase() + "\r\n";
         console.log(def);
     }
+}
+
+export class ZZPlayasEmbedParser{
+
+    private h: Buffer = Buffer.from("!PlayAsManifest0");
+
+    constructor(){}
+
+    parse(buf: Buffer){
+        console.log("Parsing embedded playas data...");
+        let head: number = buf.indexOf(this.h) + this.h.byteLength;
+        let map: any = {};
+        let entries: number = buf.readUInt16BE(head);
+        head+=2;
+        let ascii_convert: Buffer = Buffer.alloc(1);
+        for (let i = 0; i < entries; i++){
+            let str: string = "";
+            let cur: number = buf.readUInt8(head);
+            // Start seeking for the end of the ascii.
+            while (cur !== 0){
+                ascii_convert[0] = cur;
+                str+=ascii_convert.toString();
+                head++;
+                cur = buf.readUInt8(head);
+            }
+            head++;
+            let offset = buf.readUInt32BE(head);
+            buf.writeUInt32BE(offset + 0x800, head);
+            head+=4;
+            map[str] = offset + 0x800;
+        }
+        console.log("Converting to Equipment pak format...");
+        let mapping = "";
+        Object.keys(map).forEach((key: string)=>{
+            mapping+=toPaddedHexString(map[key], 8) + " : " + key + "\n";
+        });
+        return mapping;
+    }
+
 }

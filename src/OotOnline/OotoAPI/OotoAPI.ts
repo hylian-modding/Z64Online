@@ -47,7 +47,7 @@ export class OotOnline_PlayerScene {
 
 export interface IOotOnlineHelpers {
   sendPacketToPlayersInScene(packet: IPacketHeader): void;
-  clientStorage: OotOnlineStorageClient;
+  getClientStorage(): OotOnlineStorageClient | null;
 }
 
 export function OotOnlineAPI_EnableGhostMode() {

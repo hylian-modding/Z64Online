@@ -6,14 +6,25 @@ import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_Pupp
 import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
-import { IPuppetOverlord } from '../../OotoAPI/IPuppetOverlord';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { IOotOnlineHelpers, OotOnlineEvents } from '@OotOnline/OotoAPI/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
+import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 
-export class PuppetOverlord implements IPuppetOverlord {
+export class PuppetOverlordServer {
+
+  @ParentReference()
+  parent!: IOotOnlineHelpers;
+
+  @ServerNetworkHandler('Ooto_PuppetPacket')
+  onPuppetData_server(packet: Ooto_PuppetWrapperPacket) {
+    this.parent.sendPacketToPlayersInScene(packet);
+  }
+}
+
+export class PuppetOverlordClient {
   private puppets: Map<string, Puppet> = new Map<string, Puppet>();
   private awaiting_spawn: Puppet[] = new Array<Puppet>();
   fakeClientPuppet!: Puppet;
@@ -21,7 +32,8 @@ export class PuppetOverlord implements IPuppetOverlord {
   private playersAwaitingPuppets: INetworkPlayer[] = new Array<
     INetworkPlayer
   >();
-  private parent: IOotOnlineHelpers;
+  @ParentReference()
+  parent!: IOotOnlineHelpers;
   private Epona!: HorseData;
   private queuedSpawn: boolean = false;
 
@@ -29,11 +41,7 @@ export class PuppetOverlord implements IPuppetOverlord {
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
-
-  constructor(parent: IOotOnlineHelpers) {
-    this.parent = parent;
-  }
-
+  
   @Postinit()
   postinit(
   ) {
@@ -214,7 +222,7 @@ export class PuppetOverlord implements IPuppetOverlord {
     );
   }
 
-  isCurrentlyWarping(){
+  isCurrentlyWarping() {
     return this.core.link.rdramRead32(0x69C) === 0x00030000;
   }
 
@@ -266,10 +274,7 @@ export class PuppetOverlord implements IPuppetOverlord {
     this.changePuppetScene(packet.player, packet.scene, packet.age);
   }
 
-  @ServerNetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_server(packet: Ooto_PuppetWrapperPacket) {
-    this.parent.sendPacketToPlayersInScene(packet);
-  }
+
 
   @NetworkHandler('Ooto_PuppetPacket')
   onPuppetData_client(packet: Ooto_PuppetWrapperPacket) {
@@ -314,24 +319,24 @@ export class PuppetOverlord implements IPuppetOverlord {
 
   @EventHandler("OotOnline:RoguePuppet")
   onRoguePuppet(puppet: Puppet) {
-    if (this.puppets.has(puppet.player.uuid)){
+    if (this.puppets.has(puppet.player.uuid)) {
       this.puppets.delete(puppet.player.uuid);
     }
   }
 
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
-  onReset(evt: any){
+  onReset(evt: any) {
     this.localPlayerLoadingZone();
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_SPAWNED)
-  onSpawn(puppet: Puppet){
+  onSpawn(puppet: Puppet) {
     this.ModLoader.logger.debug("Unlocking puppet spawner.")
     this.queuedSpawn = false;
   }
 
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
-  onPreSpawn(puppet: Puppet){
+  onPreSpawn(puppet: Puppet) {
     this.ModLoader.logger.debug("Locking puppet spawner.")
     this.queuedSpawn = true;
   }
