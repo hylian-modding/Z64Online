@@ -76,11 +76,14 @@ export class KeyLogManagerClient {
         });
     }
 
-
-
     @NetworkHandler("Ooto_KeyDeltaServerPacket")
     onPacketClient(packet: Ooto_KeyDeltaServerPacket) {
         if (!((this.parent as any)["client"]["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
+            return;
+        }
+        if (packet.originalUser === undefined || packet.originalUser === null) {
+            this.ModLoader.logger.error("Key packet with no origin!");
+            this.ModLoader.logger.error(JSON.stringify(packet, null, 2));
             return;
         }
         if (packet.originalUser.uuid === this.ModLoader.me.uuid) {
