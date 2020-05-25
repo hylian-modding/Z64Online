@@ -1,7 +1,7 @@
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from 'modloader64_api/EventHandler';
 import { ActorHookingManagerServer } from './data/ActorHookingSystem';
 import { OotOnlineStorage } from './OotOnlineStorage';
-import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
+import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { OotOnline } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
@@ -15,17 +15,14 @@ import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 export class OotOnlineServer {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
-    actorHooks: ActorHookingManagerServer;
     @ParentReference()
     parent!: OotOnline;
+    @SidedProxy(ProxySide.SERVER, ActorHookingManagerServer)
+    actorHooks!: ActorHookingManagerServer;
+    @SidedProxy(ProxySide.SERVER, KeyLogManagerServer)
     keys!: KeyLogManagerServer;
-    puppets: PuppetOverlordServer;
-
-    constructor() {
-        this.actorHooks = new ActorHookingManagerServer();
-        this.keys = new KeyLogManagerServer();
-        this.puppets = new PuppetOverlordServer();
-    }
+    @SidedProxy(ProxySide.SERVER, PuppetOverlordServer)
+    puppets!: PuppetOverlordServer;
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

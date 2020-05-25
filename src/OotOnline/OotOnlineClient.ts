@@ -24,6 +24,8 @@ import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { KeyLogManagerClient } from './data/keys/KeyLogManager';
 import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
+import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
+import { RPCClient } from './data/RPCHandler';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -36,20 +38,20 @@ export class OotOnlineClient {
 
     LobbyConfig: IOotOnlineLobbyConfig = {} as IOotOnlineLobbyConfig;
     clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
-    modelManager!: ModelManagerClient;
     config!: OotOnlineConfigCategory;
-    utility: UtilityActorHelper;
-    actorHooks: ActorHookingManagerClient;
-    keys: KeyLogManagerClient;
-    puppets: PuppetOverlordClient;
 
-    constructor() {
-        this.modelManager = new ModelManagerClient();
-        this.utility = new UtilityActorHelper();
-        this.actorHooks = new ActorHookingManagerClient();
-        this.keys = new KeyLogManagerClient();
-        this.puppets = new PuppetOverlordClient();
-    }
+    @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
+    modelManager!: ModelManagerClient;
+    @SidedProxy(ProxySide.CLIENT, UtilityActorHelper)
+    utility!: UtilityActorHelper;
+    @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
+    actorHooks!: ActorHookingManagerClient;
+    @SidedProxy(ProxySide.CLIENT, KeyLogManagerClient)
+    keys!: KeyLogManagerClient;
+    @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
+    puppets!: PuppetOverlordClient;
+    @SidedProxy(ProxySide.CLIENT, RPCClient)
+    rcp!: RPCClient;
 
     @EventHandler(OotOnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -64,6 +66,7 @@ export class OotOnlineClient {
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
         this.ModLoader.config.setData("OotOnline", "mapTracker", false);
+        this.ModLoader.config.setData("OotOnline", "keySync", true);
     }
 
     @Init()
@@ -217,7 +220,7 @@ export class OotOnlineClient {
     onLobbySetup(lobby: LobbyData): void {
         lobby.data['OotOnline:data_syncing'] = true;
         lobby.data['OotOnline:actor_syncing'] = true;
-        lobby.data['OotOnline:key_syncing'] = true;
+        lobby.data['OotOnline:key_syncing'] = this.config.keySync;
     }
 
     @EventHandler(EventsClient.ON_LOBBY_JOIN)
@@ -848,6 +851,7 @@ export class OotOnlineClient {
                         this.keys.update();
                     }
                     let state = this.core.link.state;
+                    console.log(state + " " + this.clientStorage.needs_update + " | " + this.LobbyConfig.data_syncing);
                     if (
                         state === LinkState.BUSY ||
                         state === LinkState.GETTING_ITEM ||
