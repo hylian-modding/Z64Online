@@ -99,7 +99,7 @@ static void checkForFollowEnd(entity_t *en, z64_global_t *global)
     if (*rupees < GetMaxRupees(en, global))
     {
         en->toggleFollow = false;
-        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, 0x009E, en->actor.pos_2.x, en->actor.pos_2.y, en->actor.pos_2.z, en->actor.rot_2.x, en->actor.rot_2.y, en->actor.rot_2.z, 0x0000);
+        z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, 0x009E, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, 0x0000);
         en->despawnEnd = en->scaledTimeAlive + 3.0f;
     }
 }
@@ -167,14 +167,14 @@ static void ActorAnimate(entity_t *en)
     if (p >= 1 && en->anim_state != ANIM_IDLE2)
     {
         en->anim_state = ANIM_IDLE;
-        en->actor.pos_2 = en->resetPosition;
+        en->actor.pos = en->resetPosition;
         z_actor_set_scale(&en->actor, 0.015f);
     }
 
     if (en->anim_state == ANIM_IDLE)
     {
-        en->resetPosition = en->actor.pos_2;
-        en->resetRot = en->actor.rot_2;
+        en->resetPosition = en->actor.pos;
+        (vec3s_t) en->resetRot = en->actor.rot;
         en->actor.scale.x -= (float)(en->scale_counter * 0.00001f);
         en->actor.scale.y += (float)(en->scale_counter * 0.00001f);
         en->actor.scale.z -= (float)(en->scale_counter * 0.00001f);
@@ -191,8 +191,8 @@ static void ActorAnimate(entity_t *en)
         else if (p <= 0.6f)
         { // Jump and half spin
             p = PFOP(p, 0.1, 0.5f);
-            en->actor.pos_2.y = en->resetPosition.y + (15 * p);
-            en->actor.rot_2.y = (en->actor).rot_toward_link_y + ((405 * DEG2S) * p);
+            en->actor.pos.y = en->resetPosition.y + (15 * p);
+            en->actor.rot.y = (en->actor).rot_toward_link_y + ((405 * DEG2S) * p);
             en->actor.scale.x = 0.015f + (0.005f * (1 - p));
             en->actor.scale.y = 0.015f + (0.005f * p);
             en->actor.scale.z = 0.015f + (0.005f * (1 - p));
@@ -200,14 +200,14 @@ static void ActorAnimate(entity_t *en)
         else if (p <= 0.75f)
         { // Fall
             p = PFOP(p, 0.6f, 0.15f);
-            en->actor.pos_2.y = en->resetPosition.y + (15 * (1 - p));
-            en->actor.rot_2.y = (en->actor).rot_toward_link_y + ((405 * DEG2S) - ((52 * DEG2S) * p));
+            en->actor.pos.y = en->resetPosition.y + (15 * (1 - p));
+            en->actor.rot.y = (en->actor).rot_toward_link_y + ((405 * DEG2S) - ((52 * DEG2S) * p));
             en->actor.scale.y = 0.015f + (0.005f * (1 - p));
         }
         else if (p <= 0.925f)
         { // Compress and expand
             p = PFOP(p, 0.8f, 0.125f);
-            en->actor.rot_2.y = (en->actor).rot_toward_link_y - ((8 * DEG2S) * (1 - p));
+            en->actor.rot.y = (en->actor).rot_toward_link_y - ((8 * DEG2S) * (1 - p));
             en->actor.scale.x = 0.015f + (0.005f * p);
             en->actor.scale.y = 0.015f - (0.0025f * p);
             en->actor.scale.z = 0.015f + (0.005f * p);
@@ -272,7 +272,7 @@ static void ActorAnimate(entity_t *en)
         if (p >= 1)
         {
             en->anim_state = ANIM_IDLE;
-            en->actor.pos_2 = en->resetPosition;
+            en->actor.pos = en->resetPosition;
             z_actor_set_scale(&en->actor, 0.015f);
         }
 
@@ -285,7 +285,7 @@ static void ActorAnimate(entity_t *en)
             en->actor.scale.y = 0.015f + (0.002f * p);
             en->actor.scale.z = 0.015f - (0.0025f * p);
 
-            en->actor.rot_2.y = en->resetRot.y - ((50 * DEG2S) * p);
+            en->actor.rot.y = en->resetRot.y - ((50 * DEG2S) * p);
         }
         else if (p < 0.5f)
         { // Center
@@ -295,7 +295,7 @@ static void ActorAnimate(entity_t *en)
             en->actor.scale.y = 0.015f + (0.002f * (1 - p));
             en->actor.scale.z = 0.015f - (0.0025f * (1 - p));
 
-            en->actor.rot_2.y = en->resetRot.y - ((50 * DEG2S) * (1 - p));
+            en->actor.rot.y = en->resetRot.y - ((50 * DEG2S) * (1 - p));
         }
         else if (p < 0.6666f)
         { // Look right
@@ -305,7 +305,7 @@ static void ActorAnimate(entity_t *en)
             en->actor.scale.y = 0.015f + (0.002f * p);
             en->actor.scale.z = 0.015f - (0.0025f * p);
 
-            en->actor.rot_2.y = en->resetRot.y + ((50 * DEG2S) * p);
+            en->actor.rot.y = en->resetRot.y + ((50 * DEG2S) * p);
         }
         else if (p < 1.0f)
         { // Center
@@ -315,7 +315,7 @@ static void ActorAnimate(entity_t *en)
             en->actor.scale.y = 0.015f + (0.002f * (1 - p));
             en->actor.scale.z = 0.015f - (0.0025f * (1 - p));
 
-            en->actor.rot_2.y = en->resetRot.y + ((50 * DEG2S) * (1 - p));
+            en->actor.rot.y = en->resetRot.y + ((50 * DEG2S) * (1 - p));
         }
     }
 }
@@ -333,14 +333,14 @@ static void menu_input_update(entity_t *en, z64_global_t *global)
     {
         if ((en->inputHandler.dr.buttonState > 0 && drTime >= 0.15f) || (en->inputHandler.dr.buttonState == STATE_PRESSED))
         {
-            z_sfx_play_system(NA_SE_SY_CURSOR, &(en->actor).pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+            z_sfx_play_system(NA_SE_SY_CURSOR, &(en->actor).pos, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
             en->selected_digit++;
             en->inputHandler.dr.invokeTime = en->scaledTimeAlive;
         }
 
         if ((en->inputHandler.dl.buttonState > 0 && dlTime >= 0.15f) || (en->inputHandler.dl.buttonState == STATE_PRESSED))
         {
-            z_sfx_play_system(NA_SE_SY_CURSOR, &(en->actor).pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+            z_sfx_play_system(NA_SE_SY_CURSOR, &(en->actor).pos, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
             en->selected_digit--;
             en->inputHandler.dl.invokeTime = en->scaledTimeAlive;
         }
@@ -352,14 +352,14 @@ static void menu_input_update(entity_t *en, z64_global_t *global)
 
         if ((en->inputHandler.du.buttonState > 0 && duTime >= 0.15f) || (en->inputHandler.du.buttonState == STATE_PRESSED))
         {
-            z_sfx_play_system(NA_SE_SY_RUPY_COUNT, &(en->actor).pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+            z_sfx_play_system(NA_SE_SY_RUPY_COUNT, &(en->actor).pos, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
             ChangeClampFlipRupeeIndex(&en->rupee_amount, en->selected_digit, 1);
             en->inputHandler.du.invokeTime = en->scaledTimeAlive;
         }
 
         if ((en->inputHandler.dd.buttonState > 0 && ddTime >= 0.15f) || (en->inputHandler.dd.buttonState == STATE_PRESSED))
         {
-            z_sfx_play_system(NA_SE_SY_RUPY_COUNT, &(en->actor).pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+            z_sfx_play_system(NA_SE_SY_RUPY_COUNT, &(en->actor).pos, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
             ChangeClampFlipRupeeIndex(&en->rupee_amount, en->selected_digit, -1);
             en->inputHandler.dd.invokeTime = en->scaledTimeAlive;
         }
@@ -377,8 +377,8 @@ static void init(entity_t *en, z64_global_t *global)
     construct_z64_inputHandler_t(&en->inputHandler, &global->common.input[0].raw);
     en->toggleFollow = false;
     en->targetFollowTime = 0;
-    en->initialFollowPosition = en->actor.pos_2;
-    en->targetFollowPosition = en->actor.pos_2;
+    en->initialFollowPosition = en->actor.pos;
+    en->targetFollowPosition = en->actor.pos;
     en->scaledTimeAlive = 0;
     en->blastoffTime = 0;
     en->blastoffFrames = 0;
@@ -413,8 +413,8 @@ static void play(entity_t *en, z64_global_t *global)
     z64_actor_t *rupee;
     z64_player_t *Link = zh_get_player(global);
     /* Set Z-Target Position*/
-    en->actor.pos_3 = en->actor.pos_2;
-    (en->actor).pos_3.y += 30.0f;
+    en->actor.pos_focus = en->actor.pos;
+    (en->actor).pos_focus.y += 30.0f;
 
     external_func_8002F2F4(&en->actor, global); /* Textbox */
 
@@ -441,7 +441,7 @@ static void play(entity_t *en, z64_global_t *global)
                 en->anim_time = en->scaledTimeAlive;
                 z_actor_play_sfx2(&en->actor, NA_SE_EN_PO_SISTER_DEAD);
                 z_effect_spawn_dead_db(
-                    global, &en->actor.pos_2, &data, &data, 250, 0, RED32(smoke_inner_color), GREEN32(smoke_inner_color), BLUE32(smoke_inner_color), ALPHA32(smoke_inner_color), RED24(smoke_outer_color), GREEN24(smoke_outer_color), BLUE24(smoke_outer_color), 10, 15 /* Frames */
+                    global, &en->actor.pos, &data, &data, 250, 0, RED32(smoke_inner_color), GREEN32(smoke_inner_color), BLUE32(smoke_inner_color), ALPHA32(smoke_inner_color), RED24(smoke_outer_color), GREEN24(smoke_outer_color), BLUE24(smoke_outer_color), 10, 15 /* Frames */
                     ,
                     10);
             }
@@ -452,7 +452,7 @@ static void play(entity_t *en, z64_global_t *global)
                 en->anim_time = en->scaledTimeAlive;
                 z_actor_play_sfx2(&en->actor, NA_SE_EN_PO_LAUGH);
                 z_effect_spawn_dead_db(
-                    global, &en->actor.pos_2, &data, &data, 250, 0, RED32(smoke_inner_color), GREEN32(smoke_inner_color), BLUE32(smoke_inner_color), ALPHA32(smoke_inner_color), RED24(smoke_outer_color), GREEN24(smoke_outer_color), BLUE24(smoke_outer_color), 1, 30 /* Frames */
+                    global, &en->actor.pos, &data, &data, 250, 0, RED32(smoke_inner_color), GREEN32(smoke_inner_color), BLUE32(smoke_inner_color), ALPHA32(smoke_inner_color), RED24(smoke_outer_color), GREEN24(smoke_outer_color), BLUE24(smoke_outer_color), 1, 30 /* Frames */
                     ,
                     1);
             }
@@ -481,8 +481,8 @@ static void play(entity_t *en, z64_global_t *global)
     {
         if (en->actor.dist_from_link_xz > 75.0f && en->targetFollowTime == 0)
         {
-            en->initialFollowPosition = en->actor.pos_2;
-            en->targetFollowPosition = vec3f_add(Link->actor.pos_2, Link->actor.vel_1);
+            en->initialFollowPosition = en->actor.pos;
+            en->targetFollowPosition = vec3f_add(Link->actor.pos, Link->actor.velocity);
             en->targetFollowTime = en->scaledTimeAlive;
             en->anim_state = ANIM_HOP;
             z_actor_play_sfx2(&en->actor, NA_SE_EN_STAL_JUMP);
@@ -490,7 +490,7 @@ static void play(entity_t *en, z64_global_t *global)
             idx = idx < 3 ? idx : idx + 0x10;
             if (en->dropMoney)
             {
-                z_item_drop(global, &en->actor.pos_2, idx);
+                z_item_drop(global, &en->actor.pos, idx);
             }
         }
 
@@ -503,40 +503,40 @@ static void play(entity_t *en, z64_global_t *global)
             {
                 en->targetFollowTime = 0;
                 en->anim_state = ANIM_IDLE;
-                en->actor.rot_2.x = 0;
+                en->actor.rot.x = 0;
             }
             else
             {
                 int sp34, sp24;
-                vec3f_t temp = en->actor.pos_2;
+                vec3f_t temp = en->actor.pos;
                 temp.y += 10.0f;
 
                 float result = math_raycast(&global->col_ctxt, &sp34, &sp24, &en->actor, &temp);
 
-                en->actor.pos_2 = vec3f_add(en->initialFollowPosition, vec3f_mul_f(vec3f_sub(en->targetFollowPosition, en->initialFollowPosition), p));
+                en->actor.pos = vec3f_add(en->initialFollowPosition, vec3f_mul_f(vec3f_sub(en->targetFollowPosition, en->initialFollowPosition), p));
                 if (p < 0.25f)
                 {
                     p = PFOP(p, 0, 0.25f);
-                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result : en->initialFollowPosition.y;
-                    en->actor.rot_2.x = (DEG2S * 45.0f) * p;
+                    en->actor.pos.y = RAYCAST_SUCCESS(result) ? result : en->initialFollowPosition.y;
+                    en->actor.rot.x = (DEG2S * 45.0f) * p;
                 }
                 else if (p < 0.666f)
                 {
                     p = PFOP(p, 0.25f, 0.416f);
-                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result + (30 * p) : Link->actor.pos_2.y + (30 * p);
-                    en->actor.rot_2.x = (DEG2S * 45.0f) * (1 - p);
+                    en->actor.pos.y = RAYCAST_SUCCESS(result) ? result + (30 * p) : Link->actor.pos.y + (30 * p);
+                    en->actor.rot.x = (DEG2S * 45.0f) * (1 - p);
                 }
                 else if (p < 0.9f)
                 {
                     p = PFOP(p, 0.666f, 0.234f);
-                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result + (30 * (1 - p)) : Link->actor.pos_2.y + (30 * (1 - p));
-                    en->actor.rot_2.x = (DEG2S * -45.0f) * p;
+                    en->actor.pos.y = RAYCAST_SUCCESS(result) ? result + (30 * (1 - p)) : Link->actor.pos.y + (30 * (1 - p));
+                    en->actor.rot.x = (DEG2S * -45.0f) * p;
                 }
                 else
                 {
                     p = PFOP(p, 0.9f, 0.1f);
-                    en->actor.pos_2.y = RAYCAST_SUCCESS(result) ? result : Link->actor.pos_2.y;
-                    en->actor.rot_2.x = (DEG2S * -45.0f) * (1 - p);
+                    en->actor.pos.y = RAYCAST_SUCCESS(result) ? result : Link->actor.pos.y;
+                    en->actor.rot.x = (DEG2S * -45.0f) * (1 - p);
                 }
             }
         }
@@ -558,9 +558,9 @@ static void play(entity_t *en, z64_global_t *global)
             if (delta <= 5)
             {
                 if (en->blastoffFrames == 80)
-                    z_sfx_play_system(NA_SE_SY_WARNING_COUNT_E, &en->actor.pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+                    z_sfx_play_system(NA_SE_SY_WARNING_COUNT_E, &en->actor.pos, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
                 else if (en->blastoffFrames % 20 == 0)
-                    z_sfx_play_system(NA_SE_SY_WARNING_COUNT_N, &en->actor.pos_2, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
+                    z_sfx_play_system(NA_SE_SY_WARNING_COUNT_N, &en->actor.pos, 4, AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x0), AVAL(0x801043A0, float, 0x8));
             }
             else if (delta <= 30)
             {
@@ -568,25 +568,25 @@ static void play(entity_t *en, z64_global_t *global)
                 {
                     if (en->dropMoney)
                     {
-                        rupee = z_actor_spawn(&global->actor_ctxt, global, 0x131, en->actor.pos_2.x, en->actor.pos_2.y + 60.0f, en->actor.pos_2.z, 0, 0, 0, 0x0001);
+                        rupee = z_actor_spawn(&global->actor_ctxt, global, 0x131, en->actor.pos.x, en->actor.pos.y + 60.0f, en->actor.pos.z, 0, 0, 0, 0x0001);
                         for (int i = 0; i <= 36; i++)
                         {
                             int idx = z_lib_math_rand_s16_offset(0, 5);
                             idx = idx < 3 ? idx : idx + 0x10;
                             temp = vec3f_new_f(z_cos(DTOR(i * 10.0f)) * 4.0f * i, z_sin(i) * 5.0f, z_sin(DTOR(i * 10.0f)) * 4.0f * i);
-                            temp = vec3f_add(temp, en->actor.pos_2);
-                            temp.y = Link->actor.pos_2.y + 5.0f;
-                            z_item_drop(global, &en->actor.pos_2, idx);
+                            temp = vec3f_add(temp, en->actor.pos);
+                            temp.y = Link->actor.pos.y + 5.0f;
+                            z_item_drop(global, &en->actor.pos, idx);
                         }
                     }
                 }
                 if (en->blastoffFrames % 5 == 0)
                 {
                     z_actor_play_sfx2(en, NA_SE_IT_BOMB_EXPLOSION);
-                    effect_spawn_bomb2(global, &en->actor.pos_2, &temp, &temp, 33.0f, 0x14);
+                    effect_spawn_bomb2(global, &en->actor.pos, &temp, &temp, 33.0f, 0x14);
                 }
-                en->actor.pos_2.y += 3 * delta;
-                en->actor.rot_2.y += (3 * DEG2S) * delta;
+                en->actor.pos.y += 3 * delta;
+                en->actor.rot.y += (3 * DEG2S) * delta;
             }
             else
             {
@@ -608,7 +608,7 @@ static void draw(entity_t *en, z64_global_t *global)
         en->scale_flag = -en->scale_flag;
 
     if (en->actor.dist_from_link_xz <= 500.0f)
-        (en->actor).rot_2.y = (en->actor).rot_toward_link_y;
+        (en->actor).rot.y = (en->actor).rot_toward_link_y;
     ActorAnimate(en);
 
     vec3f_t scale = vec3f_new_f(en->actor.scale.x * 17.5f, en->actor.scale.y * 17.5f, en->actor.scale.z * 17.5f);
@@ -639,7 +639,7 @@ static void draw(entity_t *en, z64_global_t *global)
     }
     /* Draw Postbox */
     z_cheap_proc_draw_opa(global, 0x807FE0F0);
-    z_actor_shadow_draw_vec3f(&(en->actor).pos_2, &scale, 0xFF, global);
+    z_actor_shadow_draw_vec3f(&(en->actor).pos, &scale, 0xFF, global);
 }
 
 static void destroy(entity_t *en, z64_global_t *global)

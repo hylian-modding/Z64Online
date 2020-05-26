@@ -16,8 +16,9 @@ import {
 } from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
+import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 
-export class Ooto_PuppetPacket{
+export class Ooto_PuppetPacket {
   data: PuppetData;
   horse_data!: HorseData;
 
@@ -25,12 +26,12 @@ export class Ooto_PuppetPacket{
     this.data = puppetData;
   }
 
-  setHorseData(horse: HorseData){
+  setHorseData(horse: HorseData) {
     this.horse_data = horse;
   }
 }
 
-export class Ooto_PuppetWrapperPacket extends UDPPacket{
+export class Ooto_PuppetWrapperPacket extends UDPPacket {
 
   data: string;
 
@@ -78,10 +79,10 @@ export class Ooto_SubscreenSyncPacket extends Packet {
   }
 }
 
-export class Ooto_BankSyncPacket extends Packet{
+export class Ooto_BankSyncPacket extends Packet {
   savings: number;
 
-  constructor(saving: number, lobby: string){
+  constructor(saving: number, lobby: string) {
     super('Ooto_BankSyncPacket', 'OotOnline', lobby, true);
     this.savings = saving;
   }
@@ -121,18 +122,18 @@ export class Ooto_DownloadRequestPacket extends Packet {
 }
 
 export class Ooto_ClientFlagUpdate extends Packet {
-  scenes: any;
-  events: any;
-  items: any;
-  inf: any;
-  skulltulas: any;
+  scenes: Buffer;
+  events: Buffer;
+  items: Buffer;
+  inf: Buffer;
+  skulltulas: Buffer;
 
   constructor(
-    scenes: any,
-    events: any,
-    items: any,
-    inf: any,
-    skulltulas: any,
+    scenes: Buffer,
+    events: Buffer,
+    items: Buffer,
+    inf: Buffer,
+    skulltulas: Buffer,
     lobby: string
   ) {
     super('Ooto_ClientFlagUpdate', 'OotOnline', lobby, false);
@@ -256,12 +257,13 @@ export class Ooto_AllocateModelPacket extends Packet {
   }
 }
 
-export class Ooto_DownloadAllModelsPacket extends Packet {
-  models: any;
+export class OotO_GiveModelPacket extends Packet {
 
-  constructor(models: any, lobby: string) {
-    super('Ooto_DownloadAllModelsPacket', 'OotOnline', lobby, false);
-    this.models = models;
+  target: INetworkPlayer;
+
+  constructor(lobby: string, player: INetworkPlayer) {
+    super('OotO_GiveModelPacket', 'OotOnline', lobby, false);
+    this.target = player;
   }
 }
 
@@ -319,5 +321,14 @@ export class Ooto_SceneGUIPacket extends Packet {
 
   setChildIcon(iconChild: Buffer) {
     this.iconChild = iconChild.toString('base64');
+  }
+}
+
+export class OotO_isRandoPacket extends Packet {
+
+  isRando: boolean = true;
+
+  constructor(lobby: string) {
+    super("OotO_isRandoPacket", "OotOnline", lobby, false);
   }
 }

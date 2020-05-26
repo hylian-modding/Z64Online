@@ -1,12 +1,10 @@
 import {
   IModLoaderAPI,
   ModLoaderEvents,
-  IPlugin,
 } from 'modloader64_api/IModLoaderAPI';
 import {
   EventHandler,
   EventsServer,
-  EventServerLeft,
   EventsClient,
   EventServerJoined,
 } from 'modloader64_api/EventHandler';
@@ -15,18 +13,16 @@ import { zzstatic } from './zzstatic/src/zzstatic';
 import zlib from 'zlib';
 import {
   Ooto_AllocateModelPacket,
-  Ooto_DownloadAllModelsPacket,
   Ooto_IconAllocatePacket,
+  OotO_GiveModelPacket,
 } from '../OotOPackets';
 import { Age, OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
-  ServerNetworkHandler,
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { OotOnlineStorage } from '../../OotOnlineStorage';
-import { IOotOnlineHelpers, OotOnlineEvents, ICustomEquipment } from '../../OotoAPI/OotoAPI';
-import { ModelPlayer, ModelPlayerProxy } from './ModelPlayer';
+import { OotOnlineEvents, ICustomEquipment } from '../../OotoAPI/OotoAPI';
+import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
 import fs from 'fs';
@@ -40,7 +36,7 @@ import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { MatrixTranslate } from './MatrixTranslate';
-import { ManifestMapper } from './ManifestMapper';
+import { trimBuffer } from './trimBuffer';
 
 export class FilePatch {
   offset: number;
@@ -61,13 +57,12 @@ export class RomPatch {
   }
 }
 
-export class ModelManager {
+export class ModelManagerClient {
   @ModLoaderAPIInject()
   ModLoader!: IModLoaderAPI;
   @InjectCore()
-  core!: IOOTCore
-  clientStorage: OotOnlineStorageClient;
-  parent: IOotOnlineHelpers;
+  core!: IOOTCore;
+  clientStorage!: OotOnlineStorageClient;
   allocationManager: ModelAllocationManager;
   customModelFileAdult = '';
   customModelFileChild = '';
@@ -78,6 +73,7 @@ export class ModelManager {
   customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
+  customIconsFile = '';
   cacheDir: string = "./cache";
   equipmentAdultMap: Map<string, Array<number>> = new Map<string, Array<number>>();
   equipmentChildMap: Map<string, Array<number>> = new Map<string, Array<number>>();
@@ -86,14 +82,8 @@ export class ModelManager {
   colorProxies: Array<number> = [];
   lastSeenTunic: number = 0;
   matrices: Map<string, Buffer> = new Map<string, Buffer>();
-  serverModelCache: Map<string, Buffer> = new Map<string, Buffer>();
 
-  constructor(
-    clientStorage: OotOnlineStorageClient,
-    parent: IOotOnlineHelpers
-  ) {
-    this.clientStorage = clientStorage;
-    this.parent = parent;
+  constructor() {
     this.allocationManager = new ModelAllocationManager();
     let d: any = JSON.parse(fs.readFileSync(path.join(__dirname, "DlistMap.json")).toString());
     Object.keys(d.adult).forEach((key: string) => {
@@ -108,6 +98,11 @@ export class ModelManager {
         this.equipmentChildMap.get(key)!.push(parseInt(d.child[key][i]));
       })
     });
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_ICONS_APPLIED)
+  CUSTOM_ICONS_APPLIED(file: string) {
+    this.customIconsFile = file;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SWORD_BACK)
@@ -171,46 +166,6 @@ export class ModelManager {
     this.customModelFileDesc = data.txt;
   }
 
-  injectRawFileToRom(rom: Buffer, index: number, file: Buffer) {
-    let dma = 0x7430;
-    let offset: number = index * 0x10;
-    let start: number = rom.readUInt32BE(dma + offset + 0x8);
-    file.copy(rom, start);
-  }
-
-  getRawFileFromRom(rom: Buffer, index: number): Buffer {
-    let dma = 0x7430;
-    let offset: number = index * 0x10;
-    let start: number = rom.readUInt32BE(dma + offset + 0x8);
-    let end: number = rom.readUInt32BE(dma + offset + 0xc);
-    let size: number = end - start;
-    let isFileCompressed = true;
-    if (end === 0) {
-      isFileCompressed = false;
-      size =
-        rom.readUInt32BE(dma + offset + 0x4) - rom.readUInt32BE(dma + offset);
-      end = start + size;
-    }
-    let buf: Buffer = Buffer.alloc(size);
-    rom.copy(buf, 0, start, end);
-    return buf;
-  }
-
-  trimBuffer(buffer: Buffer) {
-    var pos = 0
-    for (var i = buffer.length - 1; i >= 0; i--) {
-      if (buffer[i] !== 0x00) {
-        pos = i
-        break
-      }
-    }
-    pos++;
-    while (pos % 0x10 !== 0) {
-      pos++;
-    }
-    return buffer.slice(0, pos)
-  }
-
   @Postinit()
   loadEquipment() {
     if (this.customModelFileEquipment !== '') {
@@ -243,8 +198,6 @@ export class ModelManager {
       }
     }
   }
-
-  s: number = 0;
 
   loadAdultModel(evt: any, file: string) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
@@ -279,44 +232,6 @@ export class ModelManager {
             a_copy.writeUInt32BE(addr, this.equipmentAdultMap.get(key)![i] + 0x4);
           }
           this.colorProxies.push(addr + 0x14);
-          if (key === "Hilt.2") {
-            let toki: Buffer = tools.decompressFileFromRom(evt.rom, 126);
-            let thash: string = this.ModLoader.utils.hashBuffer(toki);
-            if (thash === "3503c9424b64bb7d087b6e291cec85d1") {
-              /*               let matrix_proxy: Buffer = fs.readFileSync(path.join(__dirname, "matrix_wrapper.bin"));
-                            let matrix_offset: number = matrix_proxy.indexOf(Buffer.from("DEADBEEF", 'hex'));
-                            let dlist_hilt_offset: number = matrix_proxy.indexOf(Buffer.from("BADF00D0", 'hex'));
-                            let dlist_blade_offset: number = matrix_proxy.indexOf(Buffer.from('FF15F00D', 'hex'));
-                            let mt = new MatrixTranslate();
-                            let md = mt.guRTSF(0.0, 0.0, -90.0, -130.0, 582.0, 34.0, 0.4);
-                            let matrix_data: Buffer = mt.guMtxF2L(md);
-                            let replacement2 = Buffer.alloc(model.model.equipment.zobj.byteLength + matrix_proxy.byteLength + matrix_data.byteLength);
-                            model.model.equipment.zobj.copy(replacement2);
-                            model.model.equipment.zobj = replacement2;
-                            matrix_data.copy(model.model.equipment.zobj, offset);
-                            let addr2 = 0x80800000 + allocation_size * this.equipmentIndex;
-                            addr2 += offset;
-                            matrix_proxy.writeUInt32BE(addr2, matrix_offset);
-                            addr2 += matrix_data.byteLength;
-                            offset += matrix_data.byteLength;
-                            ms_blade_addr = offset + dlist_blade_offset;
-                            matrix_proxy.writeUInt32BE(addr, dlist_hilt_offset);
-                            matrix_proxy.writeUInt32BE(addr, dlist_blade_offset);
-                            matrix_proxy.copy(model.model.equipment.zobj, offset);
-                            offset += matrix_proxy.byteLength;
-              
-                            fs.writeFileSync(global.ModLoader["startdir"] + "/wtf.bin", model.model.equipment.zobj);
-                            let temp: Buffer = Buffer.alloc(4);
-                            temp.writeUInt32BE(addr2, 0);
-                            toki.writeUInt16BE(temp.readUInt16BE(0), 0x462);
-                            toki.writeUInt16BE(temp.readUInt16BE(2), 0x466);
-                            fs.writeFileSync(global.ModLoader["startdir"] + "/toki.ovl", toki);
-                            this.ModLoader.logger.info("Patching ovl_Bg_Toki_Swd..."); */
-            }
-            tools.recompressFileIntoRom(evt.rom, 126, toki);
-          } else if (key === "Blade.2") {
-            /* model.model.equipment.zobj.writeUInt32BE(addr, ms_blade_addr); */
-          }
         }
       });
       // Load any matrix data.
@@ -331,16 +246,16 @@ export class ModelManager {
         this.matrices.get(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT_MATRIX_SHIELD_BACK)!.copy(adult_model, 0x5050);
       }
     }
-    let _adult_model = this.ModLoader.utils.yaz0Encode(a_copy);
-    let adult_zobj = this.getRawFileFromRom(evt.rom, adult);
+    let adult_zobj = tools.decompressFileFromRom(evt.rom, adult);
     let hash: string = this.ModLoader.utils.hashBuffer(adult_zobj);
-    if (hash !== "af7b1c1859551ebde12bfe0ac91d7e9b") {
+    if (hash !== "fda5c759635bfa85f9077d0ee0d8bbb5") {
       this.ModLoader.logger.warn("The adult zobj in this rom isn't vanilla. Stopping custom model processing.");
+      this.ModLoader.logger.warn(hash);
       return;
     }
     this.ModLoader.utils.clearBuffer(adult_zobj);
-    _adult_model.copy(adult_zobj);
-    this.injectRawFileToRom(evt.rom, adult, adult_zobj);
+    a_copy.copy(adult_zobj);
+    tools.recompressFileIntoRom(evt.rom, adult, trimBuffer(adult_zobj));
 
     let patch: RomPatch[] = new Array<RomPatch>();
     patch = JSON.parse(fs.readFileSync(this.customModelRepointsAdult).toString());
@@ -354,7 +269,6 @@ export class ModelManager {
     let code_file: Buffer = tools.decompressFileFromRom(evt.rom, code);
     adult_model.writeUInt32BE(code_file.readUInt32BE(0xe65a0), 0x500c);
     this.clientStorage.adultModel = adult_model;
-    //new ManifestMapper().map("adult-link.txt");
   }
 
   loadChildModel(evt: any, file: string) {
@@ -407,17 +321,17 @@ export class ModelManager {
       }
     }
 
-    let _child_model = this.ModLoader.utils.yaz0Encode(a_copy);
-    let child_zobj = this.getRawFileFromRom(evt.rom, child);
+    let child_zobj = tools.decompressFileFromRom(evt.rom, child);
     let hash: string = this.ModLoader.utils.hashBuffer(child_zobj);
-    if (hash !== "ba03f6066c6531a08e21826b4ac2b977") {
+    if (hash !== "ddd916f50c49c55246fe24a05d326013") {
       this.ModLoader.logger.warn("The child zobj in this rom isn't vanilla. Stopping custom model processing.");
+      this.ModLoader.logger.warn(hash);
       return;
     }
     this.ModLoader.utils.clearBuffer(child_zobj);
-    _child_model.copy(child_zobj);
+    a_copy.copy(child_zobj);
 
-    this.injectRawFileToRom(evt.rom, child, child_zobj);
+    tools.recompressFileIntoRom(evt.rom, child, trimBuffer(child_zobj));
 
     let patch: RomPatch[] = new Array<RomPatch>();
     patch = JSON.parse(fs.readFileSync(this.customModelRepointsChild).toString());
@@ -457,14 +371,14 @@ export class ModelManager {
       tools.decompressFileFromRom(evt.rom, 502).copy(puppet_adult);
       puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
       puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
-      fs.writeFileSync(child_path, this.trimBuffer(puppet_child));
-      fs.writeFileSync(adult_path, this.trimBuffer(puppet_adult));
+      fs.writeFileSync(child_path, trimBuffer(puppet_child));
+      fs.writeFileSync(adult_path, trimBuffer(puppet_adult));
     }
 
     let a = new ModelPlayer("Adult");
-    a.model.adult = new ModelObject(this.trimBuffer(new zzstatic().doRepoint(puppet_adult, 0)));
+    a.model.adult = new ModelObject(trimBuffer(new zzstatic().doRepoint(puppet_adult, 0)));
     let c = new ModelPlayer("Child");
-    c.model.child = new ModelObject(this.trimBuffer(new zzstatic().doRepoint(puppet_child, 1)));
+    c.model.child = new ModelObject(trimBuffer(new zzstatic().doRepoint(puppet_child, 1)));
     this.allocationManager.models[0] = a;
     this.allocationManager.models[1] = c;
   }
@@ -476,6 +390,7 @@ export class ModelManager {
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
     this.ModLoader.logger.info('Starting custom model setup...');
     let anim = 7;
 
@@ -543,10 +458,10 @@ export class ModelManager {
     if (this.customModelFileAnims !== '') {
       this.ModLoader.logger.info('Loading new animations...');
       let anim_file: Buffer = fs.readFileSync(this.customModelFileAnims);
-      let anim_zobj: Buffer = this.getRawFileFromRom(evt.rom, anim);
+      let anim_zobj: Buffer = tools.decompressFileFromRom(evt.rom, anim);
       this.ModLoader.utils.clearBuffer(anim_zobj);
       anim_file.copy(anim_zobj);
-      this.injectRawFileToRom(evt.rom, anim, anim_zobj);
+      tools.recompressFileIntoRom(evt.rom, anim, anim_zobj);
     }
 
     if (this.customModelFileAdultIcon !== '') {
@@ -580,55 +495,16 @@ export class ModelManager {
         )
       );
     }
+
+    if (this.customIconsFile !== '') {
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+      let icons: Buffer = tools.decompressFileFromRom(evt.rom, 8);
+      this.ModLoader.utils.clearBuffer(icons);
+      fs.readFileSync(this.customIconsFile).copy(icons);
+      tools.recompressFileIntoRom(evt.rom, 8, icons);
+    }
+
     this.ModLoader.logger.info('Done.');
-
-    /*     let code_file: Buffer = this.decompressFileFromRom(evt.rom, 27);
-        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
-        let dark_link = tools.decompressFileFromRom(evt.rom, 70);
-        dark_link.writeUInt16BE(code_file.readUInt16BE(0xe65a0), 0x005E);
-        dark_link.writeUInt16BE(code_file.readUInt16BE(0xe65a0 + 0x2), 0x006E);
-        dark_link.writeUInt8(0x0014, 0x2039);
-        tools.recompressFileIntoRom(evt.rom, 70, dark_link); */
-  }
-
-  @ServerNetworkHandler('Ooto_AllocateModelPacket')
-  onModelAllocate_server(packet: Ooto_AllocateModelPacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      packet.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    this.serverModelCache.set(packet.hash, packet.model);
-    if (!storage.playerModelCache.hasOwnProperty(packet.player.uuid)) {
-      storage.playerModelCache[packet.player.uuid] = new ModelPlayerProxy(packet.player.uuid);
-    }
-    if (packet.age === Age.CHILD) {
-      storage.playerModelCache[
-        packet.player.uuid
-      ].childKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom child model for player ' +
-        packet.player.nickname +
-        '.'
-      );
-    } else if (packet.age === Age.ADULT) {
-      storage.playerModelCache[
-        packet.player.uuid
-      ].adultKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom adult model for player ' +
-        packet.player.nickname +
-        '.'
-      );
-    } else if (packet.age === 0x69) {
-      storage.playerModelCache[
-        packet.player.uuid
-      ].equipmentKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom equipment model(s) for player ' +
-        packet.player.nickname +
-        '.'
-      );
-    }
   }
 
   @NetworkHandler('Ooto_AllocateModelPacket')
@@ -677,38 +553,6 @@ export class ModelManager {
     }
   }
 
-  @ServerNetworkHandler('Ooto_IconAllocatePacket')
-  onIconAllocateServer(packet: Ooto_IconAllocatePacket) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      packet.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    this.serverModelCache.set(packet.hash, packet.icon);
-    if (!storage.playerModelCache.hasOwnProperty(packet.player.uuid)) {
-      storage.playerModelCache[packet.player.uuid] = new ModelPlayerProxy(packet.player.uuid);
-    }
-    if (packet.age === Age.ADULT) {
-      (storage.playerModelCache[
-        packet.player.uuid
-      ] as ModelPlayerProxy).iconAdultKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom icon for (Adult) player ' +
-        packet.player.nickname +
-        '.'
-      );
-    }
-    if (packet.age === Age.CHILD) {
-      (storage.playerModelCache[
-        packet.player.uuid
-      ] as ModelPlayerProxy).iconChildKey = packet.hash;
-      this.ModLoader.logger.info(
-        'server: Saving custom icon for (Child) player ' +
-        packet.player.nickname +
-        '.'
-      );
-    }
-  }
-
   @NetworkHandler('Ooto_IconAllocatePacket')
   onIconAllocateClient(packet: Ooto_IconAllocatePacket) {
     if (
@@ -738,15 +582,6 @@ export class ModelManager {
     }
   }
 
-  @EventHandler(EventsServer.ON_LOBBY_LEAVE)
-  onServerPlayerLeft(evt: EventServerLeft) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      evt.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    delete storage.playerModelCache[evt.player.uuid];
-  }
-
   @EventHandler(EventsClient.ON_PLAYER_LEAVE)
   onPlayerLeft(player: INetworkPlayer) {
     delete this.clientStorage.playerModelCache[player.uuid];
@@ -762,49 +597,76 @@ export class ModelManager {
 
   @EventHandler(EventsServer.ON_LOBBY_JOIN)
   onPlayerJoin_server(evt: EventServerJoined) {
-    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-      evt.lobby,
-      (this.parent as unknown) as IPlugin
-    ) as OotOnlineStorage;
-    let cache: any = {};
-    Object.keys(storage.playerModelCache).forEach((uuid: string) => {
-      cache[uuid] = (storage.playerModelCache[uuid] as ModelPlayerProxy).generateModelPlayer(this.serverModelCache);
-    });
-    this.ModLoader.serverSide.sendPacketToSpecificPlayer(
-      new Ooto_DownloadAllModelsPacket(cache, evt.lobby),
-      evt.player
-    );
+    this.ModLoader.serverSide.sendPacket(new OotO_GiveModelPacket(evt.lobby, evt.player));
   }
 
-  @NetworkHandler('Ooto_DownloadAllModelsPacket')
-  onModelDownload(packet: Ooto_DownloadAllModelsPacket) {
-    Object.keys(packet.models).forEach((key: string) => {
-      this.clientStorage.playerModelCache[key] = new ModelPlayer(key);
-      if (packet.models[key].model.adult.zobj.byteLength > 1) {
-        (this.clientStorage.playerModelCache[key] as ModelPlayer).model.setAdult(zlib.inflateSync(packet.models[key].model.adult.zobj));
-        let thread: ModelThread = new ModelThread(
-          this.clientStorage.playerModelCache[key].model.adult.zobj,
-          this.ModLoader
+  @NetworkHandler("OotO_GiveModelPacket")
+  onPlayerJoin_client(packet: OotO_GiveModelPacket) {
+    if (packet.target.uuid !== this.ModLoader.me.uuid) {
+      if (this.customModelFileAdult !== '') {
+        let def = zlib.deflateSync(this.clientStorage.adultModel);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_AllocateModelPacket(
+            def,
+            Age.ADULT,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ), packet.target
         );
-        thread.startThread();
       }
-      if (packet.models[key].model.child.zobj.byteLength > 1) {
-        (this.clientStorage.playerModelCache[key] as ModelPlayer).model.setChild(zlib.inflateSync(packet.models[key].model.child.zobj));
-        let thread: ModelThread = new ModelThread(
-          this.clientStorage.playerModelCache[key].model.child.zobj,
-          this.ModLoader
+
+      if (this.customModelFileChild !== '') {
+        let def = zlib.deflateSync(this.clientStorage.childModel);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_AllocateModelPacket(
+            def,
+            Age.CHILD,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
         );
-        thread.startThread();
       }
-      if (packet.models[key].model.equipment.zobj.byteLength > 1) {
-        (this.clientStorage.playerModelCache[key] as ModelPlayer).model.setEquipment(zlib.inflateSync(packet.models[key].model.equipment.zobj));
-        let thread: ModelThread = new ModelThread(
-          this.clientStorage.playerModelCache[key].model.equipment.zobj,
-          this.ModLoader
+
+      if (this.customModelFileEquipment !== '') {
+        let def = zlib.deflateSync(this.clientStorage.equipmentModel);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_AllocateModelPacket(
+            def,
+            0x69,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
         );
-        thread.startThread();
       }
-    });
+
+      if (this.customModelFileAdultIcon !== '') {
+        let def = zlib.deflateSync(this.clientStorage.adultIcon);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_IconAllocatePacket(
+            def,
+            Age.ADULT,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
+        );
+      }
+
+      if (this.customModelFileChildIcon !== '') {
+        let def = zlib.deflateSync(this.clientStorage.childIcon);
+        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
+          new Ooto_IconAllocatePacket(
+            def,
+            Age.CHILD,
+            this.ModLoader.clientLobby,
+            this.ModLoader.utils.hashBuffer(def)
+          ),
+          packet.target
+        );
+      }
+    }
   }
 
   @EventHandler("OotOnline:WriteDefaultPuppetZobjs")
@@ -937,7 +799,6 @@ export class ModelManager {
       0x837800,
       this.allocationManager.getModelInSlot(1).model.child.zobj
     );
-    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
   }
 
   @EventHandler(EventsClient.ON_INJECT_FINISHED)
@@ -950,9 +811,5 @@ export class ModelManager {
       0x837800,
       this.allocationManager.getModelInSlot(1).model.child.zobj
     );
-    this.ModLoader.emulator.rdramWrite8(0x80829D7D, 0x9);
   }
-
-  @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)
-  onPuppetDespawn(puppet: Puppet) { }
 }

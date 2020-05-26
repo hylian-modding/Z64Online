@@ -10,3 +10,5 @@ modloader64-config.json
 modloader64-p2-config.json
 CustomActorToolkit/
 libs/
+win-ia32-unpacked/
+win-ia32-unpacked.pak

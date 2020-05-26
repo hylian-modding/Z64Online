@@ -5,7 +5,6 @@ import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents, IOotOnlineHelpers } from '../../OotoAPI/OotoAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { IPuppet } from '../../OotoAPI/IPuppet';
 import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
 import fs from 'fs';
@@ -14,7 +13,7 @@ import { IActor } from 'modloader64_api/OOT/IActor';
 
 const DEADBEEF_OFFSET: number = 0x288;
 
-export class Puppet implements IPuppet {
+export class Puppet {
   player: INetworkPlayer;
   id: string;
   data: PuppetData;
@@ -68,7 +67,7 @@ export class Puppet implements IPuppet {
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      (this.parent.clientStorage.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.clientStorage.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
+      (this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
         if (success) {
           this.data.pointer = result & 0x00ffffff;
           this.doNotDespawnMe(this.data.pointer);

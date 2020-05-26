@@ -23,6 +23,7 @@ export enum OotOnlineEvents {
   CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK = "OotOnline:CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SWORD_BACK",
   CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK = "OotOnline:CUSTOM_MODEL_APPLIED_CHILD_MATRIX_SHIELD_BACK",
   CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD = "OotOnline:CUSTOM_MODEL_APPLIED_CHILD_MATRIX_ITEM_SHIELD",
+  CUSTOM_ICONS_APPLIED = "OotOnline:CUSTOM_ICONS_APPLIED",
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote'
@@ -46,7 +47,7 @@ export class OotOnline_PlayerScene {
 
 export interface IOotOnlineHelpers {
   sendPacketToPlayersInScene(packet: IPacketHeader): void;
-  clientStorage: OotOnlineStorageClient;
+  getClientStorage(): OotOnlineStorageClient | null;
 }
 
 export function OotOnlineAPI_EnableGhostMode() {

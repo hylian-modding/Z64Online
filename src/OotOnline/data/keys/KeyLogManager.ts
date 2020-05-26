@@ -8,17 +8,43 @@ import { OotOnlineStorageClient } from "../../OotOnlineStorageClient";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOotOnlineLobbyConfig } from "@OotOnline/OotOnline";
+import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 
-export class KeyLogManager {
+export class KeyLogManagerServer {
+
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+    @ParentReference()
+    parent!: IPlugin;
+
+    @ServerNetworkHandler("Ooto_KeyDeltaClientPacket")
+    onPacketServer(packet: Ooto_KeyDeltaClientPacket) {
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        if (packet.delta !== 0) {
+            let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
+            storage.changelog.push(s);
+            this.ModLoader.serverSide.sendPacket(new Ooto_KeyDeltaServerPacket(s, packet.lobby, packet.player));
+        }
+    }
+}
+
+export class KeyLogManagerClient {
     indexes: any = {};
     bases: Map<number, KeyLogEntry> = new Map<number, KeyLogEntry>();
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
-    parent: IPlugin;
+    @ParentReference()
+    parent!: IPlugin;
     @InjectCore()
     core!: IOOTCore;
 
-    constructor(parent: IPlugin) {
+    constructor() {
         this.indexes["FOREST_TEMPLE"] = VANILLA_KEY_INDEXES.FOREST_TEMPLE;
         this.indexes["FIRE_TEMPLE"] = VANILLA_KEY_INDEXES.FIRE_TEMPLE;
         this.indexes["WATER_TEMPLE"] = VANILLA_KEY_INDEXES.WATER_TEMPLE;
@@ -33,8 +59,6 @@ export class KeyLogManager {
             let index: number = this.indexes[key];
             this.bases.set(index, new KeyLogEntry(index, 0));
         });
-
-        this.parent = parent;
     }
 
     update() {
@@ -52,22 +76,14 @@ export class KeyLogManager {
         });
     }
 
-    @ServerNetworkHandler("Ooto_KeyDeltaClientPacket")
-    onPacketServer(packet: Ooto_KeyDeltaClientPacket) {
-        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            packet.lobby,
-            this.parent
-        ) as OotOnlineStorage;
-        if (packet.delta !== 0) {
-            let s = new SavedLogEntry(packet.index, packet.delta, packet.timestamp);
-            storage.changelog.push(s);
-            this.ModLoader.serverSide.sendPacket(new Ooto_KeyDeltaServerPacket(s, packet.lobby, packet.player));
-        }
-    }
-
     @NetworkHandler("Ooto_KeyDeltaServerPacket")
     onPacketClient(packet: Ooto_KeyDeltaServerPacket) {
-        if (!((this.parent as any)["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
+        if (!((this.parent as any)["client"]["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
+            return;
+        }
+        if (packet.originalUser === undefined || packet.originalUser === null) {
+            this.ModLoader.logger.error("Key packet with no origin!");
+            this.ModLoader.logger.error(JSON.stringify(packet, null, 2));
             return;
         }
         if (packet.originalUser.uuid === this.ModLoader.me.uuid) {
@@ -88,7 +104,7 @@ export class KeyLogManager {
 
     @NetworkHandler("Ooto_KeyRebuildPacket")
     onPacketRebuild(packet: Ooto_KeyRebuildPacket) {
-        if (!((this.parent as any)["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
+        if (!((this.parent as any)["client"]["LobbyConfig"] as IOotOnlineLobbyConfig).key_syncing) {
             return;
         }
         Object.keys(this.indexes).forEach((key: string) => {
