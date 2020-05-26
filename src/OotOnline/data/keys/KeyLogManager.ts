@@ -89,7 +89,7 @@ export class KeyLogManagerClient {
         if (packet.originalUser.uuid === this.ModLoader.me.uuid) {
             return;
         }
-        let storage: OotOnlineStorageClient = (this.parent as any)["clientStorage"];
+        let storage: OotOnlineStorageClient = (this.parent as any)["client"]["clientStorage"];
 
         storage.changelog.push(packet.entry);
         if (this.core.save.keyManager.getKeyCountForIndex(packet.entry.index) === 0xFF) {
