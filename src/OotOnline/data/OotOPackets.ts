@@ -262,7 +262,7 @@ export class OotO_GiveModelPacket extends Packet {
   target: INetworkPlayer;
 
   constructor(lobby: string, player: INetworkPlayer) {
-    super('OotO_GiveModelPacket', 'OotOnline', lobby, false);
+    super('OotO_GiveModelPacket', 'OotOnline', lobby, true);
     this.target = player;
   }
 }
