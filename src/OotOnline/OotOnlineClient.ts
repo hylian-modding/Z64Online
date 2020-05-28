@@ -851,7 +851,6 @@ export class OotOnlineClient {
                         this.keys.update();
                     }
                     let state = this.core.link.state;
-                    console.log(state + " " + this.clientStorage.needs_update + " | " + this.LobbyConfig.data_syncing);
                     if (
                         state === LinkState.BUSY ||
                         state === LinkState.GETTING_ITEM ||

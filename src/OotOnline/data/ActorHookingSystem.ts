@@ -314,12 +314,7 @@ export class ActorHookingManagerClient {
     this.DekuNutsRemote.clear();
     this.actorHookTicks.clear();
   }
-
-  @EventHandler(OotEvents.ON_ROOM_CHANGE_PRE)
-  onRoomChange(evt: any) {
-    this.actorHookTicks.clear();
-  }
-
+  
   setActorBehavior(
     emulator: IMemory,
     actor: IActor,

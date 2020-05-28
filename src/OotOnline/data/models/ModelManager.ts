@@ -175,6 +175,7 @@ export class ModelManagerClient {
       let buf: Buffer = new zzstatic().doRepoint(model.model.equipment.zobj, this.equipmentIndex);
       this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
     }
+    this.ModLoader.clientSide.sendPacket(new OotO_GiveModelPacket(this.ModLoader.clientLobby, this.ModLoader.me));
   }
 
   @EventHandler(OotEvents.ON_LOADING_ZONE)
@@ -593,11 +594,6 @@ export class ModelManagerClient {
       );
     }
     this.ModLoader.logger.info(this.allocationManager.getAvailableSlots() + " model blocks left!");
-  }
-
-  @EventHandler(EventsServer.ON_LOBBY_JOIN)
-  onPlayerJoin_server(evt: EventServerJoined) {
-    this.ModLoader.serverSide.sendPacket(new OotO_GiveModelPacket(evt.lobby, evt.player));
   }
 
   @NetworkHandler("OotO_GiveModelPacket")
