@@ -1,4 +1,5 @@
-#include <z64ovl/oot/u10.h>
+//#include <z64ovl/oot/u10.h>
+#include <z64ovl/oot/debug.h>
 #include <z64ovl/z64ovl_helpers.h>
 #include <z64ovl/defines_limbs.h>
 #include <z64ovl/defines_oot.h>
@@ -36,17 +37,7 @@ typedef struct
     uint8_t actionParam;
 } z_link_puppet;
 
-typedef struct
-{
-    /* 0x0000 */ z64_actor_t actor;
-    /* 0x013C */ uint8_t current_frame_data[0x86];
-    /* 0x01C4 */ z64_skelanime_t skelanime;
-    /* 0x0204 */ z64_collider_cylinder_main_t cylinder;
-    /* 0x0250 */ z_link_puppet puppetData;
-    uint32_t end;
-} entity_t;
-
-z64_collider_cylinder_init_t Collision =
+/* z64_collider_cylinder_init_t Collision =
     {
         .body = {
             .unk_0x14 = 0x07,
@@ -66,7 +57,18 @@ z64_collider_cylinder_init_t Collision =
         .radius = 0x0015,
         .height = 0x0032,
         .y_shift = 0,
-        .position = {.x = 0, .y = 0, .z = 0}};
+        .position = {.x = 0, .y = 0, .z = 0}
+        }; */
+
+typedef struct
+{
+    /* 0x0000 */ z64_actor_t actor;
+    /* 0x013C */ uint8_t current_frame_data[0x86];
+    /* 0x01C4 */ z64_skelanime_t skelanime;
+    /* 0x0204 */ z64_collider_t cylinder;
+    /* 0x0250 */ z_link_puppet puppetData;
+    uint32_t end;
+} entity_t;
 
 static uint32_t isZobjLoaded(z64_obj_ctxt_t *obj_ctxt, int32_t id)
 {
@@ -101,28 +103,28 @@ static void init(entity_t *en, z64_global_t *global)
 
     if (en->puppetData.age == OOT_AGE_ADULT)
     {
-        Collision.radius = 19;
-        Collision.height = 50;
+        //Collision.radius = 19;
+        //Collision.height = 50;
     }
     else
     {
-        Collision.radius = 18;
-        Collision.height = 32;
+        //Collision.radius = 18;
+        //Collision.height = 32;
     }
 
     z_skelanime_init(global, 1, &en->skelanime, en->puppetData.playasData.skeleton, 0);
 
-    z_skelanime_change_anim(&en->skelanime, 0, 0.0, 0.0, 0, 0);
+    z_skelanime_change_anim(&en->skelanime, 0, 0.0, 0.0, 0, 0, 0);
     z_actor_set_scale(&en->actor, 0.01f);
 
-    z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
+    //z_collider_cylinder_init(global, &en->cylinder, &en->actor, &Collision);
 
     en->puppetData.bottleColor = white;
     en->puppetData.gauntletColor = white;
 
     if (isZobjLoaded(&global->obj_ctxt, EPONA_OBJ))
     {
-        uint32_t* param_pointer = (uint32_t*) 0x80600150;
+        uint32_t* param_pointer = (uint32_t*) 0x80802010;
         uint32_t id_addr = *param_pointer;
         uint16_t *seg2 = (uint16_t *)id_addr;
         z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, en->actor.variable);
@@ -142,8 +144,8 @@ static void play(entity_t *en, z64_global_t *global)
         en->puppetData.playasData.eye_texture = eyes[helper_eye_blink(&en->puppetData.playasData.eye_index)];
     }
 
-    z_collider_cylinder_update(&en->actor, &en->cylinder);
-    z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
+    //z_collider_cylinder_update(&en->actor, &en->cylinder);
+    //z_collider_set_ot(global, (uint32_t *)(AADDR(global, 0x11e60)), &en->cylinder);
 }
 
 static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_list, vec3f_t *translation, vec3s_t *rotation, entity_t *en)
@@ -629,7 +631,7 @@ static void draw(entity_t *en, z64_global_t *global)
 
 static void destroy(entity_t *en, z64_global_t *global)
 {
-    z_collider_cylinder_free(global, &en->cylinder);
+    //z_collider_cylinder_free(global, &en->cylinder);
     if (en->actor.attached_b)
     {
         en->actor.attached_b->attached_a = 0;

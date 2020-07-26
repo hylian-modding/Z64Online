@@ -26,6 +26,7 @@ import { KeyLogManagerClient } from './data/keys/KeyLogManager';
 import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { RPCClient } from './data/RPCHandler';
+import { SoundManagerClient } from './data/sounds/SoundManager';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -52,6 +53,8 @@ export class OotOnlineClient {
     puppets!: PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, RPCClient)
     rcp!: RPCClient;
+    @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
+    sound!: SoundManagerClient;
 
     @EventHandler(OotOnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -464,24 +467,12 @@ export class OotOnlineClient {
         mergeInventoryData(this.clientStorage.inventoryStorage, packet.inventory);
         mergeEquipmentData(this.clientStorage.equipmentStorage, packet.equipment);
         mergeQuestSaveData(this.clientStorage.questStorage, packet.quest);
-        mergeDungeonItemData(
-            this.clientStorage.dungeonItemStorage,
-            packet.dungeonItems
-        );
+        mergeDungeonItemData(this.clientStorage.dungeonItemStorage, packet.dungeonItems);
 
-        applyInventoryToContext(
-            this.clientStorage.inventoryStorage,
-            this.core.save
-        );
-        applyEquipmentToContext(
-            this.clientStorage.equipmentStorage,
-            this.core.save
-        );
+        applyInventoryToContext(this.clientStorage.inventoryStorage, this.core.save);
+        applyEquipmentToContext(this.clientStorage.equipmentStorage, this.core.save);
         applyQuestSaveToContext(this.clientStorage.questStorage, this.core.save);
-        applyDungeonItemDataToContext(
-            this.clientStorage.dungeonItemStorage,
-            this.core.save.dungeonItemManager
-        );
+        applyDungeonItemDataToContext(this.clientStorage.dungeonItemStorage, this.core.save.dungeonItemManager);
 
         this.ModLoader.gui.tunnel.send(
             'OotOnline:onSubscreenPacket',
@@ -775,10 +766,10 @@ export class OotOnlineClient {
         }
         if (evt.file === "link_no_pvp.ovl") {
             let result: IOvlPayloadResult = evt.result;
-            this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
+            this.ModLoader.emulator.rdramWrite32(0x80802000, result.params);
         } else if (evt.file === "horse-3.ovl") {
             let result: IOvlPayloadResult = evt.result;
-            this.ModLoader.emulator.rdramWrite32(0x80600150, result.params);
+            this.ModLoader.emulator.rdramWrite32(0x80802010, result.params);
         }
     }
 
@@ -789,14 +780,16 @@ export class OotOnlineClient {
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
-        let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
-        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
-        let file_select_ovl: Buffer = tools.decompressFileFromRom(evt.rom, 32);
-        let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
-        if (expected_hash !== hash) {
-            this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
-            this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
-        }
+        try{
+            let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
+            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader["offsets"]["link"]["dma_rom"]);
+            let file_select_ovl: Buffer = tools.decompressDMAFileFromRom(evt.rom, 0x0032);
+            let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
+            if (expected_hash !== hash) {
+                this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
+                this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
+            }
+        }catch(err){}
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)

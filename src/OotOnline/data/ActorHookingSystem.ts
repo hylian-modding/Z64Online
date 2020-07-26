@@ -28,7 +28,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
-
+import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
@@ -538,31 +538,40 @@ export class ActorHookingManagerClient {
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
-    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+    try{
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
 
-    // Make Din's Fire not move to Link.
-    let dins: Buffer = tools.decompressFileFromRom(evt.rom, 166);
-    let dhash: string = this.ModLoader.utils.hashBuffer(dins);
-    if (dhash === "b08f7991b2beda5394e4a94cff15b50c") {
-      this.ModLoader.logger.info("Patching Din's Fire...");
-      dins.writeUInt32BE(0x0, 0x150);
-      dins.writeUInt32BE(0x0, 0x158);
-      dins.writeUInt32BE(0x0, 0x160);
-      dins.writeUInt32BE(0x0, 0x19C);
-      dins.writeUInt32BE(0x0, 0x1A4);
-      dins.writeUInt32BE(0x0, 0x1AC);
+      // Make Din's Fire not move to Link.
+      let dins: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x009F);
+      let dhash: string = this.ModLoader.utils.hashBuffer(dins);
+      if (dhash === "b08f7991b2beda5394e4a94cff15b50c") {
+        this.ModLoader.logger.info("Patching Din's Fire...");
+        dins.writeUInt32BE(0x0, 0x150);
+        dins.writeUInt32BE(0x0, 0x158);
+        dins.writeUInt32BE(0x0, 0x160);
+        dins.writeUInt32BE(0x0, 0x19C);
+        dins.writeUInt32BE(0x0, 0x1A4);
+        dins.writeUInt32BE(0x0, 0x1AC);
+      }
+      tools.recompressActorFileIntoRom(evt.rom, 0x009F, dins);
+  
+      // Change Zelda's actor category from 'NPC' to 'Chest'.
+      // This fixes Ganon's Tower Collapse.
+      let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
+      let zhash: string = this.ModLoader.utils.hashBuffer(buf);
+      if (zhash === "3560a2ed96d71e375f79fb53e55d1011") {
+        this.ModLoader.logger.info("Patching Zelda...");
+        buf.writeUInt8(0x0B, 0x7236);
+      }
+      tools.recompressActorFileIntoRom(evt.rom, 0x0179, buf);
+    }catch(err){
+      this.ModLoader.logger.error(err);
     }
-    tools.recompressFileIntoRom(evt.rom, 166, dins);
+  }
 
-    // Change Zelda's actor category from 'NPC' to 'Chest'.
-    // This fixes Ganon's Tower Collapse.
-    let buf: Buffer = tools.decompressFileFromRom(evt.rom, 369);
-    let zhash: string = this.ModLoader.utils.hashBuffer(buf);
-    if (zhash === "3560a2ed96d71e375f79fb53e55d1011") {
-      this.ModLoader.logger.info("Patching Zelda...");
-      buf.writeUInt8(0x0B, 0x7236);
-    }
-    tools.recompressFileIntoRom(evt.rom, 369, buf);
+  @EventHandler(OotEvents.ON_ROOM_CHANGE_PRE)
+  onRoomChange(evt: any) {
+    this.actorHookTicks.clear();
   }
 
   tick() {

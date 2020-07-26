@@ -13,6 +13,7 @@ export const EVENT_ARR_SIZE = 0x1c;
 export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
+const IS_DEV_BUILD: boolean = true;
 
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
@@ -58,7 +59,7 @@ export class OotOnline implements IPlugin, IOotOnlineHelpers, IPluginServerConfi
   }
 
   getServerURL(): string {
-    return "192.99.70.23:8000";
+    return IS_DEV_BUILD ? "192.99.70.23:9000" : "192.99.70.23:8000";
   }
 
 }

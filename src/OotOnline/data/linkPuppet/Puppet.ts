@@ -1,17 +1,12 @@
 import { Age, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
-import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { bus } from 'modloader64_api/EventHandler';
-import { OotOnlineEvents, IOotOnlineHelpers } from '../../OotoAPI/OotoAPI';
+import { OotOnlineEvents, IOotOnlineHelpers, RemoteSoundPlayRequest } from '../../OotoAPI/OotoAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
-import fs from 'fs';
-import path from 'path';
-import { IActor } from 'modloader64_api/OOT/IActor';
-
-const DEADBEEF_OFFSET: number = 0x288;
+import { DEADBEEF_OFFSET } from './PuppetOverlord';
 
 export class Puppet {
   player: INetworkPlayer;
@@ -67,7 +62,7 @@ export class Puppet {
       bus.emit(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      (this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number)=>{
+      (this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
         if (success) {
           this.data.pointer = result & 0x00ffffff;
           this.doNotDespawnMe(this.data.pointer);
@@ -86,11 +81,17 @@ export class Puppet {
     }
   }
 
-  processIncomingPuppetData(data: PuppetData) {
+  processIncomingPuppetData(data: PuppetData, remote: RemoteSoundPlayRequest) {
     if (this.isSpawned && !this.isShoveled) {
       if (this.ModLoader.emulator.rdramRead32(this.data.pointer + DEADBEEF_OFFSET) === 0xDEADBEEF) {
         Object.keys(data).forEach((key: string) => {
-          (this.data as any)[key] = (data as any)[key];
+          if (key === "sound"){
+            if (!remote.isCanceled){
+              (this.data as any)[key] = (data as any)[key];
+            }
+          }else{
+            (this.data as any)[key] = (data as any)[key];
+          }
         });
       } else {
         this.ModLoader.logger.error("Rogue puppet detected. Destroying...");

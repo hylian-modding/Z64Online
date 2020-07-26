@@ -86,6 +86,10 @@ export class KeyLogManagerClient {
             this.ModLoader.logger.error(JSON.stringify(packet, null, 2));
             return;
         }
+        if (this.ModLoader.me === undefined || this.ModLoader.me === null){
+            this.ModLoader.logger.error("this.ModLoader.me doesn't exist! This is bad.");
+            return;
+        }
         if (packet.originalUser.uuid === this.ModLoader.me.uuid) {
             return;
         }

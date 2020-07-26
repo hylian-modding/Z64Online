@@ -26,7 +26,24 @@ export enum OotOnlineEvents {
   CUSTOM_ICONS_APPLIED = "OotOnline:CUSTOM_ICONS_APPLIED",
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
-  ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote'
+  ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
+  ON_LOAD_SOUND_PACK = "OotOnline:OnLoadSoundPack",
+  ON_REMOTE_SOUND_PACK = "OotOnline:OnRemoteSoundPack",
+  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound"
+}
+
+export class RemoteSoundPlayRequest{
+
+  player: INetworkPlayer;
+  puppet: any;
+  sound_id: number;
+  isCanceled: boolean = false;
+
+  constructor(player: INetworkPlayer, puppet: any, sound_id: number){
+    this.player = player;
+    this.puppet = puppet;
+    this.sound_id = sound_id;
+  }
 }
 
 export interface OotOnline_Emote {

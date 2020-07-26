@@ -20,6 +20,7 @@ import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '../OotoAPI/OotoAPI';
 import { IDungeonItemContainer } from 'modloader64_api/OOT/IDungeonItemContainer';
 import { IDungeonItemManager } from 'modloader64_api/OOT/IDungeonItemManager';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 
 export function isAdultTradeItem(item: InventoryItem) {
   return (
@@ -976,4 +977,42 @@ export class OotO_SceneStruct {
   get visited_floors(): Buffer {
     return this.buf.slice(0x18, 0x1C);
   }
+}
+
+export function generateSaveChecksum(ModLoader: IModLoaderAPI): string{
+  let context: Buffer = ModLoader.emulator.rdramReadBuffer(0x8011A5D0, 0x1352);
+  // We need to ignore certain fields.
+  // Entrance Index
+  context.writeUInt32BE(0x0, 0x0000);
+  // Age Modifier
+  context.writeUInt32BE(0x0, 0x0004);
+  // Cutscene Number
+  context.writeUInt16BE(0x0, 0x000A);
+  // World Time
+  context.writeUInt16BE(0x0, 0x000C);
+  // Night Flag
+  context.writeUInt32BE(0x0, 0x00010);
+  // Death Counter
+  context.writeUInt16BE(0x0, 0x0022);
+  // Player Name
+  Buffer.alloc(0x8).copy(context, 0x0024);
+  // Health
+  context.writeUInt16BE(context.readUInt16BE(0x002E), 0x00030);
+  // Current magic amount
+  context.writeUInt8(context.readUInt8(0x0032), 0x0033);
+  // Rupees
+  context.writeUInt16BE(0x0, 0x0034);
+  // Navi Timer
+  context.writeUInt16BE(0x0, 0x0038);
+  // Saved Scene Index
+  context.writeUInt16BE(0x0, 0x0066);
+  // Current button equips
+  Buffer.alloc(0x7).copy(context, 0x0068);
+  // Item amounts
+  Buffer.alloc(0xF).copy(context, 0x008C);
+  // FW
+  Buffer.alloc(0x70).copy(context, 0x0E64);
+  context.writeUInt16BE(0x0, 0x1352);
+  let hash: string = ModLoader.utils.hashBuffer(context);
+  return hash;
 }

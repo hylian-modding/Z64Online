@@ -1,6 +1,6 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { IOOTCore, OotEvents, Age } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, OotEvents, Age, IOotHelper, IOvlPayloadResult } from "modloader64_api/OOT/OOTAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler } from "modloader64_api/EventHandler";
 import { Command } from "modloader64_api/OOT/ICommandBuffer";
@@ -8,6 +8,8 @@ import { IActor } from "modloader64_api/OOT/IActor";
 import fs from 'fs';
 import path from 'path';
 import { onTick } from "modloader64_api/PluginLifecycle";
+import { IOotOnlineHelpers } from "@OotOnline/OotoAPI/OotoAPI";
+import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 
 export class UtilityActorHelper {
 
@@ -15,6 +17,8 @@ export class UtilityActorHelper {
     ModLoader!: IModLoaderAPI;
     @InjectCore()
     core!: IOOTCore;
+    @ParentReference()
+    parent!: IOotOnlineHelpers;
     sceneList: any;
     currentBank!: IActor;
     lastKnownBalance: number = 0;
@@ -26,9 +30,9 @@ export class UtilityActorHelper {
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
         //@ts-ignore
-        /* this.currentBank = undefined;
-        if (this.sceneList.hasOwnProperty(scene) || this.ModLoader.emulator.rdramRead8(0x80718000)) {
-            this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x80600190, (success: boolean, result: number) => {
+        this.currentBank = undefined;
+        /* if (this.sceneList.hasOwnProperty(scene) || this.ModLoader.emulator.rdramRead8(0x80718000)) {
+            (this.parent.getClientStorage()!.overlayCache["bank.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["bank.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
                 if (success) {
                     console.log(result.toString(16));
                     let actor: IActor = this.core.actorManager.createIActorFromPointer(result);
@@ -44,13 +48,14 @@ export class UtilityActorHelper {
                     }
                     this.currentBank = actor;
                 }
+                return {};
             });
         } */
     }
 
     @onTick()
     onTick() {
-        /* if (this.ModLoader.emulator.rdramRead8(0x80718002) === 1 && this.currentBank !== undefined) {
+        if (this.ModLoader.emulator.rdramRead8(0x80718002) === 1 && this.currentBank !== undefined) {
             if (this.sceneList.hasOwnProperty(this.core.global.scene)) {
                 this.currentBank.position.x = this.sceneList[this.core.global.scene].x;
                 this.currentBank.position.y = this.sceneList[this.core.global.scene].y;
@@ -61,7 +66,7 @@ export class UtilityActorHelper {
                 this.currentBank = undefined;
             }
             this.ModLoader.emulator.rdramWrite8(0x80718002, 0);
-        } */
+        }
     }
 
     makeRamDump() {

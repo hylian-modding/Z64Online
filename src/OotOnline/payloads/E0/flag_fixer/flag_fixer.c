@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    z64_actor_t actor;
+    z64_actor_t zzactor;
 } entity_t;
 
 static void init(entity_t *en, z64_global_t *global)

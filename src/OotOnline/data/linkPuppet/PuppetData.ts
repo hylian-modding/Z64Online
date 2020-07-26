@@ -6,7 +6,9 @@ import {
   IOOTCore,
 } from 'modloader64_api/OOT/OOTAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { ACTOR_T_PADDING } from './PuppetOverlord';
 import { bus } from 'modloader64_api/EventHandler';
+import { OotOnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/OotoAPI/OotoAPI';
 
 export class PuppetData {
   pointer: number;
@@ -38,8 +40,8 @@ export class PuppetData {
     this.copyFields.push('strength_upgrade');
     this.copyFields.push('gauntlet_color');
     this.copyFields.push('current_mask');
-    this.copyFields.push('stick_length');
-    this.copyFields.push('action_param');
+    //this.copyFields.push('stick_length');
+    //this.copyFields.push('action_param');
     /* this.copyFields.push("xzvel");
     this.copyFields.push("state_flags_1");
     this.copyFields.push("left_state");
@@ -53,7 +55,10 @@ export class PuppetData {
   }
 
   set stick_length(num: number) {
-    this.ModLoader.emulator.rdramWriteF32(this.pointer + (0x250 + 0x30), num);
+    console.log(this.pointer.toString(16));
+    console.log(ACTOR_T_PADDING.toString(16));
+    console.log(num.toString(16));
+    this.ModLoader.emulator.rdramWriteF32(this.pointer + ACTOR_T_PADDING + (0x250 + 0x30), num);
   }
 
   get pos(): Buffer {
@@ -69,7 +74,7 @@ export class PuppetData {
   }
 
   set anim(anim: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x13C, anim);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + ACTOR_T_PADDING + 0x13C, anim);
   }
 
   get rot(): Buffer {
@@ -85,13 +90,11 @@ export class PuppetData {
   }
 
   get sound(): number {
-    let id = this.core.link.current_sound_id;
-    this.core.link.current_sound_id = 0;
-    return id;
+    return this.core.link.current_sound_id;
   }
 
   set sound(s: number) {
-    this.ModLoader.emulator.rdramWrite16(this.pointer + (0x250 + 0x2E), s);
+    this.ModLoader.emulator.rdramWrite16(this.pointer + ACTOR_T_PADDING + (0x250 + 0x2E), s);
   }
 
   get tunic_color(): Buffer {
@@ -100,7 +103,7 @@ export class PuppetData {
   }
 
   set tunic_color(buf: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x19), buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + ACTOR_T_PADDING + (0x250 + 0x19), buf);
   }
 
   get strength_upgrade(): number {
@@ -118,7 +121,7 @@ export class PuppetData {
   }
 
   set strength_upgrade(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x20), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x20), num);
   }
 
   get gauntlet_color(): Buffer {
@@ -127,7 +130,7 @@ export class PuppetData {
   }
 
   set gauntlet_color(buf: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + (0x250 + 0x21), buf);
+    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + ACTOR_T_PADDING + (0x250 + 0x21), buf);
   }
 
   get gi_obtain(): number {
@@ -135,7 +138,7 @@ export class PuppetData {
   }
 
   set gi_obtain(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x3E), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x3E), num);
   }
 
   get gi_obj(): number {
@@ -143,7 +146,7 @@ export class PuppetData {
   }
 
   set gi_obj(num: number) {
-    this.ModLoader.emulator.rdramWrite32(this.pointer + (0x250 + 0x40), num);
+    this.ModLoader.emulator.rdramWrite32(this.pointer + ACTOR_T_PADDING + (0x250 + 0x40), num);
   }
 
   get tunic_id(): number {
@@ -151,7 +154,7 @@ export class PuppetData {
   }
 
   set tunic_id(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1C), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x1C), num);
   }
 
   get sword_id(): number {
@@ -159,7 +162,7 @@ export class PuppetData {
   }
 
   set sword_id(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1D), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x1D), num);
   }
 
   get shield_id(): number {
@@ -167,7 +170,7 @@ export class PuppetData {
   }
 
   set shield_id(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1E), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x1E), num);
   }
 
   get boot_id(): number {
@@ -175,7 +178,7 @@ export class PuppetData {
   }
 
   set boot_id(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x1F), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x1F), num);
   }
 
   get xzvel(): number {
@@ -191,7 +194,7 @@ export class PuppetData {
   }
 
   set current_mask(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2D), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x2D), num);
   }
 
   get left_state(): number {
@@ -199,7 +202,7 @@ export class PuppetData {
   }
 
   set left_state(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x3C), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x3C), num);
   }
 
   get right_state(): number {
@@ -207,7 +210,7 @@ export class PuppetData {
   }
 
   set right_state(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x3D), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x3D), num);
   }
 
   get state_flags_1(): number {
@@ -215,7 +218,7 @@ export class PuppetData {
   }
 
   set state_flags_1(num: number) {
-    this.ModLoader.emulator.rdramWrite32(this.pointer + (0x250 + 0x38), num);
+    this.ModLoader.emulator.rdramWrite32(this.pointer + ACTOR_T_PADDING + (0x250 + 0x38), num);
   }
 
   get action_param(): number {
@@ -223,7 +226,7 @@ export class PuppetData {
   }
 
   set action_param(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x34), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x34), num);
   }
 
   get left_hand(): number {
@@ -285,11 +288,11 @@ export class PuppetData {
   }
 
   set left_hand(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2A), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x2A), num);
   }
 
   set right_hand(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2B), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x2B), num);
   }
 
   get right_hand(): number {
@@ -429,7 +432,7 @@ export class PuppetData {
   }
 
   set back_item(num: number) {
-    this.ModLoader.emulator.rdramWrite8(this.pointer + (0x250 + 0x2C), num);
+    this.ModLoader.emulator.rdramWrite8(this.pointer + ACTOR_T_PADDING + (0x250 + 0x2C), num);
   }
 
   toJSON() {

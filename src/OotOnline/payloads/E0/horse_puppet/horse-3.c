@@ -33,7 +33,7 @@ const uint32_t eyes[] = {EPONA_EYES_OPEN, EPONA_EYES_HALF, EPONA_EYES_CLOSED};
 
 typedef struct
 {
-    z64_actor_t actor;
+    z64_actor_t zzactor;
     z64_skelanime_weighted_t pony_skelanime;
     z64_collider_cylinder_main_t cylinder;
     uint32_t anim;
