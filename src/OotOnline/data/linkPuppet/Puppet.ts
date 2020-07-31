@@ -7,6 +7,7 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
 import { DEADBEEF_OFFSET } from './PuppetOverlord';
+import fs from 'fs';
 
 export class Puppet {
   player: INetworkPlayer;
@@ -83,20 +84,19 @@ export class Puppet {
 
   processIncomingPuppetData(data: PuppetData, remote: RemoteSoundPlayRequest) {
     if (this.isSpawned && !this.isShoveled) {
-      if (this.ModLoader.emulator.rdramRead32(this.data.pointer + DEADBEEF_OFFSET) === 0xDEADBEEF) {
-        Object.keys(data).forEach((key: string) => {
-          if (key === "sound"){
-            if (!remote.isCanceled){
-              (this.data as any)[key] = (data as any)[key];
-            }
-          }else{
-            (this.data as any)[key] = (data as any)[key];
-          }
-        });
-      } else {
+      if (this.ModLoader.emulator.rdramRead32(this.data.pointer + DEADBEEF_OFFSET) !== 0xDEADBEEF) {
         this.ModLoader.logger.error("Rogue puppet detected. Destroying...");
         bus.emit("OotOnline:RoguePuppet", this);
       }
+      Object.keys(data).forEach((key: string) => {
+        if (key === "sound") {
+          if (!remote.isCanceled) {
+            (this.data as any)[key] = (data as any)[key];
+          }
+        } else {
+          (this.data as any)[key] = (data as any)[key];
+        }
+      });
     }
   }
 

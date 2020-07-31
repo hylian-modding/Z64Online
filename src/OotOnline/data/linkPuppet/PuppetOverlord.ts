@@ -44,7 +44,7 @@ export class PuppetOverlordClient {
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
-  
+
   @Postinit()
   postinit(
   ) {
@@ -61,6 +61,9 @@ export class PuppetOverlordClient {
       this.ModLoader,
       this.parent
     );
+    if (global.ModLoader.isDebugRom) {
+      DEADBEEF_OFFSET += 0x10;
+    }
   }
 
   get current_scene() {
@@ -348,5 +351,5 @@ export class PuppetOverlordClient {
     this.ModLoader.logger.debug("Locking puppet spawner.")
     this.queuedSpawn = true;
   }
-  
+
 }

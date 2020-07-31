@@ -55,9 +55,6 @@ export class PuppetData {
   }
 
   set stick_length(num: number) {
-    console.log(this.pointer.toString(16));
-    console.log(ACTOR_T_PADDING.toString(16));
-    console.log(num.toString(16));
     this.ModLoader.emulator.rdramWriteF32(this.pointer + ACTOR_T_PADDING + (0x250 + 0x30), num);
   }
 

@@ -9,6 +9,7 @@ export class HookInfo {
   offset = 0;
   size = 0;
   isBehavior = false;
+  overrideIncoming!: (actor: IActor, offset: number, data: Buffer)=>void;
 
   constructor(offset: number, size: number, isBehavior = false) {
     this.offset = offset;

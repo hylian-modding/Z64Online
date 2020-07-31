@@ -1,5 +1,5 @@
-#include <z64ovl/oot/u10.h>
-//#include <z64ovl/oot/debug.h>
+//#include <z64ovl/oot/u10.h>
+#include <z64ovl/oot/debug.h>
 #include <z64ovl/z64ovl_helpers.h>
 #include <z64ovl/defines_limbs.h>
 #include <z64ovl/defines_oot.h>
@@ -67,6 +67,8 @@ typedef struct
     /* 0x01C4 */ z64_skelanime_t skelanime;
     /* 0x0204 */ z64_collider_t cylinder;
     /* 0x0250 */ z_link_puppet puppetData;
+    vec3s_t dt_rot[LIMB_TOTAL +1];
+    vec3s_t dt_pos[LIMB_TOTAL +1];
     uint32_t end;
 } entity_t;
 
@@ -112,7 +114,13 @@ static void init(entity_t *en, z64_global_t *global)
         //Collision.height = 32;
     }
 
-    z_skelanime_init(global, 1, &en->skelanime, en->puppetData.playasData.skeleton, 0);
+    z_skelanime_init_ext(
+        global,
+		1,
+        &en->skelanime,
+        en->puppetData.playasData.skeleton,
+        0,
+        en->dt_rot, en->dt_pos, LIMB_TOTAL+1);
 
     z_skelanime_change_anim(&en->skelanime, 0, 0.0, 0.0, 0, 0, 0);
     z_actor_set_scale(&en->actor, 0.01f);
@@ -124,7 +132,7 @@ static void init(entity_t *en, z64_global_t *global)
 
     if (isZobjLoaded(&global->obj_ctxt, EPONA_OBJ))
     {
-        uint32_t* param_pointer = (uint32_t*) 0x80802010;
+        uint32_t *param_pointer = (uint32_t *)0x80600150;
         uint32_t id_addr = *param_pointer;
         uint16_t *seg2 = (uint16_t *)id_addr;
         z_actor_spawn_attached(&global->actor_ctxt, &en->actor, global, *seg2, en->actor.pos.x, en->actor.pos.y, en->actor.pos.z, en->actor.rot.x, en->actor.rot.y, en->actor.rot.z, en->actor.variable);
@@ -151,21 +159,23 @@ static void play(entity_t *en, z64_global_t *global)
 static int Animate(z64_global_t *global, uint8_t limb_number, uint32_t *display_list, vec3f_t *translation, vec3s_t *rotation, entity_t *en)
 {
     /* Initialize Limb and Transformations */
+
     z64_disp_buf_t *opa = &ZQDL(global, poly_opa);
+
     limb_number -= 1;
-    if (limb_number == LIMB_ROOT)
-    {
-        z64_rot_t *frame_translation = (z64_rot_t *)en->current_frame_data;
-        translation->x += frame_translation->x;
-        translation->y += en->puppetData.age == 0 ? frame_translation->y : (frame_translation->y * 0.66f);
-        translation->z += frame_translation->z;
-    }
+	if (limb_number == 0)
+	{
+		z64_rot_t *frame_translation = (z64_rot_t *)en->current_frame_data;
+		translation->x += frame_translation->x;
+		translation->y += en->puppetData.age == 0 ? frame_translation->y : (frame_translation->y * 0.66f);
+		translation->z += frame_translation->z;
+	}
 
-    z64_rot_t *frame_limb_rotation = (z64_rot_t *)AADDR(&en->current_frame_data, 6 + (6 * limb_number));
+	z64_rot_t *frame_limb_rotation = (z64_rot_t *)AADDR(&en->current_frame_data, 6 + (6 * limb_number));
 
-    rotation->x += frame_limb_rotation->x;
-    rotation->y += frame_limb_rotation->y;
-    rotation->z += frame_limb_rotation->z;
+	rotation->x += frame_limb_rotation->x;
+	rotation->y += frame_limb_rotation->y;
+	rotation->z += frame_limb_rotation->z;
 
     /* Right Forearm */
     if (limb_number == LIMB_FOREARM_R)
@@ -617,10 +627,12 @@ static void draw(entity_t *en, z64_global_t *global)
 {
     gDPSetEnvColor(global->common.gfx_ctxt->poly_opa.p++, en->puppetData.tunicColor.r, en->puppetData.tunicColor.g, en->puppetData.tunicColor.b, en->puppetData.tunicColor.a);
 
+
+
     z_skelanime_draw(global, 0x12, en, &en->skelanime, &Animate, &otherCallback);
 
     vec3f_t Scale[3] = {0.2, 0.2, 0.2};
-    actor_shadow_circle(&en->actor.pos, Scale, 0x00FF, global);
+    z_actor_shadow_draw_vec3f(&en->actor.pos, Scale, 0x00FF, global);
 
     if (en->puppetData.soundid > 0)
     {

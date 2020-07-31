@@ -27,6 +27,7 @@ import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { RPCClient } from './data/RPCHandler';
 import { SoundManagerClient } from './data/sounds/SoundManager';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -766,10 +767,10 @@ export class OotOnlineClient {
         }
         if (evt.file === "link_no_pvp.ovl") {
             let result: IOvlPayloadResult = evt.result;
-            this.ModLoader.emulator.rdramWrite32(0x80802000, result.params);
+            this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
         } else if (evt.file === "horse-3.ovl") {
             let result: IOvlPayloadResult = evt.result;
-            this.ModLoader.emulator.rdramWrite32(0x80802010, result.params);
+            this.ModLoader.emulator.rdramWrite32(0x80600150, result.params);
         }
     }
 
@@ -782,7 +783,7 @@ export class OotOnlineClient {
     onRom(evt: any) {
         try{
             let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
-            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader["offsets"]["link"]["dma_rom"]);
+            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
             let file_select_ovl: Buffer = tools.decompressDMAFileFromRom(evt.rom, 0x0032);
             let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
             if (expected_hash !== hash) {

@@ -1,6 +1,6 @@
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { EventHandler, bus } from 'modloader64_api/EventHandler';
-import { OotEvents, IOOTCore, LinkState } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
   ActorHookBase,
   ActorHookProcessor,
@@ -314,7 +314,7 @@ export class ActorHookingManagerClient {
     this.DekuNutsRemote.clear();
     this.actorHookTicks.clear();
   }
-  
+
   setActorBehavior(
     emulator: IMemory,
     actor: IActor,
@@ -352,21 +352,25 @@ export class ActorHookingManagerClient {
       let hooks = this.actorHookTicks.get(packet.actorData.actor.actorUUID)!
         .hookBase.hooks;
       for (let i = 0; i < hooks.length; i++) {
-        if (hooks[i].isBehavior) {
-          let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-          this.setActorBehavior(
-            this.ModLoader.emulator,
-            actor,
-            hooks[i].offset,
-            d
-          );
-        } else {
-          actor.rdramWriteBuffer(
-            hooks[i].offset,
-            packet.actorData.hooks[i].data
-          );
+        if (hooks[i].overrideIncoming !== undefined){
+          hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data);
+        }else{
+          if (hooks[i].isBehavior) {
+            let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
+            this.setActorBehavior(
+              this.ModLoader.emulator,
+              actor,
+              hooks[i].offset,
+              d
+            );
+          } else {
+            actor.rdramWriteBuffer(
+              hooks[i].offset,
+              packet.actorData.hooks[i].data
+            );
+          }
         }
-      }
+        }
     } else if (this.bombsRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.bombsRemote.get(
         packet.actorData.actor.actorUUID
@@ -538,9 +542,8 @@ export class ActorHookingManagerClient {
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
-    try{
-      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
-
+    try {
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
       // Make Din's Fire not move to Link.
       let dins: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x009F);
       let dhash: string = this.ModLoader.utils.hashBuffer(dins);
@@ -554,7 +557,7 @@ export class ActorHookingManagerClient {
         dins.writeUInt32BE(0x0, 0x1AC);
       }
       tools.recompressActorFileIntoRom(evt.rom, 0x009F, dins);
-  
+
       // Change Zelda's actor category from 'NPC' to 'Chest'.
       // This fixes Ganon's Tower Collapse.
       let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
@@ -564,7 +567,7 @@ export class ActorHookingManagerClient {
         buf.writeUInt8(0x0B, 0x7236);
       }
       tools.recompressActorFileIntoRom(evt.rom, 0x0179, buf);
-    }catch(err){
+    } catch (err) {
       this.ModLoader.logger.error(err);
     }
   }
