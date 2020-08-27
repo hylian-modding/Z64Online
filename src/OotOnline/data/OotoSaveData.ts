@@ -280,6 +280,8 @@ export function applyDungeonItemDataToContext(
   context.GANONS_CASTLE.map = incoming.GANONS_CASTLE.map;
 }
 
+export let SEEN_MASK_OF_TRUTH: boolean = false;
+
 // As much as I want to pull some Object.keys bullshit here to make writing this less verbose, I don't want any sneaky bugs.
 // So, we write it all verbose as hell.
 export function mergeInventoryData(
@@ -360,12 +362,16 @@ export function mergeInventoryData(
     save.childTradeItem = InventoryItem.NONE;
   }
 
-  if (incoming.childTradeItem !== InventoryItem.SOLD_OUT) {
+  // Desync the mask slot if we finished the quest.
+  if (incoming.childTradeItem !== InventoryItem.SOLD_OUT && !SEEN_MASK_OF_TRUTH) {
     if (
       incoming.childTradeItem > save.childTradeItem &&
       save.childTradeItem <= InventoryItem.MASK_OF_TRUTH
     ) {
       save.childTradeItem = incoming.childTradeItem;
+      if (save.childTradeItem === InventoryItem.MASK_OF_TRUTH) {
+        SEEN_MASK_OF_TRUTH = true;
+      }
     }
   }
 
@@ -979,7 +985,7 @@ export class OotO_SceneStruct {
   }
 }
 
-export function generateSaveChecksum(ModLoader: IModLoaderAPI): string{
+export function generateSaveChecksum(ModLoader: IModLoaderAPI): string {
   let context: Buffer = ModLoader.emulator.rdramReadBuffer(0x8011A5D0, 0x1352);
   // We need to ignore certain fields.
   // Entrance Index
