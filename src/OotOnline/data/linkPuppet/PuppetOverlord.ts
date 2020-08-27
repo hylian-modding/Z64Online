@@ -154,9 +154,7 @@ export class PuppetOverlordClient {
         this.puppets.get(player.uuid)!.id +
         '.'
       );
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_SceneRequestPacket(this.ModLoader.clientLobby)
-      );
+      this.ModLoader.clientSide.sendPacket(new Ooto_SceneRequestPacket(this.ModLoader.clientLobby));
     }
   }
 

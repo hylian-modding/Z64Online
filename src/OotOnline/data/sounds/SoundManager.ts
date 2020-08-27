@@ -50,9 +50,15 @@ export class SoundManagerClient {
                 size += arr[i].byteLength;
             }
         });
-        this.rawSounds = rawSounds;
+        if (this.rawSounds === undefined) {
+            this.rawSounds = rawSounds;
+        } else {
+            Object.keys(rawSounds).forEach((key: string) => {
+                this.rawSounds[key] = rawSounds[key];
+            });
+        }
         // TODO: ADD SOME SANITY HERE
-        if (size > (this.SIZE_LIMIT * 1024 * 1024)){
+        if (size > (this.SIZE_LIMIT * 1024 * 1024)) {
             this.ModLoader.logger.error("Your sound pak is too large to reasonably network. Please tone it down.");
             return;
         }
@@ -60,8 +66,8 @@ export class SoundManagerClient {
     }
 
     @NetworkHandler('OotO_SoundPackRequestPacket')
-    onRequest(packet: OotO_SoundPackRequestPacket){
-        try{
+    onRequest(packet: OotO_SoundPackRequestPacket) {
+        try {
             let size: number = 0;
             Object.keys(this.rawSounds).forEach((key: string) => {
                 let arr: Array<Buffer> = this.rawSounds[key];
@@ -69,13 +75,8 @@ export class SoundManagerClient {
                     size += arr[i].byteLength;
                 }
             });
-            // TODO: ADD SOME SANITY HERE
-            if (size > (this.SIZE_LIMIT * 1024 * 1024)){
-                this.ModLoader.logger.error("Your sound pak is too large to reasonably network. Please tone it down.");
-                return;
-            }
             this.ModLoader.clientSide.sendPacketToSpecificPlayer(new OotO_SoundPackLoadPacket(this.rawSounds, size, this.ModLoader.clientLobby), packet.player);
-        }catch(err){}
+        } catch (err) { }
     }
 
     @NetworkHandler("OotO_SoundPackLoadPacket")
@@ -125,7 +126,7 @@ export class SoundManagerClient {
     }
 
     @EventHandler(EventsClient.ON_PLAYER_LEAVE)
-    onPlayerLeave(player: INetworkPlayer){
+    onPlayerLeave(player: INetworkPlayer) {
         if (this.PlayerSounds.has(player.uuid)) {
             this.PlayerSounds.delete(player.uuid);
         }

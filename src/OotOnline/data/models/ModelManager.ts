@@ -69,17 +69,11 @@ export class ModelManagerClient {
   customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
-  customIconsFile = '';
   cacheDir: string = "./cache";
   isThreaded: boolean = false;
 
   constructor() {
     this.allocationManager = new ModelAllocationManager();
-  }
-
-  @EventHandler(OotOnlineEvents.CUSTOM_ICONS_APPLIED)
-  CUSTOM_ICONS_APPLIED(file: string) {
-    this.customIconsFile = file;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
@@ -105,6 +99,16 @@ export class ModelManagerClient {
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ICON_CHILD)
   onCustomModel5(file: string) {
     this.customModelFileChildIcon = file;
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_OVERRIDE_ADULT)
+  onOverrideAdult(evt: any){
+    this.customModelFileAdult = evt.p;
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_OVERRIDE_CHILD)
+  onOverrideChild(evt: any){
+    this.customModelFileChild = evt.p;
   }
 
   loadAdultModel(evt: any, file: string) {
@@ -185,6 +189,12 @@ export class ModelManagerClient {
     this.ModLoader.logger.info('Starting custom model setup...');
     let anim = 7;
 
+    if (evt.rom.byteLength < (64 * 1024 * 1024)){
+      let resize = Buffer.alloc(64 * 1024 * 1024);
+      evt.rom.copy(resize);
+      evt.rom = resize;
+    }
+
     if (this.customModelFileAdult !== '') {
       this.loadAdultModel(evt, this.customModelFileAdult);
       let def = zlib.deflateSync(this.clientStorage.adultModel);
@@ -252,16 +262,6 @@ export class ModelManagerClient {
           this.ModLoader.utils.hashBuffer(def)
         )
       );
-    }
-
-    if (this.customIconsFile !== '') {
-      let icons: Buffer = tools.decompressDMAFileFromRom(evt.rom, 8);
-      let _icons: Buffer = fs.readFileSync(this.customIconsFile);
-      if (icons.byteLength === _icons.byteLength) {
-        this.ModLoader.utils.clearBuffer(icons);
-        _icons.copy(icons);
-      }
-      tools.recompressDMAFileIntoRom(evt.rom, 8, icons);
     }
 
     this.ModLoader.logger.info('Done.');

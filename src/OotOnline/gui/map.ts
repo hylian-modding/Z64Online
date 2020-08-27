@@ -1,18 +1,15 @@
 import { MessageLayer } from 'modloader64_api/MessageLayer';
-import {
-  TunnelMessageHandler,
-  GUITunnelPacket,
-} from 'modloader64_api/GUITunnel';
+import { TunnelMessageHandler, GUITunnelPacket} from 'modloader64_api/GUITunnel';
 
 const electron = require('electron');
 const ipc = electron.ipcRenderer;
 
 const hooks = {
-  onSceneChange: (packet: GUITunnelPacket) => {},
-  onSceneChange_Network: (packet: GUITunnelPacket) => {},
-  onPlayerLeft: (packet: GUITunnelPacket) => {},
-  onData: (packet: GUITunnelPacket) => {},
-  onAgeChange: (packet: GUITunnelPacket) => {},
+  onSceneChange: (packet: GUITunnelPacket) => { },
+  onSceneChange_Network: (packet: GUITunnelPacket) => { },
+  onPlayerLeft: (packet: GUITunnelPacket) => { },
+  onData: (packet: GUITunnelPacket) => { },
+  onAgeChange: (packet: GUITunnelPacket) => { },
 };
 
 class MapMessageHandlers {

@@ -99,16 +99,20 @@ export class ActorHookingManagerClient {
 
   @Postinit()
   onPostInit() {
-    let dir = path.join(__dirname, 'actors');
-    fs.readdirSync(dir).forEach((file: string) => {
-      let parse = path.parse(file);
-      if (parse.ext === '.js') {
-        bus.emit(
-          OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
-          path.join(dir, file)
-        );
-      }
-    });
+    //let dirs = ["actors", "enemies"];
+    let dirs = ["actors"];
+    for (let i = 0; i < dirs.length; i++) {
+      let dir = path.join(__dirname, dirs[i]);
+      fs.readdirSync(dir).forEach((file: string) => {
+        let parse = path.parse(file);
+        if (parse.ext === '.js') {
+          bus.emit(
+            OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
+            path.join(dir, file)
+          );
+        }
+      });
+    }
     let bombs = new ActorHookBase();
     bombs.actorID = BOMB_ID;
     bombs.hooks.push(new HookInfo(0x1e8, 0x4));
@@ -341,20 +345,15 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!.actor;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
-
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
 
       let hooks = this.actorHookTicks.get(packet.actorData.actor.actorUUID)!
         .hookBase.hooks;
       for (let i = 0; i < hooks.length; i++) {
-        if (hooks[i].overrideIncoming !== undefined){
+        if (hooks[i].overrideIncoming !== undefined) {
           hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data);
-        }else{
+        } else {
           if (hooks[i].isBehavior) {
             let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
             this.setActorBehavior(
@@ -370,19 +369,15 @@ export class ActorHookingManagerClient {
             );
           }
         }
-        }
+      }
     } else if (this.bombsRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.bombsRemote.get(
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
 
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
 
       for (let i = 0; i < this.bombProcessor.hookBase.hooks.length; i++) {
         actor.rdramWriteBuffer(
@@ -395,13 +390,8 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
-
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
 
       for (let i = 0; i < this.chuProcessor.hookBase.hooks.length; i++) {
         actor.rdramWriteBuffer(
@@ -414,21 +404,15 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
     } else if (this.DekuNutsRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.DekuNutsRemote.get(
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
-
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
     }
   }
 
@@ -514,12 +498,9 @@ export class ActorHookingManagerClient {
             dref
           );
           actor.actorUUID = packet.actorData.actor.actorUUID;
-          actor.position.x = packet.actorData.actor.position.x;
-          actor.position.y = packet.actorData.actor.position.y;
-          actor.position.z = packet.actorData.actor.position.z;
-          actor.rotation.x = packet.actorData.actor.rotation.x;
-          actor.rotation.y = packet.actorData.actor.rotation.y;
-          actor.rotation.z = packet.actorData.actor.rotation.z;
+          actor.position.setRawPos(packet.actorData.rawPos);
+          actor.rotation.setRawRot(packet.actorData.rawRot);
+
           if (packet.actorData.actor.actorID === BOMB_ID) {
             actor.rdramWrite32(0x6c, 0x0);
             actor.rdramWrite32(0x70, 0x0);
