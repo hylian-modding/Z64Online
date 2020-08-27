@@ -696,6 +696,10 @@ export class OotOnlineClient {
         );
     }
 
+    private isBottle(item: InventoryItem){
+        return (item === InventoryItem.EMPTY_BOTTLE || item === InventoryItem.BOTTLED_BIG_POE || item === InventoryItem.BOTTLED_BUGS || item === InventoryItem.BOTTLED_FAIRY || item === InventoryItem.BOTTLED_FISH || item === InventoryItem.BOTTLED_POE || item === InventoryItem.LON_LON_MILK || item === InventoryItem.LON_LON_MILK_HALF)
+    }
+
     @EventHandler(OotOnlineEvents.ON_INVENTORY_UPDATE)
     onInventoryUpdate(inventory: IInventory) {
         if (
@@ -713,8 +717,7 @@ export class OotOnlineClient {
             0x24
         );
         if (
-            buf[0x4] !== InventoryItem.NONE &&
-            raw_inventory[buf[0x4]] !== InventoryItem.NONE
+            buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))
         ) {
             buf[0x1] = raw_inventory[buf[0x4]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
@@ -724,10 +727,7 @@ export class OotOnlineClient {
                 (success: boolean, result: number) => { }
             );
         }
-        if (
-            buf[0x5] !== InventoryItem.NONE &&
-            raw_inventory[buf[0x5]] !== InventoryItem.NONE
-        ) {
+        if (buf[0x5] !== InventoryItem.NONE && raw_inventory[buf[0x5]] !== InventoryItem.NONE && (raw_inventory[buf[0x5]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x5]]))) {
             buf[0x2] = raw_inventory[buf[0x5]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -736,10 +736,7 @@ export class OotOnlineClient {
                 (success: boolean, result: number) => { }
             );
         }
-        if (
-            buf[0x6] !== InventoryItem.NONE &&
-            raw_inventory[buf[0x6]] !== InventoryItem.NONE
-        ) {
+        if (buf[0x6] !== InventoryItem.NONE && raw_inventory[buf[0x6]] !== InventoryItem.NONE && (raw_inventory[buf[0x6]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x6]]))) {
             buf[0x3] = raw_inventory[buf[0x6]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -845,11 +842,7 @@ export class OotOnlineClient {
                         this.keys.update();
                     }
                     let state = this.core.link.state;
-                    if (
-                        state === LinkState.BUSY ||
-                        state === LinkState.GETTING_ITEM ||
-                        state === LinkState.TALKING
-                    ) {
+                    if (state === LinkState.BUSY || state === LinkState.GETTING_ITEM || state === LinkState.TALKING) {
                         this.clientStorage.needs_update = true;
                     } else if (
                         state === LinkState.STANDING &&
