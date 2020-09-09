@@ -19,7 +19,7 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { OotOnlineEvents, ICustomEquipment } from '../../OotoAPI/OotoAPI';
+import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -35,25 +35,6 @@ import { OOTChildManifest } from 'Z64Lib/API/OOT/OOTChildManifest';
 import { zzstatic } from 'Z64Lib/API/zzstatic';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { ModelThread } from 'Z64Lib/API/ModelThread';
-
-export class FilePatch {
-  offset: number;
-  value: number;
-
-  constructor(offset: number, value: number) {
-    this.offset = offset;
-    this.value = value;
-  }
-}
-
-export class RomPatch {
-  index: number;
-  data: FilePatch[] = new Array<FilePatch>();
-
-  constructor(index: number) {
-    this.index = index;
-  }
-}
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -171,9 +152,9 @@ export class ModelManagerClient {
     }
 
     let a = new ModelPlayer("Adult");
-    a.model.adult = new ModelObject(trimBuffer(new zzstatic().doRepoint(puppet_adult, 0)));
+    a.model.adult = new ModelObject(trimBuffer(new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(puppet_adult, 0)));
     let c = new ModelPlayer("Child");
-    c.model.child = new ModelObject(trimBuffer(new zzstatic().doRepoint(puppet_child, 1)));
+    c.model.child = new ModelObject(trimBuffer(new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(puppet_child, 1)));
     this.allocationManager.models[0] = a;
     this.allocationManager.models[1] = c;
   }
@@ -265,6 +246,7 @@ export class ModelManagerClient {
     }
 
     this.ModLoader.logger.info('Done.');
+    this.ModLoader.clientSide.sendPacket(new OotO_GiveModelPacket(this.ModLoader.clientLobby, this.ModLoader.me));
   }
 
   @NetworkHandler('Ooto_AllocateModelPacket')
@@ -281,7 +263,7 @@ export class ModelManagerClient {
           (this.clientStorage.playerModelCache[packet.player.uuid] as ModelPlayer).model.child.zobj,
           this.ModLoader
         );
-        thread.startThread();
+        thread.startThread(Z64LibSupportedGames.OCARINA_OF_TIME);
       }
       this.ModLoader.logger.info(
         'client: Saving custom child model for player ' +
@@ -295,7 +277,7 @@ export class ModelManagerClient {
           (this.clientStorage.playerModelCache[packet.player.uuid] as ModelPlayer).model.adult.zobj,
           this.ModLoader
         );
-        thread.startThread();
+        thread.startThread(Z64LibSupportedGames.OCARINA_OF_TIME);
       }
       this.ModLoader.logger.info(
         'client: Saving custom adult model for player ' +
@@ -308,7 +290,7 @@ export class ModelManagerClient {
         (this.clientStorage.playerModelCache[packet.player.uuid] as ModelPlayer).model.equipment.zobj,
         this.ModLoader
       );
-      thread.startThread();
+      thread.startThread(Z64LibSupportedGames.OCARINA_OF_TIME);
       this.ModLoader.logger.info(
         'client: Saving custom equipment model(s) for player ' +
         packet.player.nickname +
@@ -496,7 +478,7 @@ export class ModelManagerClient {
         this.ModLoader.logger.info("Writing adult model into model block " + index + ".");
         this.ModLoader.emulator.rdramWriteBuffer(
           addr,
-          new zzstatic().doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), index)
+          new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), index)
         );
         zobj_size = model.model.adult.zobj.byteLength;
         passed = true;
@@ -507,7 +489,7 @@ export class ModelManagerClient {
         this.ModLoader.logger.info("Writing child model into model block " + index + ".");
         this.ModLoader.emulator.rdramWriteBuffer(
           addr,
-          new zzstatic().doRepoint(this.ModLoader.utils.cloneBuffer(model.model.child.zobj), index)
+          new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.child.zobj), index)
         );
         zobj_size = model.model.child.zobj.byteLength;
         passed = true;

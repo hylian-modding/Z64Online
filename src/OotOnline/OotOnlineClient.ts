@@ -28,6 +28,7 @@ import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { RPCClient } from './data/RPCHandler';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -56,6 +57,8 @@ export class OotOnlineClient {
     rcp!: RPCClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
+    @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
+    gui!: ImGuiHandler;
 
     @EventHandler(OotOnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -76,6 +79,7 @@ export class OotOnlineClient {
     @Init()
     init(): void {
         this.modelManager.clientStorage = this.clientStorage;
+        this.gui.modelManager = this.modelManager;
     }
 
     @Postinit()
@@ -696,7 +700,7 @@ export class OotOnlineClient {
         );
     }
 
-    private isBottle(item: InventoryItem){
+    private isBottle(item: InventoryItem) {
         return (item === InventoryItem.EMPTY_BOTTLE || item === InventoryItem.BOTTLED_BIG_POE || item === InventoryItem.BOTTLED_BUGS || item === InventoryItem.BOTTLED_FAIRY || item === InventoryItem.BOTTLED_FISH || item === InventoryItem.BOTTLED_POE || item === InventoryItem.LON_LON_MILK || item === InventoryItem.LON_LON_MILK_HALF)
     }
 
@@ -716,9 +720,7 @@ export class OotOnlineClient {
             addr2,
             0x24
         );
-        if (
-            buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))
-        ) {
+        if (buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))) {
             buf[0x1] = raw_inventory[buf[0x4]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -778,7 +780,7 @@ export class OotOnlineClient {
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
-        try{
+        try {
             let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
             let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
             let file_select_ovl: Buffer = tools.decompressDMAFileFromRom(evt.rom, 0x0032);
@@ -787,7 +789,7 @@ export class OotOnlineClient {
                 this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
                 this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
             }
-        }catch(err){}
+        } catch (err) { }
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)

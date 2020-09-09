@@ -345,3 +345,7 @@ export class OotO_isRandoPacket extends Packet {
     super("OotO_isRandoPacket", "OotOnline", lobby, false);
   }
 }
+
+export class OotO_ItemGetMessagePacket extends Packet{
+  
+}
