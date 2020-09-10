@@ -30,6 +30,7 @@ export class ImGuiHandler {
     p: Array<number> = new Array<number>(16);
     font!: Font;
     nameplates: boolean = true;
+    puppetsDespawn: Array<number> = [];
 
     constructor() {
     }
@@ -58,6 +59,11 @@ export class ImGuiHandler {
         this.scene = scene;
     }
 
+    @EventHandler(OotEvents.ON_LOADING_ZONE)
+    onSceneChanging(){
+        this.puppets.length = 0;
+    }
+
     @onTick()
     onTick(){
         this.eye = this.ModLoader.math.rdramReadV3(0x801C8580)
@@ -65,6 +71,17 @@ export class ImGuiHandler {
         this.up = this.ModLoader.math.rdramReadV3(0x801C86E8);
         this.v = this.getmtx(0x801DA200);
         this.p = this.getmtx(0x801DA240);
+        for (let i = 0; i < this.puppets.length; i++) {
+            if (this.puppets[i].scene !== this.scene){
+                this.puppetsDespawn.push(i);
+            }
+        }
+        if (this.puppetsDespawn.length > 0){
+            for (let i = 0; i < this.puppetsDespawn.length; i++){
+                this.puppets.slice(this.puppetsDespawn[i], 1);
+            }
+            this.puppetsDespawn.length = 0;
+        }
     }
 
     getmtx(addr: number) {
