@@ -7,7 +7,7 @@
             position: fixed;
             overflow-y: scroll;
             overflow: hidden;
-            height: 795px;
+            height: 805px;
             width: 698px;
             margin: 0;
             padding: 0;
@@ -18,20 +18,20 @@
             image-rendering: pixelated;
             -ms-interpolation-mode: nearest-neighbor;
         }
-
+        
         .doesNotHave {
             -webkit-filter: grayscale(1);
             /* Google Chrome, Safari 6+ & Opera 15+ */
             filter: grayscale(1);
             /* Microsoft Edge and Firefox 35+ */
         }
-
+        
         .doesHave {
             -webkit-transform: rotateY(360deg);
             transform: rotateY(360deg);
             transition-duration: 1.5s;
         }
-
+        
         .doesHave1 {
             -webkit-transform: rotateY(0deg);
             transform: rotateY(0deg);
@@ -141,7 +141,7 @@
                 0x005F: { x: 359, y: 38 }, // Hyrule Castle
                 0x0060: { x: 435, y: 60 }, // Death Mountain Trail
                 0x0061: { x: 448, y: 6 }, // Death Mountain Crater
-                0x0062: { x: 416, y: 26 }, // Goron 
+                0x0062: { x: 416, y: 26 }, // Goron
                 0x0063: { x: 305, y: 150 }, // Lon Lon Ranch
                 0x0064: { x: 359, y: 38 }, // Ganon's Castle Exterior
             };
@@ -186,7 +186,7 @@
                 curScene = packet.data.scene;
             }
             hooks.onSceneChange_Network = function (packet) {
-                console.log(packet);
+                this.ModLoader.logger.info(packet);
                 let player = packet.data.player.uuid;
                 let found = false;
                 for (let i = 0; i < otherPlayers.length; i++) {
@@ -533,7 +533,7 @@
                     }
                 }
                 catch (err) {
-                    console.log(err + " [ id: " + id + ", level: " + level + "]");
+                    this.ModLoader.logger.error(err + " [ id: " + id + ", level: " + level + "]");
                 }
             }
             function increaseCount(id, level) {
@@ -992,7 +992,6 @@
     <img class="doesNotHave" id="zoraSapphire" src="./sprites/tile162.png" width="50" height="50">
 
     <script>
-
     </script>
 </body>
 

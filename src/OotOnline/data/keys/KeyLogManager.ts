@@ -70,7 +70,7 @@ export class KeyLogManagerClient {
                 count = 0;
             }
             if (count !== entry.keyCount) {
-                console.log("sending packet");
+                this.ModLoader.logger.info("sending packet");
                 this.ModLoader.clientSide.sendPacket(new Ooto_KeyDeltaClientPacket(this.ModLoader.clientLobby, entry, this.core));
             }
         });

@@ -85,7 +85,7 @@ export class SoundManagerClient {
         Object.keys(packet.sounds).forEach((key: string) => {
             this.PlayerSounds.get(packet.player.uuid)!.set(parseInt(key), []);
             let arr: Array<Buffer> = packet.sounds[key];
-            console.log("Loading " + arr.length + " sounds");
+            this.ModLoader.logger.info("Loading " + arr.length + " sounds");
             for (let i = 0; i < arr.length; i++) {
                 let raw: Buffer = zlib.inflateSync(arr[i]);
                 let s = this.ModLoader.sound.initSound(raw);

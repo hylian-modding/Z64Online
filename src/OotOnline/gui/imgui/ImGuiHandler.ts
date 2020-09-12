@@ -34,7 +34,7 @@ export class ImGuiHandler {
 
     constructor() {
     }
-    
+
     @EventHandler(OotOnlineEvents.PLAYER_PUPPET_SPAWNED)
     onPuppetSpawn(puppet: Puppet){
         this.puppets.push(puppet);
@@ -126,25 +126,25 @@ export class ImGuiHandler {
                 this.ModLoader.logger.error(err);
             }
         }
-        
+
         if (this.ModLoader.ImGui.beginMainMenuBar()){
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("OotO")){
                     if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.nameplates, true)) {
-                        this.nameplates = !this.nameplates    
+                        this.nameplates = !this.nameplates
                     }
-                    
+
                     this.ModLoader.ImGui.endMenu();
                 }
                 this.ModLoader.ImGui.endMenu();
             }
             this.ModLoader.ImGui.endMainMenuBar();
         }
-        
+
         if (!this.nameplates){
             return;
         }
-        
+
         for (let i = 0; i < this.puppets.length; i++) {
             if (this.puppets[i].scene === this.scene) {
                 try {
@@ -152,32 +152,32 @@ export class ImGuiHandler {
                         let lp = this.ModLoader.math.rdramReadV3(this.puppets[i].data.pointer + 0x38);
                         lp.y += 53;
                         let text = this.puppets[i].player.nickname;
-        
+
                         let fovy = this.ModLoader.emulator.rdramReadF32(0x801C8570) // view.fovy
                         let near = this.ModLoader.emulator.rdramReadF32(0x801C8574) // view.near
                         let far = this.ModLoader.emulator.rdramReadF32(0x801C8578) // view.far
-                        let scale = this.ModLoader.emulator.rdramReadF32(0x801C857C) // view.scale   
-        
+                        let scale = this.ModLoader.emulator.rdramReadF32(0x801C857C) // view.scale
+
                         let winX = 0;
                         let winY = 0;
-        
+
                         if (this.font !== undefined) {
                             let dist = this.cp.minus(lp).magnitude()
                             dist = Math.pow(dist, 0.5)
                             scale = this.ModLoader.ImGui.getMainViewport().size.x / this.ModLoader.ImGui.getMainViewport().size.y
-        
+
                             this.v = glmatrix_matrix4.lookAt(this.v, this.eye, this.cp, this.up)
                             this.p = glmatrix_matrix4.perspective(this.p, fovy * (Math.PI / 180.0), scale, near, far)
-        
+
                             let pv: Array<number> = new Array<number>(16);
                             pv = glmatrix_matrix4.multiply(pv, this.p, this.v)
-        
+
                             let v4 = xywh(lp.x, lp.y, lp.z, 1)
                             v4 = glmatrix_vec4.transformMat4(v4, v4, pv)
-        
+
                             let vxyz = new Vector3(v4.x, v4.y, v4.z)
                             vxyz = vxyz.divideN(v4.w)
-        
+
                             vxyz.x /= vxyz.z
                             vxyz.y /= vxyz.z
 
@@ -186,7 +186,7 @@ export class ImGuiHandler {
                                 &&  0 < v4.z
                                 &&  v4.z < v4.w)
                             {
-                                
+
                                 winX = Math.round(((vxyz.x + 1.0) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.x)
                                 winY = Math.round(((1.0 - vxyz.y) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.y)
 
@@ -234,7 +234,7 @@ export class ImGuiHandler {
                                     x_scale = this.ModLoader.ImGui.getMainViewport().size.x / 320
                                     y_scale = this.ModLoader.ImGui.getMainViewport().size.y / 135
                                 }
-                                
+
 
                                 let sxy = (2.5 / dist)
                                 let tsxy = this.ModLoader.Gfx.calcTextSize(this.font, text, xy(sxy * x_scale, sxy * y_scale))
@@ -246,7 +246,7 @@ export class ImGuiHandler {
                             }
                         }
                     }
-                } catch (err) { console.log(err); }
+                } catch (err) { this.ModLoader.logger.error(err); }
             }
         }
     }

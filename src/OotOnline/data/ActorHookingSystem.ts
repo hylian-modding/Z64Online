@@ -169,7 +169,7 @@ export class ActorHookingManagerClient {
           return;
         }
       }
-      console.log(
+      this.ModLoader.logger.info(
         'Setting up hook for actor ' +
         this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
         ': ' +
@@ -251,7 +251,7 @@ export class ActorHookingManagerClient {
       return;
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
-      console.log('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
+      this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
@@ -493,7 +493,7 @@ export class ActorHookingManagerClient {
       (success: boolean, result: number) => {
         if (success) {
           let dref: number = result & 0x00ffffff;
-          console.log(dref.toString(16));
+          this.ModLoader.logger.info(dref.toString(16));
           let actor: IActor = this.core.actorManager.createIActorFromPointer(
             dref
           );
