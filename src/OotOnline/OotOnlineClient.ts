@@ -85,7 +85,7 @@ export class OotOnlineClient {
     @Postinit()
     postinit() {
         if (this.config.mapTracker) {
-            this.ModLoader.gui.openWindow(698, 795, path.resolve(path.join(__dirname, 'gui', 'map.html')));
+            this.ModLoader.gui.openWindow(698, 805, path.resolve(path.join(__dirname, 'gui', 'map.html')));
         }
         this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/data/scene_numbers.json').toString());
         this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/data/en_US.json').toString());
