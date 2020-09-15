@@ -5,7 +5,7 @@ import { IOOTCore, OotEvents, InventoryItem, Sword, Shield, Boots, Tunic, Magic,
 import { OotOnlineEvents, OotOnline_PlayerScene } from './OotoAPI/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct } from './data/OotoSaveData';
-import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket } from './data/OotOPackets';
+import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket, OotO_ItemGetMessagePacket } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
 import fs from 'fs';
@@ -14,7 +14,7 @@ import { DiscordStatus } from 'modloader64_api/Discord';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle';
+import { Init, Preinit, Postinit, onTick, onCreateResources } from 'modloader64_api/PluginLifecycle';
 import { parseFlagChanges } from './parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
@@ -29,6 +29,8 @@ import { RPCClient } from './data/RPCHandler';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
+import { addToKillFeedQueue } from 'modloader64_api/Announcements';
+import { Texture } from 'modloader64_api/Sylvain/Gfx';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -59,6 +61,23 @@ export class OotOnlineClient {
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
     gui!: ImGuiHandler;
+    resourcesLoaded: boolean = false;
+    itemIcons: Map<string, Texture> = new Map<string, Texture>();
+
+    @onCreateResources()
+    onResource() {
+        if (!this.resourcesLoaded) {
+            let base: string = path.resolve(__dirname, "gui", "sprites");
+            fs.readdirSync(base).forEach((file: string) => {
+                let p = path.resolve(base, file);
+                let t: Texture = this.ModLoader.Gfx.createTexture();
+                t.loadFromFile(p);
+                this.itemIcons.set(file, t);
+                this.ModLoader.logger.debug("Loaded " + file + ".");
+            });
+            this.resourcesLoaded = true;
+        }
+    }
 
     @EventHandler(OotOnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -104,7 +123,7 @@ export class OotOnlineClient {
         let quest = createQuestSaveFromContext(this.core.save);
         let di = createDungeonItemDataFromContext(this.core.save.dungeonItemManager);
         mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-        mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
+        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
         mergeQuestSaveData(this.clientStorage.questStorage, quest);
         mergeDungeonItemData(this.clientStorage.dungeonItemStorage, di);
         this.ModLoader.clientSide.sendPacket(new Ooto_SubscreenSyncPacket(this.clientStorage.inventoryStorage, this.clientStorage.equipmentStorage, this.clientStorage.questStorage, this.clientStorage.dungeonItemStorage, this.ModLoader.clientLobby));
@@ -413,12 +432,6 @@ export class OotOnlineClient {
         this.ModLoader.logger.info('Retrieving savegame from server...');
         // Clear inventory.
         this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x18, 0xFF));
-        // Clear c-button and b.
-        //this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0068, Buffer.alloc(0x4, 0xFF));
-        this.core.link.sword = Sword.NONE;
-        this.core.link.shield = Shield.NONE;
-        this.core.link.boots = Boots.KOKIRI;
-        this.core.link.tunic = Tunic.KOKIRI;
         applyInventoryToContext(packet.subscreen.inventory, this.core.save, true);
         applyEquipmentToContext(packet.subscreen.equipment, this.core.save);
         applyQuestSaveToContext(packet.subscreen.quest, this.core.save);
@@ -465,12 +478,12 @@ export class OotOnlineClient {
         ) as IDungeonItemSave;
 
         mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-        mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
+        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
         mergeQuestSaveData(this.clientStorage.questStorage, quest);
         mergeDungeonItemData(this.clientStorage.dungeonItemStorage, dungeonItems);
 
         mergeInventoryData(this.clientStorage.inventoryStorage, packet.inventory);
-        mergeEquipmentData(this.clientStorage.equipmentStorage, packet.equipment);
+        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, packet.equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
         mergeQuestSaveData(this.clientStorage.questStorage, packet.quest);
         mergeDungeonItemData(this.clientStorage.dungeonItemStorage, packet.dungeonItems);
 
@@ -634,6 +647,15 @@ export class OotOnlineClient {
     onBankUpdate(packet: Ooto_BankSyncPacket) {
         this.clientStorage.bank = packet.savings;
         this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
+    }
+
+    @NetworkHandler("OotO_ItemGetMessagePacket")
+    onMessage(packet: OotO_ItemGetMessagePacket) {
+        if (packet.icon !== undefined) {
+            addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
+        } else {
+            addToKillFeedQueue(packet.text);
+        }
     }
 
     healPlayer() {

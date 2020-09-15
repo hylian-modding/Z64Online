@@ -193,7 +193,7 @@ export class OotOnlineServer {
             return;
         }
         mergeInventoryData(storage.inventoryStorage, packet.inventory);
-        mergeEquipmentData(storage.equipmentStorage, packet.equipment);
+        mergeEquipmentData(this.ModLoader, storage.equipmentStorage, packet.equipment, ProxySide.SERVER, packet.lobby);
         mergeQuestSaveData(storage.questStorage, packet.quest);
         mergeDungeonItemData(storage.dungeonItemStorage, packet.dungeonItems);
         this.ModLoader.serverSide.sendPacket(

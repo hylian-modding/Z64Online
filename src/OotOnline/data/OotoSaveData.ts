@@ -21,6 +21,8 @@ import { OotOnlineEvents } from '../OotoAPI/OotoAPI';
 import { IDungeonItemContainer } from 'modloader64_api/OOT/IDungeonItemContainer';
 import { IDungeonItemManager } from 'modloader64_api/OOT/IDungeonItemManager';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
+import { OotO_ItemGetMessagePacket } from './OotOPackets';
 
 export function isAdultTradeItem(item: InventoryItem) {
   return (
@@ -625,50 +627,92 @@ export class InventorySave implements IInventoryFields {
 //-----------------------------------------------------
 
 export function mergeEquipmentData(
+  ModLoader: IModLoaderAPI,
   save: IEquipmentSave,
-  incoming: IEquipmentSave
+  incoming: IEquipmentSave,
+  side: ProxySide,
+  lobby: string
 ) {
   // Swords
   if (incoming.kokiriSword) {
+    if (save.kokiriSword !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Sword.", lobby, "tile060.png"));
+    }
     save.kokiriSword = true;
   }
   if (incoming.masterSword) {
+    if (save.masterSword !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Master Sword.", lobby, "tile061.png"));
+    }
     save.masterSword = true;
   }
   if (incoming.giantKnife) {
+    if (save.giantKnife !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Giant's Knife", lobby, "tile062.png"));
+    }
     save.giantKnife = true;
   }
   if (incoming.biggoronSword) {
+    if (save.biggoronSword !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Biggoron's Sword", lobby, "tile062.png"));
+    }
     save.biggoronSword = true;
   }
   // Shields
   if (incoming.dekuShield) {
+    if (save.dekuShield !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Deku Shield", lobby, "tile020.png"));
+    }
     save.dekuShield = true;
   }
   if (incoming.hylianShield) {
+    if (save.hylianShield !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Hylian Shield", lobby, "tile021.png"));
+    }
     save.hylianShield = true;
   }
   if (incoming.mirrorShield) {
+    if (save.mirrorShield !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Mirror Shield", lobby, "tile022.png"));
+    }
     save.mirrorShield = true;
   }
   // Tunics
   if (incoming.kokiriTunic) {
+/*     if (save.kokiriTunic !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Tunic", lobby));
+    } */
     save.kokiriTunic = true;
   }
   if (incoming.goronTunic) {
+    if (save.goronTunic !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Goron Tunic", lobby, "tile001.png"));
+    }
     save.goronTunic = true;
   }
   if (incoming.zoraTunic) {
+    if (save.zoraTunic !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Zora Tunic", lobby, "tile002.png"));
+    }
     save.zoraTunic = true;
   }
   // Boots
   if (incoming.kokiriBoots) {
+/*     if (save.kokiriBoots !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Boots", lobby));
+    } */
     save.kokiriBoots = true;
   }
   if (incoming.ironBoots) {
+    if (save.ironBoots !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Iron Boots", lobby, "tile041.png"));
+    }
     save.ironBoots = true;
   }
   if (incoming.hoverBoots) {
+    if (save.hoverBoots !== true && side === ProxySide.SERVER){
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Hover Boots", lobby, "tile042.png"));
+    }
     save.hoverBoots = true;
   }
 }

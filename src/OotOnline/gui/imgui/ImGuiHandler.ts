@@ -12,6 +12,7 @@ import {glmatrix_matrix4, glmatrix_vec4} from 'modloader64_api/math/glmatrix';
 import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
+import { string_ref } from "modloader64_api/Sylvain/ImGui";
 
 export class ImGuiHandler {
 
@@ -31,6 +32,7 @@ export class ImGuiHandler {
     font!: Font;
     nameplates: boolean = true;
     puppetsDespawn: Array<number> = [];
+    teleportDest: string_ref = [""];
 
     constructor() {
     }
@@ -133,7 +135,13 @@ export class ImGuiHandler {
                     if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.nameplates, true)) {
                         this.nameplates = !this.nameplates
                     }
-
+                    if (this.ModLoader.ImGui.beginMenu("Teleport")){
+                        this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
+                        if (this.ModLoader.ImGui.button("Warp")){
+                            this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), 0, ()=>{});
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
                     this.ModLoader.ImGui.endMenu();
                 }
                 this.ModLoader.ImGui.endMenu();

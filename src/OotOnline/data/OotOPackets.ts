@@ -257,12 +257,12 @@ export class Ooto_AllocateModelPacket extends Packet {
   }
 }
 
-export class OotO_ModifyModelPacket extends Packet{
+export class OotO_ModifyModelPacket extends Packet {
   mod: Buffer;
   offset: number;
   age: Age;
 
-  constructor(lobby: string, mod: Buffer, offset: number, age: Age){
+  constructor(lobby: string, mod: Buffer, offset: number, age: Age) {
     super('OotO_ModifyModelPacket', 'OotOnline', lobby, false);
     this.mod = mod;
     this.offset = offset;
@@ -346,6 +346,12 @@ export class OotO_isRandoPacket extends Packet {
   }
 }
 
-export class OotO_ItemGetMessagePacket extends Packet{
-  
+export class OotO_ItemGetMessagePacket extends Packet {
+  text: string;
+  icon?: string;
+  constructor(text: string, lobby: string, icon?: string) {
+    super('OotO_ItemGetMessagePacket', 'OotOnline', lobby, true);
+    this.text = text;
+    this.icon = icon;
+  }
 }

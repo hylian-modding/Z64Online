@@ -301,7 +301,6 @@ export class ModelManagerClient {
 
   @NetworkHandler('OotO_ModifyModelPacket')
   onModelMod(packet: OotO_ModifyModelPacket) {
-    this.ModLoader.logger.info(packet.mod.byteLength);
     if (!this.allocationManager.isPlayerAllocated(packet.player)) {
       return;
     }
