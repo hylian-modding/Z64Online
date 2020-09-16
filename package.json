@@ -4,7 +4,8 @@
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ML64Postbuild": "tsc ./postbuild.ts --esModuleInterop && node ./postbuild.js"
   },
   "repository": {
     "type": "git",

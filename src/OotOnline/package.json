@@ -15,8 +15,8 @@
     "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
   },
   "modloader64_aliases": {
-    "@Z64Lib/*": [
-      "libs\\Z64Lib/*"
+    "Z64Lib": [
+      "libs/Z64Lib"
     ]
   }
 }
