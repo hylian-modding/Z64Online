@@ -8,11 +8,12 @@ import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { EventHandler } from "modloader64_api/EventHandler";
 import { OotOnlineEvents } from "@OotOnline/OotoAPI/OotoAPI";
 import Vector3 from "modloader64_api/math/Vector3";
-import {glmatrix_matrix4, glmatrix_vec4} from 'modloader64_api/math/glmatrix';
+import { glmatrix_matrix4, glmatrix_vec4 } from 'modloader64_api/math/glmatrix';
 import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
+import { IS_DEV_BUILD } from "@OotOnline/OotOnline";
 
 export class ImGuiHandler {
 
@@ -38,48 +39,48 @@ export class ImGuiHandler {
     }
 
     @EventHandler(OotOnlineEvents.PLAYER_PUPPET_SPAWNED)
-    onPuppetSpawn(puppet: Puppet){
+    onPuppetSpawn(puppet: Puppet) {
         this.puppets.push(puppet);
     }
 
     @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)
-    onPuppetDespawn(puppet: Puppet){
+    onPuppetDespawn(puppet: Puppet) {
         let index: number = -1;
-        for (let i = 0; i < this.puppets.length; i++){
-            if (puppet.id === this.puppets[i].id){
+        for (let i = 0; i < this.puppets.length; i++) {
+            if (puppet.id === this.puppets[i].id) {
                 index = i;
                 break;
             }
         }
-        if (index > -1){
+        if (index > -1) {
             this.puppets.slice(index, 1);
         }
     }
 
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
-    onSceneChanged(scene: number){
+    onSceneChanged(scene: number) {
         this.scene = scene;
     }
 
     @EventHandler(OotEvents.ON_LOADING_ZONE)
-    onSceneChanging(){
+    onSceneChanging() {
         this.puppets.length = 0;
     }
 
     @onTick()
-    onTick(){
+    onTick() {
         this.eye = this.ModLoader.math.rdramReadV3(0x801C8580)
         this.cp = this.ModLoader.math.rdramReadV3(0x801C858C);
         this.up = this.ModLoader.math.rdramReadV3(0x801C86E8);
         this.v = this.getmtx(0x801DA200);
         this.p = this.getmtx(0x801DA240);
         for (let i = 0; i < this.puppets.length; i++) {
-            if (this.puppets[i].scene !== this.scene){
+            if (this.puppets[i].scene !== this.scene) {
                 this.puppetsDespawn.push(i);
             }
         }
-        if (this.puppetsDespawn.length > 0){
-            for (let i = 0; i < this.puppetsDespawn.length; i++){
+        if (this.puppetsDespawn.length > 0) {
+            for (let i = 0; i < this.puppetsDespawn.length; i++) {
                 this.puppets.slice(this.puppetsDespawn[i], 1);
             }
             this.puppetsDespawn.length = 0;
@@ -120,7 +121,7 @@ export class ImGuiHandler {
             }
         }
         this.ModLoader.ImGui.end();*/
-        if (this.font === undefined){
+        if (this.font === undefined) {
             try {
                 this.font = this.ModLoader.Gfx.createFont();
                 this.font.loadFromFile(path.resolve(__dirname, "PolygonParty-3KXM.ttf"), 22, 2);
@@ -129,18 +130,20 @@ export class ImGuiHandler {
             }
         }
 
-        if (this.ModLoader.ImGui.beginMainMenuBar()){
+        if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                if (this.ModLoader.ImGui.beginMenu("OotO")){
+                if (this.ModLoader.ImGui.beginMenu("OotO")) {
                     if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.nameplates, true)) {
                         this.nameplates = !this.nameplates
                     }
-                    if (this.ModLoader.ImGui.beginMenu("Teleport")){
-                        this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
-                        if (this.ModLoader.ImGui.button("Warp")){
-                            this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), 0, ()=>{});
+                    if (IS_DEV_BUILD) {
+                        if (this.ModLoader.ImGui.beginMenu("Teleport")) {
+                            this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
+                            if (this.ModLoader.ImGui.button("Warp")) {
+                                this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), 0, () => { });
+                            }
+                            this.ModLoader.ImGui.endMenu();
                         }
-                        this.ModLoader.ImGui.endMenu();
                     }
                     this.ModLoader.ImGui.endMenu();
                 }
@@ -149,7 +152,7 @@ export class ImGuiHandler {
             this.ModLoader.ImGui.endMainMenuBar();
         }
 
-        if (!this.nameplates){
+        if (!this.nameplates) {
             return;
         }
 
@@ -189,11 +192,10 @@ export class ImGuiHandler {
                             vxyz.x /= vxyz.z
                             vxyz.y /= vxyz.z
 
-                            if (    Math.abs(v4.x) < v4.w
-                                &&  Math.abs(v4.y) < v4.w
-                                &&  0 < v4.z
-                                &&  v4.z < v4.w)
-                            {
+                            if (Math.abs(v4.x) < v4.w
+                                && Math.abs(v4.y) < v4.w
+                                && 0 < v4.z
+                                && v4.z < v4.w) {
 
                                 winX = Math.round(((vxyz.x + 1.0) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.x)
                                 winY = Math.round(((1.0 - vxyz.y) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.y)
@@ -237,7 +239,7 @@ export class ImGuiHandler {
                                     y_scale = this.ModLoader.ImGui.getMainViewport().size.y / 180
                                 }
                                 else {
-                                   // this.ModLoader.logger.info("21/9")
+                                    // this.ModLoader.logger.info("21/9")
 
                                     x_scale = this.ModLoader.ImGui.getMainViewport().size.x / 320
                                     y_scale = this.ModLoader.ImGui.getMainViewport().size.y / 135
