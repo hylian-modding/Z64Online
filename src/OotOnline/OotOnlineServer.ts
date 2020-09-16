@@ -192,10 +192,10 @@ export class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        mergeInventoryData(storage.inventoryStorage, packet.inventory);
+        mergeInventoryData(this.ModLoader, storage.inventoryStorage, packet.inventory, ProxySide.SERVER, packet.lobby);
         mergeEquipmentData(this.ModLoader, storage.equipmentStorage, packet.equipment, ProxySide.SERVER, packet.lobby);
-        mergeQuestSaveData(storage.questStorage, packet.quest);
-        mergeDungeonItemData(storage.dungeonItemStorage, packet.dungeonItems);
+        mergeQuestSaveData(this.ModLoader, storage.questStorage, packet.quest, ProxySide.SERVER, packet.lobby);
+        mergeDungeonItemData(this.ModLoader, storage.dungeonItemStorage, packet.dungeonItems, ProxySide.SERVER, packet.lobby);
         this.ModLoader.serverSide.sendPacket(
             new Ooto_SubscreenSyncPacket(
                 storage.inventoryStorage,

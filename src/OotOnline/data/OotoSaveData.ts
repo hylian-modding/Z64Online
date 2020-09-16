@@ -113,10 +113,16 @@ export function createDungeonItemDataFromContext(
 }
 
 export function mergeDungeonItemData(
+  ModLoader: IModLoaderAPI,
   storage: IDungeonItemManager,
-  incoming: IDungeonItemSave
+  incoming: IDungeonItemSave,
+  side: ProxySide,
+  lobby: string
 ) {
   if (incoming.DEKU_TREE.bossKey && !storage.DEKU_TREE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Deku Tree)", lobby, "tile283.png"));
+    }
     storage.DEKU_TREE.bossKey = incoming.DEKU_TREE.bossKey;
   }
   if (incoming.DEKU_TREE.compass && !storage.DEKU_TREE.compass) {
@@ -127,6 +133,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.DODONGOS_CAVERN.bossKey && !storage.DODONGOS_CAVERN.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Dodongo's Cavern)", lobby, "tile283.png"));
+    }
     storage.DODONGOS_CAVERN.bossKey = incoming.DODONGOS_CAVERN.bossKey;
   }
   if (incoming.DODONGOS_CAVERN.compass && !storage.DODONGOS_CAVERN.compass) {
@@ -137,6 +146,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.JABJ_JABUS_BELLY.bossKey && !storage.JABJ_JABUS_BELLY.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Jabu Jabu's Belly)", lobby, "tile283.png"));
+    }
     storage.JABJ_JABUS_BELLY.bossKey = incoming.JABJ_JABUS_BELLY.bossKey;
   }
   if (incoming.JABJ_JABUS_BELLY.compass && !storage.JABJ_JABUS_BELLY.compass) {
@@ -147,6 +159,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.FOREST_TEMPLE.bossKey && !storage.FOREST_TEMPLE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Forest Temple)", lobby, "tile283.png"));
+    }
     storage.FOREST_TEMPLE.bossKey = incoming.FOREST_TEMPLE.bossKey;
   }
   if (incoming.FOREST_TEMPLE.compass && !storage.FOREST_TEMPLE.compass) {
@@ -157,6 +172,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.FIRE_TEMPLE.bossKey && !storage.FIRE_TEMPLE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Fire Temple)", lobby, "tile283.png"));
+    }
     storage.FIRE_TEMPLE.bossKey = incoming.FIRE_TEMPLE.bossKey;
   }
   if (incoming.FIRE_TEMPLE.compass && !storage.FIRE_TEMPLE.compass) {
@@ -167,6 +185,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.WATER_TEMPLE.bossKey && !storage.WATER_TEMPLE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Water Temple)", lobby, "tile283.png"));
+    }
     storage.WATER_TEMPLE.bossKey = incoming.WATER_TEMPLE.bossKey;
   }
   if (incoming.WATER_TEMPLE.compass && !storage.WATER_TEMPLE.compass) {
@@ -177,6 +198,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.SPIRIT_TEMPLE.bossKey && !storage.SPIRIT_TEMPLE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Spirit Temple)", lobby, "tile283.png"));
+    }
     storage.SPIRIT_TEMPLE.bossKey = incoming.SPIRIT_TEMPLE.bossKey;
   }
   if (incoming.SPIRIT_TEMPLE.compass && !storage.SPIRIT_TEMPLE.compass) {
@@ -187,6 +211,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.SHADOW_TEMPLE.bossKey && !storage.SHADOW_TEMPLE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Shadow Temple)", lobby, "tile283.png"));
+    }
     storage.SHADOW_TEMPLE.bossKey = incoming.SHADOW_TEMPLE.bossKey;
   }
   if (incoming.SHADOW_TEMPLE.compass && !storage.SHADOW_TEMPLE.compass) {
@@ -200,6 +227,9 @@ export function mergeDungeonItemData(
     incoming.BOTTOM_OF_THE_WELL.bossKey &&
     !storage.BOTTOM_OF_THE_WELL.bossKey
   ) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Bottom of the Well)", lobby, "tile283.png"));
+    }
     storage.BOTTOM_OF_THE_WELL.bossKey = incoming.BOTTOM_OF_THE_WELL.bossKey;
   }
   if (
@@ -213,6 +243,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.ICE_CAVERN.bossKey && !storage.ICE_CAVERN.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Ice Cavern)", lobby, "tile283.png"));
+    }
     storage.ICE_CAVERN.bossKey = incoming.ICE_CAVERN.bossKey;
   }
   if (incoming.ICE_CAVERN.compass && !storage.ICE_CAVERN.compass) {
@@ -223,6 +256,9 @@ export function mergeDungeonItemData(
   }
 
   if (incoming.GANONS_CASTLE.bossKey && !storage.GANONS_CASTLE.bossKey) {
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boss Key (Ganon's Castle)", lobby, "tile283.png"));
+    }
     storage.GANONS_CASTLE.bossKey = incoming.GANONS_CASTLE.bossKey;
   }
   if (incoming.GANONS_CASTLE.compass && !storage.GANONS_CASTLE.compass) {
@@ -287,62 +323,140 @@ export let SEEN_MASK_OF_TRUTH: boolean = false;
 // As much as I want to pull some Object.keys bullshit here to make writing this less verbose, I don't want any sneaky bugs.
 // So, we write it all verbose as hell.
 export function mergeInventoryData(
+  ModLoader: IModLoaderAPI,
   save: InventorySave,
-  incoming: InventorySave
+  incoming: InventorySave,
+  side: ProxySide,
+  lobby: string
 ) {
   if (incoming.dekuSticks) {
+    if (save.dekuSticks !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Deku Sticks", lobby, "tile081.png"));
+    }
     save.dekuSticks = true;
   }
   if (incoming.dekuNuts) {
+    if (save.dekuNuts !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Deku Nuts", lobby, "tile080.png"));
+    }
     save.dekuNuts = true;
   }
   if (incoming.bombs) {
+    if (save.bombs !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Bombs", lobby, "tile085.png"));
+    }
     save.bombs = true;
   }
   if (incoming.bombchus) {
+    if (save.bombchus !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Bombchus", lobby, "tile086.png"));
+    }
     save.bombchus = true;
   }
   if (incoming.magicBeans) {
+    if (save.magicBeans !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Magic Beans", lobby, "tile089.png"));
+    }
     save.magicBeans = true;
     save.magicBeansCount = incoming.magicBeansCount;
   }
   if (incoming.fairySlingshot) {
+    if (save.fairySlingshot !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fairy Slingshot", lobby, "tile083.png"));
+    }
     save.fairySlingshot = true;
   }
   if (incoming.fairyBow) {
+    if (save.fairySlingshot !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fairy Bow", lobby, "tile120.png"));
+    }
     save.fairyBow = true;
   }
   if (incoming.fireArrows) {
+    if (save.fireArrows !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fire Arrows", lobby, "tile122.png"));
+    }
     save.fireArrows = true;
   }
   if (incoming.iceArrows) {
+    if (save.iceArrows !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fire Arrows", lobby, "tile123.png"));
+    }
     save.iceArrows = true;
   }
   if (incoming.lightArrows) {
+    if (save.lightArrows !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Light Arrows", lobby, "tile124.png"));
+    }
     save.lightArrows = true;
   }
   if (incoming.dinsFire) {
+    if (save.dinsFire !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Din's Fire", lobby, "tile260.png"));
+    }
     save.dinsFire = true;
   }
   if (incoming.faroresWind) {
+    if (save.faroresWind !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Farore's Wind", lobby, "tile261.png"));
+    }
     save.faroresWind = true;
   }
   if (incoming.nayrusLove) {
+    if (save.nayrusLove !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Nayru's Love", lobby, "tile262.png"));
+    }
     save.nayrusLove = true;
   }
   if (incoming.ocarina > save.ocarina) {
     save.ocarina = incoming.ocarina;
+    if (true && side === ProxySide.SERVER) {
+      let icon: string = "tile100.png";
+      switch (save.ocarina) {
+        case Ocarina.FAIRY_OCARINA:
+          icon = "tile100.png";
+          break;
+        case Ocarina.OCARINA_OF_TIME:
+          icon = "tile101.png";
+          break;
+      }
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained an Ocarina", lobby, icon));
+    }
   }
   if (incoming.hookshot > save.hookshot) {
     save.hookshot = incoming.hookshot;
+    if (true && side === ProxySide.SERVER) {
+      let icon: string = "tile090.png";
+      let text: string = "Hookshot";
+      switch (save.hookshot) {
+        case Hookshot.HOOKSHOT:
+          icon = "tile090.png";
+          text = "Hookshot";
+          break;
+        case Hookshot.LONGSHOT:
+          icon = "tile091.png";
+          text = "Longshot"
+          break;
+      }
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the " + text, lobby, icon));
+    }
   }
   if (incoming.boomerang) {
+    if (save.boomerang !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Boomerang", lobby, "tile087.png"));
+    }
     save.boomerang = true;
   }
   if (incoming.lensOfTruth) {
+    if (save.lensOfTruth !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Lens of Truth", lobby, "tile088.png"));
+    }
     save.lensOfTruth = true;
   }
   if (incoming.megatonHammer) {
+    if (save.megatonHammer !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Megaton Hammer", lobby, "tile092.png"));
+    }
     save.megatonHammer = true;
   }
 
@@ -370,6 +484,7 @@ export function mergeInventoryData(
       incoming.childTradeItem > save.childTradeItem &&
       save.childTradeItem <= InventoryItem.MASK_OF_TRUTH
     ) {
+      // TODO: notifications
       save.childTradeItem = incoming.childTradeItem;
       if (save.childTradeItem === InventoryItem.MASK_OF_TRUTH) {
         SEEN_MASK_OF_TRUTH = true;
@@ -396,6 +511,7 @@ export function mergeInventoryData(
 
   if (incoming.adultTradeItem > save.adultTradeItem) {
     if (isAdultTradeItem(incoming.adultTradeItem)) {
+      // TODO: notifications
       save.adultTradeItem = incoming.adultTradeItem;
     }
   }
@@ -411,6 +527,7 @@ export function mergeInventoryData(
   //-----------------------------------------------------
   // Bottles
   //-----------------------------------------------------
+  // TODO: Bottle notifs
   if (incoming.bottle_1 !== InventoryItem.NONE) {
     save.bottle_1 = incoming.bottle_1;
   }
@@ -444,12 +561,39 @@ export function mergeInventoryData(
   }
   if (save.swimming < incoming.swimming) {
     save.swimming = incoming.swimming;
+    if (true && side === ProxySide.SERVER) {
+      let icon: string = "tile300.png";
+      switch (save.swimming) {
+        case ZoraScale.SILVER:
+          icon = "tile300.png";
+          break;
+        case ZoraScale.GOLDEN:
+          icon = "tile301.png";
+          break;
+      }
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Swimming Upgrade", lobby, icon));
+    }
   }
   if (save.bulletBag < incoming.bulletBag) {
     save.bulletBag = incoming.bulletBag;
   }
   if (save.strength < incoming.strength) {
     save.strength = incoming.strength;
+    if (true && side === ProxySide.SERVER) {
+      let icon: string = "tile302.png";
+      switch (save.strength) {
+        case Strength.GORON_BRACELET:
+          icon = "tile302.png";
+          break;
+        case Strength.SILVER_GAUNTLETS:
+          icon = "tile303.png";
+          break;
+        case Strength.GOLDEN_GAUNTLETS:
+          icon = "tile304.png";
+          break;
+      }
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Strength Upgrade", lobby, icon));
+    }
   }
 }
 
@@ -635,82 +779,82 @@ export function mergeEquipmentData(
 ) {
   // Swords
   if (incoming.kokiriSword) {
-    if (save.kokiriSword !== true && side === ProxySide.SERVER){
+    if (save.kokiriSword !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Sword.", lobby, "tile060.png"));
     }
     save.kokiriSword = true;
   }
   if (incoming.masterSword) {
-    if (save.masterSword !== true && side === ProxySide.SERVER){
+    if (save.masterSword !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Master Sword.", lobby, "tile061.png"));
     }
     save.masterSword = true;
   }
   if (incoming.giantKnife) {
-    if (save.giantKnife !== true && side === ProxySide.SERVER){
+    if (save.giantKnife !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Giant's Knife", lobby, "tile062.png"));
     }
     save.giantKnife = true;
   }
   if (incoming.biggoronSword) {
-    if (save.biggoronSword !== true && side === ProxySide.SERVER){
+    if (save.biggoronSword !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Biggoron's Sword", lobby, "tile062.png"));
     }
     save.biggoronSword = true;
   }
   // Shields
   if (incoming.dekuShield) {
-    if (save.dekuShield !== true && side === ProxySide.SERVER){
+    if (save.dekuShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Deku Shield", lobby, "tile020.png"));
     }
     save.dekuShield = true;
   }
   if (incoming.hylianShield) {
-    if (save.hylianShield !== true && side === ProxySide.SERVER){
+    if (save.hylianShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Hylian Shield", lobby, "tile021.png"));
     }
     save.hylianShield = true;
   }
   if (incoming.mirrorShield) {
-    if (save.mirrorShield !== true && side === ProxySide.SERVER){
+    if (save.mirrorShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Mirror Shield", lobby, "tile022.png"));
     }
     save.mirrorShield = true;
   }
   // Tunics
   if (incoming.kokiriTunic) {
-/*     if (save.kokiriTunic !== true && side === ProxySide.SERVER){
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Tunic", lobby));
-    } */
+    /*     if (save.kokiriTunic !== true && side === ProxySide.SERVER){
+          ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Tunic", lobby));
+        } */
     save.kokiriTunic = true;
   }
   if (incoming.goronTunic) {
-    if (save.goronTunic !== true && side === ProxySide.SERVER){
+    if (save.goronTunic !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Goron Tunic", lobby, "tile001.png"));
     }
     save.goronTunic = true;
   }
   if (incoming.zoraTunic) {
-    if (save.zoraTunic !== true && side === ProxySide.SERVER){
+    if (save.zoraTunic !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Zora Tunic", lobby, "tile002.png"));
     }
     save.zoraTunic = true;
   }
   // Boots
   if (incoming.kokiriBoots) {
-/*     if (save.kokiriBoots !== true && side === ProxySide.SERVER){
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Boots", lobby));
-    } */
+    /*     if (save.kokiriBoots !== true && side === ProxySide.SERVER){
+          ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Boots", lobby));
+        } */
     save.kokiriBoots = true;
   }
   if (incoming.ironBoots) {
-    if (save.ironBoots !== true && side === ProxySide.SERVER){
+    if (save.ironBoots !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Iron Boots", lobby, "tile041.png"));
     }
     save.ironBoots = true;
   }
   if (incoming.hoverBoots) {
-    if (save.hoverBoots !== true && side === ProxySide.SERVER){
+    if (save.hoverBoots !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Hover Boots", lobby, "tile042.png"));
     }
     save.hoverBoots = true;
@@ -900,96 +1044,194 @@ export function applyQuestSaveToContext(data: IQuestSave, save: ISaveContext) {
   }
 }
 
-export function mergeQuestSaveData(save: IQuestSave, incoming: IQuestSave) {
+export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, incoming: IQuestSave, side: ProxySide, lobby: string) {
   if (incoming.kokiriEmerald) {
+    if (save.kokiriEmerald !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Kokiri Emerald", lobby, "tile160.png"));
+    }
     save.kokiriEmerald = true;
   }
   if (incoming.goronRuby) {
+    if (save.goronRuby !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Goron Ruby", lobby, "tile161.png"));
+    }
     save.goronRuby = true;
   }
   if (incoming.zoraSapphire) {
+    if (save.zoraSapphire !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Zora's Sapphire", lobby, "tile162.png"));
+    }
     save.zoraSapphire = true;
   }
   if (incoming.lightMedallion) {
+    if (save.lightMedallion !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Light Medallion", lobby, "tile163.png"));
+    }
     save.lightMedallion = true;
   }
   if (incoming.forestMedallion) {
+    if (save.forestMedallion !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Forest Medallion", lobby, "tile164.png"));
+    }
     save.forestMedallion = true;
   }
   if (incoming.fireMedallion) {
+    if (save.fireMedallion !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fire Medallion", lobby, "tile165.png"));
+    }
     save.fireMedallion = true;
   }
   if (incoming.waterMedallion) {
+    if (save.waterMedallion !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Water Medallion", lobby, "tile166.png"));
+    }
     save.waterMedallion = true;
   }
   if (incoming.shadowMedallion) {
+    if (save.shadowMedallion !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Shadow Medallion", lobby, "tile167.png"));
+    }
     save.shadowMedallion = true;
   }
   if (incoming.spiritMedallion) {
+    if (save.spiritMedallion !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Spirit Medallion", lobby, "tile168.png"));
+    }
     save.spiritMedallion = true;
   }
   if (incoming.zeldasLullaby) {
+    if (save.zeldasLullaby !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Zelda's Lullaby", lobby, "tile146.png"));
+    }
     save.zeldasLullaby = true;
   }
   if (incoming.eponasSong) {
+    if (save.eponasSong !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Epona's Song", lobby, "tile146.png"));
+    }
     save.eponasSong = true;
   }
   if (incoming.sariasSong) {
+    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Saria's Song", lobby, "tile146.png"));
+    }
     save.sariasSong = true;
   }
   if (incoming.sunsSong) {
+    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Sun's Song", lobby, "tile146.png"));
+    }
     save.sunsSong = true;
   }
   if (incoming.songOfTime) {
+    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Song of Time", lobby, "tile146.png"));
+    }
     save.songOfTime = true;
   }
   if (incoming.preludeOfLight) {
+    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Plelude of Light", lobby, "tile140.png"));
+    }
     save.preludeOfLight = true;
   }
   if (incoming.minuetOfForest) {
+    if (save.minuetOfForest !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Minuet of Forest", lobby, "tile141.png"));
+    }
     save.minuetOfForest = true;
   }
   if (incoming.boleroOfFire) {
+    if (save.boleroOfFire !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Bolero of Fire", lobby, "tile142.png"));
+    }
     save.boleroOfFire = true;
   }
   if (incoming.serenadeOfWater) {
+    if (save.serenadeOfWater !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Serenade of Water", lobby, "tile143.png"));
+    }
     save.serenadeOfWater = true;
   }
   if (incoming.nocturneOfShadow) {
+    if (save.nocturneOfShadow !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Nocturne of Shadow", lobby, "tile145.png"));
+    }
     save.nocturneOfShadow = true;
   }
   if (incoming.requiemOfSpirit) {
+    if (save.requiemOfSpirit !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Requiem of Spirit", lobby, "tile144.png"));
+    }
     save.requiemOfSpirit = true;
   }
   if (incoming.gerudoMembershipCard) {
+    if (save.gerudoMembershipCard !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Gerudo Card", lobby, "tile104.png"));
+    }
     save.gerudoMembershipCard = true;
   }
   if (incoming.stoneOfAgony) {
+    if (save.gerudoMembershipCard !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Stone of Agony", lobby, "tile268.png"));
+    }
     save.stoneOfAgony = true;
   }
   if (incoming.goldSkulltulas > save.goldSkulltulas) {
     save.goldSkulltulas = incoming.goldSkulltulas;
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Golden Skulltula Token (" + save.goldSkulltulas + ")", lobby, "tile420.png"));
+    }
   }
   if (incoming.displayGoldSkulltulas) {
     save.displayGoldSkulltulas = true;
   }
   if (incoming.songOfStorms > save.songOfStorms) {
+    if (save.songOfStorms !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Song of Storms", lobby, "tile146.png"));
+    }
     save.songOfStorms = true;
   }
-  // No idea if this logic is correct. Needs testing.
   if (incoming.heartPieces > save.heartPieces) {
     save.heartPieces = incoming.heartPieces;
+    if (true && side === ProxySide.SERVER) {
+      let icon: string = "tile265_1.png";
+      switch (save.heartPieces) {
+        case 0:
+          icon = "tile265_0.png";
+          break;
+        case 1:
+          icon = "tile265_1.png";
+          break;
+        case 2:
+          icon = "tile265_2.png";
+          break;
+        case 3:
+          icon = "tile265_3.png";
+          break;
+      }
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Piece of Heart (" + save.heartPieces + ")", lobby, icon));
+    }
   } else if (incoming.heartPieces === 0 && save.heartPieces >= 3) {
     save.heartPieces = 0;
   }
   if (incoming.heart_containers > save.heart_containers) {
     save.heart_containers = incoming.heart_containers;
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Heart Container (" + save.heart_containers + ")", lobby, "tile266.png"));
+    }
   }
   if (incoming.magic_meter_size > save.magic_meter_size) {
     save.magic_meter_size = incoming.magic_meter_size;
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Magic Meter (" + save.magic_meter_size + ")", lobby, "tile263.png"));
+    }
   }
   if (incoming.double_defense > save.double_defense) {
     save.double_defense = incoming.double_defense;
+    if (true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained Double Defense", lobby, "tile265_0.png"));
+    }
   }
 }
 

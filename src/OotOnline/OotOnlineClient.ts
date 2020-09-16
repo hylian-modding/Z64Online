@@ -122,10 +122,10 @@ export class OotOnlineClient {
         let equipment = createEquipmentFromContext(this.core.save);
         let quest = createQuestSaveFromContext(this.core.save);
         let di = createDungeonItemDataFromContext(this.core.save.dungeonItemManager);
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
         mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeQuestSaveData(this.clientStorage.questStorage, quest);
-        mergeDungeonItemData(this.clientStorage.dungeonItemStorage, di);
+        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, di, ProxySide.CLIENT, this.ModLoader.clientLobby);
         this.ModLoader.clientSide.sendPacket(new Ooto_SubscreenSyncPacket(this.clientStorage.inventoryStorage, this.clientStorage.equipmentStorage, this.clientStorage.questStorage, this.clientStorage.dungeonItemStorage, this.ModLoader.clientLobby));
         if (this.utility.lastKnownBalance !== this.ModLoader.emulator.rdramRead16(0x8011B874)) {
             this.utility.lastKnownBalance = this.ModLoader.emulator.rdramRead16(0x8011B874);
@@ -417,7 +417,7 @@ export class OotOnlineClient {
                 inventory.bottle_4 = packet.contents;
                 break;
         }
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
         applyInventoryToContext(
             this.clientStorage.inventoryStorage,
             this.core.save,
@@ -477,15 +477,15 @@ export class OotOnlineClient {
             this.core.save.dungeonItemManager
         ) as IDungeonItemSave;
 
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
         mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeQuestSaveData(this.clientStorage.questStorage, quest);
-        mergeDungeonItemData(this.clientStorage.dungeonItemStorage, dungeonItems);
+        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, dungeonItems, ProxySide.CLIENT, this.ModLoader.clientLobby);
 
-        mergeInventoryData(this.clientStorage.inventoryStorage, packet.inventory);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, packet.inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
         mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, packet.equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeQuestSaveData(this.clientStorage.questStorage, packet.quest);
-        mergeDungeonItemData(this.clientStorage.dungeonItemStorage, packet.dungeonItems);
+        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, packet.quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, packet.dungeonItems, ProxySide.CLIENT, this.ModLoader.clientLobby);
 
         applyInventoryToContext(this.clientStorage.inventoryStorage, this.core.save);
         applyEquipmentToContext(this.clientStorage.equipmentStorage, this.core.save);
