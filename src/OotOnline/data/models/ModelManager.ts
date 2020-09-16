@@ -83,12 +83,12 @@ export class ModelManagerClient {
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_OVERRIDE_ADULT)
-  onOverrideAdult(evt: any){
+  onOverrideAdult(evt: any) {
     this.customModelFileAdult = evt.p;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_OVERRIDE_CHILD)
-  onOverrideChild(evt: any){
+  onOverrideChild(evt: any) {
     this.customModelFileChild = evt.p;
   }
 
@@ -140,13 +140,8 @@ export class ModelManagerClient {
       puppet_adult = Buffer.alloc(0x37800);
       //tools.decompressObjectFileFromRom(evt.rom, 0x0015).copy(puppet_adult);
       tools.decompressDMAFileFromRom(evt.rom, 502).copy(puppet_adult);
-      if (!global.ModLoader.isDebugRom) {
-        puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
-        puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
-      } else if (this.core.rom_header!.id === "NZL") {
-        puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLinkDebug.bps")));
-        puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLinkDebug.bps")));
-      }
+      puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
+      puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps")));
       fs.writeFileSync(child_path, trimBuffer(puppet_child));
       fs.writeFileSync(adult_path, trimBuffer(puppet_adult));
     }
@@ -170,7 +165,7 @@ export class ModelManagerClient {
     this.ModLoader.logger.info('Starting custom model setup...');
     let anim = 7;
 
-    if (evt.rom.byteLength < (64 * 1024 * 1024)){
+    if (evt.rom.byteLength < (64 * 1024 * 1024)) {
       let resize = Buffer.alloc(64 * 1024 * 1024);
       evt.rom.copy(resize);
       evt.rom = resize;
@@ -315,13 +310,13 @@ export class ModelManagerClient {
       let addr: number = 0x800000 + allocation_size * index;
       this.ModLoader.logger.info("Model block " + index + " starts at address 0x" + addr.toString(16) + ".");
       let pos: number = 0;
-      while(pos < packet.mod.byteLength){
+      while (pos < packet.mod.byteLength) {
         let offset: number = packet.mod.readUInt16BE(pos);
-        pos+=2;
+        pos += 2;
         let length: number = packet.mod.readUInt16BE(pos);
-        pos+=2;
+        pos += 2;
         let data: Buffer = packet.mod.slice(pos, pos + length);
-        pos+=data.byteLength;
+        pos += data.byteLength;
         this.ModLoader.emulator.rdramWriteBuffer(addr + packet.offset + offset, data);
       }
     }
