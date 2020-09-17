@@ -1119,7 +1119,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
     save.sariasSong = true;
   }
   if (incoming.sunsSong) {
-    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+    if (save.sunsSong !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Sun's Song", lobby, "tile146.png"));
     }
     save.sunsSong = true;
@@ -1131,7 +1131,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
     save.songOfTime = true;
   }
   if (incoming.preludeOfLight) {
-    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+    if (save.preludeOfLight !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Plelude of Light", lobby, "tile140.png"));
     }
     save.preludeOfLight = true;
