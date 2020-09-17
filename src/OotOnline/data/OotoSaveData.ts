@@ -1125,7 +1125,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
     save.sunsSong = true;
   }
   if (incoming.songOfTime) {
-    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+    if (save.songOfTime !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Song of Time", lobby, "tile146.png"));
     }
     save.songOfTime = true;
