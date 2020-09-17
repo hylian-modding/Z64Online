@@ -1,0 +1,1 @@
+init_vars   0x808012ac

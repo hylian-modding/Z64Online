@@ -186,7 +186,7 @@
                 curScene = packet.data.scene;
             }
             hooks.onSceneChange_Network = function (packet) {
-                console.log(packet);
+                this.ModLoader.logger.info(packet);
                 let player = packet.data.player.uuid;
                 let found = false;
                 for (let i = 0; i < otherPlayers.length; i++) {
@@ -533,7 +533,7 @@
                     }
                 }
                 catch (err) {
-                    console.log(err + " [ id: " + id + ", level: " + level + "]");
+                    this.ModLoader.logger.error(err + " [ id: " + id + ", level: " + level + "]");
                 }
             }
             function increaseCount(id, level) {

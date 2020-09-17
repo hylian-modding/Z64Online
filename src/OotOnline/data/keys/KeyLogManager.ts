@@ -70,7 +70,7 @@ export class KeyLogManagerClient {
                 count = 0;
             }
             if (count !== entry.keyCount) {
-                console.log("sending packet");
+                this.ModLoader.logger.info("sending packet");
                 this.ModLoader.clientSide.sendPacket(new Ooto_KeyDeltaClientPacket(this.ModLoader.clientLobby, entry, this.core));
             }
         });
@@ -84,6 +84,10 @@ export class KeyLogManagerClient {
         if (packet.originalUser === undefined || packet.originalUser === null) {
             this.ModLoader.logger.error("Key packet with no origin!");
             this.ModLoader.logger.error(JSON.stringify(packet, null, 2));
+            return;
+        }
+        if (this.ModLoader.me === undefined || this.ModLoader.me === null){
+            this.ModLoader.logger.error("this.ModLoader.me doesn't exist! This is bad.");
             return;
         }
         if (packet.originalUser.uuid === this.ModLoader.me.uuid) {

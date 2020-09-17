@@ -5,7 +5,7 @@ import { IOOTCore, OotEvents, InventoryItem, Sword, Shield, Boots, Tunic, Magic,
 import { OotOnlineEvents, OotOnline_PlayerScene } from './OotoAPI/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct } from './data/OotoSaveData';
-import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket } from './data/OotOPackets';
+import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket, OotO_ItemGetMessagePacket } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
 import fs from 'fs';
@@ -14,7 +14,7 @@ import { DiscordStatus } from 'modloader64_api/Discord';
 import { UtilityActorHelper } from './data/utilityActorHelper';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle';
+import { Init, Preinit, Postinit, onTick, onCreateResources } from 'modloader64_api/PluginLifecycle';
 import { parseFlagChanges } from './parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
@@ -26,6 +26,11 @@ import { KeyLogManagerClient } from './data/keys/KeyLogManager';
 import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { RPCClient } from './data/RPCHandler';
+import { SoundManagerClient } from './data/sounds/SoundManager';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
+import { addToKillFeedQueue } from 'modloader64_api/Announcements';
+import { Texture } from 'modloader64_api/Sylvain/Gfx';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -52,6 +57,27 @@ export class OotOnlineClient {
     puppets!: PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, RPCClient)
     rcp!: RPCClient;
+    @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
+    sound!: SoundManagerClient;
+    @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
+    gui!: ImGuiHandler;
+    resourcesLoaded: boolean = false;
+    itemIcons: Map<string, Texture> = new Map<string, Texture>();
+
+    @onCreateResources()
+    onResource() {
+        if (!this.resourcesLoaded) {
+            let base: string = path.resolve(__dirname, "gui", "sprites");
+            fs.readdirSync(base).forEach((file: string) => {
+                let p = path.resolve(base, file);
+                let t: Texture = this.ModLoader.Gfx.createTexture();
+                t.loadFromFile(p);
+                this.itemIcons.set(file, t);
+                this.ModLoader.logger.debug("Loaded " + file + ".");
+            });
+            this.resourcesLoaded = true;
+        }
+    }
 
     @EventHandler(OotOnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -72,12 +98,13 @@ export class OotOnlineClient {
     @Init()
     init(): void {
         this.modelManager.clientStorage = this.clientStorage;
+        this.gui.modelManager = this.modelManager;
     }
 
     @Postinit()
     postinit() {
         if (this.config.mapTracker) {
-            this.ModLoader.gui.openWindow(698, 795, path.resolve(path.join(__dirname, 'gui', 'map.html')));
+            this.ModLoader.gui.openWindow(698, 805, path.resolve(path.join(__dirname, 'gui', 'map.html')));
         }
         this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/data/scene_numbers.json').toString());
         this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/data/en_US.json').toString());
@@ -95,10 +122,10 @@ export class OotOnlineClient {
         let equipment = createEquipmentFromContext(this.core.save);
         let quest = createQuestSaveFromContext(this.core.save);
         let di = createDungeonItemDataFromContext(this.core.save.dungeonItemManager);
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-        mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
-        mergeQuestSaveData(this.clientStorage.questStorage, quest);
-        mergeDungeonItemData(this.clientStorage.dungeonItemStorage, di);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, di, ProxySide.CLIENT, this.ModLoader.clientLobby);
         this.ModLoader.clientSide.sendPacket(new Ooto_SubscreenSyncPacket(this.clientStorage.inventoryStorage, this.clientStorage.equipmentStorage, this.clientStorage.questStorage, this.clientStorage.dungeonItemStorage, this.ModLoader.clientLobby));
         if (this.utility.lastKnownBalance !== this.ModLoader.emulator.rdramRead16(0x8011B874)) {
             this.utility.lastKnownBalance = this.ModLoader.emulator.rdramRead16(0x8011B874);
@@ -390,7 +417,7 @@ export class OotOnlineClient {
                 inventory.bottle_4 = packet.contents;
                 break;
         }
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
         applyInventoryToContext(
             this.clientStorage.inventoryStorage,
             this.core.save,
@@ -405,12 +432,6 @@ export class OotOnlineClient {
         this.ModLoader.logger.info('Retrieving savegame from server...');
         // Clear inventory.
         this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x18, 0xFF));
-        // Clear c-button and b.
-        //this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0068, Buffer.alloc(0x4, 0xFF));
-        this.core.link.sword = Sword.NONE;
-        this.core.link.shield = Shield.NONE;
-        this.core.link.boots = Boots.KOKIRI;
-        this.core.link.tunic = Tunic.KOKIRI;
         applyInventoryToContext(packet.subscreen.inventory, this.core.save, true);
         applyEquipmentToContext(packet.subscreen.equipment, this.core.save);
         applyQuestSaveToContext(packet.subscreen.quest, this.core.save);
@@ -456,32 +477,20 @@ export class OotOnlineClient {
             this.core.save.dungeonItemManager
         ) as IDungeonItemSave;
 
-        mergeInventoryData(this.clientStorage.inventoryStorage, inventory);
-        mergeEquipmentData(this.clientStorage.equipmentStorage, equipment);
-        mergeQuestSaveData(this.clientStorage.questStorage, quest);
-        mergeDungeonItemData(this.clientStorage.dungeonItemStorage, dungeonItems);
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, dungeonItems, ProxySide.CLIENT, this.ModLoader.clientLobby);
 
-        mergeInventoryData(this.clientStorage.inventoryStorage, packet.inventory);
-        mergeEquipmentData(this.clientStorage.equipmentStorage, packet.equipment);
-        mergeQuestSaveData(this.clientStorage.questStorage, packet.quest);
-        mergeDungeonItemData(
-            this.clientStorage.dungeonItemStorage,
-            packet.dungeonItems
-        );
+        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, packet.inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, packet.equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, packet.quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
+        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, packet.dungeonItems, ProxySide.CLIENT, this.ModLoader.clientLobby);
 
-        applyInventoryToContext(
-            this.clientStorage.inventoryStorage,
-            this.core.save
-        );
-        applyEquipmentToContext(
-            this.clientStorage.equipmentStorage,
-            this.core.save
-        );
+        applyInventoryToContext(this.clientStorage.inventoryStorage, this.core.save);
+        applyEquipmentToContext(this.clientStorage.equipmentStorage, this.core.save);
         applyQuestSaveToContext(this.clientStorage.questStorage, this.core.save);
-        applyDungeonItemDataToContext(
-            this.clientStorage.dungeonItemStorage,
-            this.core.save.dungeonItemManager
-        );
+        applyDungeonItemDataToContext(this.clientStorage.dungeonItemStorage, this.core.save.dungeonItemManager);
 
         this.ModLoader.gui.tunnel.send(
             'OotOnline:onSubscreenPacket',
@@ -640,6 +649,15 @@ export class OotOnlineClient {
         this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
     }
 
+    @NetworkHandler("OotO_ItemGetMessagePacket")
+    onMessage(packet: OotO_ItemGetMessagePacket) {
+        if (packet.icon !== undefined) {
+            addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
+        } else {
+            addToKillFeedQueue(packet.text);
+        }
+    }
+
     healPlayer() {
         if (
             this.core.helper.isTitleScreen() ||
@@ -704,6 +722,10 @@ export class OotOnlineClient {
         );
     }
 
+    private isBottle(item: InventoryItem) {
+        return (item === InventoryItem.EMPTY_BOTTLE || item === InventoryItem.BOTTLED_BIG_POE || item === InventoryItem.BOTTLED_BUGS || item === InventoryItem.BOTTLED_FAIRY || item === InventoryItem.BOTTLED_FISH || item === InventoryItem.BOTTLED_POE || item === InventoryItem.LON_LON_MILK || item === InventoryItem.LON_LON_MILK_HALF)
+    }
+
     @EventHandler(OotOnlineEvents.ON_INVENTORY_UPDATE)
     onInventoryUpdate(inventory: IInventory) {
         if (
@@ -720,10 +742,7 @@ export class OotOnlineClient {
             addr2,
             0x24
         );
-        if (
-            buf[0x4] !== InventoryItem.NONE &&
-            raw_inventory[buf[0x4]] !== InventoryItem.NONE
-        ) {
+        if (buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))) {
             buf[0x1] = raw_inventory[buf[0x4]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -732,10 +751,7 @@ export class OotOnlineClient {
                 (success: boolean, result: number) => { }
             );
         }
-        if (
-            buf[0x5] !== InventoryItem.NONE &&
-            raw_inventory[buf[0x5]] !== InventoryItem.NONE
-        ) {
+        if (buf[0x5] !== InventoryItem.NONE && raw_inventory[buf[0x5]] !== InventoryItem.NONE && (raw_inventory[buf[0x5]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x5]]))) {
             buf[0x2] = raw_inventory[buf[0x5]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -744,10 +760,7 @@ export class OotOnlineClient {
                 (success: boolean, result: number) => { }
             );
         }
-        if (
-            buf[0x6] !== InventoryItem.NONE &&
-            raw_inventory[buf[0x6]] !== InventoryItem.NONE
-        ) {
+        if (buf[0x6] !== InventoryItem.NONE && raw_inventory[buf[0x6]] !== InventoryItem.NONE && (raw_inventory[buf[0x6]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x6]]))) {
             buf[0x3] = raw_inventory[buf[0x6]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -789,14 +802,16 @@ export class OotOnlineClient {
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
-        let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
-        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
-        let file_select_ovl: Buffer = tools.decompressFileFromRom(evt.rom, 32);
-        let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
-        if (expected_hash !== hash) {
-            this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
-            this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
-        }
+        try {
+            let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
+            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+            let file_select_ovl: Buffer = tools.decompressDMAFileFromRom(evt.rom, 0x0032);
+            let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
+            if (expected_hash !== hash) {
+                this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
+                this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
+            }
+        } catch (err) { }
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
@@ -851,11 +866,7 @@ export class OotOnlineClient {
                         this.keys.update();
                     }
                     let state = this.core.link.state;
-                    if (
-                        state === LinkState.BUSY ||
-                        state === LinkState.GETTING_ITEM ||
-                        state === LinkState.TALKING
-                    ) {
+                    if (state === LinkState.BUSY || state === LinkState.GETTING_ITEM || state === LinkState.TALKING) {
                         this.clientStorage.needs_update = true;
                     } else if (
                         state === LinkState.STANDING &&

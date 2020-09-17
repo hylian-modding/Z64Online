@@ -7,11 +7,14 @@ import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
-import { EventHandler, EventsClient } from 'modloader64_api/EventHandler';
-import { IOotOnlineHelpers, OotOnlineEvents } from '@OotOnline/OotoAPI/OotoAPI';
+import { EventHandler, EventsClient, bus } from 'modloader64_api/EventHandler';
+import { IOotOnlineHelpers, OotOnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/OotoAPI/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
+
+export let DEADBEEF_OFFSET: number = 0x288;
+export let ACTOR_T_PADDING: number = 0;
 
 export class PuppetOverlordServer {
 
@@ -41,10 +44,15 @@ export class PuppetOverlordClient {
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
-  
+
   @Postinit()
   postinit(
   ) {
+    if (global.ModLoader['isDebugRom']) {
+      ACTOR_T_PADDING += 16;
+      DEADBEEF_OFFSET += ACTOR_T_PADDING;
+    }
+
     this.fakeClientPuppet = new Puppet(
       this.ModLoader.me,
       this.core,
@@ -53,6 +61,9 @@ export class PuppetOverlordClient {
       this.ModLoader,
       this.parent
     );
+    if (global.ModLoader.isDebugRom) {
+      DEADBEEF_OFFSET += 0x10;
+    }
   }
 
   get current_scene() {
@@ -143,9 +154,7 @@ export class PuppetOverlordClient {
         this.puppets.get(player.uuid)!.id +
         '.'
       );
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_SceneRequestPacket(this.ModLoader.clientLobby)
-      );
+      this.ModLoader.clientSide.sendPacket(new Ooto_SceneRequestPacket(this.ModLoader.clientLobby));
     }
   }
 
@@ -196,7 +205,9 @@ export class PuppetOverlordClient {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
-      puppet.processIncomingPuppetData(actualPacket.data);
+      let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, actualPacket.data.sound);
+      bus.emit(OotOnlineEvents.ON_REMOTE_PLAY_SOUND, e);
+      puppet.processIncomingPuppetData(actualPacket.data, e);
       if (actualPacket.horse_data !== undefined) {
         puppet.processIncomingHorseData(actualPacket.horse_data);
       }
@@ -274,8 +285,6 @@ export class PuppetOverlordClient {
     this.changePuppetScene(packet.player, packet.scene, packet.age);
   }
 
-
-
   @NetworkHandler('Ooto_PuppetPacket')
   onPuppetData_client(packet: Ooto_PuppetWrapperPacket) {
     if (
@@ -340,4 +349,5 @@ export class PuppetOverlordClient {
     this.ModLoader.logger.debug("Locking puppet spawner.")
     this.queuedSpawn = true;
   }
+
 }

@@ -1,6 +1,6 @@
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { EventHandler, bus } from 'modloader64_api/EventHandler';
-import { OotEvents, IOOTCore, LinkState } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
   ActorHookBase,
   ActorHookProcessor,
@@ -28,7 +28,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
-
+import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
@@ -99,16 +99,20 @@ export class ActorHookingManagerClient {
 
   @Postinit()
   onPostInit() {
-    let dir = path.join(__dirname, 'actors');
-    fs.readdirSync(dir).forEach((file: string) => {
-      let parse = path.parse(file);
-      if (parse.ext === '.js') {
-        bus.emit(
-          OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
-          path.join(dir, file)
-        );
-      }
-    });
+    //let dirs = ["actors", "enemies"];
+    let dirs = ["actors"];
+    for (let i = 0; i < dirs.length; i++) {
+      let dir = path.join(__dirname, dirs[i]);
+      fs.readdirSync(dir).forEach((file: string) => {
+        let parse = path.parse(file);
+        if (parse.ext === '.js') {
+          bus.emit(
+            OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
+            path.join(dir, file)
+          );
+        }
+      });
+    }
     let bombs = new ActorHookBase();
     bombs.actorID = BOMB_ID;
     bombs.hooks.push(new HookInfo(0x1e8, 0x4));
@@ -165,7 +169,7 @@ export class ActorHookingManagerClient {
           return;
         }
       }
-      console.log(
+      this.ModLoader.logger.info(
         'Setting up hook for actor ' +
         this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
         ': ' +
@@ -247,7 +251,7 @@ export class ActorHookingManagerClient {
       return;
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
-      console.log('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
+      this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
@@ -314,7 +318,7 @@ export class ActorHookingManagerClient {
     this.DekuNutsRemote.clear();
     this.actorHookTicks.clear();
   }
-  
+
   setActorBehavior(
     emulator: IMemory,
     actor: IActor,
@@ -341,30 +345,29 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!.actor;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
-
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
 
       let hooks = this.actorHookTicks.get(packet.actorData.actor.actorUUID)!
         .hookBase.hooks;
       for (let i = 0; i < hooks.length; i++) {
-        if (hooks[i].isBehavior) {
-          let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-          this.setActorBehavior(
-            this.ModLoader.emulator,
-            actor,
-            hooks[i].offset,
-            d
-          );
+        if (hooks[i].overrideIncoming !== undefined) {
+          hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data);
         } else {
-          actor.rdramWriteBuffer(
-            hooks[i].offset,
-            packet.actorData.hooks[i].data
-          );
+          if (hooks[i].isBehavior) {
+            let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
+            this.setActorBehavior(
+              this.ModLoader.emulator,
+              actor,
+              hooks[i].offset,
+              d
+            );
+          } else {
+            actor.rdramWriteBuffer(
+              hooks[i].offset,
+              packet.actorData.hooks[i].data
+            );
+          }
         }
       }
     } else if (this.bombsRemote.has(packet.actorData.actor.actorUUID)) {
@@ -372,13 +375,9 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
 
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
 
       for (let i = 0; i < this.bombProcessor.hookBase.hooks.length; i++) {
         actor.rdramWriteBuffer(
@@ -391,13 +390,8 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
-
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
 
       for (let i = 0; i < this.chuProcessor.hookBase.hooks.length; i++) {
         actor.rdramWriteBuffer(
@@ -410,21 +404,15 @@ export class ActorHookingManagerClient {
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
     } else if (this.DekuNutsRemote.has(packet.actorData.actor.actorUUID)) {
       let actor: IActor = this.DekuNutsRemote.get(
         packet.actorData.actor.actorUUID
       )!;
 
-      actor.position.x = packet.actorData.actor.position.x;
-      actor.position.y = packet.actorData.actor.position.y;
-      actor.position.z = packet.actorData.actor.position.z;
-
-      actor.rotation.x = packet.actorData.actor.rotation.x;
-      actor.rotation.y = packet.actorData.actor.rotation.y;
-      actor.rotation.z = packet.actorData.actor.rotation.z;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
     }
   }
 
@@ -505,17 +493,14 @@ export class ActorHookingManagerClient {
       (success: boolean, result: number) => {
         if (success) {
           let dref: number = result & 0x00ffffff;
-          console.log(dref.toString(16));
+          this.ModLoader.logger.info(dref.toString(16));
           let actor: IActor = this.core.actorManager.createIActorFromPointer(
             dref
           );
           actor.actorUUID = packet.actorData.actor.actorUUID;
-          actor.position.x = packet.actorData.actor.position.x;
-          actor.position.y = packet.actorData.actor.position.y;
-          actor.position.z = packet.actorData.actor.position.z;
-          actor.rotation.x = packet.actorData.actor.rotation.x;
-          actor.rotation.y = packet.actorData.actor.rotation.y;
-          actor.rotation.z = packet.actorData.actor.rotation.z;
+          actor.position.setRawPos(packet.actorData.rawPos);
+          actor.rotation.setRawRot(packet.actorData.rawRot);
+
           if (packet.actorData.actor.actorID === BOMB_ID) {
             actor.rdramWrite32(0x6c, 0x0);
             actor.rdramWrite32(0x70, 0x0);
@@ -538,31 +523,39 @@ export class ActorHookingManagerClient {
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
-    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, 0x7430);
+    try {
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+      // Make Din's Fire not move to Link.
+      let dins: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x009F);
+      let dhash: string = this.ModLoader.utils.hashBuffer(dins);
+      if (dhash === "b08f7991b2beda5394e4a94cff15b50c") {
+        this.ModLoader.logger.info("Patching Din's Fire...");
+        dins.writeUInt32BE(0x0, 0x150);
+        dins.writeUInt32BE(0x0, 0x158);
+        dins.writeUInt32BE(0x0, 0x160);
+        dins.writeUInt32BE(0x0, 0x19C);
+        dins.writeUInt32BE(0x0, 0x1A4);
+        dins.writeUInt32BE(0x0, 0x1AC);
+      }
+      tools.recompressActorFileIntoRom(evt.rom, 0x009F, dins);
 
-    // Make Din's Fire not move to Link.
-    let dins: Buffer = tools.decompressFileFromRom(evt.rom, 166);
-    let dhash: string = this.ModLoader.utils.hashBuffer(dins);
-    if (dhash === "b08f7991b2beda5394e4a94cff15b50c") {
-      this.ModLoader.logger.info("Patching Din's Fire...");
-      dins.writeUInt32BE(0x0, 0x150);
-      dins.writeUInt32BE(0x0, 0x158);
-      dins.writeUInt32BE(0x0, 0x160);
-      dins.writeUInt32BE(0x0, 0x19C);
-      dins.writeUInt32BE(0x0, 0x1A4);
-      dins.writeUInt32BE(0x0, 0x1AC);
+      // Change Zelda's actor category from 'NPC' to 'Chest'.
+      // This fixes Ganon's Tower Collapse.
+      let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
+      let zhash: string = this.ModLoader.utils.hashBuffer(buf);
+      if (zhash === "3560a2ed96d71e375f79fb53e55d1011") {
+        this.ModLoader.logger.info("Patching Zelda...");
+        buf.writeUInt8(0x0B, 0x7236);
+      }
+      tools.recompressActorFileIntoRom(evt.rom, 0x0179, buf);
+    } catch (err) {
+      this.ModLoader.logger.error(err);
     }
-    tools.recompressFileIntoRom(evt.rom, 166, dins);
+  }
 
-    // Change Zelda's actor category from 'NPC' to 'Chest'.
-    // This fixes Ganon's Tower Collapse.
-    let buf: Buffer = tools.decompressFileFromRom(evt.rom, 369);
-    let zhash: string = this.ModLoader.utils.hashBuffer(buf);
-    if (zhash === "3560a2ed96d71e375f79fb53e55d1011") {
-      this.ModLoader.logger.info("Patching Zelda...");
-      buf.writeUInt8(0x0B, 0x7236);
-    }
-    tools.recompressFileIntoRom(evt.rom, 369, buf);
+  @EventHandler(OotEvents.ON_ROOM_CHANGE_PRE)
+  onRoomChange(evt: any) {
+    this.actorHookTicks.clear();
   }
 
   tick() {

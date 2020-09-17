@@ -7,7 +7,7 @@ import { OotOnline } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader } from 'modloader64_api/NetworkHandler';
 import { OotOnline_PlayerScene, OotOnlineEvents } from './OotoAPI/OotoAPI';
-import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_SubscreenSyncPacket, Ooto_ServerFlagUpdate, Ooto_BankSyncPacket, Ooto_DownloadResponsePacket2, Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket } from './data/OotOPackets';
+import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_SubscreenSyncPacket, Ooto_ServerFlagUpdate, Ooto_BankSyncPacket, Ooto_DownloadResponsePacket2, Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, OotO_ModifyModelPacket } from './data/OotOPackets';
 import { Ooto_KeyRebuildPacket, KeyLogManagerServer } from './data/keys/KeyLogManager';
 import { mergeInventoryData, mergeEquipmentData, mergeQuestSaveData, mergeDungeonItemData, OotO_SceneStruct } from './data/OotoSaveData';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
@@ -44,6 +44,11 @@ export class OotOnlineServer {
                 }
             });
         } catch (err) { }
+    }
+
+    @ServerNetworkHandler('OotO_ModifyModelPacket')
+    onModelModification(packet: OotO_ModifyModelPacket){
+        this.sendPacketToPlayersInScene(packet);
     }
 
     @EventHandler(EventsServer.ON_LOBBY_CREATE)
@@ -187,10 +192,10 @@ export class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        mergeInventoryData(storage.inventoryStorage, packet.inventory);
-        mergeEquipmentData(storage.equipmentStorage, packet.equipment);
-        mergeQuestSaveData(storage.questStorage, packet.quest);
-        mergeDungeonItemData(storage.dungeonItemStorage, packet.dungeonItems);
+        mergeInventoryData(this.ModLoader, storage.inventoryStorage, packet.inventory, ProxySide.SERVER, packet.lobby);
+        mergeEquipmentData(this.ModLoader, storage.equipmentStorage, packet.equipment, ProxySide.SERVER, packet.lobby);
+        mergeQuestSaveData(this.ModLoader, storage.questStorage, packet.quest, ProxySide.SERVER, packet.lobby);
+        mergeDungeonItemData(this.ModLoader, storage.dungeonItemStorage, packet.dungeonItems, ProxySide.SERVER, packet.lobby);
         this.ModLoader.serverSide.sendPacket(
             new Ooto_SubscreenSyncPacket(
                 storage.inventoryStorage,

@@ -9,6 +9,7 @@ export class HookInfo {
   offset = 0;
   size = 0;
   isBehavior = false;
+  overrideIncoming!: (actor: IActor, offset: number, data: Buffer)=>void;
 
   constructor(offset: number, size: number, isBehavior = false) {
     this.offset = offset;
@@ -23,6 +24,8 @@ export class HookData {
 
 export interface ActorPacketData {
   actor: IActor;
+  rawPos: Buffer;
+  rawRot: Buffer;
   variable: number;
   hooks: HookData[];
 }
@@ -30,11 +33,16 @@ export interface ActorPacketData {
 export class ActorPacketData_Impl implements ActorPacketData {
   actor: IActor;
   variable: number;
+  rawPos: Buffer;
+  rawRot: Buffer;
   hooks: HookData[] = new Array<HookData>();
 
   constructor(actor: IActor) {
     this.actor = actor;
     this.variable = this.actor.variable;
+    this.rawPos = this.actor.position.getRawPos();
+    this.rawRot = this.actor.rotation.getRawRot();
+    this.actor = JSON.parse(JSON.stringify(this.actor));
   }
 }
 
@@ -92,14 +100,13 @@ export class ActorHookProcessor extends JSONTemplate {
     if (this.lastFrameCache !== j) {
       this.lastFrameCache = j;
       if (this.last_inbound_frame === 0) {
-        this.modloader.clientSide.sendPacket(
-          new Ooto_ActorPacket(
-            k,
-            this.core.global.scene,
-            this.core.global.room,
-            this.modloader.clientLobby
-          )
+        let p = new Ooto_ActorPacket(
+          k,
+          this.core.global.scene,
+          this.core.global.room,
+          this.modloader.clientLobby
         );
+        this.modloader.clientSide.sendPacket(p);
       }
     }
     if (this.last_inbound_frame > 0) {
@@ -110,6 +117,9 @@ export class ActorHookProcessor extends JSONTemplate {
   toJSON() {
     let jsonObj: any = {};
     jsonObj['actor'] = (this.actor as any).toJSON();
+    jsonObj["variable"] = this.actor.variable;
+    jsonObj["rawPos"] = this.actor.position.getRawPos();
+    jsonObj["rawRot"] = this.actor.rotation.getRawRot();
     jsonObj['hooks'] = [];
     for (let i = 0; i < this.hookBase.hooks.length; i++) {
       let hookData = new HookData();

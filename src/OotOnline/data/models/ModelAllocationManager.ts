@@ -7,6 +7,10 @@ export class ModelAllocationManager {
   models: ModelPlayer[] = new Array<ModelPlayer>(this.MAX_MODELS);
 
   constructor() {
+    for (let i = 0; i < this.MAX_MODELS; i++){
+      //@ts-ignore
+      this.models[i] = undefined;
+    }
   }
 
   getModelInSlot(index: number){
