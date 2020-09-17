@@ -319,6 +319,7 @@ export function applyDungeonItemDataToContext(
 }
 
 export let SEEN_MASK_OF_TRUTH: boolean = false;
+export let FIRST_HEART_CONTAINER_SET: boolean = false;
 
 // As much as I want to pull some Object.keys bullshit here to make writing this less verbose, I don't want any sneaky bugs.
 // So, we write it all verbose as hell.
@@ -1217,9 +1218,10 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
   }
   if (incoming.heart_containers > save.heart_containers) {
     save.heart_containers = incoming.heart_containers;
-    if (true && side === ProxySide.SERVER) {
+    if (FIRST_HEART_CONTAINER_SET && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Heart Container (" + save.heart_containers + ")", lobby, "tile266.png"));
     }
+    FIRST_HEART_CONTAINER_SET = true;
   }
   if (incoming.magic_meter_size > save.magic_meter_size) {
     save.magic_meter_size = incoming.magic_meter_size;
