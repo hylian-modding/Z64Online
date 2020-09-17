@@ -1181,7 +1181,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
   if (incoming.goldSkulltulas > save.goldSkulltulas) {
     save.goldSkulltulas = incoming.goldSkulltulas;
     if (true && side === ProxySide.SERVER) {
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Golden Skulltula Token (" + save.goldSkulltulas + ")", lobby, "tile420.png"));
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a token (" + save.goldSkulltulas + ")", lobby, "tile420.png"));
     }
   }
   if (incoming.displayGoldSkulltulas) {
