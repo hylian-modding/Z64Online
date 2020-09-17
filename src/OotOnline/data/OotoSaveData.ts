@@ -367,7 +367,7 @@ export function mergeInventoryData(
     save.fairySlingshot = true;
   }
   if (incoming.fairyBow) {
-    if (save.fairySlingshot !== true && side === ProxySide.SERVER) {
+    if (save.fairyBow !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fairy Bow", lobby, "tile120.png"));
     }
     save.fairyBow = true;
