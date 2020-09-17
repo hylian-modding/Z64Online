@@ -1132,7 +1132,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
   }
   if (incoming.preludeOfLight) {
     if (save.preludeOfLight !== true && side === ProxySide.SERVER) {
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Plelude of Light", lobby, "tile140.png"));
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Prelude of Light", lobby, "tile140.png"));
     }
     save.preludeOfLight = true;
   }
@@ -1173,7 +1173,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
     save.gerudoMembershipCard = true;
   }
   if (incoming.stoneOfAgony) {
-    if (save.gerudoMembershipCard !== true && side === ProxySide.SERVER) {
+    if (save.stoneOfAgony !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Stone of Agony", lobby, "tile268.png"));
     }
     save.stoneOfAgony = true;
