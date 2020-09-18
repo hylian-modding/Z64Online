@@ -1056,6 +1056,9 @@ export function applyQuestSaveToContext(data: IQuestSave, save: ISaveContext) {
   if (lastKnownHC < data.heart_containers) {
     bus.emit(OotOnlineEvents.GAINED_HEART_CONTAINER, data.heart_containers);
   }
+  if (save.heart_containers > 0x14){
+    save.heart_containers = 0x14;
+  }
   let lastKnownMagic: Magic = save.magic_meter_size;
   save.magic_meter_size = data.magic_meter_size;
   if (lastKnownMagic < data.magic_meter_size) {
