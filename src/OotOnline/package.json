@@ -1,6 +1,6 @@
 {
   "name": "OotOnline",
-  "version": "2.0.115",
+  "version": "2.0.117",
   "description": "",
   "main": "OotOnline.js",
   "author": "denoflions",
@@ -9,8 +9,8 @@
   "core": [
     "OcarinaofTime"
   ],
-  "updateUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/update/update.json",
-  "devUrl": "https://nexus.inpureprojects.info/ModLoader64/mods/Ooto/dev/update.json",
+  "updateUrl": "https://repo.modloader64.com/mods/Ooto/update/update.json",
+  "devUrl": "https://repo.modloader64.com/mods/Ooto/dev/update.json",
   "modloader64_deps": {
     "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
   },

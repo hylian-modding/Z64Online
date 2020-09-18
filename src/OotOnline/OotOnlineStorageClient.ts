@@ -20,4 +20,5 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   localization: any = {};
   scene_keys: any = {};
   first_time_sync = false;
+  notifStorage: Array<string> = [];
 }

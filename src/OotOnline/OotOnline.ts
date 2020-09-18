@@ -13,7 +13,7 @@ export const EVENT_ARR_SIZE = 0x1c;
 export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
-export const IS_DEV_BUILD: boolean = true;
+export const IS_DEV_BUILD: boolean = false;
 
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
@@ -24,6 +24,8 @@ export interface IOotOnlineLobbyConfig {
 export class OotOnlineConfigCategory {
   mapTracker: boolean = false;
   keySync: boolean = true;
+  notifications: boolean = true;
+  nameplates: boolean = true;
 }
 
 export class OotOnline implements IPlugin, IOotOnlineHelpers, IPluginServerConfig {

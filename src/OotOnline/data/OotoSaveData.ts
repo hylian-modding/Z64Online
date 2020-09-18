@@ -319,6 +319,10 @@ export function applyDungeonItemDataToContext(
 }
 
 export let SEEN_MASK_OF_TRUTH: boolean = false;
+export let FIRST_HEART_CONTAINER_SET: boolean = false;
+export let SEEN_DEKU_SHIELD: boolean = false;
+export let SEEN_HYLIAN_SHIELD: boolean = false;
+export let LOST_ITEM_FLAGS: number = 0x8011B878;
 
 // As much as I want to pull some Object.keys bullshit here to make writing this less verbose, I don't want any sneaky bugs.
 // So, we write it all verbose as hell.
@@ -367,7 +371,7 @@ export function mergeInventoryData(
     save.fairySlingshot = true;
   }
   if (incoming.fairyBow) {
-    if (save.fairySlingshot !== true && side === ProxySide.SERVER) {
+    if (save.fairyBow !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fairy Bow", lobby, "tile120.png"));
     }
     save.fairyBow = true;
@@ -380,7 +384,7 @@ export function mergeInventoryData(
   }
   if (incoming.iceArrows) {
     if (save.iceArrows !== true && side === ProxySide.SERVER) {
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fire Arrows", lobby, "tile123.png"));
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Ice Arrows", lobby, "tile123.png"));
     }
     save.iceArrows = true;
   }
@@ -488,6 +492,7 @@ export function mergeInventoryData(
       save.childTradeItem = incoming.childTradeItem;
       if (save.childTradeItem === InventoryItem.MASK_OF_TRUTH) {
         SEEN_MASK_OF_TRUTH = true;
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 2, true);
       }
     }
   }
@@ -777,6 +782,9 @@ export function mergeEquipmentData(
   side: ProxySide,
   lobby: string
 ) {
+  SEEN_DEKU_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 0);
+  SEEN_HYLIAN_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 1);
+  SEEN_MASK_OF_TRUTH = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 2);
   // Swords
   if (incoming.kokiriSword) {
     if (save.kokiriSword !== true && side === ProxySide.SERVER) {
@@ -807,13 +815,29 @@ export function mergeEquipmentData(
     if (save.dekuShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Deku Shield", lobby, "tile020.png"));
     }
-    save.dekuShield = true;
+    if (side === ProxySide.CLIENT) {
+      if (!SEEN_DEKU_SHIELD) {
+        save.dekuShield = true;
+        SEEN_DEKU_SHIELD = true;
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 0, true);
+      }
+    } else if (side === ProxySide.SERVER) {
+      save.dekuShield = true;
+    }
   }
   if (incoming.hylianShield) {
     if (save.hylianShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Hylian Shield", lobby, "tile021.png"));
     }
-    save.hylianShield = true;
+    if (side === ProxySide.CLIENT) {
+      if (!SEEN_HYLIAN_SHIELD) {
+        save.hylianShield = true;
+        SEEN_HYLIAN_SHIELD = true;
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 1, true);
+      }
+    } else if (side === ProxySide.SERVER) {
+      save.hylianShield = true;
+    }
   }
   if (incoming.mirrorShield) {
     if (save.mirrorShield !== true && side === ProxySide.SERVER) {
@@ -1032,6 +1056,9 @@ export function applyQuestSaveToContext(data: IQuestSave, save: ISaveContext) {
   if (lastKnownHC < data.heart_containers) {
     bus.emit(OotOnlineEvents.GAINED_HEART_CONTAINER, data.heart_containers);
   }
+  if (save.heart_containers > 0x14){
+    save.heart_containers = 0x14;
+  }
   let lastKnownMagic: Magic = save.magic_meter_size;
   save.magic_meter_size = data.magic_meter_size;
   if (lastKnownMagic < data.magic_meter_size) {
@@ -1118,20 +1145,20 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
     save.sariasSong = true;
   }
   if (incoming.sunsSong) {
-    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+    if (save.sunsSong !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Sun's Song", lobby, "tile146.png"));
     }
     save.sunsSong = true;
   }
   if (incoming.songOfTime) {
-    if (save.sariasSong !== true && side === ProxySide.SERVER) {
+    if (save.songOfTime !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Song of Time", lobby, "tile146.png"));
     }
     save.songOfTime = true;
   }
   if (incoming.preludeOfLight) {
-    if (save.sariasSong !== true && side === ProxySide.SERVER) {
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Plelude of Light", lobby, "tile140.png"));
+    if (save.preludeOfLight !== true && side === ProxySide.SERVER) {
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained song Prelude of Light", lobby, "tile140.png"));
     }
     save.preludeOfLight = true;
   }
@@ -1172,7 +1199,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
     save.gerudoMembershipCard = true;
   }
   if (incoming.stoneOfAgony) {
-    if (save.gerudoMembershipCard !== true && side === ProxySide.SERVER) {
+    if (save.stoneOfAgony !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Stone of Agony", lobby, "tile268.png"));
     }
     save.stoneOfAgony = true;
@@ -1180,7 +1207,7 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
   if (incoming.goldSkulltulas > save.goldSkulltulas) {
     save.goldSkulltulas = incoming.goldSkulltulas;
     if (true && side === ProxySide.SERVER) {
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Golden Skulltula Token (" + save.goldSkulltulas + ")", lobby, "tile420.png"));
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a token (" + save.goldSkulltulas + ")", lobby, "tile420.png"));
     }
   }
   if (incoming.displayGoldSkulltulas) {
@@ -1217,9 +1244,10 @@ export function mergeQuestSaveData(ModLoader: IModLoaderAPI, save: IQuestSave, i
   }
   if (incoming.heart_containers > save.heart_containers) {
     save.heart_containers = incoming.heart_containers;
-    if (true && side === ProxySide.SERVER) {
+    if (FIRST_HEART_CONTAINER_SET && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained a Heart Container (" + save.heart_containers + ")", lobby, "tile266.png"));
     }
+    FIRST_HEART_CONTAINER_SET = true;
   }
   if (incoming.magic_meter_size > save.magic_meter_size) {
     save.magic_meter_size = incoming.magic_meter_size;

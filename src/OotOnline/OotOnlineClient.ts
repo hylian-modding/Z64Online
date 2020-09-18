@@ -73,7 +73,7 @@ export class OotOnlineClient {
                 let t: Texture = this.ModLoader.Gfx.createTexture();
                 t.loadFromFile(p);
                 this.itemIcons.set(file, t);
-                this.ModLoader.logger.debug("Loaded " + file + ".");
+                //this.ModLoader.logger.debug("Loaded " + file + ".");
             });
             this.resourcesLoaded = true;
         }
@@ -93,6 +93,9 @@ export class OotOnlineClient {
         this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
         this.ModLoader.config.setData("OotOnline", "mapTracker", false);
         this.ModLoader.config.setData("OotOnline", "keySync", true);
+        this.ModLoader.config.setData("OotOnline", "notifications", true);
+        this.ModLoader.config.setData("OotOnline", "nameplates", true);
+        this.gui.settings = this.config;
     }
 
     @Init()
@@ -651,10 +654,13 @@ export class OotOnlineClient {
 
     @NetworkHandler("OotO_ItemGetMessagePacket")
     onMessage(packet: OotO_ItemGetMessagePacket) {
-        if (packet.icon !== undefined) {
-            addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
-        } else {
-            addToKillFeedQueue(packet.text);
+        if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
+            if (packet.icon !== undefined) {
+                addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
+            } else {
+                addToKillFeedQueue(packet.text);
+            }
+            this.clientStorage.notifStorage.push(packet.text);
         }
     }
 
