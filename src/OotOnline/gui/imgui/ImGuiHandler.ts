@@ -13,7 +13,7 @@ import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
-import { IS_DEV_BUILD } from "@OotOnline/OotOnline";
+import { IS_DEV_BUILD, OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 
 export class ImGuiHandler {
 
@@ -31,9 +31,9 @@ export class ImGuiHandler {
     v: Array<number> = new Array<number>(16);
     p: Array<number> = new Array<number>(16);
     font!: Font;
-    nameplates: boolean = true;
     puppetsDespawn: Array<number> = [];
     teleportDest: string_ref = [""];
+    settings!: OotOnlineConfigCategory
 
     constructor() {
     }
@@ -133,8 +133,13 @@ export class ImGuiHandler {
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("OotO")) {
-                    if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.nameplates, true)) {
-                        this.nameplates = !this.nameplates
+                    if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.settings.nameplates, true)) {
+                        this.settings.nameplates = !this.settings.nameplates;
+                        this.ModLoader.config.save();
+                    }
+                    if (this.ModLoader.ImGui.menuItem("Show notifications", undefined, this.settings.notifications, true)){
+                        this.settings.notifications = !this.settings.notifications
+                        this.ModLoader.config.save();
                     }
                     if (IS_DEV_BUILD) {
                         if (this.ModLoader.ImGui.beginMenu("Teleport")) {
@@ -152,7 +157,7 @@ export class ImGuiHandler {
             this.ModLoader.ImGui.endMainMenuBar();
         }
 
-        if (!this.nameplates) {
+        if (!this.settings.nameplates) {
             return;
         }
 

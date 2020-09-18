@@ -24,6 +24,8 @@ export interface IOotOnlineLobbyConfig {
 export class OotOnlineConfigCategory {
   mapTracker: boolean = false;
   keySync: boolean = true;
+  notifications: boolean = true;
+  nameplates: boolean = true;
 }
 
 export class OotOnline implements IPlugin, IOotOnlineHelpers, IPluginServerConfig {

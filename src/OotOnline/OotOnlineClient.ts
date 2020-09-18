@@ -93,6 +93,9 @@ export class OotOnlineClient {
         this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
         this.ModLoader.config.setData("OotOnline", "mapTracker", false);
         this.ModLoader.config.setData("OotOnline", "keySync", true);
+        this.ModLoader.config.setData("OotOnline", "notifications", true);
+        this.ModLoader.config.setData("OotOnline", "nameplates", true);
+        this.gui.settings = this.config;
     }
 
     @Init()
