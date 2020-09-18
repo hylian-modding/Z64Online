@@ -381,7 +381,7 @@ export function mergeInventoryData(
   }
   if (incoming.iceArrows) {
     if (save.iceArrows !== true && side === ProxySide.SERVER) {
-      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Fire Arrows", lobby, "tile123.png"));
+      ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Ice Arrows", lobby, "tile123.png"));
     }
     save.iceArrows = true;
   }
