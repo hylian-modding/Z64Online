@@ -73,7 +73,7 @@ export class OotOnlineClient {
                 let t: Texture = this.ModLoader.Gfx.createTexture();
                 t.loadFromFile(p);
                 this.itemIcons.set(file, t);
-                this.ModLoader.logger.debug("Loaded " + file + ".");
+                //this.ModLoader.logger.debug("Loaded " + file + ".");
             });
             this.resourcesLoaded = true;
         }
