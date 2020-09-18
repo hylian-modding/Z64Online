@@ -324,6 +324,14 @@ export let SEEN_DEKU_SHIELD: boolean = false;
 export let SEEN_HYLIAN_SHIELD: boolean = false;
 export let LOST_ITEM_FLAGS: number = 0x8011B878;
 
+export const enum LOSEABLE_GEAR{
+  SEEN_DEKU_SHIELD,
+  SEEN_HYLIAN_SHIELD,
+  SEEN_MASK_OF_TRUTH,
+  CURRENTLY_HAS_DEKU_SHIELD,
+  CURRENTLY_HAS_HYLIAN_SHIELD
+}
+
 // As much as I want to pull some Object.keys bullshit here to make writing this less verbose, I don't want any sneaky bugs.
 // So, we write it all verbose as hell.
 export function mergeInventoryData(
@@ -782,9 +790,9 @@ export function mergeEquipmentData(
   side: ProxySide,
   lobby: string
 ) {
-  SEEN_DEKU_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 0);
-  SEEN_HYLIAN_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 1);
-  SEEN_MASK_OF_TRUTH = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 2);
+  SEEN_DEKU_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_DEKU_SHIELD);
+  SEEN_HYLIAN_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_HYLIAN_SHIELD);
+  SEEN_MASK_OF_TRUTH = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_MASK_OF_TRUTH);
   // Swords
   if (incoming.kokiriSword) {
     if (save.kokiriSword !== true && side === ProxySide.SERVER) {
@@ -818,8 +826,9 @@ export function mergeEquipmentData(
     if (side === ProxySide.CLIENT) {
       if (!SEEN_DEKU_SHIELD) {
         save.dekuShield = true;
-        SEEN_DEKU_SHIELD = true;
-        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 0, true);
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_DEKU_SHIELD, true);
+      }else{
+        save.dekuShield = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.CURRENTLY_HAS_DEKU_SHIELD);
       }
     } else if (side === ProxySide.SERVER) {
       save.dekuShield = true;
@@ -832,8 +841,9 @@ export function mergeEquipmentData(
     if (side === ProxySide.CLIENT) {
       if (!SEEN_HYLIAN_SHIELD) {
         save.hylianShield = true;
-        SEEN_HYLIAN_SHIELD = true;
-        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 1, true);
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_HYLIAN_SHIELD, true);
+      }else{
+        save.hylianShield = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.CURRENTLY_HAS_HYLIAN_SHIELD);
       }
     } else if (side === ProxySide.SERVER) {
       save.hylianShield = true;

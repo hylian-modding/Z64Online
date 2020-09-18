@@ -4,7 +4,7 @@ import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/Netwo
 import { IOOTCore, OotEvents, InventoryItem, Sword, Shield, Boots, Tunic, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState } from 'modloader64_api/OOT/OOTAPI';
 import { OotOnlineEvents, OotOnline_PlayerScene } from './OotoAPI/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
-import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct } from './data/OotoSaveData';
+import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct, LOST_ITEM_FLAGS, LOSEABLE_GEAR } from './data/OotoSaveData';
 import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket, OotO_ItemGetMessagePacket } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
@@ -121,6 +121,11 @@ export class OotOnlineClient {
 
     updateInventory() {
         this.ModLoader.logger.info('updateInventory()');
+
+        // Shield Stuff
+        this.ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.CURRENTLY_HAS_DEKU_SHIELD, this.core.save.shields.dekuShield);
+        this.ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.CURRENTLY_HAS_HYLIAN_SHIELD, this.core.save.shields.hylianShield);
+
         let inventory = createInventoryFromContext(this.core.save);
         let equipment = createEquipmentFromContext(this.core.save);
         let quest = createQuestSaveFromContext(this.core.save);
@@ -654,7 +659,7 @@ export class OotOnlineClient {
 
     @NetworkHandler("OotO_ItemGetMessagePacket")
     onMessage(packet: OotO_ItemGetMessagePacket) {
-        if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
+        if (this.clientStorage.notifStorage.indexOf(packet.text) === -1) {
             if (packet.icon !== undefined) {
                 addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
             } else {
