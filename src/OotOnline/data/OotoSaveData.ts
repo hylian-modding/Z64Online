@@ -322,6 +322,7 @@ export let SEEN_MASK_OF_TRUTH: boolean = false;
 export let FIRST_HEART_CONTAINER_SET: boolean = false;
 export let SEEN_DEKU_SHIELD: boolean = false;
 export let SEEN_HYLIAN_SHIELD: boolean = false;
+export let LOST_ITEM_FLAGS: number = 0x8011B878;
 
 // As much as I want to pull some Object.keys bullshit here to make writing this less verbose, I don't want any sneaky bugs.
 // So, we write it all verbose as hell.
@@ -491,6 +492,7 @@ export function mergeInventoryData(
       save.childTradeItem = incoming.childTradeItem;
       if (save.childTradeItem === InventoryItem.MASK_OF_TRUTH) {
         SEEN_MASK_OF_TRUTH = true;
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 2, true);
       }
     }
   }
@@ -780,6 +782,9 @@ export function mergeEquipmentData(
   side: ProxySide,
   lobby: string
 ) {
+  SEEN_DEKU_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 0);
+  SEEN_HYLIAN_SHIELD = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 1);
+  SEEN_MASK_OF_TRUTH = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, 2);
   // Swords
   if (incoming.kokiriSword) {
     if (save.kokiriSword !== true && side === ProxySide.SERVER) {
@@ -810,25 +815,29 @@ export function mergeEquipmentData(
     if (save.dekuShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Deku Shield", lobby, "tile020.png"));
     }
-    if (side === ProxySide.CLIENT && !SEEN_DEKU_SHIELD){
+    if (side === ProxySide.CLIENT) {
+      if (!SEEN_DEKU_SHIELD) {
+        save.dekuShield = true;
+        SEEN_DEKU_SHIELD = true;
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 0, true);
+      }
+    } else if (side === ProxySide.SERVER) {
       save.dekuShield = true;
     }
-    if (side === ProxySide.SERVER){
-      save.dekuShield = true;
-    }
-    SEEN_DEKU_SHIELD = true;
   }
   if (incoming.hylianShield) {
     if (save.hylianShield !== true && side === ProxySide.SERVER) {
       ModLoader.serverSide.sendPacket(new OotO_ItemGetMessagePacket("You obtained the Hylian Shield", lobby, "tile021.png"));
     }
-    if (side === ProxySide.CLIENT && !SEEN_HYLIAN_SHIELD){
+    if (side === ProxySide.CLIENT) {
+      if (!SEEN_HYLIAN_SHIELD) {
+        save.hylianShield = true;
+        SEEN_HYLIAN_SHIELD = true;
+        ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, 1, true);
+      }
+    } else if (side === ProxySide.SERVER) {
       save.hylianShield = true;
     }
-    if (side === ProxySide.SERVER){
-      save.hylianShield = true;
-    }
-    SEEN_HYLIAN_SHIELD = true;
   }
   if (incoming.mirrorShield) {
     if (save.mirrorShield !== true && side === ProxySide.SERVER) {
