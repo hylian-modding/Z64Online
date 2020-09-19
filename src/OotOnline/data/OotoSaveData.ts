@@ -826,6 +826,7 @@ export function mergeEquipmentData(
     if (side === ProxySide.CLIENT) {
       if (!SEEN_DEKU_SHIELD) {
         save.dekuShield = true;
+        SEEN_DEKU_SHIELD = true;
         ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_DEKU_SHIELD, true);
       }else{
         save.dekuShield = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.CURRENTLY_HAS_DEKU_SHIELD);
@@ -841,6 +842,7 @@ export function mergeEquipmentData(
     if (side === ProxySide.CLIENT) {
       if (!SEEN_HYLIAN_SHIELD) {
         save.hylianShield = true;
+        SEEN_HYLIAN_SHIELD = true;
         ModLoader.emulator.rdramWriteBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.SEEN_HYLIAN_SHIELD, true);
       }else{
         save.hylianShield = ModLoader.emulator.rdramReadBit8(LOST_ITEM_FLAGS, LOSEABLE_GEAR.CURRENTLY_HAS_HYLIAN_SHIELD);
