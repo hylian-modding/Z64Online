@@ -654,13 +654,15 @@ export class OotOnlineClient {
 
     @NetworkHandler("OotO_ItemGetMessagePacket")
     onMessage(packet: OotO_ItemGetMessagePacket) {
-        if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
-            if (packet.icon !== undefined) {
-                addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
-            } else {
-                addToKillFeedQueue(packet.text);
+        if (this.config.notifications){
+            if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
+                if (packet.icon !== undefined) {
+                    addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
+                } else {
+                    addToKillFeedQueue(packet.text);
+                }
+                this.clientStorage.notifStorage.push(packet.text);
             }
-            this.clientStorage.notifStorage.push(packet.text);
         }
     }
 
