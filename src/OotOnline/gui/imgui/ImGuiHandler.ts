@@ -14,6 +14,7 @@ import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { IS_DEV_BUILD, OotOnlineConfigCategory } from "@OotOnline/OotOnline";
+import { changeKillfeedFont } from "modloader64_api/Announcements";
 
 export class ImGuiHandler {
 
@@ -124,7 +125,8 @@ export class ImGuiHandler {
         if (this.font === undefined) {
             try {
                 this.font = this.ModLoader.Gfx.createFont();
-                this.font.loadFromFile(path.resolve(__dirname, "PolygonParty-3KXM.ttf"), 22, 2);
+                this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 22, 2);
+                changeKillfeedFont(this.font);
             } catch (err) {
                 this.ModLoader.logger.error(err);
             }
