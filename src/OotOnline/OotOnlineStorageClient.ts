@@ -1,5 +1,6 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
+import { OotO_ItemGetMessagePacket } from './data/OotOPackets';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
@@ -21,4 +22,5 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   scene_keys: any = {};
   first_time_sync = false;
   notifStorage: Array<string> = [];
+  notifBuffer: Array<OotO_ItemGetMessagePacket> = [];
 }

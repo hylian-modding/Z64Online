@@ -229,6 +229,7 @@ export class OotOnlineClient {
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
         setTimeout(() => {
+            this.core.save.inventory.childTradeItem = InventoryItem.NONE;
             if (this.LobbyConfig.data_syncing) {
                 this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby));
             }
@@ -654,16 +655,7 @@ export class OotOnlineClient {
 
     @NetworkHandler("OotO_ItemGetMessagePacket")
     onMessage(packet: OotO_ItemGetMessagePacket) {
-        if (this.config.notifications){
-            if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
-                if (packet.icon !== undefined) {
-                    addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
-                } else {
-                    addToKillFeedQueue(packet.text);
-                }
-                this.clientStorage.notifStorage.push(packet.text);
-            }
-        }
+        this.clientStorage.notifBuffer.push(packet);
     }
 
     healPlayer() {
@@ -873,6 +865,26 @@ export class OotOnlineClient {
                         this.keys.update();
                     }
                     let state = this.core.link.state;
+                    if (state === LinkState.STANDING && this.clientStorage.notifBuffer.length > 0){
+                        if (this.clientStorage.notifBuffer.length > 10){
+                            let size = this.clientStorage.notifBuffer.length;
+                            this.clientStorage.notifBuffer.length = 0;
+                            this.clientStorage.notifBuffer.push(new OotO_ItemGetMessagePacket("You obtained " + size + " items.", this.ModLoader.clientLobby));
+                        }
+                        while (this.clientStorage.notifBuffer.length > 0){
+                            let packet = this.clientStorage.notifBuffer.shift()!;
+                            if (this.config.notifications){
+                                if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
+                                    if (packet.icon !== undefined) {
+                                        addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
+                                    } else {
+                                        addToKillFeedQueue(packet.text);
+                                    }
+                                    this.clientStorage.notifStorage.push(packet.text);
+                                }
+                            }
+                        }
+                    }
                     if (state === LinkState.BUSY || state === LinkState.GETTING_ITEM || state === LinkState.TALKING) {
                         this.clientStorage.needs_update = true;
                     } else if (
