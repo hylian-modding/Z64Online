@@ -9,7 +9,7 @@ export class HookInfo {
   offset = 0;
   size = 0;
   isBehavior = false;
-  overrideIncoming!: (actor: IActor, offset: number, data: Buffer)=>void;
+  overrideIncoming!: (actor: IActor, offset: number, data: Buffer, ModLoader: IModLoaderAPI)=>void;
 
   constructor(offset: number, size: number, isBehavior = false) {
     this.offset = offset;
@@ -51,8 +51,11 @@ export class ActorHookBase {
   variable = 0;
   checkVariable = false;
   hooks: HookInfo[] = new Array<HookInfo>();
+  noMove: boolean;
 
-  constructor() {}
+  constructor(noMove = false) {
+    this.noMove = noMove;
+  }
 }
 
 function getActorBehavior(

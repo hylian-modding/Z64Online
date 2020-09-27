@@ -55,6 +55,10 @@ export class ActorHookingManagerClient {
     string,
     ActorHookProcessor
   >();
+  transitionHookTicks: Map<string, ActorHookProcessor> = new Map<
+    string,
+    ActorHookProcessor
+  >();
   // Bombs
   bombsLocal: Map<string, IActor> = new Map<string, IActor>();
   bombsRemote: Map<string, IActor> = new Map<string, IActor>();
@@ -170,16 +174,13 @@ export class ActorHookingManagerClient {
         }
       }
       this.ModLoader.logger.info(
-        'Setting up hook for actor ' +
-        this.names['0x' + actor.actorID.toString(16).toUpperCase()] +
-        ': ' +
-        actor.actorUUID +
-        '.'
+        'Setting up hook for actor ' + this.names['0x' + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + ", " + actor.isTransitionActor + '.'
       );
-      this.actorHookTicks.set(
-        actor.actorUUID,
-        new ActorHookProcessor(actor, base, this.ModLoader, this.core)
-      );
+      if (actor.isTransitionActor) {
+        this.transitionHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core));
+      } else {
+        this.actorHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core));
+      }
     } else if (actor.actorID === BOMB_ID) {
       if (actor.rdramRead32(0x1e8) <= 10) {
         return;
@@ -249,6 +250,18 @@ export class ActorHookingManagerClient {
   onActorDespawned(actor: IActor) {
     if (!(this.parent as any).client.LobbyConfig.actor_syncing) {
       return;
+    }
+    if (this.transitionHookTicks.has(actor.actorUUID)) {
+      this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
+      this.ModLoader.clientSide.sendPacket(
+        new Ooto_ActorDeadPacket(
+          actor.actorUUID,
+          this.core.global.scene,
+          this.core.global.room,
+          this.ModLoader.clientLobby
+        )
+      );
+      this.transitionHookTicks.delete(actor.actorUUID);
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
       this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
@@ -336,23 +349,63 @@ export class ActorHookingManagerClient {
 
   @NetworkHandler('Ooto_ActorPacket')
   onActorPacket(packet: Ooto_ActorPacket) {
+    // Specifically deal with doors first.
+    if (this.transitionHookTicks.has(packet.actorData.actor.actorUUID)) {
+      this.transitionHookTicks.get(
+        packet.actorData.actor.actorUUID
+      )!.last_inbound_frame = 50;
+
+      let p = this.transitionHookTicks.get(
+        packet.actorData.actor.actorUUID
+      )!;
+      let actor: IActor = p.actor;
+
+      if (!p.hookBase.noMove) {
+        actor.position.setRawPos(packet.actorData.rawPos);
+        actor.rotation.setRawRot(packet.actorData.rawRot);
+      }
+
+      let hooks = p.hookBase.hooks;
+      for (let i = 0; i < hooks.length; i++) {
+        if (hooks[i].overrideIncoming !== undefined) {
+          hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data, this.ModLoader);
+        } else {
+          if (hooks[i].isBehavior) {
+            let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
+            this.setActorBehavior(
+              this.ModLoader.emulator,
+              actor,
+              hooks[i].offset,
+              d
+            );
+          } else {
+            actor.rdramWriteBuffer(
+              hooks[i].offset,
+              packet.actorData.hooks[i].data
+            );
+          }
+        }
+      }
+    }
     if (this.actorHookTicks.has(packet.actorData.actor.actorUUID)) {
       this.actorHookTicks.get(
         packet.actorData.actor.actorUUID
       )!.last_inbound_frame = 50;
 
-      let actor: IActor = this.actorHookTicks.get(
+      let p = this.actorHookTicks.get(
         packet.actorData.actor.actorUUID
-      )!.actor;
+      )!;
+      let actor: IActor = p.actor;
 
-      actor.position.setRawPos(packet.actorData.rawPos);
-      actor.rotation.setRawRot(packet.actorData.rawRot);
+      if (!p.hookBase.noMove) {
+        actor.position.setRawPos(packet.actorData.rawPos);
+        actor.rotation.setRawRot(packet.actorData.rawRot);
+      }
 
-      let hooks = this.actorHookTicks.get(packet.actorData.actor.actorUUID)!
-        .hookBase.hooks;
+      let hooks = p.hookBase.hooks;
       for (let i = 0; i < hooks.length; i++) {
         if (hooks[i].overrideIncoming !== undefined) {
-          hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data);
+          hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data, this.ModLoader);
         } else {
           if (hooks[i].isBehavior) {
             let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
@@ -560,6 +613,9 @@ export class ActorHookingManagerClient {
 
   tick() {
     this.actorHookTicks.forEach((value: ActorHookProcessor, key: string) => {
+      value.onTick();
+    });
+    this.transitionHookTicks.forEach((value: ActorHookProcessor, key: string) => {
       value.onTick();
     });
     this.bombsLocal.forEach((value: IActor, key: string) => {

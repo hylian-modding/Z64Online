@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Sword, Shield, Boots, Tunic, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState } from 'modloader64_api/OOT/OOTAPI';
 import { OotOnlineEvents, OotOnline_PlayerScene } from './OotoAPI/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct } from './data/OotoSaveData';
@@ -856,8 +856,7 @@ export class OotOnlineClient {
     onTick() {
         if (
             !this.core.helper.isTitleScreen() &&
-            this.core.helper.isSceneNumberValid() &&
-            this.core.helper.isInterfaceShown()
+            this.core.helper.isSceneNumberValid()
         ) {
             if (!this.core.helper.isPaused()) {
                 if (!this.clientStorage.first_time_sync) {
