@@ -480,7 +480,7 @@ export function mergeInventoryData(
   }
 
   // Desync the mask slot if we finished the quest.
-  if (incoming.childTradeItem !== InventoryItem.SOLD_OUT && !SEEN_MASK_OF_TRUTH) {
+  if ((incoming.childTradeItem !== InventoryItem.SOLD_OUT && incoming.childTradeItem !== InventoryItem.NONE) && !SEEN_MASK_OF_TRUTH) {
     if (
       incoming.childTradeItem > save.childTradeItem &&
       save.childTradeItem <= InventoryItem.MASK_OF_TRUTH
