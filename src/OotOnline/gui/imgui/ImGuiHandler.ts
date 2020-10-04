@@ -6,7 +6,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { EventHandler } from "modloader64_api/EventHandler";
-import { OotOnlineEvents } from "@OotOnline/OotoAPI/OotoAPI";
+import { IOotOnlineHelpers, OotOnlineEvents } from "@OotOnline/OotoAPI/OotoAPI";
 import Vector3 from "modloader64_api/math/Vector3";
 import { glmatrix_matrix4, glmatrix_vec4 } from 'modloader64_api/math/glmatrix';
 import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
@@ -15,6 +15,18 @@ import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { IS_DEV_BUILD, OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 import { changeKillfeedFont } from "modloader64_api/Announcements";
+import IMemory from "modloader64_api/IMemory";
+import { IActor } from "modloader64_api/OOT/IActor";
+import fse from 'fs-extra';
+import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
+
+function buf2hex(buffer: Buffer) {
+    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+}
+
+function v3toTruncatedString(v3: Vector3, fixed: number = 4): string {
+    return "(" + v3.x.toFixed(fixed).toString() + ", " + v3.y.toFixed(fixed).toString() + ", " + v3.z.toFixed(fixed).toString() + ")";
+}
 
 export class ImGuiHandler {
 
@@ -22,6 +34,8 @@ export class ImGuiHandler {
     ModLoader!: IModLoaderAPI;
     @InjectCore()
     core!: IOOTCore;
+    @ParentReference()
+    parent!: IOotOnlineHelpers;
     modelManager!: ModelManagerClient;
     puppets: Array<Puppet> = [];
     scene: number = -1;
@@ -35,8 +49,15 @@ export class ImGuiHandler {
     puppetsDespawn: Array<number> = [];
     teleportDest: string_ref = [""];
     settings!: OotOnlineConfigCategory
+    showActorBrowser: boolean = false;
+    actorCategories: Array<string> = ["Switches", "Backgrounds", "Player", "Bomb", "NPC", "Enemy", "Prop", "Item", "Misc", "Boss", "Door", "Chest"];
+    actorNames: any;
+    curActor: number = 0;
+    raddeg: number = Math.PI / 32768
+    actor_data: Buffer = Buffer.alloc(0x13C);
 
     constructor() {
+        this.actorNames = JSON.parse(fse.readFileSync(path.resolve(__dirname, "ACTOR_NAMES.json")).toString());
     }
 
     @EventHandler(OotOnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -103,6 +124,35 @@ export class ImGuiHandler {
         return m;
     };
 
+    getActorBehavior(
+        emulator: IMemory,
+        actor: IActor,
+        offset: number
+    ): number {
+        let id: number = actor.actorID;
+        let overlay_table: number = global.ModLoader['overlay_table'];
+        let overlay_entry = overlay_table + id * 32;
+        let behavior_start = overlay_entry + 0x10;
+        let pointer = emulator.dereferencePointer(behavior_start);
+        let behavior = actor.dereferencePointer(offset);
+        return behavior - pointer;
+    }
+
+    setActorBehavior(
+        emulator: IMemory,
+        actor: IActor,
+        offset: number,
+        behavior: number
+    ) {
+        let id: number = actor.actorID;
+        let overlay_table: number = global.ModLoader['overlay_table'];
+        let overlay_entry = overlay_table + id * 32;
+        let behavior_start = overlay_entry + 0x10;
+        let pointer = emulator.dereferencePointer(behavior_start);
+        let behavior_result = pointer + behavior;
+        actor.rdramWrite32(offset, behavior_result + 0x80000000);
+    }
+
     @onViUpdate()
     onViUpdate() {
         /* this.ModLoader.ImGui.begin("OotOnline Debugger", [true]);
@@ -139,7 +189,7 @@ export class ImGuiHandler {
                         this.settings.nameplates = !this.settings.nameplates;
                         this.ModLoader.config.save();
                     }
-                    if (this.ModLoader.ImGui.menuItem("Show notifications", undefined, this.settings.notifications, true)){
+                    if (this.ModLoader.ImGui.menuItem("Show notifications", undefined, this.settings.notifications, true)) {
                         this.settings.notifications = !this.settings.notifications
                         this.ModLoader.config.save();
                     }
@@ -152,6 +202,9 @@ export class ImGuiHandler {
                             this.ModLoader.ImGui.endMenu();
                         }
                     }
+                    if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
+                        this.showActorBrowser = !this.showActorBrowser;
+                    }
                     this.ModLoader.ImGui.endMenu();
                 }
                 this.ModLoader.ImGui.endMenu();
@@ -161,6 +214,150 @@ export class ImGuiHandler {
 
         if (!this.settings.nameplates) {
             return;
+        }
+
+        /*if (!this.helper.isLinkEnteringLoadingZone()) {
+            for (let i = 0; i < 12 * 8; i += 8) {
+                let count = this.emulator.rdramReadPtr32(
+                    global.ModLoader.global_context_pointer,
+                    this.actor_array_addr + i
+                );
+                let ptr = this.emulator.dereferencePointer(
+                    global.ModLoader.global_context_pointer
+                );
+                if (count > 0) {
+                    let pointer = this.emulator.dereferencePointer(
+                        ptr + this.actor_array_addr + (i + 4)
+                    );
+                    this.actors_pointers_this_frame.push(pointer);
+                    let next = this.emulator.dereferencePointer(
+                        pointer + this.actor_next_offset
+                    );
+                    while (next > 0) {
+                        this.actors_pointers_this_frame.push(next);
+                        next = this.emulator.dereferencePointer(
+                            next + this.actor_next_offset
+                        );
+                    }
+                }
+            }
+        }*/
+
+        if (this.showActorBrowser) {
+            let treeNodeDepth = 0;
+            if (this.ModLoader.ImGui.begin("Actor Browser###OotO:ActorDebug")) {
+                this.ModLoader.ImGui.columns(2, "###ActorView", true)
+
+                let offset = 0x1C30;
+                for (let i = 0; i < 12; i++) {
+                    treeNodeDepth++;
+                    let ptr = this.ModLoader.emulator.rdramRead32(global.ModLoader.global_context_pointer);
+                    ptr += offset + (i * 8) + 4;
+                    if (this.ModLoader.ImGui.treeNode(this.actorCategories[i] + "###OotO:ActorDebugTree" + treeNodeDepth)) {
+                        this.ModLoader.ImGui.sameLine()
+                        this.ModLoader.ImGui.textDisabled(ptr.toString(16).toUpperCase())
+
+                        if (this.ModLoader.emulator.rdramReadPtr32(global.ModLoader.global_context_pointer, offset + (i * 8)) === 0) {
+                            this.ModLoader.ImGui.treePop();
+                            continue;
+                        }
+
+                        let next = this.ModLoader.emulator.rdramReadPtr32(global.ModLoader.global_context_pointer, offset + (i * 8) + 4);
+
+                        while (next !== 0) {
+                            let name = this.actorNames["0x" + this.ModLoader.emulator.rdramRead16(next).toString(16).toUpperCase()];
+                            if (name === undefined) {
+                                name = "Unknown actor";
+                            }
+
+                            if (this.ModLoader.ImGui.menuItem(name + "###OotO:ActorDebugTree" + next.toString(16), undefined, this.curActor === next)) {
+                                this.curActor = next;
+                            }
+                            next = this.ModLoader.emulator.rdramRead32(next + 0x124);
+                        }
+
+                        this.ModLoader.ImGui.treePop();
+                    }
+                }
+
+                this.ModLoader.ImGui.nextColumn()
+
+                let actor = this.core.actorManager.createIActorFromPointer(this.curActor);
+                let actor_size = this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramRead32(this.curActor + (0x13C - 4)) + 0x14) + 0xC)
+
+                if (actor_size === 0) actor_size = 0x13C
+
+                this.ModLoader.ImGui.textDisabled("UUID: " + actor.actorUUID.toUpperCase())
+                this.ModLoader.ImGui.textDisabled("Address: " + this.curActor.toString(16).toUpperCase())
+
+                this.ModLoader.ImGui.text("Actor ID: " + actor.actorID.toString(16).toUpperCase().padStart(4, "0")); this.ModLoader.ImGui.sameLine()
+                this.ModLoader.ImGui.text("Actor Type: " + actor.actorType.toString(16).toUpperCase()); this.ModLoader.ImGui.sameLine()
+                this.ModLoader.ImGui.text("Variable: " + actor.variable.toString(16).toUpperCase()); this.ModLoader.ImGui.sameLine()
+                this.ModLoader.ImGui.text("Room: " + actor.room.toString(16).toUpperCase())
+                this.ModLoader.ImGui.text("Render Flags: " + actor.renderingFlags.toString(16).toUpperCase())
+
+                this.ModLoader.ImGui.text("Health: " + actor.health.toString())
+                this.ModLoader.ImGui.text("Object Table Index: " + actor.objectTableIndex.toString(16))
+                this.ModLoader.ImGui.text("Redead Freeze: " + actor.redeadFreeze.toString(16).toUpperCase())
+                this.ModLoader.ImGui.text("Sound Effect: " + actor.soundEffect.toString(16).toUpperCase())
+
+                this.ModLoader.ImGui.text("Position: " + v3toTruncatedString(actor.position.getVec3()));
+                this.ModLoader.ImGui.text("Rotation: " + v3toTruncatedString(actor.rotation.getVec3().multiplyN(this.raddeg)));
+                this.ModLoader.ImGui.text("Sizeof: " + actor_size.toString(16).toUpperCase())
+
+                if (this.ModLoader.ImGui.treeNode("Hex" + "###" + this.curActor.toString(16))) {
+                    this.actor_data = this.ModLoader.emulator.rdramReadBuffer(this.curActor, actor_size)
+
+                    this.ModLoader.ImGui.sameLine(undefined, 12)
+                    if (this.ModLoader.ImGui.button("Copy")) {
+                        this.ModLoader.ImGui.setClipboardText(buf2hex(this.actor_data).toUpperCase())
+                    }
+
+                    let width = this.ModLoader.ImGui.getContentRegionAvail().x - 20
+                    let current_offset = 0
+
+                    this.ModLoader.ImGui.beginChildFrame(1, xy(width, 320))
+
+                    for (let i = 0; i < actor_size; i += 4) {
+                        current_offset += 8
+
+                        if (current_offset >= width - 64) {
+                            this.ModLoader.ImGui.newLine()
+                            current_offset = 8
+                        }
+
+                        for (let j = 0; j < 4; j++) {
+                            this.ModLoader.ImGui.sameLine(current_offset - j, 0)
+                            this.ModLoader.ImGui.textDisabled(buf2hex(this.actor_data.slice(i + j, i + j + 1)).toUpperCase())
+                            current_offset += 20
+                        }
+
+                        current_offset += 8
+                    }
+
+                    this.ModLoader.ImGui.endChildFrame()
+
+                    this.ModLoader.ImGui.treePop()
+                }
+
+                if (this.ModLoader.ImGui.smallButton(this.raddeg === (Math.PI / 32768) ? "Radians" : "Degrees")) {
+                    this.raddeg = this.raddeg == (Math.PI / 32768) ? (180 / 32769) : (Math.PI / 32768)
+                }
+
+                this.ModLoader.ImGui.sameLine()
+                if (this.ModLoader.ImGui.smallButton("Move to Link")) {
+                    let pos = this.core.link.position.getRawPos();
+                    let rot = this.core.link.rotation.getRawRot();
+                    actor.position.setRawPos(pos);
+                    actor.rotation.setRawRot(rot);
+                }
+
+                if (this.ModLoader.ImGui.smallButton("Kill Actor")) {
+                    actor.destroy();
+                }
+
+                this.ModLoader.ImGui.end();
+            }
         }
 
         for (let i = 0; i < this.puppets.length; i++) {
