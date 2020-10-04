@@ -7,6 +7,7 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { bus } from "modloader64_api/EventHandler";
 import { OotOnlineEvents, OotOnline_Emote } from "@OotOnline/OotoAPI/OotoAPI";
 import { Pak } from "modloader64_api/PakFormat";
+import zip from 'adm-zip';
 
 export class Halloween implements IWorldEvent {
 
@@ -19,10 +20,14 @@ export class Halloween implements IWorldEvent {
         this.ModLoader = ModLoader;
         this.startDate = new Date(new Date().getFullYear(), 9, 27);
         this.endDate = new Date(new Date().getFullYear(), 10, 3);
-        let assets: Pak = new Pak(path.resolve(__dirname, "assets.pak"));
+        let assets: zip = new zip(path.resolve(__dirname, "assets.zip"));
         this.ModLoader.logger.info("Loading Halloween assets...");
-        for (let i = 0; i < assets.pak.header.files.length; i++) {
-            this.assets.set(assets.pak.header.files[i].filename, assets.load(i));
+        for (let i = 0; i < assets.getEntries().length; i++){
+            let e = assets.getEntries()[i];
+            if (!e.isDirectory){
+                this.assets.set(e.entryName, e.getData());
+                this.ModLoader.logger.debug(e.entryName);
+            }
         }
     }
 
