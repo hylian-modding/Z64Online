@@ -65,7 +65,7 @@ export class Puppet {
       this.data.pointer = 0x0;
       (this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
         if (success) {
-          this.data.pointer = result & 0x00ffffff;
+          this.data.pointer = result;
           this.doNotDespawnMe(this.data.pointer);
           if (this.hasAttachedHorse()) {
             let horse: number = this.getAttachedHorse();
