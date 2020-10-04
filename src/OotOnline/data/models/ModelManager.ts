@@ -52,6 +52,9 @@ export class ModelManagerClient {
   customModelFileChildIcon = '';
   cacheDir: string = "./cache";
   isThreaded: boolean = false;
+  //
+  customModelBufferAdult: Buffer | undefined;
+  customModelBufferChild: Buffer | undefined;
 
   constructor() {
     this.allocationManager = new ModelAllocationManager();
@@ -62,9 +65,19 @@ export class ModelManagerClient {
     this.customModelFileAdult = file;
   }
 
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT)
+  onCustomModelBufferAdult(buf: Buffer) {
+    this.customModelBufferAdult = buf;
+  }
+
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
   onCustomModel2(file: string) {
     this.customModelFileChild = file;
+  }
+
+  @EventHandler(OotOnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD)
+  onCustomModelBufferChild(buf: Buffer) {
+    this.customModelBufferChild = buf;
   }
 
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS)
@@ -92,9 +105,14 @@ export class ModelManagerClient {
     this.customModelFileChild = evt.p;
   }
 
-  loadAdultModel(evt: any, file: string) {
+  loadAdultModel(evt: any, file: string, buf?: Buffer) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    let model: Buffer = fs.readFileSync(file);
+    let model: Buffer;
+    if (file !== '') {
+      model = fs.readFileSync(file);
+    } else {
+      model = buf!;
+    }
     let manifest: OOTAdultManifest = new OOTAdultManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       manifest.inject(this.ModLoader, evt.rom, model);
@@ -105,9 +123,14 @@ export class ModelManagerClient {
     }
   }
 
-  loadChildModel(evt: any, file: string) {
+  loadChildModel(evt: any, file: string, buf?: Buffer) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    let model: Buffer = fs.readFileSync(file);
+    let model: Buffer;
+    if (file !== '') {
+      model = fs.readFileSync(file);
+    } else {
+      model = buf!;
+    }
     let manifest: OOTChildManifest = new OOTChildManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       manifest.inject(this.ModLoader, evt.rom, model);
@@ -171,8 +194,8 @@ export class ModelManagerClient {
       evt.rom = resize;
     }
 
-    if (this.customModelFileAdult !== '') {
-      this.loadAdultModel(evt, this.customModelFileAdult);
+    if (this.customModelFileAdult !== '' || this.customModelBufferAdult !== undefined) {
+      this.loadAdultModel(evt, this.customModelFileAdult, this.customModelBufferAdult);
       let def = zlib.deflateSync(this.clientStorage.adultModel);
       this.ModLoader.clientSide.sendPacket(
         new Ooto_AllocateModelPacket(
@@ -184,8 +207,8 @@ export class ModelManagerClient {
       );
     }
 
-    if (this.customModelFileChild !== '') {
-      this.loadChildModel(evt, this.customModelFileChild);
+    if (this.customModelFileChild !== '' || this.customModelBufferChild !== undefined) {
+      this.loadChildModel(evt, this.customModelFileChild, this.customModelBufferChild);
       let def = zlib.deflateSync(this.clientStorage.childModel);
       this.ModLoader.clientSide.sendPacket(
         new Ooto_AllocateModelPacket(

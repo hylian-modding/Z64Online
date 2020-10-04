@@ -19,3 +19,6 @@ postbuild.js
 src/cheatmenu.pak
 CustomActorToolkit0.42/
 Texture64-v0.1.1/
+zzobjman.exe
+tools/
+merge.bat

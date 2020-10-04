@@ -31,6 +31,8 @@ import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 import { addToKillFeedQueue } from 'modloader64_api/Announcements';
 import { Texture } from 'modloader64_api/Sylvain/Gfx';
+import { WorldEvents } from './WorldEvents/WorldEvents';
+import { EmoteManager } from './data/emotes/emoteManager';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -45,6 +47,8 @@ export class OotOnlineClient {
     clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
     config!: OotOnlineConfigCategory;
 
+    @SidedProxy(ProxySide.CLIENT, EmoteManager)
+    emotes!: EmoteManager;
     @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, UtilityActorHelper)
@@ -61,6 +65,8 @@ export class OotOnlineClient {
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
     gui!: ImGuiHandler;
+    @SidedProxy(ProxySide.CLIENT, WorldEvents)
+    worldEvents!: WorldEvents;
     resourcesLoaded: boolean = false;
     itemIcons: Map<string, Texture> = new Map<string, Texture>();
 
@@ -228,6 +234,7 @@ export class OotOnlineClient {
 
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
+        this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
         setTimeout(() => {
             this.core.save.inventory.childTradeItem = InventoryItem.NONE;
             if (this.LobbyConfig.data_syncing) {
@@ -789,7 +796,7 @@ export class OotOnlineClient {
         if (evt.file === "link_no_pvp.ovl") {
             let result: IOvlPayloadResult = evt.result;
             this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
-        } else if (evt.file === "horse-3.ovl") {
+        } else if (evt.file === "flag_fixer.ovl") {
             let result: IOvlPayloadResult = evt.result;
             this.ModLoader.emulator.rdramWrite32(0x80600150, result.params);
         }

@@ -26,7 +26,9 @@ export enum OotOnlineEvents {
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
   ON_LOAD_SOUND_PACK = "OotOnline:OnLoadSoundPack",
   ON_REMOTE_SOUND_PACK = "OotOnline:OnRemoteSoundPack",
-  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound"
+  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound",
+  CUSTOM_MODEL_LOAD_BUFFER_ADULT = "OotOnline:ApplyCustomModelAdultBuffer",
+  CUSTOM_MODEL_LOAD_BUFFER_CHILD = "OotOnline:ApplyCustomModelChildBuffer"
 }
 
 export class RemoteSoundPlayRequest{
