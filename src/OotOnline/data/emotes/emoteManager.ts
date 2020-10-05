@@ -48,6 +48,13 @@ export class EmoteManager {
         }
         if (this.displayingEmoteWindow) {
             if (this.ModLoader.ImGui.begin("Emotes###OotO:Emotes")) {
+                if (this.isCurrentlyPlayingEmote) {
+                    if (this.ModLoader.ImGui.smallButton("Stop")) {
+                        this.isCurrentlyPlayingEmote = false;
+                        this.core.link.redeadFreeze = 0x0;
+                        this.currentEmoteFrame = -1;
+                    }
+                }
                 if (this.masterEmoteList.length > 0) {
                     for (let i = 0; i < this.masterEmoteList.length; i++) {
                         if (this.masterEmoteList[i].name !== "") {
@@ -66,10 +73,10 @@ export class EmoteManager {
     }
 
     @Postinit()
-    onPost(){
+    onPost() {
         let rawSound: any = {};
-        for (let i = 0; i < this.masterEmoteList.length; i++){
-            if (this.masterEmoteList[i].soundid !== undefined){
+        for (let i = 0; i < this.masterEmoteList.length; i++) {
+            if (this.masterEmoteList[i].soundid !== undefined) {
                 let arr: Array<Buffer> = [];
                 arr.push(zlib.deflateSync(this.masterEmoteList[i].soundBuffer!));
                 rawSound[this.masterEmoteList[i].soundid!] = arr;
