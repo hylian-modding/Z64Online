@@ -19,7 +19,7 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { OotOnlineEvents } from '../../OotoAPI/OotoAPI';
+import { OotOnlineEvents, OotOnline_ModelAllocation } from '../../OotoAPI/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -103,6 +103,29 @@ export class ModelManagerClient {
   @EventHandler(OotOnlineEvents.CUSTOM_MODEL_OVERRIDE_CHILD)
   onOverrideChild(evt: any) {
     this.customModelFileChild = evt.p;
+  }
+
+  @EventHandler(OotOnlineEvents.ALLOCATE_MODEL_BLOCK)
+  onAlloc(alloc: OotOnline_ModelAllocation){
+    let uuid = this.ModLoader.utils.getUUID();
+    let mp = new ModelPlayer(uuid);
+    switch(alloc.age){
+      case Age.ADULT:
+        mp.model.adult.zobj = alloc.model;
+        break;
+      case Age.CHILD:
+        mp.model.child.zobj = alloc.model;
+        break;
+    }
+    alloc.slot = this.allocationManager.allocateSlot(mp);
+  }
+
+  @EventHandler(OotOnlineEvents.FORCE_LOAD_MODEL_BLOCK)
+  onForceLoad(slot: number){
+    let allocation_size = 0x37800;
+    let addr: number = 0x800000 + allocation_size * slot;
+    let model = this.allocationManager.getModelInSlot(slot);
+    this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), slot));
   }
 
   loadAdultModel(evt: any, file: string, buf?: Buffer) {
