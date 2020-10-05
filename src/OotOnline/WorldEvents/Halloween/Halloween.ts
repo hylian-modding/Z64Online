@@ -3,57 +3,32 @@ import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import path from 'path';
 import { zzstatic } from 'Z64Lib/API/zzstatic';
-import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { bus } from "modloader64_api/EventHandler";
+import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
+import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { OotOnlineEvents, OotOnline_Emote } from "@OotOnline/OotoAPI/OotoAPI";
-import { Pak } from "modloader64_api/PakFormat";
 import zip from 'adm-zip';
+import { FlipFlags, Texture } from "modloader64_api/Sylvain/Gfx";
+import fs from 'fs';
+import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
+import { onCreateResources, onViUpdate, Preinit } from "modloader64_api/PluginLifecycle";
+import { rgb, rgba, vec4, xywh } from "modloader64_api/Sylvain/vec";
+import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
+import { InjectCore } from "modloader64_api/CoreInjection";
 
 export class Halloween implements IWorldEvent {
 
-    ModLoader: IModLoaderAPI;
-    startDate: Date;
-    endDate: Date;
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+    @InjectCore()
+    core!: IOOTCore;
     assets: Map<string, Buffer> = new Map<string, Buffer>();
+    resourceLoad: boolean = false;
+    titleScreen!: Texture;
+    fadeIn: vec4 = rgba(255, 255, 255, 0);
 
-    constructor(ModLoader: IModLoaderAPI) {
-        this.ModLoader = ModLoader;
-        this.startDate = new Date(new Date().getFullYear(), 9, 27);
-        this.endDate = new Date(new Date().getFullYear(), 10, 3);
-        let assets: zip = new zip(path.resolve(__dirname, "assets.zip"));
-        this.ModLoader.logger.info("Loading Halloween assets...");
-        for (let i = 0; i < assets.getEntries().length; i++){
-            let e = assets.getEntries()[i];
-            if (!e.isDirectory){
-                this.assets.set(e.entryName, e.getData());
-                this.ModLoader.logger.debug(e.entryName);
-            }
-        }
-    }
-
-    getRandomInt(min: number, max: number) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    preinit(): void {
-        let costumes_adult: Buffer[] = [];
-        let costumes_child: Buffer[] = [];
-        this.assets.forEach((value: Buffer, key: string) => {
-            if (key.indexOf("costumes/adult") > -1) {
-                costumes_adult.push(this.assets.get(key)!);
-            } else if (key.indexOf("costumes/child") > -1) {
-                costumes_child.push(this.assets.get(key)!);
-            }
-        });
-        let choice = costumes_adult[this.getRandomInt(0, costumes_adult.length - 1)];
-        bus.emit(OotOnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT, choice);
-        let choice2 = costumes_child[this.getRandomInt(0, costumes_child.length - 1)];
-        bus.emit(OotOnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD, choice2);
-    }
-
-    injectAssets(rom: Buffer): void {
+    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
+    onRomPatched(evt: any) {
+        let rom: Buffer = evt.rom;
         try {
             let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
 
@@ -104,8 +79,63 @@ export class Halloween implements IWorldEvent {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80700000, replacement);
                 this.ModLoader.emulator.rdramWriteBuffer(curRam, gs_replacement);
             }, 1);
+
         } catch (err) {
             this.ModLoader.logger.error(err.stack);
         }
+    }
+
+    @onCreateResources()
+    onLoadAssets() {
+        if (!this.resourceLoad) {
+            this.titleScreen = this.ModLoader.Gfx.createTexture();
+            fs.writeFileSync(path.resolve(__dirname, "Halloween.png"), this.assets.get("assets/Halloween.png")!);
+            this.titleScreen.loadFromFile(path.resolve(__dirname, "Halloween.png"));
+            this.resourceLoad = true;
+        }
+    }
+
+    getRandomInt(min: number, max: number) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    @Preinit()
+    preinit(): void {
+        let assets: zip = new zip(path.resolve(__dirname, "assets.zip"));
+        this.ModLoader.logger.info("Loading Halloween assets...");
+        for (let i = 0; i < assets.getEntries().length; i++) {
+            let e = assets.getEntries()[i];
+            if (!e.isDirectory) {
+                this.assets.set(e.entryName, e.getData());
+                this.ModLoader.logger.debug(e.entryName);
+            }
+        }
+        let costumes_adult: Buffer[] = [];
+        let costumes_child: Buffer[] = [];
+        this.assets.forEach((value: Buffer, key: string) => {
+            if (key.indexOf("costumes/adult") > -1) {
+                costumes_adult.push(this.assets.get(key)!);
+            } else if (key.indexOf("costumes/child") > -1) {
+                costumes_child.push(this.assets.get(key)!);
+            }
+        });
+        let choice = costumes_adult[this.getRandomInt(0, costumes_adult.length - 1)];
+        bus.emit(OotOnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT, choice);
+        let choice2 = costumes_child[this.getRandomInt(0, costumes_child.length - 1)];
+        bus.emit(OotOnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD, choice2);
+    }
+
+    @onViUpdate()
+    onVi() {
+        if (!this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid()){
+            this.fadeIn.w = 0;
+            return;
+        };
+        if (this.fadeIn.w < 1.0){
+            this.fadeIn.w+=0.001;
+        }
+        this.ModLoader.Gfx.addSprite(this.ModLoader.ImGui.getWindowDrawList(), this.titleScreen, xywh(0, 0, this.titleScreen.width, this.titleScreen.height), xywh(0, 0, this.ModLoader.ImGui.getMainViewport().size.x, this.ModLoader.ImGui.getMainViewport().size.y), this.fadeIn, FlipFlags.None);
     }
 }
