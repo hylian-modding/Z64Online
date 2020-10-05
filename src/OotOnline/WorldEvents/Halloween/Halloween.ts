@@ -73,7 +73,7 @@ export class Halloween implements IWorldEvent {
             this.assets.get("assets/scarecrow_textures.bin")!.copy(sc, 0x2C00);
             tools.recompressDMAFileIntoRom(rom, 815, sc);
 
-            bus.emit(OotOnlineEvents.ON_REGISTER_EMOTE, { name: "Spooky", buf: this.assets.get("assets/skeleton_dance.bin")!, sound: this.assets.get("assets/skeleton.ogg")! } as OotOnline_Emote);
+            bus.emit(OotOnlineEvents.ON_REGISTER_EMOTE, { name: "Spooky", buf: this.assets.get("assets/skeleton_dance.bin")!, sound: this.assets.get("assets/skeleton.ogg")!, builtIn: true} as OotOnline_Emote);
 
             this.ModLoader.utils.setTimeoutFrames(() => {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80700000, replacement);

@@ -52,6 +52,7 @@ export interface OotOnline_Emote {
   name: string;
   buf: Buffer;
   sound?: Buffer;
+  builtIn?: boolean;
 }
 
 export class OotOnline_PlayerScene {
