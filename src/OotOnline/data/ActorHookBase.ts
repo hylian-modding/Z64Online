@@ -9,7 +9,7 @@ export class HookInfo {
   offset = 0;
   size = 0;
   isBehavior = false;
-  overrideIncoming!: (actor: IActor, offset: number, data: Buffer, ModLoader: IModLoaderAPI)=>void;
+  overrideIncoming!: (actor: IActor, offset: number, data: Buffer, ModLoader: IModLoaderAPI) => void;
 
   constructor(offset: number, size: number, isBehavior = false) {
     this.offset = offset;
@@ -58,7 +58,7 @@ export class ActorHookBase {
   }
 }
 
-function getActorBehavior(
+export function getActorBehavior(
   emulator: IMemory,
   actor: IActor,
   offset: number
@@ -115,6 +115,19 @@ export class ActorHookProcessor extends JSONTemplate {
     if (this.last_inbound_frame > 0) {
       this.last_inbound_frame--;
     }
+  }
+
+  fakeTick(): Ooto_ActorPacket {
+    let k = this.toJSON();
+    let j = JSON.stringify(k);
+    this.lastFrameCache = j;
+    let p = new Ooto_ActorPacket(
+      k,
+      this.core.global.scene,
+      this.core.global.room,
+      this.modloader.clientLobby
+    );
+    return p;
   }
 
   toJSON() {

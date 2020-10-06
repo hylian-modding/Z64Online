@@ -1,11 +1,13 @@
 import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
+import { Puppet } from '@OotOnline/data/linkPuppet/Puppet';
 
 export enum OotOnlineEvents {
   PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
   PLAYER_PUPPET_SPAWNED = 'OotOnline:onPlayerPuppetSpawned',
   PLAYER_PUPPET_DESPAWNED = 'OotOnline:onPlayerPuppetDespawned',
+  PLAYER_PUPPET_QUERY = "OotOnline:PlayerPuppetQuery",
   SERVER_PLAYER_CHANGED_SCENES = 'OotOnline:onServerPlayerChangedScenes',
   CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'OotOnline:onRemotePlayerChangedScenes',
   GHOST_MODE = 'OotOnline:EnableGhostMode',
@@ -42,7 +44,9 @@ export class RemoteSoundPlayRequest{
 }
 
 export interface OotOnline_Emote {
+  name: string;
   buf: Buffer;
+  sound?: Buffer;
 }
 
 export class OotOnline_PlayerScene {
@@ -66,7 +70,13 @@ export function OotOnlineAPI_EnableGhostMode() {
   bus.emit(OotOnlineEvents.GHOST_MODE, {});
 }
 
-export interface ICustomEquipment {
-  zobj: string;
-  txt: string;
+export interface PuppetQuery{
+  puppet: Puppet | undefined;
+  player: INetworkPlayer;
+}
+
+export function OotOnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery{
+  let evt: PuppetQuery = {puppet: undefined, player} as PuppetQuery;
+  bus.emit(OotOnlineEvents.PLAYER_PUPPET_QUERY, evt);
+  return evt;
 }

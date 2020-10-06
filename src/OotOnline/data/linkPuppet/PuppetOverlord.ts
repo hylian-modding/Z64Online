@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient, bus } from 'modloader64_api/EventHandler';
-import { IOotOnlineHelpers, OotOnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/OotoAPI/OotoAPI';
+import { IOotOnlineHelpers, OotOnlineEvents, PuppetQuery, RemoteSoundPlayRequest } from '@OotOnline/OotoAPI/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
@@ -348,6 +348,13 @@ export class PuppetOverlordClient {
   onPreSpawn(puppet: Puppet) {
     this.ModLoader.logger.debug("Locking puppet spawner.")
     this.queuedSpawn = true;
+  }
+
+  @EventHandler(OotOnlineEvents.PLAYER_PUPPET_QUERY)
+  onQuery(evt: PuppetQuery){
+    if (this.puppets.has(evt.player.uuid)){
+      evt.puppet = this.puppets.get(evt.player.uuid);
+    }
   }
 
 }

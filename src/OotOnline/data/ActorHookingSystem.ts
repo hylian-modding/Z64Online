@@ -1,11 +1,12 @@
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { EventHandler, bus } from 'modloader64_api/EventHandler';
-import { OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
 import {
   ActorHookBase,
   ActorHookProcessor,
   ActorPacketData,
   ActorPacketData_Impl,
+  getActorBehavior,
   HookInfo,
 } from './ActorHookBase';
 import fs from 'fs';
@@ -22,13 +23,14 @@ import {
 } from 'modloader64_api/NetworkHandler';
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import { IOotOnlineHelpers, OotOnlineEvents } from '../OotoAPI/OotoAPI';
+import { IOotOnlineHelpers, OotOnlineAPI_QueryPuppet, OotOnlineEvents } from '../OotoAPI/OotoAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import { addToKillFeedQueue } from 'modloader64_api/Announcements';
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
@@ -37,6 +39,7 @@ const FW_ID = 0x009E;
 const DF_ID = 0x009F;
 const NL_ID = 0x00F4;
 const DEKU_NUTS = 0x0056;
+const ARROW = 0x0016;
 
 export class ActorHookingManagerServer {
 
@@ -71,10 +74,9 @@ export class ActorHookingManagerClient {
   NLLocal: Map<string, IActor> = new Map<string, IActor>();
   NLRemote: Map<string, IActor> = new Map<string, IActor>();
   NLProcessor!: ActorHookProcessor;
-  // Deku Nuts
-  DekuNutsLocal: Map<string, IActor> = new Map<string, IActor>();
-  DekuNutsRemote: Map<string, IActor> = new Map<string, IActor>();
-  DekuNutsProcessor!: ActorHookProcessor;
+  //
+  knockedArrow!: IActor | undefined;
+  arrowProcess!: ActorHookProcessor;
 
   @ModLoaderAPIInject()
   ModLoader!: IModLoaderAPI;
@@ -86,7 +88,7 @@ export class ActorHookingManagerClient {
 
   constructor() {
     this.names = JSON.parse(
-      fs.readFileSync(__dirname + '/crash/ACTOR_NAMES.json').toString()
+      fs.readFileSync(__dirname + '/../gui/imgui/ACTOR_NAMES.json').toString()
     );
   }
 
@@ -147,12 +149,23 @@ export class ActorHookingManagerClient {
       this.ModLoader,
       this.core
     );
-
-    let dn = new ActorHookBase();
-    dn.actorID = DEKU_NUTS;
-    this.DekuNutsProcessor = new ActorHookProcessor(
+    let a = new ActorHookBase();
+    a.actorID = ARROW;
+    a.hooks.push(new HookInfo(0x24C, 0x4, true));
+    a.hooks.push(new HookInfo(0x130, 0x4, true));
+    a.hooks.push(new HookInfo(0x134, 0x4, true));
+    a.hooks.push(new HookInfo(0x118, 0x4));
+    a.hooks.push(new HookInfo(0x200, 0xC));
+    a.hooks.push(new HookInfo(0x20C, 0xC));
+    a.hooks.push(new HookInfo(0x238, 0x4));
+    a.hooks.push(new HookInfo(0x5C, 0xC));
+    a.hooks.push(new HookInfo(0x68, 0xC));
+    a.hooks.push(new HookInfo(0x30, 0x6));
+    a.hooks.push(new HookInfo(0x1C, 0x2));
+    a.hooks.push(new HookInfo(0x21C, 0x1C));
+    this.arrowProcess = new ActorHookProcessor(
       this.core.actorManager.createIActorFromPointer(0x0),
-      dn,
+      a,
       this.ModLoader,
       this.core
     );
@@ -231,18 +244,8 @@ export class ActorHookingManagerClient {
           this.ModLoader.clientLobby
         )
       );
-    } else if (actor.actorID === DEKU_NUTS) {
-      /* actor.actorUUID = this.ModLoader.utils.getUUID();
-      let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
-      this.DekuNutsLocal.set(actor.actorUUID, actor);
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(
-          actorData,
-          this.core.global.scene,
-          this.core.global.room,
-          this.ModLoader.clientLobby
-        )
-      ); */
+    } else if (actor.actorID === ARROW) {
+      this.knockedArrow = actor;
     }
   }
 
@@ -306,16 +309,6 @@ export class ActorHookingManagerClient {
         )
       );
       this.NLLocal.delete(actor.actorUUID);
-    } else if (actor.actorID === DEKU_NUTS) {
-      this.ModLoader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(
-          actor.actorUUID,
-          this.core.global.scene,
-          this.core.global.room,
-          this.ModLoader.clientLobby
-        )
-      );
-      this.DekuNutsLocal.delete(actor.actorUUID);
     }
   }
 
@@ -327,8 +320,6 @@ export class ActorHookingManagerClient {
     this.chusRemote.clear();
     this.NLLocal.clear();
     this.NLRemote.clear();
-    this.DekuNutsLocal.clear();
-    this.DekuNutsRemote.clear();
     this.actorHookTicks.clear();
   }
 
@@ -459,13 +450,6 @@ export class ActorHookingManagerClient {
 
       actor.position.setRawPos(packet.actorData.rawPos);
       actor.rotation.setRawRot(packet.actorData.rawRot);
-    } else if (this.DekuNutsRemote.has(packet.actorData.actor.actorUUID)) {
-      let actor: IActor = this.DekuNutsRemote.get(
-        packet.actorData.actor.actorUUID
-      )!;
-
-      actor.position.setRawPos(packet.actorData.rawPos);
-      actor.rotation.setRawRot(packet.actorData.rawRot);
     }
   }
 
@@ -539,6 +523,9 @@ export class ActorHookingManagerClient {
         this.ModLoader.emulator.rdramWrite8(0x6001A8, pos[8]);
         this.ModLoader.emulator.rdramWrite8(0x6001A9, pos[9]);
         break;
+      case ARROW:
+        spawn_param = 0x80600190;
+        break;
     }
     this.core.commandBuffer.runCommand(
       Command.SPAWN_ACTOR,
@@ -565,9 +552,31 @@ export class ActorHookingManagerClient {
             this.chusRemote.set(actor.actorUUID, actor);
           } else if (packet.actorData.actor.actorID === NL_ID) {
             this.NLRemote.set(actor.actorUUID, actor);
-          } else if (packet.actorData.actor.actorID === DEKU_NUTS) {
-            actor.redeadFreeze = 0x10;
-            this.DekuNutsRemote.set(actor.actorUUID, actor);
+          } else if (packet.actorData.actor.actorID === ARROW) {
+            this.arrowProcess.actor = actor;
+            actor.position.setRawPos(packet.actorData.rawPos);
+            actor.rotation.setRawRot(packet.actorData.rawRot);
+            let hooks = this.arrowProcess.hookBase.hooks;
+            for (let i = 0; i < hooks.length; i++) {
+              if (hooks[i].overrideIncoming !== undefined) {
+                hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data, this.ModLoader);
+              } else {
+                if (hooks[i].isBehavior) {
+                  let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
+                  this.setActorBehavior(
+                    this.ModLoader.emulator,
+                    actor,
+                    hooks[i].offset,
+                    d
+                  );
+                } else {
+                  actor.rdramWriteBuffer(
+                    hooks[i].offset,
+                    packet.actorData.hooks[i].data
+                  );
+                }
+              }
+            }
           }
         }
       }
@@ -633,9 +642,22 @@ export class ActorHookingManagerClient {
       value.position.z = this.core.link.position.z;
       this.NLProcessor.onTick();
     });
-    this.DekuNutsLocal.forEach((value: IActor, key: string) => {
-      this.DekuNutsProcessor.actor = value;
-      this.DekuNutsProcessor.onTick();
-    });
+    if (this.knockedArrow !== undefined) {
+      if (getActorBehavior(this.ModLoader.emulator, this.knockedArrow, 0x24c) === 0x6A0) {
+        this.knockedArrow.actorUUID = this.ModLoader.utils.getUUID();
+        let actorData: ActorPacketData = new ActorPacketData_Impl(this.knockedArrow);
+        this.arrowProcess.actor = this.knockedArrow;
+        actorData.hooks = this.arrowProcess.fakeTick().actorData.hooks;
+        this.ModLoader.clientSide.sendPacket(
+          new Ooto_SpawnActorPacket(
+            actorData,
+            this.core.global.scene,
+            this.core.global.room,
+            this.ModLoader.clientLobby
+          )
+        );
+        this.knockedArrow = undefined;
+      }
+    }
   }
 }
