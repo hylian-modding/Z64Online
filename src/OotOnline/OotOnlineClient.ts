@@ -234,7 +234,10 @@ export class OotOnlineClient {
 
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
-        this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
+        let test = false;
+        if (test){
+            this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
+        }
         setTimeout(() => {
             this.core.save.inventory.childTradeItem = InventoryItem.NONE;
             if (this.LobbyConfig.data_syncing) {

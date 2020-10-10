@@ -71,7 +71,7 @@ export class EmoteManager {
                         if (this.masterEmoteList[i].name !== "") {
                             this.ModLoader.ImGui.text(this.masterEmoteList[i].name);
                             this.ModLoader.ImGui.sameLine();
-                            if (this.ModLoader.ImGui.button("Play###OotO:Emotes:" + this.masterEmoteList[i])) {
+                            if (this.ModLoader.ImGui.button("Play###OotO:Emotes:" + this.masterEmoteList[i].name)) {
                                 if (this.core.link.state === LinkState.STANDING){
                                     this.currentEmoteID = i;
                                     this.isCurrentlyPlayingEmote = true;

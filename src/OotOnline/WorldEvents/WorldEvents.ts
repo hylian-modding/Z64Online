@@ -2,7 +2,7 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { InjectCore } from 'modloader64_api/CoreInjection';
-import { Halloween } from './Halloween/Halloween';
+import { Halloween, Halloween_Server } from './Halloween/Halloween';
 import { DateProxy } from 'modloader64_api/SidedProxy/DateProxy';
 import { ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 
@@ -23,4 +23,6 @@ export class WorldEvents {
     core!: IOOTCore;
     @DateProxy(ProxySide.CLIENT, HALLOWEEN_START, HALLOWEEN_END, Halloween)
     halloween!: Halloween;
+    @DateProxy(ProxySide.SERVER, HALLOWEEN_START, HALLOWEEN_END, Halloween_Server)
+    halloweenServer!: Halloween_Server;
 }

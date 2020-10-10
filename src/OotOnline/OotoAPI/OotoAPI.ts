@@ -91,6 +91,7 @@ export class OotOnline_ModelAllocation{
   model: Buffer;
   age: Age;
   slot!: number;
+  pointer!: number;
 
   constructor(model: Buffer, age: Age){
     this.model = model;

@@ -3,6 +3,7 @@ import {
   ModLoaderEvents,
 } from 'modloader64_api/IModLoaderAPI';
 import {
+  bus,
   EventHandler,
   EventsClient,
 } from 'modloader64_api/EventHandler';
@@ -55,6 +56,7 @@ export class ModelManagerClient {
   //
   customModelBufferAdult: Buffer | undefined;
   customModelBufferChild: Buffer | undefined;
+  unFixDekuSticks!: Buffer;
 
   constructor() {
     this.allocationManager = new ModelAllocationManager();
@@ -106,26 +108,40 @@ export class ModelManagerClient {
   }
 
   @EventHandler(OotOnlineEvents.ALLOCATE_MODEL_BLOCK)
-  onAlloc(alloc: OotOnline_ModelAllocation){
+  onAlloc(alloc: OotOnline_ModelAllocation) {
     let uuid = this.ModLoader.utils.getUUID();
     let mp = new ModelPlayer(uuid);
-    switch(alloc.age){
+    switch (alloc.age) {
       case Age.ADULT:
         mp.model.adult.zobj = alloc.model;
         break;
       case Age.CHILD:
         mp.model.child.zobj = alloc.model;
         break;
+      case 0x69:
+        mp.model.equipment.zobj = alloc.model;
+        break;
     }
     alloc.slot = this.allocationManager.allocateSlot(mp);
+    let allocation_size = 0x37800;
+    let addr: number = 0x80800000 + allocation_size * alloc.slot;
+    alloc.pointer = addr;
   }
 
   @EventHandler(OotOnlineEvents.FORCE_LOAD_MODEL_BLOCK)
-  onForceLoad(slot: number){
+  onForceLoad(slot: number) {
     let allocation_size = 0x37800;
     let addr: number = 0x800000 + allocation_size * slot;
     let model = this.allocationManager.getModelInSlot(slot);
-    this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), slot));
+    if (model.model.adult.zobj.byteLength > 1) {
+      this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), slot));
+    }
+    if (model.model.child.zobj.byteLength > 1) {
+      this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.child.zobj), slot));
+    }
+    if (model.model.equipment.zobj.byteLength > 1) {
+      this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.equipment.zobj), slot));
+    }
   }
 
   loadAdultModel(evt: any, file: string, buf?: Buffer) {
@@ -154,6 +170,9 @@ export class ModelManagerClient {
     } else {
       model = buf!;
     }
+    let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+    this.unFixDekuSticks.copy(code_file, 0x6A800);
+    tools.recompressDMAFileIntoRom(evt.rom, 27, code_file);
     let manifest: OOTChildManifest = new OOTChildManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       manifest.inject(this.ModLoader, evt.rom, model);
@@ -203,6 +222,9 @@ export class ModelManagerClient {
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
   onRomPatchedPre(evt: any) {
     this.setupPuppetModels(evt);
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+    let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+    this.unFixDekuSticks = code_file.slice(0x6A800, 0x6A800 + 0x20);
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)

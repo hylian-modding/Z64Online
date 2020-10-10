@@ -40,6 +40,7 @@ export class PuppetData {
     this.copyFields.push('strength_upgrade');
     this.copyFields.push('gauntlet_color');
     this.copyFields.push('current_mask');
+    this.copyFields.push("sound");
     //this.copyFields.push('stick_length');
     //this.copyFields.push('action_param');
     /* this.copyFields.push("xzvel");
