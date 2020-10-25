@@ -235,7 +235,7 @@ export class OotOnlineClient {
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
         let test = false;
-        if (test){
+        if (test) {
             this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
         }
         setTimeout(() => {
@@ -875,22 +875,19 @@ export class OotOnlineClient {
                         this.keys.update();
                     }
                     let state = this.core.link.state;
-                    if (state === LinkState.STANDING && this.clientStorage.notifBuffer.length > 0){
-                        if (this.clientStorage.notifBuffer.length > 10){
+                    if (state === LinkState.STANDING && this.clientStorage.notifBuffer.length > 0) {
+                        if (this.clientStorage.notifBuffer.length > 10) {
                             let size = this.clientStorage.notifBuffer.length;
                             this.clientStorage.notifBuffer.length = 0;
                             this.clientStorage.notifBuffer.push(new OotO_ItemGetMessagePacket("You obtained " + size + " items.", this.ModLoader.clientLobby));
                         }
-                        while (this.clientStorage.notifBuffer.length > 0){
+                        while (this.clientStorage.notifBuffer.length > 0) {
                             let packet = this.clientStorage.notifBuffer.shift()!;
-                            if (this.config.notifications){
-                                if (this.clientStorage.notifStorage.indexOf(packet.text) === -1){
-                                    if (packet.icon !== undefined) {
-                                        addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
-                                    } else {
-                                        addToKillFeedQueue(packet.text);
-                                    }
-                                    this.clientStorage.notifStorage.push(packet.text);
+                            if (this.config.notifications) {
+                                if (packet.icon !== undefined) {
+                                    addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
+                                } else {
+                                    addToKillFeedQueue(packet.text);
                                 }
                             }
                         }

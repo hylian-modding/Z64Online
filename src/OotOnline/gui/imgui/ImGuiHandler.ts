@@ -48,6 +48,7 @@ export class ImGuiHandler {
     font!: Font;
     puppetsDespawn: Array<number> = [];
     teleportDest: string_ref = [""];
+    cutsceneDest: string_ref = [""];
     settings!: OotOnlineConfigCategory
     showActorBrowser: boolean = false;
     actorCategories: Array<string> = ["Switches", "Backgrounds", "Player", "Bomb", "NPC", "Enemy", "Prop", "Item", "Misc", "Boss", "Door", "Chest"];
@@ -196,8 +197,9 @@ export class ImGuiHandler {
                     if (IS_DEV_BUILD) {
                         if (this.ModLoader.ImGui.beginMenu("Teleport")) {
                             this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
+                            this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
                             if (this.ModLoader.ImGui.button("Warp")) {
-                                this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), 0, () => { });
+                                this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
                             }
                             this.ModLoader.ImGui.endMenu();
                         }
@@ -355,9 +357,8 @@ export class ImGuiHandler {
                 if (this.ModLoader.ImGui.smallButton("Kill Actor")) {
                     actor.destroy();
                 }
-
-                this.ModLoader.ImGui.end();
             }
+            this.ModLoader.ImGui.end();
         }
 
         for (let i = 0; i < this.puppets.length; i++) {

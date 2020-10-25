@@ -51,6 +51,7 @@ export class ModelManagerClient {
   customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
+  customEquipmentSlot: number = -1;
   cacheDir: string = "./cache";
   isThreaded: boolean = false;
   //
@@ -126,6 +127,9 @@ export class ModelManagerClient {
     let allocation_size = 0x37800;
     let addr: number = 0x80800000 + allocation_size * alloc.slot;
     alloc.pointer = addr;
+    if (alloc.age === 0x69) {
+      this.customEquipmentSlot = alloc.slot;
+    }
   }
 
   @EventHandler(OotOnlineEvents.FORCE_LOAD_MODEL_BLOCK)
@@ -154,6 +158,37 @@ export class ModelManagerClient {
     }
     let manifest: OOTAdultManifest = new OOTAdultManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
+      /* if (this.customEquipmentSlot > 0) {
+        try {
+          let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
+          let index = this.allocationManager.getModelInSlot(this.customEquipmentSlot).model.equipment.zobj.indexOf(eq);
+          let str = "";
+          let curByte: number = 0;
+          let curIndex: number = index + 0x10;
+          while (curByte !== 0xFF) {
+            str += this.allocationManager.getModelInSlot(this.customEquipmentSlot).model.equipment.zobj.slice(curIndex, curIndex + 1).toString();
+            curByte = this.allocationManager.getModelInSlot(this.customEquipmentSlot).model.equipment.zobj.slice(curIndex, curIndex + 1).readUInt8(0);
+            curIndex++;
+          }
+          str = str.substr(0, str.length - 1);
+          let data = JSON.parse(str);
+          let rp = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(this.allocationManager.getModelInSlot(this.customEquipmentSlot).model.equipment.zobj), this.customEquipmentSlot);
+          let header = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex'));
+          console.log(header.toString(16));
+          header+=0x10;
+          Object.keys(data.adult).forEach((key: string) => {
+            let i = header + (parseInt(key) * 0x8) + 0x4;
+            let offset = parseInt(data.adult[key]);
+            console.log(i.toString(16));
+            console.log(offset.toString(16));
+            console.log(rp.readUInt32BE(i).toString(16));
+            model.writeUInt32BE(rp.readUInt32BE(i), offset);
+            fs.writeFileSync(global.ModLoader.startdir + "/test.zobj", model);
+          });
+        } catch (err) {
+          console.log(err.stack);
+        }
+      } */
       manifest.inject(this.ModLoader, evt.rom, model);
       let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
       let offset: number = 0xE65A0;
@@ -488,19 +523,6 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler("OotOnline:WriteDefaultPuppetZobjs")
-  onWriteRequest(evt: any) {
-    this.ModLoader.logger.debug("Writing default models...");
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x800000,
-      this.allocationManager.getModelInSlot(0).model.adult.zobj
-    );
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x837800,
-      this.allocationManager.getModelInSlot(1).model.child.zobj
-    );
-  }
-
   @EventHandler(OotOnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: Puppet) {
     let puppet_spawn_params_ptr: number = 0x80600140;
@@ -572,6 +594,9 @@ export class ModelManagerClient {
       0x837800,
       this.allocationManager.getModelInSlot(1).model.child.zobj
     );
+    if (this.customEquipmentSlot > 0) {
+      bus.emit(OotOnlineEvents.FORCE_LOAD_MODEL_BLOCK, this.customEquipmentSlot);
+    }
   }
 
   @EventHandler(EventsClient.ON_INJECT_FINISHED)
