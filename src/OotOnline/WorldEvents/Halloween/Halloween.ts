@@ -366,13 +366,20 @@ export class Halloween implements IWorldEvent {
         try {
             this.logger = this.ModLoader.logger.getLogger("OotO_Halloween");
             this.logger.debug("Doing preinit...");
-            this.logger.debug("Streaming data...");
             let stream = (): Buffer => {
+                this.logger.debug("Streaming data...");
                 const fetch = require('sync-fetch')
                 const response = fetch('https://repo.modloader64.com/mods/Ooto/events/halloween/halloween2020.content');
                 return response.json().data;
             };
-            let buf = stream().swap32();
+            let buf: Buffer;
+            if (fs.existsSync(path.resolve(this.cacheDir, "halloween2020.content"))){
+                this.logger.debug("Loading cached data stream...");
+                buf = fs.readFileSync(path.resolve(this.cacheDir, "halloween2020.content"));
+            }else{
+                buf = stream().swap32();
+                fs.writeFileSync(path.resolve(this.cacheDir, "halloween2020.content"), buf);
+            }
             let assets: zip = new zip(buf);
             for (let i = 0; i < assets.getEntries().length; i++) {
                 let e = assets.getEntries()[i];
