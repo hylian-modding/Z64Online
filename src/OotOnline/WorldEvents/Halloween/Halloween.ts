@@ -99,19 +99,19 @@ export class Halloween implements IWorldEvent {
             let hashes: any = JSON.parse(this.assets.get("assets/hashes.json")!.toString());
             delete hashes[8];
             let allGood: boolean = true;
-            Object.keys(hashes).forEach((key: string)=>{
+            Object.keys(hashes).forEach((key: string) => {
                 let id = parseInt(key);
                 let buf = tools.decompressDMAFileFromRom(rom, id);
                 let hash = this.ModLoader.utils.hashBuffer(buf);
-                if (hashes[key] !== hash){
+                if (hashes[key] !== hash) {
                     allGood = false;
                     this.logger.error(id + " hash check failed!");
                 }
             });
 
-            if (!allGood){
+            if (!allGood) {
                 throw new Error("Hash check failed! Halloween Spooktacular disabled.");
-            }else{
+            } else {
                 this.logger.debug("Everything looks good. Time to patch.");
             }
 
@@ -385,6 +385,13 @@ export class Halloween implements IWorldEvent {
         if (this.erroredOut) {
             return;
         }
+        let tcWrap = (fn: Function) => {
+            try {
+                fn();
+            } catch (err) {
+            }
+        };
+        tcWrap(() => { fs.mkdirSync(this.cacheDir) });
         try {
             this.logger = this.ModLoader.logger.getLogger("OotO_Halloween");
             this.logger.debug("Doing preinit...");
@@ -458,13 +465,6 @@ export class Halloween implements IWorldEvent {
             return;
         }
         if (!this.erroredOut) {
-            let tcWrap = (fn: Function) => {
-                try {
-                    fn();
-                } catch (err) {
-                    console.log(err);
-                }
-            };
             let tex = path.resolve(__dirname, "cache");
             tcWrap(() => { fs.mkdirSync(tex); });
             if (this.config.textures) {
