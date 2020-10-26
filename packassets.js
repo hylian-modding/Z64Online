@@ -7,6 +7,7 @@ exports.MonkeyPatch_Stringify = void 0;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var adm_zip_1 = __importDefault(require("adm-zip"));
+// Copied from ML core. Needed for the packing process.
 var MonkeyPatch_Stringify = /** @class */ (function () {
     function MonkeyPatch_Stringify() {
     }
@@ -47,8 +48,6 @@ if (!fs_extra_1["default"].existsSync(path_1["default"].resolve("./dist/hallowee
     zipFile.addLocalFolder("./assets", "assets");
     zipFile.writeZip("./assets.zip");
     process.chdir(og);
-    //fse.moveSync(path.resolve("./OcarinaofTimeOnline-HolidayAssets/Halloween/assets.zip"), path.resolve("./dist/halloween2020.zip"));
     var content = JSON.stringify({ data: pad(fs_extra_1["default"].readFileSync('./OcarinaofTimeOnline-HolidayAssets/Halloween/assets.zip')).swap32() });
-    console.log(path_1["default"].resolve("./dist/halloween2020.content"));
     fs_extra_1["default"].writeFileSync(path_1["default"].resolve("./dist/halloween2020.content"), Buffer.from(content));
 }

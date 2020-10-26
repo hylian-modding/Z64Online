@@ -21,11 +21,10 @@ import { Command } from "modloader64_api/OOT/ICommandBuffer";
 import { IActor } from "modloader64_api/OOT/IActor";
 import { addToKillFeedQueue } from "modloader64_api/Announcements";
 import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
-import { NetworkHandler } from "modloader64_api/NetworkHandler";
+import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { IPosition } from "modloader64_api/OOT/IPosition";
 import { Music, SoundSourceStatus } from "modloader64_api/Sound/sfml_audio";
-import { checkServerIdentity } from "tls";
-import child_process from 'child_process';
+import { Analytics_StorePacket } from 'modloader64_api/analytics/Analytics_StorePacket';
 
 class HeapAsset {
     name: string;
@@ -94,7 +93,28 @@ export class Halloween implements IWorldEvent {
         this.logger.debug("Patching virtual rom...");
         let rom: Buffer = evt.rom;
         try {
+
             let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
+
+            let hashes: any = JSON.parse(this.assets.get("assets/hashes.json")!.toString());
+            delete hashes[8];
+            let allGood: boolean = true;
+            Object.keys(hashes).forEach((key: string)=>{
+                let id = parseInt(key);
+                let buf = tools.decompressDMAFileFromRom(rom, id);
+                let hash = this.ModLoader.utils.hashBuffer(buf);
+                if (hashes[key] !== hash){
+                    allGood = false;
+                    this.logger.error(id + " hash check failed!");
+                }
+            });
+
+            if (!allGood){
+                throw new Error("Hash check failed! Halloween Spooktacular disabled.");
+            }else{
+                this.logger.debug("Everything looks good. Time to patch.");
+            }
+
             tools.noCRC(rom);
 
             let files: Map<number, Buffer> = new Map<number, Buffer>();
@@ -274,6 +294,7 @@ export class Halloween implements IWorldEvent {
         this.currentDarkLink = undefined;
         //@ts-ignore
         this.heap = undefined;
+        this.playingCredits = false;
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_POST)
@@ -284,6 +305,7 @@ export class Halloween implements IWorldEvent {
         this.logger.debug("Reloading assets...");
         this.setupAssets();
         this.currentDarkLink = undefined;
+        this.playingCredits = false;
     }
 
     @EventHandler(OotEvents.ON_LOADING_ZONE)
@@ -373,10 +395,10 @@ export class Halloween implements IWorldEvent {
                 return response.json().data;
             };
             let buf: Buffer;
-            if (fs.existsSync(path.resolve(this.cacheDir, "halloween2020.content"))){
+            if (fs.existsSync(path.resolve(this.cacheDir, "halloween2020.content"))) {
                 this.logger.debug("Loading cached data stream...");
                 buf = fs.readFileSync(path.resolve(this.cacheDir, "halloween2020.content"));
-            }else{
+            } else {
                 buf = stream().swap32();
                 fs.writeFileSync(path.resolve(this.cacheDir, "halloween2020.content"), buf);
             }
@@ -430,6 +452,9 @@ export class Halloween implements IWorldEvent {
             this.fogScenes = JSON.parse(this.assets.get("assets/fog.json")!.toString())["scenes"];
         } catch (err) {
             this.erroredOut = true;
+            if (fs.existsSync(path.resolve(this.cacheDir, "halloween2020.content"))) {
+                fs.unlinkSync(path.resolve(this.cacheDir, "halloween2020.content"));
+            }
             return;
         }
         if (!this.erroredOut) {
@@ -586,20 +611,22 @@ export class Halloween implements IWorldEvent {
                 this.arc = 0;
             }
             if (this.currentDarkLink.rdramRead32(0x130) === 0) {
+                let name = this.getDarkLinkCostumeName();
                 this.currentDarkLink = undefined;
-                let check = { name: this.getDarkLinkCostumeName(), data: this.costumesChild[this.darkLinkSelection], age: Age.CHILD } as OotO_EventReward;
+                let check = { name: name, data: this.costumesChild[this.darkLinkSelection], age: Age.CHILD } as OotO_EventReward;
                 bus.emit(OotO_RewardEvents.CHECK_REWARD, check);
                 if (check.checked !== undefined) {
                     if (check.checked) {
                         return;
                     }
                 }
-                addToKillFeedQueue("Unlocked: " + this.getDarkLinkCostumeName());
+                addToKillFeedQueue("Unlocked: " + name);
                 if (this.darkLinkAge > 0) {
-                    bus.emit(OotO_RewardEvents.UNLOCK_PLAYAS, { name: this.getDarkLinkCostumeName(), data: this.costumesChild[this.darkLinkSelection], age: Age.CHILD } as OotO_EventReward);
+                    bus.emit(OotO_RewardEvents.UNLOCK_PLAYAS, { name: name, data: this.costumesChild[this.darkLinkSelection], age: Age.CHILD } as OotO_EventReward);
                 } else {
-                    bus.emit(OotO_RewardEvents.UNLOCK_PLAYAS, { name: this.getDarkLinkCostumeName(), data: this.costumesAdult[this.darkLinkSelection], age: Age.ADULT } as OotO_EventReward);
+                    bus.emit(OotO_RewardEvents.UNLOCK_PLAYAS, { name: name, data: this.costumesAdult[this.darkLinkSelection], age: Age.ADULT } as OotO_EventReward);
                 }
+                this.ModLoader.clientSide.sendPacket(new OotO_HalloweenUnlockPacket(name, this.ModLoader.clientLobby));
             } else {
                 if (this.currentDarkLink.rdramRead32(0x654) === 0) {
                     this.currentDarkLink.rdramWrite32(0x654, 0x801DAA30);
@@ -673,6 +700,7 @@ export class Halloween implements IWorldEvent {
                     addToKillFeedQueue("There is no escape...");
                 } else {
                     addToKillFeedQueue("An invader approaches...");
+                    this.ModLoader.clientSide.sendPacket(new OotO_DarkLinkSpawned(this.ModLoader.clientLobby));
                 }
                 this.pendingSpawn = true;
             } else {
@@ -696,17 +724,74 @@ export class OotO_HalloweenPacket extends Packet {
     }
 }
 
+export class OotO_HalloweenUnlockPacket extends Packet {
+
+    costume: string;
+
+    constructor(costume: string, lobby: string) {
+        super('OotO_HalloweenUnlockPacket', "OotOnline", lobby, false);
+        this.costume = costume;
+    }
+}
+
+export class OotO_DarkLinkSpawned extends Packet {
+    constructor(lobby: string) {
+        super('OotO_DarkLinkSpawned', 'OotOnline', lobby, false);
+    }
+}
+
 export class Halloween_Server {
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
+    costumeCounts: any;
+    darkLinkSpawns: any;
 
     @Preinit()
     preinit(): void {
         this.ModLoader.logger.info("Setting up Halloween server side...");
         setInterval(() => {
             this.ModLoader.serverSide.sendPacket(new OotO_HalloweenPacket());
+            this.ModLoader.analytics.send("OotO_Halloween2020_costumes", this.costumeCounts);
+            this.ModLoader.analytics.send('OotO_Halloween2020_spawnCount', this.darkLinkSpawns);
         }, 15 * 60 * 1000);
+    }
+
+    @Init()
+    init() {
+        this.ModLoader.analytics.retrieve("OotO_Halloween2020_costumes");
+        this.ModLoader.analytics.retrieve("OotO_Halloween2020_spawnCount");
+    }
+
+    @ServerNetworkHandler('OotO_HalloweenUnlockPacket')
+    onUnlock(packet: OotO_HalloweenUnlockPacket) {
+        if (!this.costumeCounts.hasOwnProperty(packet.costume)) {
+            this.costumeCounts[packet.costume] = 0;
+        }
+        this.costumeCounts[packet.costume]++;
+        this.ModLoader.logger.debug("Costume: " + packet.costume + " +1.");
+    }
+
+    @ServerNetworkHandler('OotO_DarkLinkSpawned')
+    onSpawn(packet: OotO_DarkLinkSpawned) {
+        if (!this.darkLinkSpawns.hasOwnProperty("count")) {
+            this.darkLinkSpawns["count"] = 0;
+        }
+        this.darkLinkSpawns["count"]++;
+        this.ModLoader.logger.debug("Dark Link count: " + this.darkLinkSpawns["count"] + ".");
+    }
+
+    @ServerNetworkHandler("Analytics_StorePacket")
+    onLoad(packet: Analytics_StorePacket) {
+        switch (packet.key) {
+            case "OotO_Halloween2020_costumes":
+                this.costumeCounts = packet.data;
+                this.ModLoader.logger.info("Setting up costume analytics.");
+                break;
+            case 'OotO_Halloween2020_spawnCount':
+                this.darkLinkSpawns = packet.data;
+                this.ModLoader.logger.info("Setting up dark link analytics.");
+        }
     }
 }
 
