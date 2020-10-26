@@ -256,10 +256,16 @@ export class ModelManagerClient {
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
   onRomPatchedPre(evt: any) {
-    this.setupPuppetModels(evt);
-    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
-    this.unFixDekuSticks = code_file.slice(0x6A800, 0x6A800 + 0x20);
+    try {
+      this.setupPuppetModels(evt);
+      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+      let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+      this.unFixDekuSticks = code_file.slice(0x6A800, 0x6A800 + 0x20);
+    } catch (err) {
+      // Maybe don't shallow this error?
+      console.log(err);
+      throw err;
+    }
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
