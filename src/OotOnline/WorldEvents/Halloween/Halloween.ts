@@ -744,8 +744,8 @@ export class Halloween_Server {
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
-    costumeCounts: any;
-    darkLinkSpawns: any;
+    costumeCounts: any = {};
+    darkLinkSpawns: any = {};
 
     @Preinit()
     preinit(): void {

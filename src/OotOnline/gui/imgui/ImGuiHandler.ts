@@ -203,9 +203,9 @@ export class ImGuiHandler {
                             }
                             this.ModLoader.ImGui.endMenu();
                         }
-                    }
-                    if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
-                        this.showActorBrowser = !this.showActorBrowser;
+                        if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
+                            this.showActorBrowser = !this.showActorBrowser;
+                        }
                     }
                     this.ModLoader.ImGui.endMenu();
                 }
