@@ -11,6 +11,7 @@ import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, 
 import { Ooto_KeyRebuildPacket, KeyLogManagerServer } from './data/keys/KeyLogManager';
 import { mergeInventoryData, mergeEquipmentData, mergeQuestSaveData, mergeDungeonItemData, OotO_SceneStruct } from './data/OotoSaveData';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
+import { WorldEvents } from './WorldEvents/WorldEvents';
 
 export class OotOnlineServer {
     @ModLoaderAPIInject()
@@ -23,6 +24,8 @@ export class OotOnlineServer {
     keys!: KeyLogManagerServer;
     @SidedProxy(ProxySide.SERVER, PuppetOverlordServer)
     puppets!: PuppetOverlordServer;
+    @SidedProxy(ProxySide.SERVER, WorldEvents)
+    worldEvents!: WorldEvents;
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

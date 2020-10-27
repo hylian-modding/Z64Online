@@ -2,6 +2,7 @@ import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
 import { Puppet } from '@OotOnline/data/linkPuppet/Puppet';
+import { Age } from 'modloader64_api/OOT/OOTAPI';
 
 export enum OotOnlineEvents {
   PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
@@ -26,7 +27,11 @@ export enum OotOnlineEvents {
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
   ON_LOAD_SOUND_PACK = "OotOnline:OnLoadSoundPack",
   ON_REMOTE_SOUND_PACK = "OotOnline:OnRemoteSoundPack",
-  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound"
+  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound",
+  CUSTOM_MODEL_LOAD_BUFFER_ADULT = "OotOnline:ApplyCustomModelAdultBuffer",
+  CUSTOM_MODEL_LOAD_BUFFER_CHILD = "OotOnline:ApplyCustomModelChildBuffer",
+  ALLOCATE_MODEL_BLOCK = "OotOnline:AllocateModelBlock",
+  FORCE_LOAD_MODEL_BLOCK = "OotOnline:ForceLoadModelBlock"
 }
 
 export class RemoteSoundPlayRequest{
@@ -47,6 +52,7 @@ export interface OotOnline_Emote {
   name: string;
   buf: Buffer;
   sound?: Buffer;
+  builtIn?: boolean;
 }
 
 export class OotOnline_PlayerScene {
@@ -79,4 +85,16 @@ export function OotOnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery{
   let evt: PuppetQuery = {puppet: undefined, player} as PuppetQuery;
   bus.emit(OotOnlineEvents.PLAYER_PUPPET_QUERY, evt);
   return evt;
+}
+
+export class OotOnline_ModelAllocation{
+  model: Buffer;
+  age: Age;
+  slot!: number;
+  pointer!: number;
+
+  constructor(model: Buffer, age: Age){
+    this.model = model;
+    this.age = age;
+  }
 }

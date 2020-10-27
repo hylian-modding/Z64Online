@@ -33,7 +33,7 @@ export class SoundManagerClient {
     ModLoader!: IModLoaderAPI;
     PlayerSounds: Map<string, Map<number, sf.Sound[]>> = new Map<string, Map<number, sf.Sound[]>>();
     rawSounds: any;
-    SIZE_LIMIT: number = 5;
+    SIZE_LIMIT: number = 10;
 
     getRandomInt(min: number, max: number) {
         min = Math.ceil(min);
