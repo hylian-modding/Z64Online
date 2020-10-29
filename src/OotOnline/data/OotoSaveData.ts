@@ -649,10 +649,9 @@ export function applyInventoryToContext(
       if (save.inventory.bombchuCount > 0) {
         clearInterval(global.ModLoader['fuckyouBombchu']);
       }
-      save.inventory.bombchuCount = UpgradeCountLookup(
-        InventoryItem.BOMBCHU,
-        AmmoUpgrade.BASE
-      );
+      if (UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE) > save.inventory.bombchuCount) {
+        save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+      }
     }, 1);
   }
   save.inventory.bombchus = data.bombchus;
