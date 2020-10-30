@@ -12,6 +12,8 @@ import os from 'os';
 import { bus, EventHandler } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '@OotOnline/OotoAPI/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
+import fs from 'fs';
+import path from 'path';
 
 export interface IWorldEvent {
 }
@@ -61,8 +63,8 @@ export class WorldEventRewards {
                 this.rewards.adult[reward.name] = reward.data;
                 break;
         }
-        let n = os.userInfo().username + '@' + os.hostname();
-        let sc = new StorageContainer("holiday_event_rewards");
+        let n = "holiday_event_rewards_v2"
+        let sc = new StorageContainer("holiday_event_rewards_v2");
         sc.storeObject(new Cryptr(n).encrypt(JSON.stringify(this.rewards)));
     }
 
@@ -78,15 +80,30 @@ export class WorldEventRewards {
         }
     }
 
+    private migrateRewardsFile1(){
+        if (fs.existsSync("./storage/holiday_event_rewards.pak")){
+            this.ModLoader.logger.debug("Migrating event rewards...");
+            let sc = new StorageContainer("holiday_event_rewards");
+            let str = sc.loadObject();
+            let n = os.userInfo().username + '@' + os.hostname();
+            let d = new Cryptr(n).decrypt(str);
+            this.rewards = JSON.parse(d);
+            sc = new StorageContainer("holiday_event_rewards_v2");
+            sc.storeObject(new Cryptr("holiday_event_rewards_v2").encrypt(JSON.stringify(this.rewards)));
+            fs.unlinkSync("./storage/holiday_event_rewards.pak");
+        }
+    }
+
     @Preinit()
     preinit() {
+        this.migrateRewardsFile1();
         this.config = this.ModLoader.config.registerConfigCategory("OotO_WorldEvents") as OotO_EventConfig;
         this.ModLoader.config.setData("OotO_WorldEvents", "adultCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
         try {
-            let sc = new StorageContainer("holiday_event_rewards");
+            let sc = new StorageContainer("holiday_event_rewards_v2");
             let str = sc.loadObject();
-            let n = os.userInfo().username + '@' + os.hostname();
+            let n = "holiday_event_rewards_v2";
             let d = new Cryptr(n).decrypt(str);
             this.rewards = JSON.parse(d);
         } catch (err) {
