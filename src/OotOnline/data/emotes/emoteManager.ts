@@ -22,6 +22,7 @@ export class EmoteManager {
     core!: IOOTCore;
     displayingEmoteWindow: bool_ref = [false];
     currentEmoteSoundID: number = 0xFF00;
+    muteAll: bool_ref = [false];
 
     @EventHandler(OotOnlineEvents.ON_REGISTER_EMOTE)
     onRegisterEmote(emote: OotOnline_Emote) {
@@ -57,6 +58,8 @@ export class EmoteManager {
         }
         if (this.displayingEmoteWindow[0]) {
             if (this.ModLoader.ImGui.begin("Emotes###OotO:Emotes", this.displayingEmoteWindow, WindowFlags.NoCollapse)) {
+                if (this.ModLoader.ImGui.checkbox("Mute All", this.muteAll)){
+                }
                 if (this.isCurrentlyPlayingEmote) {
                     if (this.ModLoader.ImGui.smallButton("Stop")) {
                         this.masterEmoteList[this.currentEmoteID].sound!.stop();
@@ -105,7 +108,9 @@ export class EmoteManager {
                 console.log("PLAYING EMOTE SOUND");
                 console.log(this.masterEmoteList[this.currentEmoteID].sound!.status);
                 if (this.masterEmoteList[this.currentEmoteID].sound!.status !== SoundSourceStatus.Playing) {
-                    this.masterEmoteList[this.currentEmoteID].sound!.play();
+                    if (!this.muteAll[0]){
+                        this.masterEmoteList[this.currentEmoteID].sound!.play();
+                    }
                     if (!this.masterEmoteList[this.currentEmoteID].isBuiltInEmote) {
                         this.core.link.current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
                     } else {
@@ -130,7 +135,9 @@ export class EmoteManager {
             if (this.masterEmoteList[i].name === packet.emote) {
                 if (this.masterEmoteList[i].sound !== undefined) {
                     if (this.masterEmoteList[i].sound!.status !== SoundSourceStatus.Playing) {
-                        this.masterEmoteList[i].sound!.play();
+                        if (!this.muteAll[0]){
+                            this.masterEmoteList[i].sound!.play();
+                        }
                     }
                 }
             }
