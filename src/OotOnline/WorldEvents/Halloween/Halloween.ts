@@ -24,21 +24,7 @@ import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
 import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { IPosition } from "modloader64_api/OOT/IPosition";
 import { Music, SoundSourceStatus } from "modloader64_api/Sound/sfml_audio";
-import { Analytics_StorePacket } from 'modloader64_api/analytics/Analytics_StorePacket';
-
-class HeapAsset {
-    name: string;
-    slot: number;
-    asset: Buffer;
-    callback: Function | undefined;
-    pointer: number = 0;
-
-    constructor(name: string, slot: number, asset: Buffer) {
-        this.name = name;
-        this.slot = slot;
-        this.asset = asset;
-    }
-}
+import { HeapAsset } from "../HeapAsset";
 
 export class Halloween implements IWorldEvent {
 
@@ -752,15 +738,11 @@ export class Halloween_Server {
         this.ModLoader.logger.info("Setting up Halloween server side...");
         setInterval(() => {
             this.ModLoader.serverSide.sendPacket(new OotO_HalloweenPacket());
-            this.ModLoader.analytics.send("OotO_Halloween2020_costumes", this.costumeCounts);
-            this.ModLoader.analytics.send('OotO_Halloween2020_spawnCount', this.darkLinkSpawns);
         }, 15 * 60 * 1000);
     }
 
     @Init()
     init() {
-        this.ModLoader.analytics.retrieve("OotO_Halloween2020_costumes");
-        this.ModLoader.analytics.retrieve("OotO_Halloween2020_spawnCount");
     }
 
     @ServerNetworkHandler('OotO_HalloweenUnlockPacket')
@@ -779,19 +761,6 @@ export class Halloween_Server {
         }
         this.darkLinkSpawns["count"]++;
         this.ModLoader.logger.debug("Dark Link count: " + this.darkLinkSpawns["count"] + ".");
-    }
-
-    @ServerNetworkHandler("Analytics_StorePacket")
-    onLoad(packet: Analytics_StorePacket) {
-        switch (packet.key) {
-            case "OotO_Halloween2020_costumes":
-                this.costumeCounts = packet.data;
-                this.ModLoader.logger.info("Setting up costume analytics.");
-                break;
-            case 'OotO_Halloween2020_spawnCount':
-                this.darkLinkSpawns = packet.data;
-                this.ModLoader.logger.info("Setting up dark link analytics.");
-        }
     }
 }
 

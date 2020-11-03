@@ -13,15 +13,11 @@ import { bus, EventHandler } from 'modloader64_api/EventHandler';
 import { OotOnlineEvents } from '@OotOnline/OotoAPI/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
 import fs from 'fs';
-import path from 'path';
 
 export interface IWorldEvent {
 }
 
-//const HALLOWEEN_START: Date = new Date(new Date().getFullYear(), 9, 27);
-//const HALLOWEEN_END: Date = new Date(new Date().getFullYear(), 10, 3);
-
-const HALLOWEEN_START: Date = new Date(new Date().getFullYear(), 9, 1);
+const HALLOWEEN_START: Date = new Date(new Date().getFullYear(), 9, 27);
 const HALLOWEEN_END: Date = new Date(new Date().getFullYear(), 10, 3);
 
 export class RewardContainer {
@@ -133,6 +129,11 @@ export class WorldEventRewards {
         if (this.rewardsWindowStatus[0]) {
             if (this.ModLoader.ImGui.begin("Rewards Inventory###OotO:EventRewards")) {
                 this.ModLoader.ImGui.text("Changing costumes requires a game restart.");
+                if (this.ModLoader.ImGui.smallButton("Remove costumes")){
+                    this.config.adultCostume = "";
+                    this.config.childCostume = "";
+                    this.ModLoader.config.save();
+                }
                 this.ModLoader.ImGui.columns(2);
                 this.ModLoader.ImGui.text("Adult Costumes");
                 Object.keys(this.rewards.adult).forEach((key: string) => {
@@ -167,8 +168,8 @@ export class WorldEvents {
     core!: IOOTCore;
     @SidedProxy(ProxySide.CLIENT, WorldEventRewards)
     rewards!: WorldEventRewards;
-    @DateProxy(ProxySide.CLIENT, HALLOWEEN_START, HALLOWEEN_END, Halloween)
+    //@DateProxy(ProxySide.CLIENT, HALLOWEEN_START, HALLOWEEN_END, Halloween)
     halloween!: Halloween;
-    @DateProxy(ProxySide.SERVER, HALLOWEEN_START, HALLOWEEN_END, Halloween_Server)
+    //@DateProxy(ProxySide.SERVER, HALLOWEEN_START, HALLOWEEN_END, Halloween_Server)
     halloweenServer!: Halloween_Server;
 }
