@@ -353,6 +353,12 @@ export class ImGuiHandler {
                     actor.position.setRawPos(pos);
                     actor.rotation.setRawRot(rot);
                 }
+                if (this.ModLoader.ImGui.smallButton("Move Link to Actor")){
+                    let pos = actor.position.getRawPos();
+                    let rot = actor.rotation.getRawRot();
+                    this.core.link.position.setRawPos(pos);
+                    this.core.link.rotation.setRawRot(rot);
+                }
 
                 if (this.ModLoader.ImGui.smallButton("Kill Actor")) {
                     actor.destroy();
