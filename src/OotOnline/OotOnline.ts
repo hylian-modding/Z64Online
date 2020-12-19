@@ -1,5 +1,5 @@
 import { IPlugin, IPluginServerConfig, IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { IOotOnlineHelpers } from "./OotoAPI/OotoAPI";
+import { IZ64OnlineHelpers } from "./Z64API/OotoAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
@@ -13,7 +13,7 @@ export const EVENT_ARR_SIZE = 0x1c;
 export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
-export const IS_DEV_BUILD: boolean = false;
+export const IS_DEV_BUILD: boolean = true;
 
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
@@ -28,7 +28,7 @@ export class OotOnlineConfigCategory {
   nameplates: boolean = true;
 }
 
-export class OotOnline implements IPlugin, IOotOnlineHelpers, IPluginServerConfig {
+export class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfig {
 
   ModLoader!: IModLoaderAPI;
   @InjectCore()

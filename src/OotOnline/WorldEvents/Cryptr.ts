@@ -33,6 +33,7 @@ export class Cryptr {
         const key = this.getKey(salt);
 
         const cipher = crypto.createCipheriv(this.algorithm, key, iv);
+        
         const encrypted = Buffer.concat([cipher.update(String(value), 'utf8'), cipher.final()]);
 
         //@ts-ignore

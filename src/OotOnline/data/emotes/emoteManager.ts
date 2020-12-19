@@ -1,7 +1,7 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IOOTCore, LinkState } from "modloader64_api/OOT/OOTAPI";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
-import { OotOnlineEvents, OotOnline_Emote } from '@OotOnline/OotoAPI/OotoAPI';
+import { Z64OnlineEvents, Z64Emote_Emote } from '@OotOnline/Z64API/OotoAPI';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { onTick, onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
@@ -24,8 +24,8 @@ export class EmoteManager {
     currentEmoteSoundID: number = 0xFF00;
     muteAll: bool_ref = [false];
 
-    @EventHandler(OotOnlineEvents.ON_REGISTER_EMOTE)
-    onRegisterEmote(emote: OotOnline_Emote) {
+    @EventHandler(Z64OnlineEvents.ON_REGISTER_EMOTE)
+    onRegisterEmote(emote: Z64Emote_Emote) {
         let s: Sound | undefined;
         let id: number | undefined;
         let e = new anim_binary_container(emote.name, emote.buf, s, emote.sound, id);
@@ -62,7 +62,9 @@ export class EmoteManager {
                 }
                 if (this.isCurrentlyPlayingEmote) {
                     if (this.ModLoader.ImGui.smallButton("Stop")) {
-                        this.masterEmoteList[this.currentEmoteID].sound!.stop();
+                        try {
+                            this.masterEmoteList[this.currentEmoteID].sound!.stop();
+                        } catch (err) { }
                         this.isCurrentlyPlayingEmote = false;
                         this.core.link.redeadFreeze = 0x0;
                         this.currentEmoteFrame = -1;
@@ -98,7 +100,7 @@ export class EmoteManager {
                 rawSound[this.masterEmoteList[i].soundid!] = arr;
             }
         }
-        bus.emit(OotOnlineEvents.ON_LOAD_SOUND_PACK, rawSound);
+        bus.emit(Z64OnlineEvents.ON_LOAD_SOUND_PACK, rawSound);
     }
 
     @onTick()

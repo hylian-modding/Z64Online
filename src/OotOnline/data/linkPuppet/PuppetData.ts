@@ -8,7 +8,7 @@ import {
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ACTOR_T_PADDING } from './PuppetOverlord';
 import { bus } from 'modloader64_api/EventHandler';
-import { OotOnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/OotoAPI/OotoAPI';
+import { Z64OnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/Z64API/OotoAPI';
 
 export class PuppetData {
   pointer: number;

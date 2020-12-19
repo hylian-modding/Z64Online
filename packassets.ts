@@ -44,7 +44,7 @@ function pad(buf: Buffer){
 }
 
 if (!fse.existsSync(path.resolve("./dist/halloween2020.content"))) {
-    console.log("Packing holiday assets...");
+    console.log("Packing Halloween assets...");
     let og = process.cwd();
     process.chdir("./OcarinaofTimeOnline-HolidayAssets/Halloween");
     let zipFile: zip = new zip();
@@ -53,4 +53,16 @@ if (!fse.existsSync(path.resolve("./dist/halloween2020.content"))) {
     process.chdir(og);
     const content = JSON.stringify({ data: pad(fse.readFileSync('./OcarinaofTimeOnline-HolidayAssets/Halloween/assets.zip')).swap32() });
     fse.writeFileSync(path.resolve("./dist/halloween2020.content"), Buffer.from(content));
+}
+
+if (!fse.existsSync(path.resolve("./dist/christmas2020.content"))) {
+    console.log("Packing Christmas assets...");
+    let og = process.cwd();
+    process.chdir("./OcarinaofTimeOnline-HolidayAssets/Christmas");
+    let zipFile: zip = new zip();
+    zipFile.addLocalFolder("./assets/OOT", "assets");
+    zipFile.writeZip("./assets.zip");
+    process.chdir(og);
+    const content = JSON.stringify({ data: pad(fse.readFileSync('./OcarinaofTimeOnline-HolidayAssets/Christmas/assets.zip')).swap32() });
+    fse.writeFileSync(path.resolve("./dist/christmas2020.content"), Buffer.from(content));
 }

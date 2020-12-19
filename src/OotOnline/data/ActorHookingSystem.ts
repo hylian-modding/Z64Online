@@ -23,7 +23,7 @@ import {
 } from 'modloader64_api/NetworkHandler';
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import { IOotOnlineHelpers, OotOnlineAPI_QueryPuppet, OotOnlineEvents } from '../OotoAPI/OotoAPI';
+import { IZ64OnlineHelpers, Z64OnlineAPI_QueryPuppet, Z64OnlineEvents } from '../Z64API/OotoAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
@@ -44,7 +44,7 @@ const ARROW = 0x0016;
 export class ActorHookingManagerServer {
 
   @ParentReference()
-  parent!: IOotOnlineHelpers;
+  parent!: IZ64OnlineHelpers;
 
   @ServerNetworkHandler('Ooto_ActorPacket')
   onActorPacketServer(packet: Ooto_ActorPacket) {
@@ -83,7 +83,7 @@ export class ActorHookingManagerClient {
   @InjectCore()
   core!: IOOTCore;
   @ParentReference()
-  parent!: IOotOnlineHelpers;
+  parent!: IZ64OnlineHelpers;
   names: any;
 
   constructor() {
@@ -92,7 +92,7 @@ export class ActorHookingManagerClient {
     );
   }
 
-  @EventHandler(OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD)
+  @EventHandler(Z64OnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD)
   onActorSyncFile(evt: string) {
     let hook: ActorHookBase = require(evt);
     this.actorHookMap.set(hook.actorID, hook);
@@ -113,7 +113,7 @@ export class ActorHookingManagerClient {
         let parse = path.parse(file);
         if (parse.ext === '.js') {
           bus.emit(
-            OotOnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
+            Z64OnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
             path.join(dir, file)
           );
         }

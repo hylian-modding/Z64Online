@@ -17,7 +17,7 @@ import {
   Magic,
 } from 'modloader64_api/OOT/OOTAPI';
 import { bus } from 'modloader64_api/EventHandler';
-import { OotOnlineEvents } from '../OotoAPI/OotoAPI';
+import { Z64OnlineEvents } from '../Z64API/OotoAPI';
 import { IDungeonItemContainer } from 'modloader64_api/OOT/IDungeonItemContainer';
 import { IDungeonItemManager } from 'modloader64_api/OOT/IDungeonItemManager';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
@@ -472,6 +472,9 @@ export function mergeInventoryData(
     save.childTradeItem === InventoryItem.NONE
   ) {
     save.childTradeItem = incoming.childTradeItem;
+    if (save.childTradeItem >= InventoryItem.MASK_OF_TRUTH) {
+      SEEN_MASK_OF_TRUTH = true;
+    }
   }
 
   if (save.childTradeItem === InventoryItem.DEKU_STICK) {
@@ -1025,22 +1028,22 @@ export function applyQuestSaveToContext(data: IQuestSave, save: ISaveContext) {
   let lastKnownHP: number = save.questStatus.heartPieces;
   save.questStatus.heartPieces = data.heartPieces;
   if (lastKnownHP < data.heartPieces) {
-    bus.emit(OotOnlineEvents.GAINED_PIECE_OF_HEART, data.heartPieces);
+    bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, data.heartPieces);
   }
   let lastKnownHC: number = save.heart_containers;
   save.heart_containers = data.heart_containers;
   if (lastKnownHC < data.heart_containers) {
-    bus.emit(OotOnlineEvents.GAINED_HEART_CONTAINER, data.heart_containers);
+    bus.emit(Z64OnlineEvents.GAINED_HEART_CONTAINER, data.heart_containers);
   }
   let lastKnownMagic: Magic = save.magic_meter_size;
   save.magic_meter_size = data.magic_meter_size;
   if (lastKnownMagic < data.magic_meter_size) {
-    bus.emit(OotOnlineEvents.MAGIC_METER_INCREASED, data.magic_meter_size);
+    bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, data.magic_meter_size);
   }
   let lastKnownDD: number = save.double_defense;
   save.double_defense = data.double_defense;
   if (lastKnownDD < data.double_defense) {
-    bus.emit(OotOnlineEvents.GAINED_HEART_CONTAINER, data.double_defense);
+    bus.emit(Z64OnlineEvents.GAINED_HEART_CONTAINER, data.double_defense);
   }
 }
 
