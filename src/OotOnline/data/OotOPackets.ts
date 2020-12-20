@@ -244,42 +244,6 @@ export class Ooto_SpawnActorPacket extends Packet {
   }
 }
 
-export class Ooto_AllocateModelPacket extends Packet {
-  model: Buffer;
-  age: Age;
-  hash: string;
-
-  constructor(model: Buffer, age: Age, lobby: string, hash: string) {
-    super('Ooto_AllocateModelPacket', 'OotOnline', lobby, true);
-    this.model = model;
-    this.age = age;
-    this.hash = hash;
-  }
-}
-
-export class OotO_ModifyModelPacket extends Packet {
-  mod: Buffer;
-  offset: number;
-  age: Age;
-
-  constructor(lobby: string, mod: Buffer, offset: number, age: Age) {
-    super('OotO_ModifyModelPacket', 'OotOnline', lobby, false);
-    this.mod = mod;
-    this.offset = offset;
-    this.age = age;
-  }
-}
-
-export class OotO_GiveModelPacket extends Packet {
-
-  target: INetworkPlayer;
-
-  constructor(lobby: string, player: INetworkPlayer) {
-    super('OotO_GiveModelPacket', 'OotOnline', lobby, true);
-    this.target = player;
-  }
-}
-
 export class Ooto_BottleUpdatePacket extends Packet {
   slot: number;
   contents: InventoryItem;
@@ -288,19 +252,6 @@ export class Ooto_BottleUpdatePacket extends Packet {
     super('Ooto_BottleUpdatePacket', 'OotOnline', lobby, true);
     this.slot = slot;
     this.contents = contents;
-  }
-}
-
-export class Ooto_IconAllocatePacket extends Packet {
-  icon: Buffer;
-  age: Age;
-  hash: string;
-
-  constructor(buf: Buffer, age: Age, lobby: string, hash: string) {
-    super('Ooto_IconAllocatePacket', 'OotOnline', lobby, true);
-    this.icon = buf;
-    this.age = age;
-    this.hash = hash;
   }
 }
 

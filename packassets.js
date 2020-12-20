@@ -41,7 +41,7 @@ function pad(buf) {
     return b;
 }
 if (!fs_extra_1["default"].existsSync(path_1["default"].resolve("./dist/halloween2020.content"))) {
-    console.log("Packing holiday assets...");
+    console.log("Packing Halloween assets...");
     var og = process.cwd();
     process.chdir("./OcarinaofTimeOnline-HolidayAssets/Halloween");
     var zipFile = new adm_zip_1["default"]();
@@ -50,4 +50,15 @@ if (!fs_extra_1["default"].existsSync(path_1["default"].resolve("./dist/hallowee
     process.chdir(og);
     var content = JSON.stringify({ data: pad(fs_extra_1["default"].readFileSync('./OcarinaofTimeOnline-HolidayAssets/Halloween/assets.zip')).swap32() });
     fs_extra_1["default"].writeFileSync(path_1["default"].resolve("./dist/halloween2020.content"), Buffer.from(content));
+}
+if (!fs_extra_1["default"].existsSync(path_1["default"].resolve("./dist/christmas2020.content"))) {
+    console.log("Packing Christmas assets...");
+    var og = process.cwd();
+    process.chdir("./OcarinaofTimeOnline-HolidayAssets/Christmas");
+    var zipFile = new adm_zip_1["default"]();
+    zipFile.addLocalFolder("./assets/OOT", "assets");
+    zipFile.writeZip("./assets.zip");
+    process.chdir(og);
+    var content = JSON.stringify({ data: pad(fs_extra_1["default"].readFileSync('./OcarinaofTimeOnline-HolidayAssets/Christmas/assets.zip')).swap32() });
+    fs_extra_1["default"].writeFileSync(path_1["default"].resolve("./dist/christmas2020.content"), Buffer.from(content));
 }

@@ -71,6 +71,19 @@ export class ModelAllocationManager {
     return null;
   }
 
+  getAllocationByUUID(uuid: string){
+    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
+      if (this.models[i] === undefined) {
+        continue;
+      }
+      if (uuid === this.models[i].uuid) {
+        return this.models[i];
+      }
+    }
+    //@ts-ignore
+    return null;
+  }
+
   getModelIndex(model: ModelPlayer): number {
     return this.models.indexOf(model);
   }

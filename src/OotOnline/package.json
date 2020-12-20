@@ -1,6 +1,6 @@
 {
   "name": "OotOnline",
-  "version": "2.0.156",
+  "version": "2.0.180",
   "description": "",
   "main": "OotOnline.js",
   "author": "denoflions",
@@ -18,5 +18,8 @@
     "Z64Lib": [
       "libs/Z64Lib"
     ]
+  },
+  "dependencies": {
+    "lodash": "^4.17.20"
   }
 }

@@ -6,8 +6,8 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { OotOnline } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader } from 'modloader64_api/NetworkHandler';
-import { OotOnline_PlayerScene, OotOnlineEvents } from './OotoAPI/OotoAPI';
-import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_SubscreenSyncPacket, Ooto_ServerFlagUpdate, Ooto_BankSyncPacket, Ooto_DownloadResponsePacket2, Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, OotO_ModifyModelPacket } from './data/OotOPackets';
+import { Z64_PlayerScene, Z64OnlineEvents, Z64_ModifyModelPacket } from './Z64API/OotoAPI';
+import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_SubscreenSyncPacket, Ooto_ServerFlagUpdate, Ooto_BankSyncPacket, Ooto_DownloadResponsePacket2, Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket } from './data/OotOPackets';
 import { Ooto_KeyRebuildPacket, KeyLogManagerServer } from './data/keys/KeyLogManager';
 import { mergeInventoryData, mergeEquipmentData, mergeQuestSaveData, mergeDungeonItemData, OotO_SceneStruct } from './data/OotoSaveData';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
@@ -50,7 +50,7 @@ export class OotOnlineServer {
     }
 
     @ServerNetworkHandler('OotO_ModifyModelPacket')
-    onModelModification(packet: OotO_ModifyModelPacket){
+    onModelModification(packet: Z64_ModifyModelPacket){
         this.sendPacketToPlayersInScene(packet);
     }
 
@@ -108,7 +108,7 @@ export class OotOnlineServer {
                 packet.scene +
                 '.'
             );
-            bus.emit(OotOnlineEvents.SERVER_PLAYER_CHANGED_SCENES, new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene));
+            bus.emit(Z64OnlineEvents.SERVER_PLAYER_CHANGED_SCENES, new Z64_PlayerScene(packet.player, packet.lobby, packet.scene));
         } catch (err) {
         }
     }

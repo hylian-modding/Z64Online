@@ -2,7 +2,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState } from 'modloader64_api/OOT/OOTAPI';
-import { OotOnlineEvents, OotOnline_PlayerScene } from './OotoAPI/OotoAPI';
+import { Z64OnlineEvents, Z64_PlayerScene } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct } from './data/OotoSaveData';
 import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket, OotO_ItemGetMessagePacket } from './data/OotOPackets';
@@ -85,7 +85,7 @@ export class OotOnlineClient {
         }
     }
 
-    @EventHandler(OotOnlineEvents.GHOST_MODE)
+    @EventHandler(Z64OnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
         this.LobbyConfig.actor_syncing = false;
         this.LobbyConfig.data_syncing = false;
@@ -106,8 +106,12 @@ export class OotOnlineClient {
 
     @Init()
     init(): void {
-        this.modelManager.clientStorage = this.clientStorage;
-        this.gui.modelManager = this.modelManager;
+        if (this.modelManager !== undefined) {
+            this.modelManager.clientStorage = this.clientStorage;
+            if (this.gui !== undefined) {
+                this.gui.modelManager = this.modelManager;
+            }
+        }
     }
 
     @Postinit()
@@ -244,10 +248,10 @@ export class OotOnlineClient {
                 this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby));
             }
             let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(this.core.global.scene, this.core.save.age, this.ModLoader.clientLobby);
-            if (this.modelManager.clientStorage.adultIcon.byteLength > 1) {
+            if (this.clientStorage.adultIcon.byteLength > 1) {
                 gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
             }
-            if (this.modelManager.clientStorage.childIcon.byteLength > 1) {
+            if (this.clientStorage.childIcon.byteLength > 1) {
                 gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
             }
             this.ModLoader.gui.tunnel.send('OotOnline:onAgeChange', new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p));
@@ -271,7 +275,7 @@ export class OotOnlineClient {
         this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
         this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
         if (GHOST_MODE_TRIGGERED) {
-            bus.emit(OotOnlineEvents.GHOST_MODE, true);
+            bus.emit(Z64OnlineEvents.GHOST_MODE, true);
         }
     }
 
@@ -299,10 +303,10 @@ export class OotOnlineClient {
             this.core.save.age,
             this.ModLoader.clientLobby
         );
-        if (this.modelManager.clientStorage.adultIcon.byteLength > 1) {
+        if (this.clientStorage.adultIcon.byteLength > 1) {
             gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
         }
-        if (this.modelManager.clientStorage.childIcon.byteLength > 1) {
+        if (this.clientStorage.childIcon.byteLength > 1) {
             gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
         }
         this.ModLoader.gui.tunnel.send(
@@ -343,8 +347,8 @@ export class OotOnlineClient {
             '.'
         );
         bus.emit(
-            OotOnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
-            new OotOnline_PlayerScene(packet.player, packet.lobby, packet.scene)
+            Z64OnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
+            new Z64_PlayerScene(packet.player, packet.lobby, packet.scene)
         );
         let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
             packet.scene,
@@ -437,7 +441,7 @@ export class OotOnlineClient {
             this.core.save,
             true
         );
-        bus.emit(OotOnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
+        bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
     }
 
     // The server is giving me data.
@@ -681,17 +685,17 @@ export class OotOnlineClient {
         );
     }
 
-    @EventHandler(OotOnlineEvents.GAINED_PIECE_OF_HEART)
+    @EventHandler(Z64OnlineEvents.GAINED_PIECE_OF_HEART)
     onNeedsHeal1(evt: any) {
         this.healPlayer();
     }
 
-    @EventHandler(OotOnlineEvents.GAINED_HEART_CONTAINER)
+    @EventHandler(Z64OnlineEvents.GAINED_HEART_CONTAINER)
     onNeedsHeal2(evt: any) {
         this.healPlayer();
     }
 
-    @EventHandler(OotOnlineEvents.MAGIC_METER_INCREASED)
+    @EventHandler(Z64OnlineEvents.MAGIC_METER_INCREASED)
     onNeedsMagic(size: Magic) {
         switch (size) {
             case Magic.NONE:
@@ -713,10 +717,10 @@ export class OotOnlineClient {
             age,
             this.ModLoader.clientLobby
         );
-        if (this.modelManager.clientStorage.adultIcon.byteLength > 1) {
+        if (this.clientStorage.adultIcon.byteLength > 1) {
             gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
         }
-        if (this.modelManager.clientStorage.childIcon.byteLength > 1) {
+        if (this.clientStorage.childIcon.byteLength > 1) {
             gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
         }
         this.ModLoader.gui.tunnel.send(
@@ -736,7 +740,7 @@ export class OotOnlineClient {
         return (item === InventoryItem.EMPTY_BOTTLE || item === InventoryItem.BOTTLED_BIG_POE || item === InventoryItem.BOTTLED_BUGS || item === InventoryItem.BOTTLED_FAIRY || item === InventoryItem.BOTTLED_FISH || item === InventoryItem.BOTTLED_POE || item === InventoryItem.LON_LON_MILK || item === InventoryItem.LON_LON_MILK_HALF)
     }
 
-    @EventHandler(OotOnlineEvents.ON_INVENTORY_UPDATE)
+    @EventHandler(Z64OnlineEvents.ON_INVENTORY_UPDATE)
     onInventoryUpdate(inventory: IInventory) {
         if (
             this.core.helper.isTitleScreen() ||

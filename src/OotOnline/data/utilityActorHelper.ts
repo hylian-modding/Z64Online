@@ -8,7 +8,7 @@ import { IActor } from "modloader64_api/OOT/IActor";
 import fs from 'fs';
 import path from 'path';
 import { onTick } from "modloader64_api/PluginLifecycle";
-import { IOotOnlineHelpers } from "@OotOnline/OotoAPI/OotoAPI";
+import { IZ64OnlineHelpers } from "@OotOnline/Z64API/OotoAPI";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 
 export class UtilityActorHelper {
@@ -18,7 +18,7 @@ export class UtilityActorHelper {
     @InjectCore()
     core!: IOOTCore;
     @ParentReference()
-    parent!: IOotOnlineHelpers;
+    parent!: IZ64OnlineHelpers;
     sceneList: any;
     currentBank!: IActor;
     lastKnownBalance: number = 0;

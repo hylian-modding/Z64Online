@@ -6,7 +6,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { EventHandler } from "modloader64_api/EventHandler";
-import { IOotOnlineHelpers, OotOnlineEvents } from "@OotOnline/OotoAPI/OotoAPI";
+import { IZ64OnlineHelpers, Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
 import Vector3 from "modloader64_api/math/Vector3";
 import { glmatrix_matrix4, glmatrix_vec4 } from 'modloader64_api/math/glmatrix';
 import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
@@ -35,7 +35,7 @@ export class ImGuiHandler {
     @InjectCore()
     core!: IOOTCore;
     @ParentReference()
-    parent!: IOotOnlineHelpers;
+    parent!: IZ64OnlineHelpers;
     modelManager!: ModelManagerClient;
     puppets: Array<Puppet> = [];
     scene: number = -1;
@@ -61,12 +61,12 @@ export class ImGuiHandler {
         this.actorNames = JSON.parse(fse.readFileSync(path.resolve(__dirname, "ACTOR_NAMES.json")).toString());
     }
 
-    @EventHandler(OotOnlineEvents.PLAYER_PUPPET_SPAWNED)
+    @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
     onPuppetSpawn(puppet: Puppet) {
         this.puppets.push(puppet);
     }
 
-    @EventHandler(OotOnlineEvents.PLAYER_PUPPET_DESPAWNED)
+    @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_DESPAWNED)
     onPuppetDespawn(puppet: Puppet) {
         let index: number = -1;
         for (let i = 0; i < this.puppets.length; i++) {
