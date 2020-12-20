@@ -660,7 +660,6 @@ export class ModelManagerClient {
             let i = header + (parseInt(key) * 0x8) + 0x4;
             let offset = parseInt(data.OOT.child[key]) + 0x4;
             Model.writeUInt32BE(cp.readUInt32BE(i), offset);
-            console.log(cp.readUInt32BE(i).toString(16));
           });
         }
       }
@@ -696,7 +695,6 @@ export class ModelManagerClient {
       this.clearEquipmentHeap();
       this.equipmentMap.forEach((value: Buffer, key: string) => {
         let p = this.equipmentHeap.malloc(value.byteLength);
-        console.log(p.toString(16));
         this.ModLoader.emulator.rdramWriteBuffer(p, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(value), 0, true, p));
         let rp = this.ModLoader.emulator.rdramReadBuffer(p, value.byteLength);
         let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');

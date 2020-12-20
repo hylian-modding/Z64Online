@@ -284,6 +284,7 @@ export class WorldEventRewards {
                         }, 1);
                         this.ModLoader.config.save();
                     }
+                    this.ModLoader.ImGui.text("First costume change requires a game restart");
                     Object.keys(this.rewards.events).forEach((event: string) => {
                         let eventObj = this.rewards.events[event];
                         if (this.ModLoader.ImGui.treeNode(event + "###" + event)) {
