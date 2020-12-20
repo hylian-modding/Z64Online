@@ -80,10 +80,10 @@ class ChristmasBombReward extends ChristmasReward {
 }
 
 class ChristmasRNGReward extends ChristmasReward {
-    constructor(trigger: number, ModLoader: IModLoaderAPI, core: IOOTCore) {
+    constructor(trigger: number, ModLoader: IModLoaderAPI, core: IOOTCore, override?: number) {
         super("If you see this message yell at den for fucking up", trigger, ModLoader, core, (ModLoader: IModLoaderAPI, core: IOOTCore, client: ChristmasClient) => {
             let rng = client.getRandomInt(0, 100);
-            if (rng <= client.currentProc) {
+            if (rng <= client.currentProc || override !== undefined) {
                 // Winner.
                 client.currentProc = 0;
                 if (client.rewardsMap.length > 0) {
@@ -95,6 +95,12 @@ class ChristmasRNGReward extends ChristmasReward {
                         new ChristmasAdultCostumeReward(data, "Costume: " + data, this.trigger, this.ModLoader, this.core).run(client);
                     } else if (client.costumesGear.has(data)) {
                         new ChristmasEquipmentCostumeReward(data, "Costume: " + data, this.trigger, this.ModLoader, this.core).run(client);
+                    }
+                    if (override !== undefined) {
+                        addToKillFeedQueue("Winner!");
+                    }
+                    if (client.rewardsMap.length === 0) {
+                        addToKillFeedQueue("All rewards found today!");
                     }
                 } else {
                     this.doFail(client);
@@ -238,6 +244,7 @@ export class ChristmasClient implements IWorldEvent {
     eventDisabled: boolean = false;
     @SidedProxy(ProxySide.CLIENT, CreditsController)
     credits!: CreditsController;
+    alreadyUnlocked: Array<string> = [];
 
     @Preinit()
     preinit() {
@@ -315,17 +322,37 @@ export class ChristmasClient implements IWorldEvent {
         this.heap.costumes.get(Age.CHILD)!.forEach((value: Buffer, index: number) => {
             let name = CostumeHelper.getCostumeName(value);
             this.costumesChild.set(name, value);
+            let e = { name: name, age: Age.CHILD, data: value, event: "Christmas 2020", checked: false } as Z64_EventReward;
+            bus.emit(Z64_RewardEvents.CHECK_REWARD, e);
+            if (e.checked === true) {
+                this.alreadyUnlocked.push(name);
+            }
         });
         this.heap.costumes.get(Age.ADULT)!.forEach((value: Buffer, index: number) => {
             let name = CostumeHelper.getCostumeName(value);
             this.costumesAdult.set(name, value);
+            let e = { name: name, age: Age.ADULT, data: value, event: "Christmas 2020", checked: false } as Z64_EventReward;
+            bus.emit(Z64_RewardEvents.CHECK_REWARD, e);
+            if (e.checked === true) {
+                this.alreadyUnlocked.push(name);
+            }
         });
         this.heap.equipment!.forEach((value: Buffer[], key: string) => {
             for (let i = 0; i < value.length; i++) {
                 let name = CostumeHelper.getCostumeName(value[i]);
                 this.costumesGear.set(name, value[i]);
+                let e = { name: name, age: 0x69, data: value[i], event: "Christmas 2020", checked: false, equipmentCategory: CostumeHelper.getEquipmentCategory(value[i]) } as Z64_EventReward;
+                bus.emit(Z64_RewardEvents.CHECK_REWARD, e);
+                if (e.checked === true) {
+                    this.alreadyUnlocked.push(name);
+                }
             }
         });
+        for (let i = 0; i < this.alreadyUnlocked.length; i++){
+            if (this.rewardsMap.indexOf(this.alreadyUnlocked[i]) > -1){
+                this.ModLoader.logger.debug(this.alreadyUnlocked[i] + " already unlocked. Removing from item pool.");
+            }
+        }
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
@@ -363,7 +390,7 @@ export class ChristmasClient implements IWorldEvent {
             for (let i = 0; i < 1; i++) {
                 let used: number[] = [];
                 let trees: number[] = [];
-                for (let j = 0; j < 80; j++) {
+                for (let j = 0; j < 40; j++) {
                     let c = this.getRandomInt(0, clone.length);
                     while (used.indexOf(c) === -1) {
                         c = this.getRandomInt(0, clone.length);
@@ -394,7 +421,7 @@ export class ChristmasClient implements IWorldEvent {
             let rewardArr: Array<string> = rewardArrs[rewardDay];
             this.rewardsMap = rewardArr;
             for (let i = 0; i < rewardArr.length; i++) {
-                this.rewardsToday.push(new ChristmasChildCostumeReward(rewardArr[i], "Costume unlocked: " + rewardArr[i], lobby.data["OotOnline:christmas_winner"], this.ModLoader, this.core));
+                this.rewardsToday.push(new ChristmasRNGReward(lobby.data["OotOnline:christmas_winner"], this.ModLoader, this.core, 1));
             }
             for (let i = 0; i < this.christmasSpawnLocations.length; i++) {
                 if (this.christmasSpawnLocations[i] !== lobby.data["OotOnline:christmas_winner"]) {
@@ -671,7 +698,14 @@ export class ChristmasServer implements IWorldEvent {
 
     @Preinit()
     preinit() {
-        this.rewardData = JSON.parse(fs.readFileSync(path.resolve(global.ModLoader.startdir, "christmas2020_rewardmap.json")).toString());
+        if (fs.existsSync(path.resolve(global.ModLoader.startdir, "christmas2020_rewardmap.json"))) {
+            this.rewardData = JSON.parse(fs.readFileSync(path.resolve(global.ModLoader.startdir, "christmas2020_rewardmap.json")).toString());
+        } else {
+            this.rewardData = {};
+            for (let i = 0; i < 31; i++) {
+                this.rewardData[i.toString()] = [];
+            }
+        }
     }
 
     @EventHandler(EventsServer.ON_LOBBY_DATA)
