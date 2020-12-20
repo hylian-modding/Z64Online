@@ -363,7 +363,7 @@ export class PuppetOverlordClient {
       }
       if (puppet.isSpawned) {
         puppet.despawn();
-        this.awaiting_spawn.push(puppet);
+        // The system will auto-respawn these in a couple of frames.
       }
     }
   }

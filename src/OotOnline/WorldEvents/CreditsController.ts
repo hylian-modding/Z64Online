@@ -8,7 +8,7 @@ import { FlipFlags, Texture } from "modloader64_api/Sylvain/Gfx";
 import fs from 'fs';
 import path from 'path';
 import { rgba, xy, xywh } from "modloader64_api/Sylvain/vec";
-import { onViUpdate } from "modloader64_api/PluginLifecycle";
+import { onTick, onViUpdate } from "modloader64_api/PluginLifecycle";
 
 export class CreditsController {
 
@@ -29,19 +29,25 @@ export class CreditsController {
     eventDisabled: boolean = false;
     creditsDone: boolean = false;
 
+    @onTick()
+    onTick() {
+        if (this.playingCredits) {
+            this.core.commandBuffer.runCommand(Command.PLAY_MUSIC, 0);
+        }
+    }
+
     @onViUpdate()
     onVi() {
-        if (this.eventDisabled){
+        if (this.eventDisabled) {
             return;
         }
         if (this.playingCredits) {
-            if (this.creditsMusic === undefined){
+            if (this.creditsMusic === undefined) {
                 this.creditsMusic = this.ModLoader.sound.initMusic(this.assets.get("assets/music/credits.ogg")!);
                 this.creditsMusic.volume = 50;
                 return;
             }
             if (this.creditsMusic.status !== SoundSourceStatus.Playing && !this.creditsDone) {
-                this.core.commandBuffer.runCommand(Command.PLAY_MUSIC, 0);
                 this.creditsMusic.stop();
                 this.creditsMusic.play();
                 this.needsSlideChange = true;

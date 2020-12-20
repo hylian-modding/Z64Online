@@ -20,7 +20,7 @@
         "./src/OotOnline/*"
       ],
       "Z64Lib/*": [
-        "./libs/Z64Lib/*"
+        "libs\\Z64Lib/*"
       ]
     }
   },
@@ -31,7 +31,8 @@
     "cores/**/*.ts",
     "bin/paker.ts",
     "tools/**/*.ts",
-    "src/modloader/consoles/mupen/resources/test.js"
+    "src/modloader/consoles/mupen/resources/test.js",
+    "API/src/IAnalyticsManager.ts"
   ],
   "exclude": [
     "node_modules",

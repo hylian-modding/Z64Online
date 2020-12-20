@@ -85,7 +85,8 @@ class ChristmasRNGReward extends ChristmasReward {
             let rng = client.getRandomInt(0, 100);
             if (rng <= client.currentProc || override !== undefined) {
                 // Winner.
-                client.currentProc = 0;
+                client.cleanRewards();
+                client.currentProc = 30;
                 if (client.rewardsMap.length > 0) {
                     let data = client.rewardsMap.shift()!;
                     this.msg = "Costume: " + data;
@@ -113,7 +114,8 @@ class ChristmasRNGReward extends ChristmasReward {
 
     doFail(client: ChristmasClient) {
         // Loser.
-        client.currentProc += 10;
+        client.currentProc += 30;
+        console.log(client.currentProc);
         // What do we give? Lets see.
         // Rupees, Bombs, Arrows, Bombchus, Sticks, Nuts.
         let spin = client.getRandomInt(0, 5);
@@ -239,7 +241,7 @@ export class ChristmasClient implements IWorldEvent {
     costumesAdult: Map<string, Buffer> = new Map<string, Buffer>();
     costumesGear: Map<string, Buffer> = new Map<string, Buffer>();
     christmasSpawnLocations!: Array<number>;
-    currentProc: number = 0;
+    currentProc: number = 30;
     treeProc: string = "";
     eventDisabled: boolean = false;
     @SidedProxy(ProxySide.CLIENT, CreditsController)
@@ -299,8 +301,10 @@ export class ChristmasClient implements IWorldEvent {
         let tex = path.resolve(__dirname, "cache");
         tcWrap(() => { fs.mkdirSync(tex) });
         tcWrap(() => {
-            let sc = new StorageContainer("christmas_flags_2020");
-            this.collectionFlags = sc.loadObject();
+            let p = path.resolve(".", "saves", this.ModLoader.clientLobby, "christmas_flags_oot.json");
+            if (fs.existsSync(p)) {
+                this.collectionFlags = JSON.parse(fs.readFileSync(p).toString());
+            }
         });
         if (this.config.textures) {
             bus.emit(ModLoaderEvents.OVERRIDE_TEXTURE_PATH, tex);
@@ -311,6 +315,42 @@ export class ChristmasClient implements IWorldEvent {
                 fs.writeFileSync(path.resolve(tex, parse.base), value);
             }
         });
+    }
+
+    cleanRewards() {
+        this.alreadyUnlocked = [];
+        this.heap.costumes.get(Age.CHILD)!.forEach((value: Buffer, index: number) => {
+            let name = CostumeHelper.getCostumeName(value);
+            let e = { name: name, age: Age.CHILD, data: value, event: "Christmas 2020", checked: false } as Z64_EventReward;
+            bus.emit(Z64_RewardEvents.CHECK_REWARD, e);
+            if (e.checked === true) {
+                this.alreadyUnlocked.push(name);
+            }
+        });
+        this.heap.costumes.get(Age.ADULT)!.forEach((value: Buffer, index: number) => {
+            let name = CostumeHelper.getCostumeName(value);
+            let e = { name: name, age: Age.ADULT, data: value, event: "Christmas 2020", checked: false } as Z64_EventReward;
+            bus.emit(Z64_RewardEvents.CHECK_REWARD, e);
+            if (e.checked === true) {
+                this.alreadyUnlocked.push(name);
+            }
+        });
+        this.heap.equipment!.forEach((value: Buffer[], key: string) => {
+            for (let i = 0; i < value.length; i++) {
+                let name = CostumeHelper.getCostumeName(value[i]);
+                let e = { name: name, age: 0x69, data: value[i], event: "Christmas 2020", checked: false, equipmentCategory: CostumeHelper.getEquipmentCategory(value[i]) } as Z64_EventReward;
+                bus.emit(Z64_RewardEvents.CHECK_REWARD, e);
+                if (e.checked === true) {
+                    this.alreadyUnlocked.push(name);
+                }
+            }
+        });
+        for (let i = 0; i < this.alreadyUnlocked.length; i++) {
+            if (this.rewardsMap.indexOf(this.alreadyUnlocked[i]) > -1) {
+                this.ModLoader.logger.debug(this.alreadyUnlocked[i] + " already unlocked. Removing from item pool.");
+                this.rewardsMap.splice(this.rewardsMap.indexOf(this.alreadyUnlocked[i]), 1);
+            }
+        }
     }
 
     @Postinit()
@@ -435,7 +475,7 @@ export class ChristmasClient implements IWorldEvent {
             for (let i = 0; i < 1; i++) {
                 let used: number[] = [];
                 let trees: number[] = [];
-                for (let j = 0; j < 40; j++) {
+                for (let j = 0; j < 80; j++) {
                     let c = this.getRandomInt(0, clone.length);
                     while (used.indexOf(c) === -1) {
                         c = this.getRandomInt(0, clone.length);
@@ -634,8 +674,8 @@ export class ChristmasClient implements IWorldEvent {
                 }
             }
             this.collectionFlags[this.treeDay].writeUInt8(1, treeId);
-            let sc = new StorageContainer("christmas_flags_2020");
-            sc.storeObject(this.collectionFlags);
+            let p = path.resolve(".", "saves", this.ModLoader.clientLobby, "christmas_flags_oot.json");
+            fs.writeFileSync(p, JSON.stringify(this.collectionFlags));
         }
     }
 
@@ -643,73 +683,6 @@ export class ChristmasClient implements IWorldEvent {
     onVi() {
         if (this.eventDisabled) {
             return;
-        }
-        if (this.ModLoader.ImGui.beginMainMenuBar()) {
-            if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                if (this.ModLoader.ImGui.beginMenu("OotO")) {
-                    if (this.ModLoader.ImGui.beginMenu("Christmas Dev")) {
-                        if (this.ModLoader.ImGui.checkbox("Show tree", this.GuiVariables.showTree)) {
-                        }
-                        if (this.ModLoader.ImGui.checkbox("Generate snow (overworld only)", this.GuiVariables.snow)) {
-                        }
-                        if (this.ModLoader.ImGui.smallButton("Save Present Position")) {
-                            let scene = this.core.global.scene;
-                            let pos = this.core.link.position.getRawPos();
-                            let rot = this.core.link.rotation.getRawRot();
-                            let sb = new SmartBuffer();
-                            sb.writeUInt32BE(scene);
-                            sb.writeBuffer(pos);
-                            sb.writeBuffer(rot);
-                            sb.writeUInt32BE(this.GuiVariables.showTree[0] ? 1 : 0);
-                            sb.writeUInt32BE(this.GuiVariables.boxVariant[0]);
-                            sb.writeUInt32BE(this.GuiVariables.snow[0] ? 1 : 0);
-                            let data = JSON.stringify({ present: sb.toBuffer() });
-                            this.ModLoader.logger.debug(data);
-                            this.ModLoader.ImGui.setClipboardText(data);
-                            let i = 0;
-                            let p = sb.toBuffer();
-                            let valid = true;
-                            let snow = this.GuiVariables.snow[0];
-                            this.ModLoader.utils.setTimeoutFrames(() => {
-                                if (snow) {
-                                    let cats = [ActorCategory.MISC, ActorCategory.ITEM_ACTION];
-                                    Object.keys(cats).forEach((key: any) => {
-                                        let cat = this.core.actorManager.getActors(cats[key]);
-                                        for (let i = 0; i < cat.length; i++) {
-                                            if (cat[i].actorID === 0x97 || cat[i].actorID === 0x165) {
-                                                this.ModLoader.logger.debug("Found existing weather to erase.");
-                                                cat[i].destroy();
-                                            }
-                                        }
-                                    });
-                                }
-                                this.ModLoader.emulator.rdramWrite32(this.treePointer, this.presentParams);
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x4, this.heap.getSlotAddress(this.heap.findAsset("PresentPsi")!));
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x8, this.heap.getSlotAddress(this.heap.findAsset("TreePsi")!));
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0xC, this.heap.getSlotAddress(this.heap.findAsset("PsiTopper")!));
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x10, valid ? 1 : 0);
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x14, p.readUInt32BE(0x16));
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x18, p.readUInt32BE(0x1A));
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x1C, p.readUInt32BE(0x1E));
-                                this.ModLoader.emulator.rdramWrite32(this.presentParams + 0x20, this.snowList);
-                                this.present.spawn(this.present, (success: boolean, result: number) => {
-                                    if (success) {
-                                        let a = this.core.actorManager.createIActorFromPointer(result);
-                                        a.position.setRawPos(p.slice(0x4, 0x4 + 0xC));
-                                        a.rotation.setRawRot(p.slice(0x10, 0x10 + 0x6));
-                                        a.room = 0xFF;
-                                    }
-                                    return {};
-                                });
-                            }, 20 + i);
-                        }
-                        this.ModLoader.ImGui.endMenu();
-                    }
-                    this.ModLoader.ImGui.endMenu();
-                }
-                this.ModLoader.ImGui.endMenu();
-            }
-            this.ModLoader.ImGui.endMainMenuBar();
         }
         if (!this.title.onTitleScreen) {
             this.title.fadeIn.w = 0;
