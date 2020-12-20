@@ -319,6 +319,7 @@ export class ChristmasClient implements IWorldEvent {
             return;
         }
         this.heap.postinit();
+        let items: Array<string> = [];
         this.heap.costumes.get(Age.CHILD)!.forEach((value: Buffer, index: number) => {
             let name = CostumeHelper.getCostumeName(value);
             this.costumesChild.set(name, value);
@@ -327,6 +328,7 @@ export class ChristmasClient implements IWorldEvent {
             if (e.checked === true) {
                 this.alreadyUnlocked.push(name);
             }
+            items.push(name);
         });
         this.heap.costumes.get(Age.ADULT)!.forEach((value: Buffer, index: number) => {
             let name = CostumeHelper.getCostumeName(value);
@@ -336,6 +338,7 @@ export class ChristmasClient implements IWorldEvent {
             if (e.checked === true) {
                 this.alreadyUnlocked.push(name);
             }
+            items.push(name);
         });
         this.heap.equipment!.forEach((value: Buffer[], key: string) => {
             for (let i = 0; i < value.length; i++) {
@@ -346,12 +349,54 @@ export class ChristmasClient implements IWorldEvent {
                 if (e.checked === true) {
                     this.alreadyUnlocked.push(name);
                 }
+                items.push(name);
             }
         });
-        for (let i = 0; i < this.alreadyUnlocked.length; i++){
-            if (this.rewardsMap.indexOf(this.alreadyUnlocked[i]) > -1){
+        for (let i = 0; i < this.alreadyUnlocked.length; i++) {
+            if (this.rewardsMap.indexOf(this.alreadyUnlocked[i]) > -1) {
                 this.ModLoader.logger.debug(this.alreadyUnlocked[i] + " already unlocked. Removing from item pool.");
             }
+        }
+        let generate: boolean = false;
+        if (generate) {
+            let dist: any = {};
+            for (let i = 1; i < 32; i++) {
+                dist[i.toString()] = [];
+            }
+            let curDay = 20;
+            let shuffle = (array: Array<string>) => {
+                let currentIndex = array.length, temporaryValue, randomIndex;
+                while (0 !== currentIndex) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex -= 1;
+                    temporaryValue = array[currentIndex];
+                    array[currentIndex] = array[randomIndex];
+                    array[randomIndex] = temporaryValue;
+                }
+                return array;
+            }
+            let copy = (array: Array<string>) => {
+                let arr = [];
+                for (let i = 0; i < array.length; i++) {
+                    arr.push(array[i]);
+                }
+                return arr;
+            }
+            items = shuffle(items);
+            let c = copy(items);
+            let c2 = copy(items);
+            console.log(JSON.stringify(dist, null, 2));
+            while (items.length > 0) {
+                console.log(curDay);
+                dist[curDay.toString()].push(items.shift());
+                curDay++;
+                if (curDay > 31) {
+                    curDay = 20;
+                }
+            }
+            dist["1"] = shuffle(c);
+            dist["2"] = shuffle(c2);
+            console.log(JSON.stringify(dist, null, 2));
         }
     }
 
