@@ -629,6 +629,7 @@ export class ModelManagerClient {
     let passed: boolean = false;
     if (eqList.model.equipment.length > 0) {
       this.ModLoader.logger.debug("Loading equipment overrides...");
+      this.ModLoader.emulator.rdramWriteBuffer(0x80800000 + allocation_size * eqIndex, Buffer.alloc(0x37800));
       let temp = new Heap(this.ModLoader.emulator, 0x80800000 + allocation_size * eqIndex, 0x37800);
       for (let i = 0; i < eqList.model.equipment.length; i++) {
         let cp = this.ModLoader.utils.cloneBuffer(eqList.model.equipment[i].zobj);
