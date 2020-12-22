@@ -28,6 +28,7 @@ class ChristmasGuiStuff {
     showTree: bool_ref = [true];
     snow: bool_ref = [false];
     boxVariant: number_ref = [0];
+    muteAllEventMusic: boolean = false;
 }
 
 class TitleScreenData {
@@ -36,12 +37,12 @@ class TitleScreenData {
     fadeIn: vec4 = rgba(255, 255, 255, 0);
     onTitleScreen: boolean = false;
     titleMusic!: Music;
-    creditsMusic!: Music;
 }
 
 interface OotO_Christmas_Config {
     textures: boolean;
     disableEvent: boolean;
+    muteMusic: boolean;
 }
 
 interface IChristmasReward {
@@ -256,6 +257,7 @@ export class ChristmasClient implements IWorldEvent {
         this.config = this.ModLoader.config.registerConfigCategory("OotO_Christmas") as OotO_Christmas_Config;
         this.ModLoader.config.setData("OotO_Christmas", "textures", true);
         this.ModLoader.config.setData("OotO_Christmas", "disableEvent", false);
+        this.ModLoader.config.setData("OotO_Christmas", "muteMusic", false);
         this.eventDisabled = this.config.disableEvent;
         this.title = new TitleScreenData();
         //this.heap = new AssetHeap(this.ModLoader, "Christmas", undefined, path.resolve(global.ModLoader.startdir, "Christmas"));
@@ -281,7 +283,6 @@ export class ChristmasClient implements IWorldEvent {
             this.title.icon.loadFromFile(path.resolve(__dirname, "../", "../", "icon.png"));
             // Sounds
             this.title.titleMusic = this.ModLoader.sound.initMusic(this.heap.assets.get("assets/music/titlescreen.ogg")!);
-            this.title.creditsMusic = this.ModLoader.sound.initMusic(this.heap.assets.get("assets/music/credits.ogg")!);
             this.resourceLoad = true;
         }
     }
@@ -499,6 +500,7 @@ export class ChristmasClient implements IWorldEvent {
         }
         this.eventDisabled = !lobby.data['OotOnline:christmas'];
         this.credits.eventDisabled = this.eventDisabled;
+        this.credits.muteMusic = this.config.muteMusic;
         if (lobby.data['OotOnline:christmas']) {
             this.christmasSpawnLocations = lobby.data['OotOnline:christmas_spawns'];
             let rewardArrs: any = lobby.data["OotOnline:ChristmasRewardMap"];
@@ -679,11 +681,39 @@ export class ChristmasClient implements IWorldEvent {
         }
     }
 
+    @EventHandler('Z64_EventMusicState')
+    onMusicStateChange(mute: boolean){
+        if (this.title.titleMusic !== undefined){
+            this.title.titleMusic.stop();
+        }
+        if (this.credits.creditsMusic !== undefined){
+            this.credits.muteMusic = mute;
+            this.credits.creditsMusic.stop();
+        }
+    }
+
     @onViUpdate()
     onVi() {
         if (this.eventDisabled) {
             return;
         }
+        if (this.ModLoader.ImGui.beginMainMenuBar()) {
+            if (this.ModLoader.ImGui.beginMenu("Mods")) {
+                if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                    if (this.ModLoader.ImGui.beginMenu("Events")) {
+                        if (this.ModLoader.ImGui.menuItem("Disable Music", undefined, this.config.muteMusic, true)) {
+                            this.config.muteMusic = !this.config.muteMusic;
+                            this.ModLoader.config.save();
+                            bus.emit('Z64_EventMusicState', this.config.muteMusic);
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
+                    this.ModLoader.ImGui.endMenu();
+                }
+                this.ModLoader.ImGui.endMenu();
+            }
+        }
+        this.ModLoader.ImGui.endMainMenuBar();
         if (!this.title.onTitleScreen) {
             this.title.fadeIn.w = 0;
             try {
@@ -695,9 +725,11 @@ export class ChristmasClient implements IWorldEvent {
         }
         try {
             if (this.title.titleMusic.status !== SoundSourceStatus.Playing) {
-                this.core.commandBuffer.runCommand(Command.PLAY_MUSIC, 0);
-                this.title.titleMusic.volume = 50;
-                this.title.titleMusic.play();
+                if (!this.config.muteMusic) {
+                    this.core.commandBuffer.runCommand(Command.PLAY_MUSIC, 0);
+                    this.title.titleMusic.volume = 50;
+                    this.title.titleMusic.play();
+                }
             }
         } catch (err) { }
         if (this.title.fadeIn.w < 1.0) {

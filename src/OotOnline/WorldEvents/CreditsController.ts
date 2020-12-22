@@ -27,6 +27,7 @@ export class CreditsController {
     private entranceTrigger: number = 0x0000006B;
     private cutsceneTrigger: number = 0x0000FFF2;
     eventDisabled: boolean = false;
+    muteMusic: boolean = false;
     creditsDone: boolean = false;
 
     @onTick()
@@ -48,8 +49,10 @@ export class CreditsController {
                 return;
             }
             if (this.creditsMusic.status !== SoundSourceStatus.Playing && !this.creditsDone) {
-                this.creditsMusic.stop();
-                this.creditsMusic.play();
+                if (!this.muteMusic) {
+                    this.creditsMusic.stop();
+                    this.creditsMusic.play();
+                }
                 this.needsSlideChange = true;
             }
             if (this.needsSlideChange) {
