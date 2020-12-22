@@ -604,8 +604,7 @@ export class ActorHookingManagerClient {
       // Change Zelda's actor category from 'NPC' to 'Chest'.
       // This fixes Ganon's Tower Collapse.
       let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
-      let zhash: string = this.ModLoader.utils.hashBuffer(buf);
-      if (zhash === "3560a2ed96d71e375f79fb53e55d1011") {
+      if (buf.readUInt32BE(0x7234) === 0x01790400) {
         this.ModLoader.logger.info("Patching Zelda...");
         buf.writeUInt8(0x0B, 0x7236);
       }
