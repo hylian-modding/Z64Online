@@ -260,8 +260,8 @@ export class ChristmasClient implements IWorldEvent {
         this.ModLoader.config.setData("OotO_Christmas", "muteMusic", false);
         this.eventDisabled = this.config.disableEvent;
         this.title = new TitleScreenData();
-        this.heap = new AssetHeap(this.ModLoader, "Christmas", undefined, path.resolve(global.ModLoader.startdir, "Christmas"));
-        //this.heap = new AssetHeap(this.ModLoader, "Christmas", this.url, undefined);
+        //this.heap = new AssetHeap(this.ModLoader, "Christmas", undefined, path.resolve(global.ModLoader.startdir, "Christmas"));
+        this.heap = new AssetHeap(this.ModLoader, "Christmas", this.url, undefined);
         this.collectionFlags = [];
         for (let i = 0; i < 32; i++) {
             this.collectionFlags.push(Buffer.alloc(100));
