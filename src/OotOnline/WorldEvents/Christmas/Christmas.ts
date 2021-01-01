@@ -226,7 +226,7 @@ export class ChristmasClient implements IWorldEvent {
     @InjectCore()
     core!: IOOTCore;
     collectionFlags!: Buffer[];
-    url: string = "https://repo.modloader64.com/mods/Ooto/events/christmas/Christmas_2020_final.content";
+    url: string = "https://repo.modloader64.com/mods/Ooto/events/christmas/Christmas_2020_final_hotfix1.content";
     GuiVariables: ChristmasGuiStuff = new ChristmasGuiStuff();
     resourceLoad: boolean = false;
     title!: TitleScreenData;
@@ -260,10 +260,10 @@ export class ChristmasClient implements IWorldEvent {
         this.ModLoader.config.setData("OotO_Christmas", "muteMusic", false);
         this.eventDisabled = this.config.disableEvent;
         this.title = new TitleScreenData();
-        //this.heap = new AssetHeap(this.ModLoader, "Christmas", undefined, path.resolve(global.ModLoader.startdir, "Christmas"));
-        this.heap = new AssetHeap(this.ModLoader, "Christmas", this.url, undefined);
+        this.heap = new AssetHeap(this.ModLoader, "Christmas", undefined, path.resolve(global.ModLoader.startdir, "Christmas"));
+        //this.heap = new AssetHeap(this.ModLoader, "Christmas", this.url, undefined);
         this.collectionFlags = [];
-        for (let i = 0; i < 31; i++) {
+        for (let i = 0; i < 32; i++) {
             this.collectionFlags.push(Buffer.alloc(100));
         }
         //this.rewardsToday.push(new ChristmasEquipmentCostumeReward("Ice Sword", "An icey blade.", 43, this.ModLoader, this.core));
@@ -443,10 +443,17 @@ export class ChristmasClient implements IWorldEvent {
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRomPatched(evt: any) {
-        if (this.eventDisabled) {
-            return;
+        try{
+            if (this.eventDisabled) {
+                return;
+            }
+            this.heap.onRomPatched(evt);
+            this.heap.hotfixes.forEach((value: Buffer, key: string) => {
+                bus.emit(Z64_RewardEvents.APPLY_REWARD_PATCH, { name: key, data: value });
+            });
+        }catch(err){
+            console.log(err);
         }
-        this.heap.onRomPatched(evt);
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
@@ -682,11 +689,11 @@ export class ChristmasClient implements IWorldEvent {
     }
 
     @EventHandler('Z64_EventMusicState')
-    onMusicStateChange(mute: boolean){
-        if (this.title.titleMusic !== undefined){
+    onMusicStateChange(mute: boolean) {
+        if (this.title.titleMusic !== undefined) {
             this.title.titleMusic.stop();
         }
-        if (this.credits.creditsMusic !== undefined){
+        if (this.credits.creditsMusic !== undefined) {
             this.credits.muteMusic = mute;
             this.credits.creditsMusic.stop();
         }

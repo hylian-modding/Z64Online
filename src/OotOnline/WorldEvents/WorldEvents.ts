@@ -14,12 +14,16 @@ import fs from 'fs';
 import { ChristmasClient, ChristmasServer } from './Christmas/Christmas';
 import { CostumeHelper } from './CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
+import { MLPatchLib } from './ML64PatchLib';
+import { trimBuffer } from 'Z64Lib/API/Z64RomTools';
+import path from 'path';
 
 export interface IWorldEvent {
 }
 
 export class RewardContainer {
     events: any = {};
+    patches: any = {};
 
     findRewardByKey(key: string): Buffer | undefined {
         let eventKeys = Object.keys(this.events);
@@ -31,7 +35,12 @@ export class RewardContainer {
                 let itemKeys = Object.keys(items);
                 for (let k = 0; k < itemKeys.length; k++) {
                     if (itemKeys[k] === key) {
-                        return items[itemKeys[k]];
+                        if (this.patches.hasOwnProperty(itemKeys[k])) {
+                            let pp = new MLPatchLib();
+                            return trimBuffer(pp.apply(items[itemKeys[k]], this.patches[itemKeys[k]]));
+                        } else {
+                            return items[itemKeys[k]];
+                        }
                     }
                 }
             }
@@ -51,7 +60,12 @@ export class RewardContainer {
                 let eqKeys = Object.keys(eqItems);
                 for (let k = 0; k < eqKeys.length; k++) {
                     if (eqKeys[k] === key) {
-                        return eqItems[eqKeys[k]];
+                        if (this.patches.hasOwnProperty(eqKeys[k])) {
+                            let pp = new MLPatchLib();
+                            return trimBuffer(pp.apply(eqItems[eqKeys[k]], this.patches[eqKeys[k]]));
+                        } else {
+                            return eqItems[eqKeys[k]];
+                        }
                     }
                 }
             }
@@ -64,6 +78,9 @@ export class RewardContainer {
         this.events = data.events;
         for (let i = 0; i < clone.length; i++) {
             this.createEvent(clone[i]);
+        }
+        if (data.hasOwnProperty("patches")) {
+            this.patches = data.patches;
         }
         return this;
     }
@@ -84,6 +101,16 @@ export class RewardContainer {
     }
 }
 
+export class RewardItem {
+    data: Buffer;
+    uuid: string;
+
+    constructor(uuid: string, data: Buffer) {
+        this.data = data;
+        this.uuid = uuid;
+    }
+}
+
 export class RewardTypeContainer {
     items: any = {};
 }
@@ -95,7 +122,8 @@ export class RewardContainerOld {
 
 export const enum Z64_RewardEvents {
     UNLOCK_PLAYAS = "Z64:WorldEvent_UnlockPlayas",
-    CHECK_REWARD = "Z64:WorldEvent_CheckReward"
+    CHECK_REWARD = "Z64:WorldEvent_CheckReward",
+    APPLY_REWARD_PATCH = "Z64:WorldEvent_ApplyRewardPatch"
 }
 
 export interface Z64_EventReward {
@@ -139,7 +167,7 @@ export class WorldEventRewards {
 
     @EventHandler(Z64_RewardEvents.UNLOCK_PLAYAS)
     onUnlock(reward: Z64_EventReward) {
-        try{
+        try {
             switch (reward.age) {
                 case Age.CHILD:
                     this.rewards.events[reward.event].Child.items[reward.name] = reward.data;
@@ -156,7 +184,7 @@ export class WorldEventRewards {
             }
             let sc = new StorageContainer("holiday_event_rewards_v3");
             sc.storeObject(this.rewards);
-        }catch(err){
+        } catch (err) {
             console.log(err.stack);
         }
     }
@@ -177,6 +205,13 @@ export class WorldEventRewards {
                 reward.checked = this.rewards.events[reward.event].Equipment.items[reward.equipmentCategory!].hasOwnProperty(reward.name);
                 break;
         }
+    }
+
+    @EventHandler(Z64_RewardEvents.APPLY_REWARD_PATCH)
+    onApplyPatch(patch: any) {
+        this.rewards.patches[patch.name] = patch.data;
+        let sc = new StorageContainer("holiday_event_rewards_v3");
+        sc.storeObject(this.rewards);
     }
 
     private migrateRewardsFile1() {
