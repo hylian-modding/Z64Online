@@ -302,7 +302,7 @@ export class ChristmasClient implements IWorldEvent {
         let tex = path.resolve(__dirname, "cache");
         tcWrap(() => { fs.mkdirSync(tex) });
         tcWrap(() => {
-            let p = path.resolve(".", "saves", this.ModLoader.clientLobby, "christmas_flags_oot.json");
+            let p = path.resolve(".", "saves", this.ModLoader.clientLobby, "christmas_flags_oot_v2.json");
             if (fs.existsSync(p)) {
                 this.collectionFlags = JSON.parse(fs.readFileSync(p).toString());
             }
@@ -443,7 +443,7 @@ export class ChristmasClient implements IWorldEvent {
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRomPatched(evt: any) {
-        try{
+        try {
             if (this.eventDisabled) {
                 return;
             }
@@ -451,7 +451,7 @@ export class ChristmasClient implements IWorldEvent {
             this.heap.hotfixes.forEach((value: Buffer, key: string) => {
                 bus.emit(Z64_RewardEvents.APPLY_REWARD_PATCH, { name: key, data: value });
             });
-        }catch(err){
+        } catch (err) {
             console.log(err);
         }
     }
@@ -483,7 +483,7 @@ export class ChristmasClient implements IWorldEvent {
             for (let i = 0; i < 1; i++) {
                 let used: number[] = [];
                 let trees: number[] = [];
-                for (let j = 0; j < 80; j++) {
+                /* for (let j = 0; j < 80; j++) {
                     let c = this.getRandomInt(0, clone.length);
                     while (used.indexOf(c) === -1) {
                         c = this.getRandomInt(0, clone.length);
@@ -491,6 +491,9 @@ export class ChristmasClient implements IWorldEvent {
                         trees.push(c);
                     }
 
+                } */
+                for (let j = 0; j < clone.length; j++) {
+                    trees.push(j);
                 }
                 days[i] = trees;
             }
@@ -613,10 +616,13 @@ export class ChristmasClient implements IWorldEvent {
                         valid = true;
                     }
                 }
-                if (valid) {
-                    if (this.collectionFlags[this.treeDay].readUInt8(treeIndex) > 0) {
-                        valid = false;
+                try {
+                    if (valid) {
+                        if (this.collectionFlags[this.treeDay].readUInt8(treeIndex) > 0) {
+                            valid = false;
+                        }
                     }
+                } catch (err) {
                 }
                 let p = possibleSpawns[i];
                 this.ModLoader.utils.setTimeoutFrames(() => {
@@ -683,7 +689,7 @@ export class ChristmasClient implements IWorldEvent {
                 }
             }
             this.collectionFlags[this.treeDay].writeUInt8(1, treeId);
-            let p = path.resolve(".", "saves", this.ModLoader.clientLobby, "christmas_flags_oot.json");
+            let p = path.resolve(".", "saves", this.ModLoader.clientLobby, "christmas_flags_oot_v2.json");
             fs.writeFileSync(p, JSON.stringify(this.collectionFlags));
         }
     }
@@ -759,7 +765,7 @@ export class ChristmasServer implements IWorldEvent {
             this.rewardData = JSON.parse(fs.readFileSync(path.resolve(global.ModLoader.startdir, "christmas2020_rewardmap.json")).toString());
         } else {
             this.rewardData = {};
-            for (let i = 0; i < 31; i++) {
+            for (let i = 0; i < 32; i++) {
                 this.rewardData[i.toString()] = [];
             }
         }
