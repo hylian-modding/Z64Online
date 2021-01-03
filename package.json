@@ -1,6 +1,6 @@
 {
   "name": "OotOnline",
-  "version": "2.0.184",
+  "version": "2.0.187",
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
   "scripts": {

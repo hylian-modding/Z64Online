@@ -11,12 +11,10 @@ import { bus, EventHandler } from 'modloader64_api/EventHandler';
 import { Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation } from '@OotOnline/Z64API/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
 import fs from 'fs';
-import { ChristmasClient, ChristmasServer } from './Christmas/Christmas';
 import { CostumeHelper } from './CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
 import { MLPatchLib } from './ML64PatchLib';
 import { trimBuffer } from 'Z64Lib/API/Z64RomTools';
-import path from 'path';
 
 export interface IWorldEvent {
 }
@@ -436,8 +434,4 @@ export class WorldEvents {
     core!: IOOTCore;
     @SidedProxy(ProxySide.CLIENT, WorldEventRewards)
     rewards!: WorldEventRewards;
-    @SidedProxy(ProxySide.CLIENT, ChristmasClient)
-    christmasClient!: ChristmasClient;
-    @SidedProxy(ProxySide.SERVER, ChristmasServer)
-    christmasServer!: ChristmasServer;
 }
