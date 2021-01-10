@@ -25,6 +25,8 @@ export enum Z64OnlineEvents {
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
   ON_LOAD_SOUND_PACK = "OotOnline:OnLoadSoundPack",
+  POST_LOADED_SOUND_LIST = "OotOnline:PostLoadedSoundList",
+  ON_SELECT_SOUND_PACK = "OotOnline:OnSelectSoundPack",
   ON_REMOTE_SOUND_PACK = "OotOnline:OnRemoteSoundPack",
   ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound",
   CUSTOM_MODEL_LOAD_BUFFER_ADULT = "OotOnline:ApplyCustomModelAdultBuffer",

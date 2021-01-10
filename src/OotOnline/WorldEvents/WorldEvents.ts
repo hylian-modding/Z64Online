@@ -142,6 +142,7 @@ export class WorldEventRewards {
     customModelFilesAdult: Map<string, Buffer> = new Map<string, Buffer>();
     customModelFilesChild: Map<string, Buffer> = new Map<string, Buffer>();
     customModelsFilesEquipment: Map<string, Z64Online_EquipmentPak[]> = new Map<string, Z64Online_EquipmentPak[]>();
+    customSoundGroups: Map<string, any> = new Map<string, any>();
 
     constructor() {
         this.rewards.createEvent("Halloween 2020");
@@ -161,6 +162,14 @@ export class WorldEventRewards {
             }
             this.customModelsFilesEquipment.get(cat)!.push(new Z64Online_EquipmentPak(name, value));
         });
+    }
+
+    @EventHandler(Z64OnlineEvents.POST_LOADED_SOUND_LIST)
+    onSoundPost(paks: Map<string, any>){
+        this.customSoundGroups = paks;
+        // I don't understand how something with a key of undefined keeps ending up in here.
+        //@ts-ignore
+        this.customSoundGroups.delete(undefined);
     }
 
     @EventHandler(Z64_RewardEvents.UNLOCK_PLAYAS)
@@ -258,6 +267,7 @@ export class WorldEventRewards {
         this.ModLoader.config.setData("OotO_WorldEvents", "adultCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "equipmentLoadout", {});
+        this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
         try {
             let sc = new StorageContainer("holiday_event_rewards_v3");
             let d = sc.loadObject();
@@ -275,6 +285,9 @@ export class WorldEventRewards {
             if (c !== undefined) {
                 bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD, c);
             }
+        }
+        if (this.config.voice !== ""){
+            // TODO
         }
         let keys = Object.keys(this.config.equipmentLoadout);
         if (keys.length > 0) {
@@ -310,10 +323,12 @@ export class WorldEventRewards {
                         this.config.adultCostume = "";
                         this.config.childCostume = "";
                         this.config.equipmentLoadout = {};
+                        this.config.voice = "";
                         this.ModLoader.utils.setTimeoutFrames(() => {
                             bus.emit(Z64OnlineEvents.CLEAR_EQUIPMENT, {});
                             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, new Z64Online_ModelAllocation(Buffer.alloc(1), Age.ADULT));
                             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD));
+                            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
                         }, 1);
                         this.ModLoader.config.save();
                     }
@@ -366,7 +381,7 @@ export class WorldEventRewards {
                             this.ModLoader.ImGui.treePop();
                         }
                     });
-                    if (this.customModelFilesAdult.size > 0 || this.customModelFilesChild.size > 0 || this.customModelsFilesEquipment.size > 0) {
+                    if (this.customModelFilesAdult.size > 0 || this.customModelFilesChild.size > 0 || this.customModelsFilesEquipment.size > 0 || this.customSoundGroups.size > 0) {
                         if (this.ModLoader.ImGui.treeNode("Custom###OotOCustomModels")) {
                             if (this.ModLoader.ImGui.treeNode("Adult###OotOCustomModels_Adult")) {
                                 this.customModelFilesAdult.forEach((value: Buffer, key: string) => {
@@ -406,6 +421,16 @@ export class WorldEventRewards {
                                             }
                                         }
                                         this.ModLoader.ImGui.treePop();
+                                    }
+                                });
+                                this.ModLoader.ImGui.treePop();
+                            }
+                            if (this.ModLoader.ImGui.treeNode("Voice###OotOCustomVoice")){
+                                this.customSoundGroups.forEach((value: any, key: string)=>{
+                                    if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.voice)) {
+                                        this.config.voice = key;
+                                        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, key);
+                                        this.ModLoader.config.save();
                                     }
                                 });
                                 this.ModLoader.ImGui.treePop();
