@@ -5,11 +5,12 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { NetworkHandler, INetworkPlayer } from "modloader64_api/NetworkHandler";
 import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
-import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
+import { Init, onTick, Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64OnlineEvents, RemoteSoundPlayRequest } from "@OotOnline/Z64API/OotoAPI";
 import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
+import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     totalSize: number;
@@ -42,6 +43,16 @@ export class SoundManagerClient {
     sounds: Map<number, Array<sf.Sound>> = new Map<number, Array<sf.Sound>>();
     localSoundPaks: Map<string, any> = new Map<string, any>();
     originalData!: Buffer;
+    config!: Z64_EventConfig;
+
+    @Init()
+    init() {
+        this.config = this.ModLoader.config.registerConfigCategory("OotO_WorldEvents") as Z64_EventConfig;
+        this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
+        if (this.config.voice !== "") {
+            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voice);
+        }
+    }
 
     getRandomInt(min: number, max: number) {
         min = Math.ceil(min);
@@ -112,7 +123,7 @@ export class SoundManagerClient {
     @EventHandler(Z64OnlineEvents.ON_SELECT_SOUND_PACK)
     onSelect(id: string | undefined) {
         this.sounds.clear();
-        if (id === undefined){
+        if (id === undefined) {
             this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket({}, 0, this.ModLoader.clientLobby));
             return;
         }
