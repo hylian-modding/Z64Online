@@ -123,7 +123,7 @@ export class SoundManagerClient {
     @EventHandler(Z64OnlineEvents.ON_SELECT_SOUND_PACK)
     onSelect(id: string | undefined) {
         this.sounds.clear();
-        if (id === undefined) {
+        if (id === undefined || !this.localSoundPaks.has(id)) {
             this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket({}, 0, this.ModLoader.clientLobby));
             return;
         }
