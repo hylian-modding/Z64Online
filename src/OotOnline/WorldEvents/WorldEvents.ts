@@ -364,7 +364,7 @@ export class WorldEventRewards {
                                 Object.keys(eventObj.Equipment.items).forEach((key: string) => {
                                     if (this.ModLoader.ImGui.treeNode(key + "###" + event + key)) {
                                         Object.keys(eventObj.Equipment.items[key]).forEach((key2: string) => {
-                                            if (this.ModLoader.ImGui.menuItem(key2, undefined, false)) {
+                                            if (this.ModLoader.ImGui.menuItem(key2, undefined, this.config.equipmentLoadout[key] === key2)) {
                                                 this.config.equipmentLoadout[key] = key2;
                                                 this.ModLoader.utils.setTimeoutFrames(() => {
                                                     bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, this.rewards.findEquipmentRewardByKey(key2)!));
@@ -411,7 +411,7 @@ export class WorldEventRewards {
                                 this.customModelsFilesEquipment.forEach((value: Z64Online_EquipmentPak[], key: string) => {
                                     if (this.ModLoader.ImGui.treeNode(key + "###" + "OotOCustomModels_Equipment_" + key)) {
                                         for (let i = 0; i < value.length; i++) {
-                                            if (this.ModLoader.ImGui.menuItem(value[i].name, undefined, false)) {
+                                            if (this.ModLoader.ImGui.menuItem(value[i].name, undefined, this.config.equipmentLoadout[key] === value[i].name)) {
                                                 this.config.equipmentLoadout[key] = value[i].name;
                                                 this.ModLoader.utils.setTimeoutFrames(() => {
                                                     bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, value[i].data));
