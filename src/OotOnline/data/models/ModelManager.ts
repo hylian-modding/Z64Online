@@ -9,7 +9,7 @@ import {
 } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '../../OotOnlineStorageClient';
 import zlib from 'zlib';
-import { Age, OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { Age, OotEvents, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
 import {
   INetworkPlayer,
   NetworkHandler,
@@ -34,6 +34,7 @@ import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Heap } from 'modloader64_api/heap';
 import { SmartBuffer } from 'smart-buffer';
+import { FakeHeap } from '@OotOnline/WorldEvents/FakeHeap';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -41,7 +42,7 @@ export class ModelManagerClient {
   @InjectCore()
   core!: IOOTCore;
   clientStorage!: OotOnlineStorageClient;
-  allocationManager: ModelAllocationManager;
+  allocationManager!: ModelAllocationManager;
   customModelFileAnims = '';
   customModelRepointsAdult = __dirname + '/zobjs/adult.json';
   customModelRepointsChild = __dirname + '/zobjs/child.json';
@@ -60,12 +61,8 @@ export class ModelManagerClient {
   config!: Z64_EventConfig;
   equipmentMapping!: Z64Online_ModelAllocation;
   equipmentMap: Map<string, Buffer> = new Map<string, Buffer>();
-  equipmentHeap!: Heap;
+  equipmentHeap!: FakeHeap;
   proxyProcessFlags: Buffer = Buffer.alloc(2);
-
-  constructor() {
-    this.allocationManager = new ModelAllocationManager();
-  }
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
   onCustomModel(file: string) {
@@ -133,9 +130,7 @@ export class ModelManagerClient {
         break;
     }
     alloc.slot = this.allocationManager.allocateSlot(mp);
-    let allocation_size = 0x37800;
-    let addr: number = 0x80800000 + allocation_size * alloc.slot;
-    alloc.pointer = addr;
+    alloc.pointer = mp.pointer;
   }
 
   private createEquipmentHeap() {
@@ -143,8 +138,8 @@ export class ModelManagerClient {
     let mp = new ModelPlayer(uuid);
     let alloc = new Z64Online_ModelAllocation(Buffer.alloc(0x37800), 0x69);
     alloc.slot = this.allocationManager.allocateSlot(mp);
-    alloc.pointer = 0x80800000 + alloc.model.byteLength * alloc.slot;
-    this.equipmentHeap = new Heap(this.ModLoader.emulator, alloc.pointer, alloc.model.byteLength);
+    alloc.pointer = mp.pointer;
+    this.equipmentHeap = new FakeHeap(this.ModLoader.emulator, alloc.pointer, alloc.model.byteLength);
     this.equipmentMapping = alloc;
   }
 
@@ -152,19 +147,17 @@ export class ModelManagerClient {
     let b = this.ModLoader.emulator.rdramReadBuffer(this.equipmentMapping.pointer, this.equipmentMapping.model.byteLength);
     b = this.ModLoader.utils.clearBuffer(b);
     this.ModLoader.emulator.rdramWriteBuffer(this.equipmentMapping.pointer, b);
-    this.equipmentHeap = new Heap(this.ModLoader.emulator, this.equipmentMapping.pointer, this.equipmentMapping.model.byteLength);
+    this.equipmentHeap = new FakeHeap(this.ModLoader.emulator, this.equipmentMapping.pointer, this.equipmentMapping.model.byteLength);
   }
 
   @EventHandler(Z64OnlineEvents.FORCE_LOAD_MODEL_BLOCK)
   onForceLoad(slot: number) {
-    let allocation_size = 0x37800;
-    let addr: number = 0x800000 + allocation_size * slot;
     let model = this.allocationManager.getModelInSlot(slot);
     if (model.model.adult.zobj.byteLength > 1) {
-      this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), slot));
+      this.ModLoader.emulator.rdramWriteBuffer(model.pointer, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.adult.zobj), 0, true, model.pointer));
     }
     if (model.model.child.zobj.byteLength > 1) {
-      this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.child.zobj), slot));
+      this.ModLoader.emulator.rdramWriteBuffer(model.pointer, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(model.model.child.zobj), 0, true, model.pointer));
     }
   }
 
@@ -187,13 +180,14 @@ export class ModelManagerClient {
         let proxy = fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Adult_Proxy.zobj"));
         let alloc = new Z64Online_ModelAllocation(model, Age.ADULT);
         alloc.rom = manifest.inject(this.ModLoader, evt.rom, proxy, true);
-        bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
+        this.ModLoader.utils.setTimeoutFrames(() => {
+          bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
+        }, 2);
         this.clientStorage.adultProxy = alloc;
         let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
         let offset: number = 0xE65A0;
         model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
         this.clientStorage.adultModel = model;
-        new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(this.clientStorage.adultModel), this.clientStorage.adultProxy.slot, true);
       } else {
         manifest.inject(this.ModLoader, evt.rom, model);
         let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
@@ -224,13 +218,14 @@ export class ModelManagerClient {
         proxy = trimBuffer(proxy);
         let alloc = new Z64Online_ModelAllocation(model, Age.CHILD);
         alloc.rom = manifest.inject(this.ModLoader, evt.rom, proxy, true);
-        bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
+        this.ModLoader.utils.setTimeoutFrames(() => {
+          bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
+        }, 2);
         this.clientStorage.childProxy = alloc;
         let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
         let offset: number = 0xE65A0 + 0x4;
         model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
         this.clientStorage.childModel = model;
-        new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(this.clientStorage.childModel), this.clientStorage.childProxy.slot, true);
       } else {
         manifest.inject(this.ModLoader, evt.rom, model);
         let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
@@ -270,11 +265,13 @@ export class ModelManagerClient {
     }
 
     let a = new ModelPlayer("Adult");
-    a.model.adult = new ModelObject(trimBuffer(new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(puppet_adult, 0)));
+    a.model.adult = new ModelObject(trimBuffer(puppet_adult));
     let c = new ModelPlayer("Child");
-    c.model.child = new ModelObject(trimBuffer(new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(puppet_child, 1)));
-    this.allocationManager.models[0] = a;
-    this.allocationManager.models[1] = c;
+    c.model.child = new ModelObject(trimBuffer(puppet_child));
+    this.ModLoader.utils.setTimeoutFrames(() => {
+      this.allocationManager.allocateSlot(a);
+      this.allocationManager.allocateSlot(c);
+    }, 2);
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
@@ -306,6 +303,7 @@ export class ModelManagerClient {
 
   @Preinit()
   preinit() {
+    this.allocationManager = new ModelAllocationManager(this.ModLoader);
     this.config = this.ModLoader.config.registerConfigCategory("OotO_WorldEvents") as Z64_EventConfig;
     this.ModLoader.config.setData("OotO_WorldEvents", "adultCostume", "");
     this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
@@ -470,8 +468,7 @@ export class ModelManagerClient {
       );
       let index: number = this.allocationManager.getModelIndex(model);
       this.ModLoader.logger.info("This model is assigned to model block " + index + ".");
-      let allocation_size = 0x37800;
-      let addr: number = 0x800000 + allocation_size * index;
+      let addr: number = model.pointer;
       this.ModLoader.logger.info("Model block " + index + " starts at address 0x" + addr.toString(16) + ".");
       let pos: number = 0;
       while (pos < packet.mod.byteLength) {
@@ -594,11 +591,12 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: Puppet) {
-    let puppet_spawn_params_ptr: number = 0x80600140;
+    let puppet_spawn_params_ptr: number = (this.clientStorage.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).params;
+    console.log(puppet_spawn_params_ptr.toString(16));
     let puppet_spawn_variable_offset: number = 0xE;
-    this.ModLoader.emulator.rdramWriteBuffer(0x800000, this.allocationManager.getModelInSlot(0).model.adult.zobj);
-    this.ModLoader.emulator.rdramWriteBuffer(0x837800, this.allocationManager.getModelInSlot(1).model.child.zobj);
-    this.ModLoader.emulator.rdramWritePtr16(puppet_spawn_params_ptr, puppet_spawn_variable_offset, puppet.age);
+    this.ModLoader.emulator.rdramWriteBuffer(this.allocationManager.getModelInSlot(0).pointer, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(this.allocationManager.getModelInSlot(0).model.adult.zobj), 0, true, this.allocationManager.getModelInSlot(0).pointer));
+    this.ModLoader.emulator.rdramWriteBuffer(this.allocationManager.getModelInSlot(1).pointer, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(this.allocationManager.getModelInSlot(1).model.child.zobj), 0, true, this.allocationManager.getModelInSlot(1).pointer));
+    this.ModLoader.emulator.rdramWrite16(puppet_spawn_params_ptr + puppet_spawn_variable_offset, puppet.age);
 
     if (!this.clientStorage.playerModelCache.hasOwnProperty(puppet.player.uuid)) return;
 
@@ -610,15 +608,13 @@ export class ModelManagerClient {
       eq_mp.model.equipment = mp.model.equipment;
       this.allocationManager.allocateSlot(eq_mp);
     }
-    let allocation_size = 0x37800;
     this.ModLoader.logger.info("Getting model for player " + puppet.player.nickname + "...");
     let model: ModelPlayer = this.allocationManager.getPlayerAllocation(puppet.player);
     let eqList: ModelPlayer = this.allocationManager.getAllocationByUUID(puppet.player.uuid + "_Equipment")!;
     eqList.model.equipment = model.model.equipment;
     let index: number = this.allocationManager.getModelIndex(model);
-    let eqIndex: number = this.allocationManager.getModelIndex(eqList);
     this.ModLoader.logger.info("This model is assigned to model block " + index + ".");
-    let addr: number = 0x80800000 + allocation_size * index;
+    let addr: number = model.pointer;
     this.ModLoader.logger.info("Model block " + index + " starts at address 0x" + addr.toString(16) + ".");
     let Model: Buffer;
     if (puppet.age === Age.ADULT) {
@@ -627,10 +623,9 @@ export class ModelManagerClient {
       Model = this.ModLoader.utils.cloneBuffer(model.model.child.zobj)
     }
     let passed: boolean = false;
-    if (eqList.model.equipment.length > 0) {
+    /* if (eqList.model.equipment.length > 0) {
       this.ModLoader.logger.debug("Loading equipment overrides...");
-      this.ModLoader.emulator.rdramWriteBuffer(0x80800000 + allocation_size * eqIndex, Buffer.alloc(0x37800));
-      let temp = new Heap(this.ModLoader.emulator, 0x80800000 + allocation_size * eqIndex, 0x37800);
+      let temp = new FakeHeap(this.ModLoader.emulator, eqList.pointer, 0x37800);
       for (let i = 0; i < eqList.model.equipment.length; i++) {
         let cp = this.ModLoader.utils.cloneBuffer(eqList.model.equipment[i].zobj);
         let cp_p = temp.malloc(cp.byteLength);
@@ -664,23 +659,24 @@ export class ModelManagerClient {
           });
         }
       }
-    }
+    } */
     if (puppet.age === Age.ADULT && model.model.adult !== undefined) {
       if (model.model.adult.zobj.byteLength > 1) {
         this.ModLoader.logger.info("Writing adult model into model block " + index + ".");
-        this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(Model, index));
+        this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(Model, 0, true, model.pointer));
         passed = true;
       }
     }
     if (puppet.age === Age.CHILD && model.model.child !== undefined) {
       if (model.model.child.zobj.byteLength > 1) {
         this.ModLoader.logger.info("Writing child model into model block " + index + ".");
-        this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(Model, index));
+        this.ModLoader.emulator.rdramWriteBuffer(addr, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(Model, 0, true, model.pointer));
         passed = true;
       }
     }
     if (passed) {
-      this.ModLoader.emulator.rdramWritePtr16(puppet_spawn_params_ptr, puppet_spawn_variable_offset, index);
+      this.ModLoader.emulator.rdramWrite16(puppet_spawn_params_ptr + puppet_spawn_variable_offset, index);
+      this.ModLoader.emulator.rdramWrite32(puppet_spawn_params_ptr + 0x8, model.pointer);
     }
   }
 
@@ -733,14 +729,6 @@ export class ModelManagerClient {
 
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: number) {
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x800000,
-      this.allocationManager.getModelInSlot(0).model.adult.zobj
-    );
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x837800,
-      this.allocationManager.getModelInSlot(1).model.child.zobj
-    );
     if (this.equipmentHeap === undefined) {
       this.createEquipmentHeap();
     }
@@ -861,18 +849,6 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.proxyNeedsSync = true;
     }, 1);
-  }
-
-  @EventHandler(EventsClient.ON_INJECT_FINISHED)
-  onLoaded(evt: any) {
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x800000,
-      this.allocationManager.getModelInSlot(0).model.adult.zobj
-    );
-    this.ModLoader.emulator.rdramWriteBuffer(
-      0x837800,
-      this.allocationManager.getModelInSlot(1).model.child.zobj
-    );
   }
 
   doesLinkObjExist(age: Age) {
