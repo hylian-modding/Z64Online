@@ -8,7 +8,6 @@ roms/
 .vscode/
 modloader64-config.json
 modloader64-p2-config.json
-CustomActorToolkit/
 libs/
 win-ia32-unpacked/
 win-ia32-unpacked.pak
@@ -26,3 +25,4 @@ src/vanillamizer.bps
 src/Nimpize_Adventure.bps
 christmas2020_rewardmap.json
 src/DrAhsidVoice.pak
+test_files/

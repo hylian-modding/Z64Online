@@ -19,6 +19,7 @@ import IMemory from "modloader64_api/IMemory";
 import { IActor } from "modloader64_api/OOT/IActor";
 import fse from 'fs-extra';
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
+import { OpaDebug } from "./OpaDebug";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -56,6 +57,7 @@ export class ImGuiHandler {
     curActor: number = 0;
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
+    opa!: OpaDebug;
 
     constructor() {
         this.actorNames = JSON.parse(fse.readFileSync(path.resolve(__dirname, "ACTOR_NAMES.json")).toString());
@@ -181,6 +183,12 @@ export class ImGuiHandler {
             } catch (err) {
                 this.ModLoader.logger.error(err);
             }
+            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator);
+            return;
+        }
+
+        if (this.opa !== undefined) {
+            this.opa.onViUpdate();
         }
 
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
@@ -353,7 +361,7 @@ export class ImGuiHandler {
                     actor.position.setRawPos(pos);
                     actor.rotation.setRawRot(rot);
                 }
-                if (this.ModLoader.ImGui.smallButton("Move Link to Actor")){
+                if (this.ModLoader.ImGui.smallButton("Move Link to Actor")) {
                     let pos = actor.position.getRawPos();
                     let rot = actor.rotation.getRawRot();
                     this.core.link.position.setRawPos(pos);

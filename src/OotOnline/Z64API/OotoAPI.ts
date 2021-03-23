@@ -40,7 +40,10 @@ export enum Z64OnlineEvents {
   LOAD_EQUIPMENT_BUFFER = "OotOnline:LoadEquipmentBuffer",
   LOAD_EQUIPMENT_PAK = "OotOnline:LoadEquipmentPak",
   REFRESH_EQUIPMENT = "OotOnline:RefreshEquipment",
-  CLEAR_EQUIPMENT = "OotOnline:ClearEquipment"
+  CLEAR_EQUIPMENT = "OotOnline:ClearEquipment",
+  EQUIPMENT_ZOBJ_LOADED = "OotOnline:EqZobjLoad",
+  EQUIPMENT_LOAD_START = "OotOnline:EqZobjLoadStart",
+  EQUIPMENT_LOAD_END = "OotOnline:EqZobjLoadEnd"
 }
 
 export class RemoteSoundPlayRequest {

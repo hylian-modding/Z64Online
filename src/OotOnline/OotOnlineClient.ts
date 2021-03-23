@@ -1,11 +1,9 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
-import { createEquipmentFromContext, createInventoryFromContext, createQuestSaveFromContext, mergeEquipmentData, mergeInventoryData, mergeQuestSaveData, createDungeonItemDataFromContext, mergeDungeonItemData, InventorySave, applyInventoryToContext, applyEquipmentToContext, applyQuestSaveToContext, applyDungeonItemDataToContext, EquipmentSave, QuestSave, OotoDungeonItemContext, IDungeonItemSave, OotO_SceneStruct } from './data/OotoSaveData';
-import { Ooto_ClientFlagUpdate, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_SubscreenSyncPacket, Ooto_BottleUpdatePacket, Ooto_SceneGUIPacket, Ooto_BankSyncPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket, Ooto_DownloadResponsePacket2, Ooto_ServerFlagUpdate, OotO_isRandoPacket, OotO_ItemGetMessagePacket } from './data/OotOPackets';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
 import fs from 'fs';
@@ -33,6 +31,8 @@ import { addToKillFeedQueue } from 'modloader64_api/Announcements';
 import { Texture } from 'modloader64_api/Sylvain/Gfx';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
+import { OotOSaveData } from './data/OotoSaveData';
+import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, OotO_ItemGetMessagePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -130,45 +130,10 @@ export class OotOnlineClient {
     }
 
     updateInventory() {
-        this.ModLoader.logger.info('updateInventory()');
-        let inventory = createInventoryFromContext(this.core.save);
-        let equipment = createEquipmentFromContext(this.core.save);
-        let quest = createQuestSaveFromContext(this.core.save);
-        let di = createDungeonItemDataFromContext(this.core.save.dungeonItemManager);
-        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, di, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        this.ModLoader.clientSide.sendPacket(new Ooto_SubscreenSyncPacket(this.clientStorage.inventoryStorage, this.clientStorage.equipmentStorage, this.clientStorage.questStorage, this.clientStorage.dungeonItemStorage, this.ModLoader.clientLobby));
-        if (this.utility.lastKnownBalance !== this.ModLoader.emulator.rdramRead16(0x8011B874)) {
-            this.utility.lastKnownBalance = this.ModLoader.emulator.rdramRead16(0x8011B874);
-            this.ModLoader.clientSide.sendPacket(new Ooto_BankSyncPacket(this.utility.lastKnownBalance, this.ModLoader.clientLobby));
-        }
         this.clientStorage.needs_update = false;
-    }
-
-    updateFlags() {
-        if (this.ModLoader.emulator.rdramRead8(0x80600144) === 0x1) {
-            this.ModLoader.logger.debug("Flag updating temporarily disabled in this scene.");
-            return;
-        }
-        this.ModLoader.utils.clearBuffer(this.clientStorage.sceneStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.eventStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.itemFlagStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.infStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.skulltulaStorage);
-        let scene_data = this.core.save.permSceneData;
-        let event_data = this.core.save.eventFlags;
-        let item_data = this.core.save.itemFlags;
-        let inf_data = this.core.save.infTable;
-        let skulltula_data = this.core.save.skulltulaFlags;
-        let scenes: any = parseFlagChanges(scene_data, this.clientStorage.sceneStorage);
-        let events: any = parseFlagChanges(event_data, this.clientStorage.eventStorage);
-        let items: any = parseFlagChanges(item_data, this.clientStorage.itemFlagStorage);
-        let inf: any = parseFlagChanges(inf_data, this.clientStorage.infStorage);
-        let skulltulas: any = parseFlagChanges(skulltula_data, this.clientStorage.skulltulaStorage);
-        this.ModLoader.logger.info('updateFlags()');
-        this.ModLoader.clientSide.sendPacket(new Ooto_ClientFlagUpdate(this.clientStorage.sceneStorage, this.clientStorage.eventStorage, this.clientStorage.itemFlagStorage, this.clientStorage.infStorage, this.clientStorage.skulltulaStorage, this.ModLoader.clientLobby));
+        let data = new OotOSaveData(this.core, this.ModLoader);
+        let save = data.createSave();
+        this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
     }
 
     autosaveSceneData() {
@@ -227,13 +192,6 @@ export class OotOnlineClient {
     }
 
     updateSkulltulas() {
-        if (this.clientStorage.lastKnownSkullCount <
-            this.core.save.questStatus.goldSkulltulas) {
-            this.clientStorage.needs_update = true;
-            this.clientStorage.lastKnownSkullCount = this.core.save.questStatus.goldSkulltulas;
-            this.ModLoader.logger.info('Skulltula update.');
-            this.updateFlags();
-        }
     }
 
     @EventHandler(OotEvents.ON_SAVE_LOADED)
@@ -243,18 +201,9 @@ export class OotOnlineClient {
             this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
         }
         setTimeout(() => {
-            this.core.save.inventory.childTradeItem = InventoryItem.NONE;
             if (this.LobbyConfig.data_syncing) {
-                this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby));
+                this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
             }
-            let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(this.core.global.scene, this.core.save.age, this.ModLoader.clientLobby);
-            if (this.clientStorage.adultIcon.byteLength > 1) {
-                gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
-            }
-            if (this.clientStorage.childIcon.byteLength > 1) {
-                gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
-            }
-            this.ModLoader.gui.tunnel.send('OotOnline:onAgeChange', new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p));
         }, 1000);
     }
 
@@ -298,21 +247,6 @@ export class OotOnlineClient {
             )
         );
         this.ModLoader.logger.info('client: I moved to scene ' + scene + '.');
-        let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
-            scene,
-            this.core.save.age,
-            this.ModLoader.clientLobby
-        );
-        if (this.clientStorage.adultIcon.byteLength > 1) {
-            gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
-        }
-        if (this.clientStorage.childIcon.byteLength > 1) {
-            gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
-        }
-        this.ModLoader.gui.tunnel.send(
-            'OotOnline:onSceneChanged',
-            new GUITunnelPacket('OotOnline', 'OotOnline:onSceneChanged', gui_p)
-        );
         if (this.core.helper.isSceneNumberValid()) {
             this.ModLoader.gui.setDiscordStatus(
                 new DiscordStatus(
@@ -324,7 +258,6 @@ export class OotOnlineClient {
                 )
             );
         }
-        this.ModLoader.emulator.rdramWrite8(0x80600144, 0x0);
     }
 
     @EventHandler(OotEvents.ON_ROOM_CHANGE)
@@ -349,48 +282,6 @@ export class OotOnlineClient {
         bus.emit(
             Z64OnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES,
             new Z64_PlayerScene(packet.player, packet.lobby, packet.scene)
-        );
-        let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
-            packet.scene,
-            packet.age,
-            packet.lobby
-        );
-        gui_p.player = packet.player;
-        if (
-            this.modelManager.clientStorage.playerModelCache.hasOwnProperty(
-                packet.player.uuid
-            )
-        ) {
-            if (
-                (this.modelManager.clientStorage.playerModelCache[
-                    packet.player.uuid
-                ] as ModelPlayer).customIconAdult.byteLength > 1
-            ) {
-                gui_p.setAdultIcon(
-                    (this.modelManager.clientStorage.playerModelCache[
-                        packet.player.uuid
-                    ] as ModelPlayer).customIconAdult
-                );
-            }
-            if (
-                (this.modelManager.clientStorage.playerModelCache[
-                    packet.player.uuid
-                ] as ModelPlayer).customIconChild.byteLength > 1
-            ) {
-                gui_p.setChildIcon(
-                    (this.modelManager.clientStorage.playerModelCache[
-                        packet.player.uuid
-                    ] as ModelPlayer).customIconChild
-                );
-            }
-        }
-        this.ModLoader.gui.tunnel.send(
-            'OotOnline:onSceneChanged_Network',
-            new GUITunnelPacket(
-                'OotOnline',
-                'OotOnline:onSceneChanged_Network',
-                gui_p
-            )
         );
     }
 
@@ -418,9 +309,7 @@ export class OotOnlineClient {
             return;
         }
         this.clientStorage.bottleCache[packet.slot] = packet.contents;
-        let inventory: InventorySave = createInventoryFromContext(
-            this.core.save
-        ) as InventorySave;
+        let inventory = this.core.save.inventory;
         switch (packet.slot) {
             case 0:
                 inventory.bottle_1 = packet.contents;
@@ -435,192 +324,27 @@ export class OotOnlineClient {
                 inventory.bottle_4 = packet.contents;
                 break;
         }
-        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        applyInventoryToContext(
-            this.clientStorage.inventoryStorage,
-            this.core.save,
-            true
-        );
         bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
     }
 
     // The server is giving me data.
     @NetworkHandler('Ooto_DownloadResponsePacket')
     onDownloadPacket_client(packet: Ooto_DownloadResponsePacket) {
-        this.ModLoader.logger.info('Retrieving savegame from server...');
-        // Clear inventory.
-        this.ModLoader.emulator.rdramWriteBuffer(global.ModLoader.save_context + 0x0074, Buffer.alloc(0x18, 0xFF));
-        applyInventoryToContext(packet.subscreen.inventory, this.core.save, true);
-        applyEquipmentToContext(packet.subscreen.equipment, this.core.save);
-        applyQuestSaveToContext(packet.subscreen.quest, this.core.save);
-        applyDungeonItemDataToContext(
-            packet.subscreen.dungeonItems,
-            this.core.save.dungeonItemManager
-        );
-        this.core.save.permSceneData = packet.flags.scenes;
-        this.core.save.eventFlags = packet.flags.events;
-        this.core.save.itemFlags = packet.flags.items;
-        this.core.save.infTable = packet.flags.inf;
-        this.core.save.skulltulaFlags = packet.flags.skulltulas;
-        this.clientStorage.bank = packet.bank.savings;
-        this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
+        if (!packet.host) {
+            if (packet.save) {
+                let s = new OotOSaveData(this.core, this.ModLoader);
+                s.applySave(packet.save!);
+            }
+        } else {
+            this.ModLoader.logger.info("The lobby is mine!");
+        }
         this.clientStorage.first_time_sync = true;
     }
 
-    // I am giving the server data.
-    @NetworkHandler('Ooto_DownloadResponsePacket2')
-    onDownPacket2_client(packet: Ooto_DownloadResponsePacket2) {
-        this.clientStorage.first_time_sync = true;
-        this.ModLoader.logger.info('The lobby is mine!');
-        this.clientStorage.needs_update = true;
-        this.updateBottles(true);
-    }
-
-    @NetworkHandler('Ooto_SubscreenSyncPacket')
-    onItemSync_client(packet: Ooto_SubscreenSyncPacket) {
-        if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
-        ) {
-            return;
-        }
-        let inventory: InventorySave = createInventoryFromContext(
-            this.core.save
-        ) as InventorySave;
-        let equipment: EquipmentSave = createEquipmentFromContext(
-            this.core.save
-        ) as EquipmentSave;
-        let quest: QuestSave = createQuestSaveFromContext(this.core.save);
-        let dungeonItems: OotoDungeonItemContext = createDungeonItemDataFromContext(
-            this.core.save.dungeonItemManager
-        ) as IDungeonItemSave;
-
-        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, dungeonItems, ProxySide.CLIENT, this.ModLoader.clientLobby);
-
-        mergeInventoryData(this.ModLoader, this.clientStorage.inventoryStorage, packet.inventory, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeEquipmentData(this.ModLoader, this.clientStorage.equipmentStorage, packet.equipment, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeQuestSaveData(this.ModLoader, this.clientStorage.questStorage, packet.quest, ProxySide.CLIENT, this.ModLoader.clientLobby);
-        mergeDungeonItemData(this.ModLoader, this.clientStorage.dungeonItemStorage, packet.dungeonItems, ProxySide.CLIENT, this.ModLoader.clientLobby);
-
-        applyInventoryToContext(this.clientStorage.inventoryStorage, this.core.save);
-        applyEquipmentToContext(this.clientStorage.equipmentStorage, this.core.save);
-        applyQuestSaveToContext(this.clientStorage.questStorage, this.core.save);
-        applyDungeonItemDataToContext(this.clientStorage.dungeonItemStorage, this.core.save.dungeonItemManager);
-
-        this.ModLoader.gui.tunnel.send(
-            'OotOnline:onSubscreenPacket',
-            new GUITunnelPacket('OotOnline', 'OotOnline:onSubscreenPacket', packet)
-        );
-    }
-
-    @NetworkHandler('Ooto_ServerFlagUpdate')
-    onSceneFlagSync_client(packet: Ooto_ServerFlagUpdate) {
-
-        this.ModLoader.utils.clearBuffer(this.clientStorage.sceneStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.eventStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.itemFlagStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.infStorage);
-        this.ModLoader.utils.clearBuffer(this.clientStorage.skulltulaStorage);
-
-        let scene_data = this.core.save.permSceneData;
-        let event_data = this.core.save.eventFlags;
-        let item_data = this.core.save.itemFlags;
-        let inf_data = this.core.save.infTable;
-        let skulltula_data = this.core.save.skulltulaFlags;
-
-        parseFlagChanges(
-            scene_data,
-            this.clientStorage.sceneStorage
-        );
-        parseFlagChanges(
-            event_data,
-            this.clientStorage.eventStorage
-        );
-        parseFlagChanges(
-            item_data,
-            this.clientStorage.itemFlagStorage
-        );
-        parseFlagChanges(
-            inf_data,
-            this.clientStorage.infStorage
-        );
-        parseFlagChanges(
-            skulltula_data,
-            this.clientStorage.skulltulaStorage
-        );
-
-        for (let i = 0; i < packet.scenes.byteLength; i += 0x1C) {
-            let struct = new OotO_SceneStruct(packet.scenes.slice(i, i + 0x1C));
-            let cur = new OotO_SceneStruct(this.clientStorage.sceneStorage.slice(i, i + 0x1C));
-            for (let j = 0; j < struct.chests.byteLength; j++) {
-                if (struct.chests[j] !== cur.chests[i]) {
-                    cur.chests[j] |= struct.chests[j];
-                }
-            }
-            for (let j = 0; j < struct.collectible.byteLength; j++) {
-                if (struct.collectible[j] !== cur.collectible[i]) {
-                    cur.collectible[j] |= struct.collectible[j];
-                }
-            }
-            for (let j = 0; j < struct.room_clear.byteLength; j++) {
-                if (struct.room_clear[j] !== cur.room_clear[i]) {
-                    cur.room_clear[j] |= struct.room_clear[j];
-                }
-            }
-            for (let j = 0; j < struct.switches.byteLength; j++) {
-                if (struct.switches[j] !== cur.switches[i]) {
-                    cur.switches[j] |= struct.switches[j];
-                }
-            }
-            for (let j = 0; j < struct.visited_floors.byteLength; j++) {
-                if (struct.visited_floors[j] !== cur.visited_floors[i]) {
-                    cur.visited_floors[j] |= struct.visited_floors[j];
-                }
-            }
-            for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
-                if (struct.visited_rooms[j] !== cur.visited_rooms[i]) {
-                    cur.visited_rooms[j] |= struct.visited_rooms[j];
-                }
-            }
-            for (let j = 0; j < struct.unused.byteLength; j++) {
-                if (struct.unused[j] !== cur.unused[i]) {
-                    cur.unused[j] = struct.unused[j];
-                }
-            }
-        }
-        for (let i = 0; i < packet.events.byteLength; i++) {
-            let value = packet.events[i];
-            if (this.clientStorage.eventStorage[i] !== value) {
-                this.clientStorage.eventStorage[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.items.byteLength; i++) {
-            let value = packet.items[i];
-            if (this.clientStorage.itemFlagStorage[i] !== value) {
-                this.clientStorage.itemFlagStorage[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.inf.byteLength; i++) {
-            let value = packet.inf[i];
-            if (this.clientStorage.infStorage[i] !== value) {
-                this.clientStorage.infStorage[i] |= value;
-            }
-        }
-        for (let i = 0; i < packet.skulltulas.byteLength; i++) {
-            let value = packet.skulltulas[i];
-            if (this.clientStorage.skulltulaStorage[i] !== value) {
-                this.clientStorage.skulltulaStorage[i] |= value;
-            }
-        }
-
-        this.core.save.permSceneData = this.clientStorage.sceneStorage;
-        this.core.save.eventFlags = this.clientStorage.eventStorage;
-        this.core.save.itemFlags = this.clientStorage.itemFlagStorage;
-        this.core.save.infTable = this.clientStorage.infStorage;
-        this.core.save.skulltulaFlags = this.clientStorage.skulltulaStorage;
+    @NetworkHandler('OotO_UpdateSaveDataPacket')
+    onSaveUpdate(packet: OotO_UpdateSaveDataPacket) {
+        let data = new OotOSaveData(this.core, this.ModLoader);
+        data.applySave(packet.save);
     }
 
     @NetworkHandler('Ooto_ClientSceneContextUpdate')
@@ -659,12 +383,6 @@ export class OotOnlineClient {
         if (Object.keys(parseFlagChanges(packet.temp, buf5) > 0)) {
             this.core.global.liveSceneData_temp = buf5;
         }
-    }
-
-    @NetworkHandler("Ooto_BankSyncPacket")
-    onBankUpdate(packet: Ooto_BankSyncPacket) {
-        this.clientStorage.bank = packet.savings;
-        this.ModLoader.emulator.rdramWrite16(0x8011B874, this.clientStorage.bank);
     }
 
     @NetworkHandler("OotO_ItemGetMessagePacket")
@@ -712,21 +430,6 @@ export class OotOnlineClient {
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
     onAgeChange(age: Age) {
-        let gui_p: Ooto_SceneGUIPacket = new Ooto_SceneGUIPacket(
-            this.core.global.scene,
-            age,
-            this.ModLoader.clientLobby
-        );
-        if (this.clientStorage.adultIcon.byteLength > 1) {
-            gui_p.setAdultIcon(this.modelManager.clientStorage.adultIcon);
-        }
-        if (this.clientStorage.childIcon.byteLength > 1) {
-            gui_p.setChildIcon(this.modelManager.clientStorage.childIcon);
-        }
-        this.ModLoader.gui.tunnel.send(
-            'OotOnline:onAgeChange',
-            new GUITunnelPacket('OotOnline', 'OotOnline:onAgeChange', gui_p)
-        );
         this.ModLoader.clientSide.sendPacket(
             new Ooto_ScenePacket(
                 this.ModLoader.clientLobby,
@@ -904,7 +607,6 @@ export class OotOnlineClient {
                         this.LobbyConfig.data_syncing
                     ) {
                         this.updateInventory();
-                        this.updateFlags();
                         this.clientStorage.needs_update = false;
                     }
                 }

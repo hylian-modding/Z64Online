@@ -1,0 +1,13 @@
+{
+    "OOT": {
+        "adult": {"0": {"slot": "glasses"}},
+        "child": {}
+    },
+    "MM": {
+        "human": {},
+        "deku": {},
+        "zora": {},
+        "goron": {},
+        "fd": {}
+    }
+}

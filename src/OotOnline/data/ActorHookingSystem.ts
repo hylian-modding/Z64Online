@@ -31,6 +31,7 @@ import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { addToKillFeedQueue } from 'modloader64_api/Announcements';
+import { MLPatchLib } from '@OotOnline/WorldEvents/ML64PatchLib';
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
@@ -547,14 +548,14 @@ export class ActorHookingManagerClient {
             actor.rdramWrite8(0x118, 0x80);
             this.bombsRemote.set(actor.actorUUID, actor);
           } else if (packet.actorData.actor.actorID === BOMBCHU_ID) {
-            actor.rdramWrite8(0x118, 0x80);
-            actor.redeadFreeze = 0x10;
             this.chusRemote.set(actor.actorUUID, actor);
           } else if (packet.actorData.actor.actorID === NL_ID) {
             this.NLRemote.set(actor.actorUUID, actor);
           } else if (packet.actorData.actor.actorID === ARROW) {
             this.arrowProcess.actor = actor;
             actor.position.setRawPos(packet.actorData.rawPos);
+            actor.rdramWriteBuffer(0x8, packet.actorData.rawPos);
+            actor.rdramWriteBuffer(0x38, packet.actorData.rawPos);
             actor.rotation.setRawRot(packet.actorData.rawRot);
             let hooks = this.arrowProcess.hookBase.hooks;
             for (let i = 0; i < hooks.length; i++) {
@@ -609,8 +610,20 @@ export class ActorHookingManagerClient {
         buf.writeUInt8(0x0B, 0x7236);
       }
       tools.recompressActorFileIntoRom(evt.rom, 0x0179, buf);
+      
+      let patch_path: string = path.resolve(__dirname, "actorPatches");
+      fs.readdirSync(patch_path).forEach((file: string)=>{
+        let f: string = path.resolve(patch_path, file);
+        if (fs.existsSync(f)){
+          let patch: Buffer = fs.readFileSync(f);
+          let target: number = parseInt(path.parse(f).name.split("-")[0].trim());
+          let exp: string = path.resolve(__dirname, "..", "payloads", "E0", path.parse(f).name + ".ovl");
+          fs.writeFileSync(exp, new MLPatchLib().apply(tools.decompressActorFileFromRom(evt.rom, target), patch));
+        }
+      });
+
     } catch (err) {
-      this.ModLoader.logger.error(err);
+      this.ModLoader.logger.error(err.stack);
     }
   }
 

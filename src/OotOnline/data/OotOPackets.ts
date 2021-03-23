@@ -8,12 +8,6 @@ import {
   Age,
   InventoryItem,
 } from 'modloader64_api/OOT/OOTAPI';
-import {
-  IEquipmentSave,
-  IQuestSave,
-  IDungeonItemSave,
-  InventorySave,
-} from './OotoSaveData';
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
@@ -58,27 +52,6 @@ export class Ooto_SceneRequestPacket extends Packet {
   }
 }
 
-export class Ooto_SubscreenSyncPacket extends Packet {
-  inventory: InventorySave;
-  equipment: IEquipmentSave;
-  quest: IQuestSave;
-  dungeonItems: IDungeonItemSave;
-
-  constructor(
-    save: InventorySave,
-    equipment: IEquipmentSave,
-    quest: IQuestSave,
-    dungeonItems: IDungeonItemSave,
-    lobby: string
-  ) {
-    super('Ooto_SubscreenSyncPacket', 'OotOnline', lobby, false);
-    this.inventory = save;
-    this.equipment = equipment;
-    this.quest = quest;
-    this.dungeonItems = dungeonItems;
-  }
-}
-
 export class Ooto_BankSyncPacket extends Packet {
   savings: number;
 
@@ -89,83 +62,33 @@ export class Ooto_BankSyncPacket extends Packet {
 }
 
 export class Ooto_DownloadResponsePacket extends Packet {
-  subscreen: Ooto_SubscreenSyncPacket;
-  flags: Ooto_ServerFlagUpdate;
-  bank: Ooto_BankSyncPacket;
 
-  constructor(
-    subscreen: Ooto_SubscreenSyncPacket,
-    scenes: Ooto_ServerFlagUpdate,
-    bank: Ooto_BankSyncPacket,
-    lobby: string
-  ) {
+  save?: Buffer;
+  host: boolean;
+
+  constructor(lobby: string, host: boolean) {
     super('Ooto_DownloadResponsePacket', 'OotOnline', lobby, false);
-    this.subscreen = subscreen;
-    this.flags = scenes;
-    this.bank = bank;
-    packetHelper.cloneDestination(this, this.subscreen);
-    packetHelper.cloneDestination(this, this.flags);
-    packetHelper.cloneDestination(this, this.bank);
-  }
-}
-
-export class Ooto_DownloadResponsePacket2 extends Packet {
-  constructor(lobby: string) {
-    super('Ooto_DownloadResponsePacket2', 'OotOnline', lobby, false);
+    this.host = host;
   }
 }
 
 export class Ooto_DownloadRequestPacket extends Packet {
-  constructor(lobby: string) {
+
+  save: Buffer;
+
+  constructor(lobby: string, save: Buffer) {
     super('Ooto_DownloadRequestPacket', 'OotOnline', lobby, false);
+    this.save = save;
   }
 }
 
-export class Ooto_ClientFlagUpdate extends Packet {
-  scenes: Buffer;
-  events: Buffer;
-  items: Buffer;
-  inf: Buffer;
-  skulltulas: Buffer;
+export class OotO_UpdateSaveDataPacket extends Packet{
 
-  constructor(
-    scenes: Buffer,
-    events: Buffer,
-    items: Buffer,
-    inf: Buffer,
-    skulltulas: Buffer,
-    lobby: string
-  ) {
-    super('Ooto_ClientFlagUpdate', 'OotOnline', lobby, false);
-    this.scenes = scenes;
-    this.events = events;
-    this.items = items;
-    this.inf = inf;
-    this.skulltulas = skulltulas;
-  }
-}
+  save: Buffer;
 
-export class Ooto_ServerFlagUpdate extends Packet {
-  scenes: Buffer;
-  events: Buffer;
-  items: Buffer;
-  inf: Buffer;
-  skulltulas: Buffer;
-
-  constructor(
-    scenes: Buffer,
-    events: Buffer,
-    items: Buffer,
-    inf: Buffer,
-    skulltulas: Buffer,
-    lobby: string
-  ) {
-    super('Ooto_ServerFlagUpdate', 'OotOnline', lobby, false);
-    this.scenes = scenes;
-    this.events = events;
-    this.items = items;
-    this.inf = inf;
-    this.skulltulas = skulltulas;
+  constructor(lobby: string, save: Buffer){
+    super('OotO_UpdateSaveDataPacket', 'OotOnline', lobby, false);
+    this.save = save;
   }
 }
 

@@ -15,7 +15,7 @@ import {
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64_IconAllocatePacket, Z64_ModifyModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation } from '../../Z64API/OotoAPI';
-import { ModelPlayer, ModelPlayerProxy } from './ModelPlayer';
+import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
 import fs from 'fs';
@@ -29,7 +29,6 @@ import { OOTAdultManifest } from 'Z64Lib/API/OOT/OOTAdultManfest';
 import { OOTChildManifest } from 'Z64Lib/API/OOT/OOTChildManifest';
 import { zzstatic } from 'Z64Lib/API/zzstatic';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
-import { ModelThread } from 'Z64Lib/API/ModelThread';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Heap } from 'modloader64_api/heap';
@@ -226,16 +225,32 @@ export class ModelManagerClient {
         alloc.rom = manifest.inject(this.ModLoader, evt.rom, proxy, true);
         bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
         this.clientStorage.childProxy = alloc;
-        let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
-        let offset: number = 0xE65A0 + 0x4;
-        model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
+        if (model.readUInt32BE(0x500C) === 0xFFFFFFFF) {
+          // Assume pointer based on age.
+          let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+          let offset: number = 0xE65A0 + 0x4;
+          model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
+        } else {
+          // User defined pointer. Inject it instead.
+          let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+          let offset: number = 0xE65A0 + 0x4;
+          code_file.writeUInt32BE(model.readUInt32BE(0x500C), offset);
+        }
         this.clientStorage.childModel = model;
         new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(this.clientStorage.childModel), this.clientStorage.childProxy.slot, true);
       } else {
         manifest.inject(this.ModLoader, evt.rom, model);
-        let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
-        let offset: number = 0xE65A0 + 0x4;
-        model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
+        if (model.readUInt32BE(0x500C) === 0xFFFFFFFF) {
+          // Assume pointer based on age.
+          let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+          let offset: number = 0xE65A0 + 0x4;
+          model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
+        } else {
+          // User defined pointer. Inject it instead.
+          let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+          let offset: number = 0xE65A0 + 0x4;
+          code_file.writeUInt32BE(model.readUInt32BE(0x500C), offset);
+        }
         this.clientStorage.childModel = model;
       }
     }
@@ -694,9 +709,35 @@ export class ModelManagerClient {
         model = this.ModLoader.emulator.rdramReadBuffer(this.clientStorage.childProxy.pointer, allocation_size);
       }
       this.clearEquipmentHeap();
+
+      let returnModel: () => void = () => {
+        if (age === Age.ADULT) {
+          this.ModLoader.emulator.rdramWriteBuffer(this.clientStorage.adultProxy.pointer, model);
+        } else {
+          this.ModLoader.emulator.rdramWriteBuffer(this.clientStorage.childProxy.pointer, model);
+        }
+      };
+
+      let accessoriesWrapper = this.equipmentHeap.malloc(0x30);
+      let accessoriesBuffer: SmartBuffer = new SmartBuffer();
+      accessoriesBuffer.writeUInt32BE(0xDF000000); // 0x0
+      accessoriesBuffer.writeUInt32BE(0x00000000); // 0x4
+      accessoriesBuffer.writeUInt32BE(0xE7000000); // 0x8
+      accessoriesBuffer.writeUInt32BE(0x00000000); // 0xC
+      accessoriesBuffer.writeUInt32BE(0xDE000000); // 0x10
+      accessoriesBuffer.writeUInt32BE(accessoriesWrapper); // 0x14 - Hat Slot
+      accessoriesBuffer.writeUInt32BE(0xDE000000); // 0x18
+      accessoriesBuffer.writeUInt32BE(accessoriesWrapper); // 0x1C - Glasses Slot
+      accessoriesBuffer.writeUInt32BE(0xDF000000); // 0x20
+      accessoriesBuffer.writeUInt32BE(0x00000000); // 0x24
+
+      bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_START, {});
       this.equipmentMap.forEach((value: Buffer, key: string) => {
         let p = this.equipmentHeap.malloc(value.byteLength);
         this.ModLoader.emulator.rdramWriteBuffer(p, new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(this.ModLoader.utils.cloneBuffer(value), 0, true, p));
+        let a = new Z64Online_ModelAllocation(value, 0x69);
+        a.pointer = p;
+        bus.emit(Z64OnlineEvents.EQUIPMENT_ZOBJ_LOADED, a);
         let rp = this.ModLoader.emulator.rdramReadBuffer(p, value.byteLength);
         let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
         let index = rp.indexOf(eq);
@@ -714,20 +755,45 @@ export class ModelManagerClient {
         header += 0x10;
         if (age === Age.ADULT) {
           Object.keys(data.OOT.adult).forEach((key: string) => {
-            let i = header + (parseInt(key) * 0x8) + 0x4;
-            let offset = parseInt(data.OOT.adult[key]) + 0x4;
-            model.writeUInt32BE(rp.readUInt32BE(i), offset);
+            if (typeof (data.OOT.adult[key]) === 'string') {
+              let i = header + (parseInt(key) * 0x8) + 0x4;
+              let offset = parseInt(data.OOT.adult[key]) + 0x4;
+              model.writeUInt32BE(rp.readUInt32BE(i), offset);
+            } else if (typeof (data.OOT.adult[key]) === 'object') {
+              if (data.OOT.adult[key].slot === "hat") {
+                console.log("hat");
+                let i = header + (parseInt(key) * 0x8) + 0x4;
+                accessoriesBuffer.writeUInt32BE(rp.readUInt32BE(i), 0x14);
+              } else if (data.OOT.adult[key].slot === "glasses") {
+                console.log("glasses");
+                let i = header + (parseInt(key) * 0x8) + 0x4;
+                accessoriesBuffer.writeUInt32BE(rp.readUInt32BE(i), 0x1C);
+              }
+            }
           });
-          this.ModLoader.emulator.rdramWriteBuffer(this.clientStorage.adultProxy.pointer, model);
         } else {
           Object.keys(data.OOT.child).forEach((key: string) => {
             let i = header + (parseInt(key) * 0x8) + 0x4;
             let offset = parseInt(data.OOT.child[key]) + 0x4;
             model.writeUInt32BE(rp.readUInt32BE(i), offset);
           });
-          this.ModLoader.emulator.rdramWriteBuffer(this.clientStorage.childProxy.pointer, model);
         }
       });
+      // Hook head bone.
+      let offset = model.readUInt32BE(0x50C8 + 0x4) - this.clientStorage.adultProxy.pointer;
+      // Find a DF command.
+      let cmd: number = model.readUInt32BE(offset);
+      while (cmd !== 0xDF000000) {
+        offset += 4;
+        cmd = model.readUInt32BE(offset);
+      }
+      model.writeUInt32BE(0xDE010000, offset);
+      offset += 4;
+      model.writeUInt32BE(accessoriesWrapper + 0x8, offset);
+      this.ModLoader.emulator.rdramWriteBuffer(accessoriesWrapper, accessoriesBuffer.toBuffer());
+      console.log(accessoriesWrapper.toString(16));
+      returnModel();
+      bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_END, {});
     }
   }
 
