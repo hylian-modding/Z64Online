@@ -1,25 +1,27 @@
 import { ModelPlayer } from './ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 
 export class ModelAllocationManager {
   MAX_MODELS = 36;
-  RESERVED_SLOTS = 2;
   models: ModelPlayer[] = new Array<ModelPlayer>(this.MAX_MODELS);
+  ModLoader: IModLoaderAPI;
 
-  constructor() {
-    for (let i = 0; i < this.MAX_MODELS; i++){
+  constructor(ModLoader: IModLoaderAPI) {
+    for (let i = 0; i < this.MAX_MODELS; i++) {
       //@ts-ignore
       this.models[i] = undefined;
     }
+    this.ModLoader = ModLoader;
   }
 
-  getModelInSlot(index: number){
+  getModelInSlot(index: number) {
     return this.models[index];
   }
 
-  getAvailableSlots(): number{
+  getAvailableSlots(): number {
     let n: number = 0;
-    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
+    for (let i = 0; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         n++;
       }
@@ -29,25 +31,28 @@ export class ModelAllocationManager {
 
   allocateSlot(model: ModelPlayer): number {
     let index = -1;
-    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
+    for (let i = 0; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         index = i;
         break;
       }
     }
     if (index > -1) {
+      let p = this.ModLoader.heap!.malloc(0x37800);
+      model.pointer = p;
       this.models[index] = model;
     }
     return index;
   }
 
   deallocateSlot(index: number) {
+    this.ModLoader.heap!.free(this.models[index].pointer);
     //@ts-ignore
     this.models[index] = undefined;
   }
 
   isPlayerAllocated(player: INetworkPlayer): boolean {
-    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
+    for (let i = 0; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         continue;
       }
@@ -59,7 +64,7 @@ export class ModelAllocationManager {
   }
 
   getPlayerAllocation(player: INetworkPlayer): ModelPlayer {
-    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
+    for (let i = 0; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         continue;
       }
@@ -71,8 +76,8 @@ export class ModelAllocationManager {
     return null;
   }
 
-  getAllocationByUUID(uuid: string){
-    for (let i = this.RESERVED_SLOTS; i < this.models.length; i++) {
+  getAllocationByUUID(uuid: string) {
+    for (let i = 0; i < this.models.length; i++) {
       if (this.models[i] === undefined) {
         continue;
       }
