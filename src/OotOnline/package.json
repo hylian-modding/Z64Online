@@ -4,7 +4,7 @@
   "description": "",
   "main": "OotOnline.js",
   "author": "denoflions",
-  "credits": "\nASM: Ideka, glank.\nPuppet contributors: Psi-Hate, Drahsid, CrookedPoe.\nHelpful advice: Skawo, Noka.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
+  "credits": "\nASM: Ideka, glank.\nPuppet contributors: Drahsid, Fig, Psi-Hate CrookedPoe.\nHelpful advice: Noka, Skawo.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
   "license": "GPL-3.0",
   "core": [
     "OcarinaofTime"
