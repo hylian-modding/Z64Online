@@ -31,7 +31,6 @@ import { zzstatic } from 'Z64Lib/API/zzstatic';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
-import { Heap } from 'modloader64_api/heap';
 import { SmartBuffer } from 'smart-buffer';
 import { FakeHeap } from '@OotOnline/WorldEvents/FakeHeap';
 

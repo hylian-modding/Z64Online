@@ -62,7 +62,7 @@ export class Puppet {
       bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      (this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["link_no_pvp.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
+      (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawn((this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
         if (success) {
           this.data.pointer = result;
           this.doNotDespawnMe(this.data.pointer);
@@ -76,7 +76,6 @@ export class Puppet {
           this.isSpawning = false;
           bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
         }
-        return {};
       });
     }
   }

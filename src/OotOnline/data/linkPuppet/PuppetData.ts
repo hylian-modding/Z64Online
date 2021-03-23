@@ -36,6 +36,14 @@ export class PuppetData {
     this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0xB4, rot);
   }
 
+  get sound(): Buffer{
+    return Buffer.alloc(2);
+  }
+
+  set sound(buf: Buffer){
+    //this.ModLoader.emulator.rdramWriteBuffer(this.pointer, buf);
+  }
+
   toJSON() {
     const jsonObj: any = {};
 

@@ -200,7 +200,7 @@ export class PuppetOverlordClient {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
-      let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, actualPacket.data.sound);
+      let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, actualPacket.data.sound.readUInt16BE(0));
       bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
       puppet.processIncomingPuppetData(actualPacket.data, e);
       if (actualPacket.horse_data !== undefined) {

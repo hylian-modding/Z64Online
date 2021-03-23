@@ -503,7 +503,7 @@ export class OotOnlineClient {
             let result: IOvlPayloadResult = evt.result;
             this.clientStorage.overlayCache[evt.file] = result;
         }
-        if (evt.file === "link_no_pvp.ovl") {
+        if (evt.file === "puppet.ovl") {
             let result: IOvlPayloadResult = evt.result;
             this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
         } else if (evt.file === "flag_fixer.ovl") {

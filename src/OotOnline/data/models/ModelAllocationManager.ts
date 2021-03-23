@@ -46,6 +46,7 @@ export class ModelAllocationManager {
   }
 
   deallocateSlot(index: number) {
+    this.ModLoader.emulator.rdramWriteBuffer(this.models[index].pointer, this.ModLoader.utils.clearBuffer(this.ModLoader.emulator.rdramReadBuffer(this.models[index].pointer, 0x37800)));
     this.ModLoader.heap!.free(this.models[index].pointer);
     //@ts-ignore
     this.models[index] = undefined;
