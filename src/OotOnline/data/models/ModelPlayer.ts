@@ -1,44 +1,19 @@
-import { ModelContainer } from './ModelContainer';
+import { IModelReference, IModelScript } from '@OotOnline/Z64API/OotoAPI';
 
 export class ModelPlayer {
   uuid: string = "";
-  pointer: number = -1;
-  model: ModelContainer = new ModelContainer();
-  customIconAdult: Buffer = Buffer.alloc(1);
-  customIconChild: Buffer = Buffer.alloc(1);
+  proxyPointer: number = -1;
+  proxyData!: Buffer;
+  isDead: boolean = true;
+  hasLeftGame: boolean = false;
+  adult!: IModelReference;
+  child!: IModelReference;
+  playerIsSpawned: boolean = false;
+  equipment: Map<string, IModelReference> = new Map<string, IModelReference>();
+  currentScript: IModelScript | undefined;
+  additionalData: Map<any, any> = new Map<any, any>();
 
   constructor(uuid: string){
     this.uuid = uuid;
-  }
-}
-
-export class ModelPlayerProxy{
-  uuid: string = "";
-  adultKey: string = "";
-  childKey: string = "";
-  equipmentKey: string = "";
-  iconAdultKey: string = "";
-  iconChildKey: string = "";
-
-  constructor(uuid: string){
-    this.uuid = uuid;
-  }
-
-  generateModelPlayer(map: Map<string, Buffer>): ModelPlayer{
-    let p = new ModelPlayer(this.uuid);
-    p.model = new ModelContainer();
-    if (this.adultKey !== ''){
-      p.model.setAdult(map.get(this.adultKey)!);
-    }
-    if (this.childKey !== ''){
-      p.model.setChild(map.get(this.childKey)!);
-    }
-    if (this.iconAdultKey !== ''){
-      p.customIconAdult = map.get(this.iconAdultKey)!;
-    }
-    if (this.iconChildKey !== ''){
-      p.customIconChild = map.get(this.iconChildKey)!;
-    }
-    return p;
   }
 }

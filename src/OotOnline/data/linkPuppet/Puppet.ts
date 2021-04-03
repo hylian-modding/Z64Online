@@ -16,7 +16,6 @@ export class Puppet {
   isSpawning = false;
   isShoveled = false;
   scene: number;
-  age: Age;
   core: IOOTCore;
   void!: Vector3;
   ModLoader: IModLoaderAPI;
@@ -31,13 +30,16 @@ export class Puppet {
     parent: IZ64OnlineHelpers
   ) {
     this.player = player;
-    this.data = new PuppetData(pointer, ModLoader, core);
+    this.data = new PuppetData(pointer, ModLoader);
     this.scene = 81;
-    this.age = 1;
     this.ModLoader = ModLoader;
     this.core = core;
     this.id = this.ModLoader.utils.getUUID();
     this.parent = parent;
+  }
+
+  get age(): Age {
+    return this.data.age;
   }
 
   debug_movePuppetToPlayer() {
@@ -82,6 +84,7 @@ export class Puppet {
 
   processIncomingPuppetData(data: PuppetData, remote: RemoteSoundPlayRequest) {
     if (this.isSpawned && !this.isShoveled) {
+      this.data.ageLastFrame = this.age;
       Object.keys(data).forEach((key: string) => {
         if (key === "sound") {
           if (!remote.isCanceled) {
@@ -91,6 +94,9 @@ export class Puppet {
           (this.data as any)[key] = (data as any)[key];
         }
       });
+      if (this.data.ageLastFrame !== this.age){
+        bus.emit(Z64OnlineEvents.PUPPET_AGE_CHANGED, this);
+      }
     }
   }
 

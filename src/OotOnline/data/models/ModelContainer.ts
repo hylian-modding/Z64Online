@@ -1,24 +1,47 @@
-import { Z64Online_ModelAllocation } from "@OotOnline/Z64API/OotoAPI";
+import { IModelReference, IModelScript } from "@OotOnline/Z64API/OotoAPI";
+import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 
-export class ModelContainer {
-  adult: ModelObject = new ModelObject(Buffer.alloc(1));
-  child: ModelObject = new ModelObject(Buffer.alloc(1));
-  equipment: Array<ModelObject> = [];
+export class ModelReference implements IModelReference {
+  hash: string;
+  pointer: number = 0;
+  isPlayerModel: boolean = true;
+  isDead: boolean = false;
+  isLoaded: boolean = false;
+  script: IModelScript | undefined;
+  ModLoader: IModLoaderAPI;
 
-  setAdult(zobj: Buffer){
-    this.adult = new ModelObject(zobj);
+  constructor(hash: string, ModLoader: IModLoaderAPI) {
+    this.hash = hash;
+    this.ModLoader = ModLoader;
   }
 
-  setChild(zobj: Buffer){
-    this.child = new ModelObject(zobj);
+  loadModel(): boolean{
+    this.ModLoader.privateBus.emit("LOAD_MODEL", this);
+    return this.isLoaded;
+  }
+  
+  unregister(): boolean{
+    this.ModLoader.privateBus.emit("KILL_MODEL", this)
+    return  this.isDead;
   }
 }
 
 export class ModelObject {
-  zobj: Buffer;
-  proxy?: Z64Online_ModelAllocation;
+  private _zobj: Buffer;
+  size: number;
 
   constructor(zobj: Buffer) {
-    this.zobj = zobj;
+    this._zobj = zobj;
+    this.size = zobj.byteLength;
+  }
+
+  set zobj(buf: Buffer) {
+    this._zobj = buf;
+  }
+
+  get zobj(): Buffer {
+    let copy = Buffer.alloc(this._zobj.byteLength);
+    this._zobj.copy(copy);
+    return copy;
   }
 }

@@ -15,11 +15,6 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   ];
   childModel: Buffer = Buffer.alloc(1);
   adultModel: Buffer = Buffer.alloc(1);
-  adultProxy!: Z64Online_ModelAllocation;
-  childProxy!: Z64Online_ModelAllocation;
-  equipmentModel: Buffer = Buffer.alloc(1);
-  adultIcon: Buffer = Buffer.alloc(1);
-  childIcon: Buffer = Buffer.alloc(1);
   overlayCache: any = {};
   localization: any = {};
   scene_keys: any = {};

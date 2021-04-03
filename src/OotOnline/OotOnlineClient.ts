@@ -10,7 +10,6 @@ import fs from 'fs';
 import { OotOnlineStorageClient } from './OotOnlineStorageClient';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { UtilityActorHelper } from './data/utilityActorHelper';
-import { ModelManagerClient } from './data/models/ModelManager';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { Init, Preinit, Postinit, onTick, onCreateResources } from 'modloader64_api/PluginLifecycle';
 import { parseFlagChanges } from './parseFlagChanges';
@@ -33,6 +32,9 @@ import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
 import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, OotO_ItemGetMessagePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { ThiccOpa } from './data/opa/ThiccOpa';
+import { ModelManagerClient } from './data/models/ModelManager';
+import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -69,6 +71,7 @@ export class OotOnlineClient {
     worldEvents!: WorldEvents;
     resourcesLoaded: boolean = false;
     itemIcons: Map<string, Texture> = new Map<string, Texture>();
+    opa!: ThiccOpa;
 
     @onCreateResources()
     onResource() {
@@ -108,9 +111,6 @@ export class OotOnlineClient {
     init(): void {
         if (this.modelManager !== undefined) {
             this.modelManager.clientStorage = this.clientStorage;
-            if (this.gui !== undefined) {
-                this.gui.modelManager = this.modelManager;
-            }
         }
     }
 
@@ -127,6 +127,12 @@ export class OotOnlineClient {
         status.partyMax = 30;
         status.partySize = 1;
         this.ModLoader.gui.setDiscordStatus(status);
+    }
+
+    @EventHandler(EventsClient.ON_HEAP_READY)
+    onHeapReady() {
+        //this.opa = new ThiccOpa();
+        //this.opa.toggleSuperPoly(this.ModLoader.heap!, this.ModLoader);
     }
 
     updateInventory() {
@@ -225,6 +231,12 @@ export class OotOnlineClient {
         this.ModLoader.logger.info('OotOnline settings inherited from lobby.');
         if (GHOST_MODE_TRIGGERED) {
             bus.emit(Z64OnlineEvents.GHOST_MODE, true);
+        }
+        if (lobby.data.hasOwnProperty("Z64OEventsActive")){
+            if (lobby.data.Z64OEventsActive.length > 0){
+                this.ModLoader.logger.info("Server sent event data.");
+                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET, lobby.data.Z64OEventsActive);
+            }
         }
     }
 
@@ -561,8 +573,20 @@ export class OotOnlineClient {
         }
     }
 
+    @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
+    onDump(evt: any) {
+        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024));
+    }
+
+    private updateSyncContext(){
+        this.ModLoader.emulator.rdramWrite8(0x806FFF00, this.core.save.inventory.strength);
+    }
+
     @onTick()
     onTick() {
+        if (this.opa !== undefined) {
+            this.opa.onTick(0, this.core, this.ModLoader);
+        }
         if (
             !this.core.helper.isTitleScreen() &&
             this.core.helper.isSceneNumberValid()
@@ -578,6 +602,7 @@ export class OotOnlineClient {
                     this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSkulltulas();
+                    this.updateSyncContext();
                     if (this.LobbyConfig.key_syncing) {
                         this.keys.update();
                     }

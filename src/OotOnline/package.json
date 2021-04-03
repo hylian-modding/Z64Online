@@ -20,6 +20,7 @@
     ]
   },
   "dependencies": {
-    "lodash": "^4.17.20"
+    "f3djs": "git+https://github.com/CrookedPoe/f3djs.git",
+    "fetch": "^1.1.0"
   }
 }

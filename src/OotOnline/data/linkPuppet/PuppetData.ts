@@ -1,56 +1,64 @@
-import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { SmartBuffer } from 'smart-buffer';
+import path from 'path';
+import { Age } from 'modloader64_api/OOT/OOTAPI';
+
+interface SyncData {
+	lengths: any;
+	sources: any;
+	destinations: any;
+}
+
+const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData.json"));
 
 export class PuppetData {
-  pointer: number;
-  ModLoader: IModLoaderAPI;
-  core: IOOTCore;
+	pointer: number;
+	ModLoader: IModLoaderAPI;
+	buf: SmartBuffer;
+	ageLastFrame: Age = Age.ADULT;
+	age: Age = Age.ADULT;
 
-  private readonly copyFields: string[] = new Array<string>();
+	private readonly copyFields: string[] = new Array<string>();
 
-  constructor(
-    pointer: number,
-    ModLoader: IModLoaderAPI,
-    core: IOOTCore
-  ) {
-    this.pointer = pointer;
-    this.ModLoader = ModLoader;
-    this.core = core;
-    this.copyFields.push('pos');
-    this.copyFields.push('rot');
-  }
+	constructor(pointer: number, ModLoader: IModLoaderAPI) {
+		this.pointer = pointer;
+		this.ModLoader = ModLoader;
+		this.buf = new SmartBuffer();
+		this.copyFields.push("bundle");
+	}
 
-  get pos(): Buffer {
-    return this.core.link.position.getRawPos();
-  }
+	onTick() {
+		this.buf.clear();
+		Object.keys(SYNC_DATA.sources).forEach((key: string) => {
+			this.buf.writeBuffer(this.ModLoader.emulator.rdramReadBuffer(parseInt(SYNC_DATA.sources[key]), SYNC_DATA.lengths[key]));
+		});
+	}
 
-  set pos(pos: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0x24, pos);
-  }
+	get bundle(): Buffer {
+		return this.buf.toBuffer();
+	}
 
-  get rot(): Buffer {
-    return this.core.link.rotation.getRawRot();
-  }
+	set bundle(buf: Buffer) {
+		this.buf.clear();
+		this.buf.writeBuffer(buf);
+		this.buf.readOffset = 0;
+		Object.keys(SYNC_DATA.destinations).forEach((key: string) => {
+			if (key === "age"){
+				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
+				this.age = data.readUInt32BE(0);
+				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
+			}else{
+				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), this.buf.readBuffer(SYNC_DATA.lengths[key]));
+			}
+		});
+	}
 
-  set rot(rot: Buffer) {
-    this.ModLoader.emulator.rdramWriteBuffer(this.pointer + 0xB4, rot);
-  }
+	toJSON() {
+		const jsonObj: any = {};
+		for (let i = 0; i < this.copyFields.length; i++) {
+			jsonObj[this.copyFields[i]] = (this as any)[this.copyFields[i]];
+		}
 
-  get sound(): Buffer{
-    return Buffer.alloc(2);
-  }
-
-  set sound(buf: Buffer){
-    //this.ModLoader.emulator.rdramWriteBuffer(this.pointer, buf);
-  }
-
-  toJSON() {
-    const jsonObj: any = {};
-
-    for (let i = 0; i < this.copyFields.length; i++) {
-      jsonObj[this.copyFields[i]] = (this as any)[this.copyFields[i]];
-    }
-    //console.log(JSON.stringify(jsonObj, null, 2));
-    return jsonObj;
-  }
+		return jsonObj;
+	}
 }

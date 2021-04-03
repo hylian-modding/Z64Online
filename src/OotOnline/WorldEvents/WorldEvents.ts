@@ -4,125 +4,22 @@ import { Age, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
-import { StorageContainer } from 'modloader64_api/Storage';
-import { Cryptr } from './Cryptr';
-import os from 'os';
-import { bus, EventHandler } from 'modloader64_api/EventHandler';
+import { bus, EventHandler, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation } from '@OotOnline/Z64API/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
-import fs from 'fs';
 import { CostumeHelper } from './CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
-import { MLPatchLib } from './ML64PatchLib';
-import { trimBuffer } from 'Z64Lib/API/Z64RomTools';
-
-export interface IWorldEvent {
-}
-
-export class RewardContainer {
-    events: any = {};
-    patches: any = {};
-
-    findRewardByKey(key: string): Buffer | undefined {
-        let eventKeys = Object.keys(this.events);
-        for (let i = 0; i < eventKeys.length; i++) {
-            let event = this.events[eventKeys[i]];
-            let categoryKeys = Object.keys(event);
-            for (let j = 0; j < categoryKeys.length; j++) {
-                let items = event[categoryKeys[j]].items;
-                let itemKeys = Object.keys(items);
-                for (let k = 0; k < itemKeys.length; k++) {
-                    if (itemKeys[k] === key) {
-                        if (this.patches.hasOwnProperty(itemKeys[k])) {
-                            let pp = new MLPatchLib();
-                            return trimBuffer(pp.apply(items[itemKeys[k]], this.patches[itemKeys[k]]));
-                        } else {
-                            return items[itemKeys[k]];
-                        }
-                    }
-                }
-            }
-        }
-        return undefined;
-    }
-
-    findEquipmentRewardByKey(key: string): Buffer | undefined {
-        let eventKeys = Object.keys(this.events);
-        for (let i = 0; i < eventKeys.length; i++) {
-            let event = this.events[eventKeys[i]];
-            let categoryKeys = ["Equipment"];
-            let eqTypes = event[categoryKeys[0]].items;
-            let eqTypeKeys = Object.keys(eqTypes);
-            for (let j = 0; j < eqTypeKeys.length; j++) {
-                let eqItems = eqTypes[eqTypeKeys[j]];
-                let eqKeys = Object.keys(eqItems);
-                for (let k = 0; k < eqKeys.length; k++) {
-                    if (eqKeys[k] === key) {
-                        if (this.patches.hasOwnProperty(eqKeys[k])) {
-                            let pp = new MLPatchLib();
-                            return trimBuffer(pp.apply(eqItems[eqKeys[k]], this.patches[eqKeys[k]]));
-                        } else {
-                            return eqItems[eqKeys[k]];
-                        }
-                    }
-                }
-            }
-        }
-        return undefined;
-    }
-
-    fromData(data: any) {
-        let clone: string[] = JSON.parse(JSON.stringify(Object.keys(this.events)));
-        this.events = data.events;
-        for (let i = 0; i < clone.length; i++) {
-            this.createEvent(clone[i]);
-        }
-        if (data.hasOwnProperty("patches")) {
-            this.patches = data.patches;
-        }
-        return this;
-    }
-
-    createEvent(event: string) {
-        if (!this.events.hasOwnProperty(event)) {
-            this.events[event] = {};
-        }
-        if (!this.events[event].hasOwnProperty("Adult")) {
-            this.events[event]["Adult"] = new RewardTypeContainer();
-        }
-        if (!this.events[event].hasOwnProperty("Child")) {
-            this.events[event]["Child"] = new RewardTypeContainer();
-        }
-        if (!this.events[event].hasOwnProperty("Equipment")) {
-            this.events[event]["Equipment"] = new RewardTypeContainer();
-        }
-    }
-}
-
-export class RewardItem {
-    data: Buffer;
-    uuid: string;
-
-    constructor(uuid: string, data: Buffer) {
-        this.data = data;
-        this.uuid = uuid;
-    }
-}
-
-export class RewardTypeContainer {
-    items: any = {};
-}
-
-export class RewardContainerOld {
-    adult: any = {};
-    child: any = {};
-}
-
-export const enum Z64_RewardEvents {
-    UNLOCK_PLAYAS = "Z64:WorldEvent_UnlockPlayas",
-    CHECK_REWARD = "Z64:WorldEvent_CheckReward",
-    APPLY_REWARD_PATCH = "Z64:WorldEvent_ApplyRewardPatch"
-}
+import fs from 'fs';
+import path from 'path';
+import { StorageContainer } from 'modloader64_api/Storage';
+import { ContentBundle } from './ContentBundle';
+import { EventController } from './EventController';
+import { OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
+import { WorldEvents_TransactionPacket } from './WorldEventPackets';
+import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
+import crypto from 'crypto';
+import { AssetContainer } from './AssetContainer';
+import { publicKey } from './publicKey';
 
 export interface Z64_EventReward {
     name: string;
@@ -133,20 +30,33 @@ export interface Z64_EventReward {
     checked?: boolean;
 }
 
+export interface RewardContainer {
+    tickets: RewardTicket[];
+    coins: number;
+    sig: Buffer;
+}
+
 export class WorldEventRewards {
     config!: Z64_EventConfig;
-    rewards: RewardContainer = new RewardContainer();
+    cacheDir: string = path.resolve(global.ModLoader.startdir, "cache");
+
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
+    @InjectCore()
+    core!: IOOTCore;
     rewardsWindowStatus: bool_ref = [false];
     customModelFilesAdult: Map<string, Buffer> = new Map<string, Buffer>();
     customModelFilesChild: Map<string, Buffer> = new Map<string, Buffer>();
     customModelsFilesEquipment: Map<string, Z64Online_EquipmentPak[]> = new Map<string, Z64Online_EquipmentPak[]>();
     customSoundGroups: Map<string, any> = new Map<string, any>();
+    allRewardTickets: Map<string, RewardTicket> = new Map<string, RewardTicket>();
+    rewardTicketsByEvent: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
+    rewardTicketsForEquipment: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
+    rewardTicketsByUUID: Map<string, RewardTicket> = new Map<string, RewardTicket>();
+    rewardContainer: RewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1) };
+    assets!: AssetContainer;
 
     constructor() {
-        this.rewards.createEvent("Halloween 2020");
-        this.rewards.createEvent("Christmas 2020");
     }
 
     @EventHandler(Z64OnlineEvents.POST_LOADED_MODELS_LIST)
@@ -165,141 +75,156 @@ export class WorldEventRewards {
     }
 
     @EventHandler(Z64OnlineEvents.POST_LOADED_SOUND_LIST)
-    onSoundPost(paks: Map<string, any>){
+    onSoundPost(paks: Map<string, any>) {
         this.customSoundGroups = paks;
         // I don't understand how something with a key of undefined keeps ending up in here.
         //@ts-ignore
         this.customSoundGroups.delete(undefined);
     }
 
-    @EventHandler(Z64_RewardEvents.UNLOCK_PLAYAS)
-    onUnlock(reward: Z64_EventReward) {
-        try {
-            switch (reward.age) {
-                case Age.CHILD:
-                    this.rewards.events[reward.event].Child.items[reward.name] = reward.data;
-                    break;
-                case Age.ADULT:
-                    this.rewards.events[reward.event].Adult.items[reward.name] = reward.data;
-                    break;
-                case 0x69:
-                    if (!this.rewards.events[reward.event].Equipment.items.hasOwnProperty(reward.equipmentCategory!)) {
-                        this.rewards.events[reward.event].Equipment.items[reward.equipmentCategory!] = {};
-                    }
-                    this.rewards.events[reward.event].Equipment.items[reward.equipmentCategory!][reward.name] = reward.data;
-                    break;
+    private migrateRewards() {
+        if (fs.existsSync("./storage/holiday_event_rewards_v3.pak")) {
+            if (fs.existsSync("./storage/Z64O_Reward_Tickets.pak")) {
+                let storage = new StorageContainer("Z64O_Reward_Tickets");
+                this.rewardContainer = storage.loadObject() as RewardContainer;
             }
-            let sc = new StorageContainer("holiday_event_rewards_v3");
-            sc.storeObject(this.rewards);
-        } catch (err) {
-            console.log(err.stack);
+            this.ModLoader.logger.debug("Migrating event rewards...");
+            let rewards: Array<string> = [];
+            let old = new StorageContainer("holiday_event_rewards_v3").loadObject().events;
+            Object.keys(old).forEach((event: string) => {
+                let e = old[event];
+                Object.keys(e).forEach((cat: string) => {
+                    let c = e[cat];
+                    let items = c["items"];
+                    Object.keys(items).forEach((item: string) => {
+                        if (Buffer.isBuffer(items[item])) {
+                            this.ModLoader.logger.info(item);
+                            rewards.push(item);
+                        } else {
+                            let i = items[item];
+                            Object.keys(i).forEach((eq: string) => {
+                                this.ModLoader.logger.info(eq);
+                                rewards.push(eq);
+                            });
+                        }
+                    });
+                });
+            });
+            try {
+                let tickets: Array<RewardTicket> = [];
+                this.assets.bundle.files.forEach((buf: Buffer, key: string) => {
+                    if (key.indexOf(".json") > -1) {
+                        tickets.push(JSON.parse(buf.toString()));
+                    }
+                });
+                rewards.forEach((value: string) => {
+                    this.ModLoader.logger.info("found matching zobj. Looking for ticket...");
+                    for (let i = 0; i < tickets.length; i++) {
+                        if (tickets[i].game !== "OotO") continue;
+                        if (tickets[i].name.indexOf(value) > -1) {
+                            this.ModLoader.logger.info("found matching ticket!");
+                            this.rewardContainer.tickets.push(tickets[i]);
+                        }
+                    }
+                });
+                new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
+                fs.unlinkSync("./storage/holiday_event_rewards_v3.pak");
+            } catch (err) {
+                console.log(err);
+            }
         }
     }
 
-    @EventHandler(Z64_RewardEvents.CHECK_REWARD)
-    onCheck(reward: Z64_EventReward) {
-        switch (reward.age) {
-            case Age.CHILD:
-                reward.checked = this.rewards.events[reward.event].Child.items.hasOwnProperty(reward.name);
-                break;
-            case Age.ADULT:
-                reward.checked = this.rewards.events[reward.event].Adult.items.hasOwnProperty(reward.name);
-                break;
-            case 0x69:
-                if (!this.rewards.events[reward.event].Equipment.items.hasOwnProperty(reward.equipmentCategory!)) {
-                    this.rewards.events[reward.event].Equipment.items[reward.equipmentCategory!] = {};
+    loadTickets() {
+        this.ModLoader.logger.info("Loading reward tickets...");
+        this.allRewardTickets.clear();
+        this.rewardTicketsByEvent.clear();
+        this.rewardTicketsByUUID.clear();
+        this.rewardTicketsForEquipment.clear();
+        this.assets.bundle.files.forEach((buf: Buffer, key: string) => {
+            if (key.indexOf(".json") > -1) {
+                let ticket: RewardTicket = JSON.parse(buf.toString());
+                this.allRewardTickets.set(ticket.uuid, ticket);
+            }
+        });
+        if (!fs.readFileSync("./storage/Z64O_Reward_Tickets.pak")) {
+            return;
+        }
+        let storage = new StorageContainer("Z64O_Reward_Tickets");
+        this.rewardContainer = storage.loadObject() as RewardContainer;
+        if (this.rewardContainer.coins > 0) {
+            if (this.rewardContainer.sig.byteLength > 1) {
+                let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
+                let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
+                const public_key = publicKey;
+                const verifier = crypto.createVerify('sha256');
+                verifier.update(Buffer.from(hash));
+                verifier.end();
+                const verified = verifier.verify(public_key, this.rewardContainer.sig);
+                if (verified) {
+                    this.ModLoader.logger.debug("Rewards file OK.");
+                } else {
+                    this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1) };
+                    this.ModLoader.logger.error("This rewards file has been tampered with.");
                 }
-                reward.checked = this.rewards.events[reward.event].Equipment.items[reward.equipmentCategory!].hasOwnProperty(reward.name);
-                break;
+            }
+        }
+        for (let i = 0; i < this.rewardContainer.tickets.length; i++) {
+            this.rewardContainer.tickets[i] = this.allRewardTickets.get(this.rewardContainer.tickets[i].uuid)!;
+            let ticket = this.rewardContainer.tickets[i];
+            if (ticket.game !== "OotO") continue;
+            this.rewardTicketsByUUID.set(ticket.uuid, ticket);
+            if (!this.rewardTicketsByEvent.has(ticket.event)) {
+                this.rewardTicketsByEvent.set(ticket.event, new Map<string, RewardTicket[]>());
+            }
+            if (!this.rewardTicketsByEvent.get(ticket.event)!.has(ticket.category)) {
+                this.rewardTicketsByEvent.get(ticket.event)!.set(ticket.category, []);
+            }
+            this.rewardTicketsByEvent.get(ticket.event)!.get(ticket.category)!.push(ticket);
+            if (ticket.category === "Equipment") {
+                if (!this.rewardTicketsForEquipment.has(ticket.event)) {
+                    this.rewardTicketsForEquipment.set(ticket.event, new Map<string, RewardTicket[]>());
+                }
+                let category = CostumeHelper.getEquipmentCategory(this.assets.bundle.files.get(ticket.name)!);
+                if (!this.rewardTicketsForEquipment.get(ticket.event)!.has(category)) {
+                    this.rewardTicketsForEquipment.get(ticket.event)!.set(category, []);
+                }
+                this.rewardTicketsForEquipment.get(ticket.event)!.get(category)!.push(ticket);
+            }
         }
     }
 
-    @EventHandler(Z64_RewardEvents.APPLY_REWARD_PATCH)
-    onApplyPatch(patch: any) {
-        this.rewards.patches[patch.name] = patch.data;
-        let sc = new StorageContainer("holiday_event_rewards_v3");
-        sc.storeObject(this.rewards);
-    }
-
-    private migrateRewardsFile1() {
-        if (fs.existsSync("./storage/holiday_event_rewards.pak")) {
-            this.ModLoader.logger.debug("Migrating event rewards...");
-            let sc = new StorageContainer("holiday_event_rewards");
-            let str = sc.loadObject();
-            let n = os.userInfo().username + '@' + os.hostname();
-            let d = new Cryptr(n).decrypt(str);
-            this.rewards = JSON.parse(d);
-            sc = new StorageContainer("holiday_event_rewards_v2");
-            sc.storeObject(new Cryptr("holiday_event_rewards_v2").encrypt(JSON.stringify(this.rewards)));
-            fs.unlinkSync("./storage/holiday_event_rewards.pak");
-        }
-    }
-
-    private migrateRewardsFile2() {
-        if (fs.existsSync("./storage/holiday_event_rewards_v2.pak")) {
-            this.ModLoader.logger.debug("Migrating event rewards...");
-            let sc = new StorageContainer("holiday_event_rewards_v2");
-            let str = sc.loadObject();
-            let d = new Cryptr("holiday_event_rewards_v2").decrypt(str);
-            let rewards_old: RewardContainerOld = JSON.parse(d);
-            let event = "Halloween 2020";
-            this.rewards.events[event] = {};
-            this.rewards.events[event]["Adult"] = new RewardTypeContainer();
-            this.rewards.events[event]["Child"] = new RewardTypeContainer();
-            Object.keys(rewards_old.child).forEach((key: string) => {
-                this.rewards.events[event]["Child"].items[key] = rewards_old.child[key];
-            });
-            Object.keys(rewards_old.adult).forEach((key: string) => {
-                this.rewards.events[event]["Adult"].items[key] = rewards_old.adult[key];
-            });
-            sc = new StorageContainer("holiday_event_rewards_v3");
-
-            sc.storeObject(this.rewards);
-            fs.unlinkSync("./storage/holiday_event_rewards_v2.pak");
-        }
+    loadAssets() {
+        this.assets = new AssetContainer(this.ModLoader, this.core, () => {
+            this.migrateRewards();
+            this.loadTickets();
+        });
+        this.assets.url = "https://repo.modloader64.com/mods/Ooto/event/Z64O_Assets.content";
+        this.assets.preinit();
     }
 
     @Preinit()
     preinit() {
-        this.migrateRewardsFile1();
-        this.migrateRewardsFile2();
         this.config = this.ModLoader.config.registerConfigCategory("OotO_WorldEvents") as Z64_EventConfig;
         this.ModLoader.config.setData("OotO_WorldEvents", "adultCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "equipmentLoadout", {});
         this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
-        try {
-            let sc = new StorageContainer("holiday_event_rewards_v3");
-            let d = sc.loadObject();
-            this.rewards = this.rewards.fromData(d);
-        } catch (err) {
+        this.loadAssets();
+    }
+
+    private getAssetByUUID(uuid: string): Buffer | undefined {
+        let ticket = this.rewardTicketsByUUID.get(uuid)!;
+        if (ticket === undefined) {
+            this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
+            return undefined
+        };
+        let asset = this.assets.bundle.files.get(ticket.name)!;
+        if (asset === undefined) {
+            this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
+            return undefined;
         }
-        if (this.config.adultCostume !== "") {
-            let c = this.rewards.findRewardByKey(this.config.adultCostume);
-            if (c !== undefined) {
-                bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT, c);
-            }
-        }
-        if (this.config.childCostume !== "") {
-            let c = this.rewards.findRewardByKey(this.config.childCostume);
-            if (c !== undefined) {
-                bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD, c);
-            }
-        }
-        if (this.config.voice !== ""){
-            // TODO
-        }
-        let keys = Object.keys(this.config.equipmentLoadout);
-        if (keys.length > 0) {
-            for (let i = 0; i < keys.length; i++) {
-                let key = keys[i];
-                let value = this.config.equipmentLoadout[key];
-                let c = this.rewards.findEquipmentRewardByKey(value);
-                if (c !== undefined) {
-                    bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, c));
-                }
-            }
-        }
+        return asset;
     }
 
     @onViUpdate()
@@ -332,50 +257,53 @@ export class WorldEventRewards {
                         }, 1);
                         this.ModLoader.config.save();
                     }
-                    this.ModLoader.ImGui.text("First costume change requires a game restart");
-                    Object.keys(this.rewards.events).forEach((event: string) => {
-                        let eventObj = this.rewards.events[event];
-                        if (this.ModLoader.ImGui.treeNode(event + "###" + event)) {
-                            if (this.ModLoader.ImGui.treeNode("Adult###" + event + "Adult")) {
-                                Object.keys(eventObj.Adult.items).forEach((key: string) => {
-                                    if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.adultCostume)) {
-                                        this.config.adultCostume = key;
+                    this.rewardTicketsByEvent.forEach((event: Map<string, RewardTicket[]>, key: string) => {
+                        if (this.ModLoader.ImGui.treeNode(key + "###" + key)) {
+                            if (this.ModLoader.ImGui.treeNode("Adult###" + key + "Adult")) {
+                                event.get("Adult")!.forEach((ticket: RewardTicket) => {
+                                    let name = path.parse(ticket.name).name;
+                                    if (this.ModLoader.ImGui.menuItem(name, undefined, name === this.config.adultCostume)) {
+                                        this.config.adultCostume = ticket.uuid;
                                         this.ModLoader.utils.setTimeoutFrames(() => {
-                                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, new Z64Online_ModelAllocation(this.ModLoader.utils.cloneBuffer(this.rewards.findRewardByKey(key)!), Age.ADULT));
+                                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.ADULT));
                                         }, 1);
                                         this.ModLoader.config.save();
                                     }
                                 });
                                 this.ModLoader.ImGui.treePop();
                             }
-                            if (this.ModLoader.ImGui.treeNode("Child###" + event + "Child")) {
-                                Object.keys(eventObj.Child.items).forEach((key: string) => {
-                                    if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.childCostume)) {
-                                        this.config.childCostume = key;
+                            if (this.ModLoader.ImGui.treeNode("Child###" + key + "Child")) {
+                                event.get("Child")!.forEach((ticket: RewardTicket) => {
+                                    let name = path.parse(ticket.name).name;
+                                    if (this.ModLoader.ImGui.menuItem(name, undefined, name === this.config.childCostume)) {
+                                        this.config.childCostume = ticket.uuid;
                                         this.ModLoader.utils.setTimeoutFrames(() => {
-                                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, new Z64Online_ModelAllocation(this.ModLoader.utils.cloneBuffer(this.rewards.findRewardByKey(key)!), Age.CHILD));
+                                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.CHILD));
                                         }, 1);
                                         this.ModLoader.config.save();
                                     }
                                 });
                                 this.ModLoader.ImGui.treePop();
                             }
-                            if (this.ModLoader.ImGui.treeNode("Equipment###" + event + "Equipment")) {
-                                Object.keys(eventObj.Equipment.items).forEach((key: string) => {
-                                    if (this.ModLoader.ImGui.treeNode(key + "###" + event + key)) {
-                                        Object.keys(eventObj.Equipment.items[key]).forEach((key2: string) => {
-                                            if (this.ModLoader.ImGui.menuItem(key2, undefined, this.config.equipmentLoadout[key] === key2)) {
-                                                this.config.equipmentLoadout[key] = key2;
-                                                this.ModLoader.utils.setTimeoutFrames(() => {
-                                                    bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, this.rewards.findEquipmentRewardByKey(key2)!));
-                                                    bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
-                                                }, 1);
-                                                this.ModLoader.config.save();
-                                            }
-                                        });
-                                        this.ModLoader.ImGui.treePop();
-                                    }
-                                });
+                            if (this.ModLoader.ImGui.treeNode("Equipment###" + key + "Equipment")) {
+                                if (this.rewardTicketsForEquipment.has(key)) {
+                                    this.rewardTicketsForEquipment.get(key)!.forEach((value: RewardTicket[], key2: string) => {
+                                        if (this.ModLoader.ImGui.treeNode(key2 + "###" + key + key2)) {
+                                            value.forEach((ticket: RewardTicket) => {
+                                                let name = path.parse(ticket.name).name;
+                                                if (this.ModLoader.ImGui.menuItem(name, undefined, this.config.equipmentLoadout[key] === name)) {
+                                                    this.config.equipmentLoadout[key] = ticket.uuid;
+                                                    this.ModLoader.utils.setTimeoutFrames(() => {
+                                                        bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, this.getAssetByUUID(ticket.uuid)!));
+                                                        bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
+                                                    }, 1);
+                                                    this.ModLoader.config.save();
+                                                }
+                                            });
+                                            this.ModLoader.ImGui.treePop();
+                                        }
+                                    });
+                                }
                                 this.ModLoader.ImGui.treePop();
                             }
                             this.ModLoader.ImGui.treePop();
@@ -425,8 +353,8 @@ export class WorldEventRewards {
                                 });
                                 this.ModLoader.ImGui.treePop();
                             }
-                            if (this.ModLoader.ImGui.treeNode("Voice###OotOCustomVoice")){
-                                this.customSoundGroups.forEach((value: any, key: string)=>{
+                            if (this.ModLoader.ImGui.treeNode("Voice###OotOCustomVoice")) {
+                                this.customSoundGroups.forEach((value: any, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.voice)) {
                                         this.config.voice = key;
                                         bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, key);
@@ -448,7 +376,112 @@ export class WorldEventRewards {
 
     @Postinit()
     onPost() {
+        this.ModLoader.utils.setTimeoutFrames(() => {
+            if (this.config.adultCostume !== "") {
+                let c = this.getAssetByUUID(this.config.adultCostume);
+                if (c !== undefined) {
+                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, new Z64Online_ModelAllocation(c, Age.ADULT));
+                }
+            }
+            if (this.config.childCostume !== "") {
+                let c = this.getAssetByUUID(this.config.childCostume);
+                if (c !== undefined) {
+                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, new Z64Online_ModelAllocation(c, Age.CHILD));
+                }
+            }
+            if (this.config.voice !== "") {
+                // TODO
+            }
+            let keys = Object.keys(this.config.equipmentLoadout);
+            if (keys.length > 0) {
+                for (let i = 0; i < keys.length; i++) {
+                    let key = keys[i];
+                    let value = this.config.equipmentLoadout[key];
+                    let c = this.getAssetByUUID(value);
+                    if (c !== undefined) {
+                        bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, c));
+                    }
+                }
+            }
+        }, 10);
     }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.ASSET_LOOKUP)
+    assetLookup(evt: OOTO_PRIVATE_ASSET_LOOKUP_OBJ) {
+        let asset = this.assets.bundle.files.get(this.allRewardTickets.get(evt.uuid)!.name)!;
+        evt.asset = this.ModLoader.utils.cloneBuffer(asset);
+        evt.ticket = this.allRewardTickets.get(evt.uuid)!;
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_WALLET_GET)
+    coinLookup(evt: OOTO_PRIVATE_COIN_LOOKUP_OBJ) {
+        evt.coins = this.rewardContainer.coins;
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_WALLET_SET)
+    coinChange(evt: OOTO_PRIVATE_COIN_LOOKUP_OBJ) {
+        evt.coins += evt.coins;
+        this.transactionProcess();
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_TICKET)
+    onUnlock(ticket: RewardTicket) {
+        if (this.allRewardTickets.has(ticket.uuid)) {
+            this.rewardContainer.tickets.push(this.allRewardTickets.get(ticket.uuid)!);
+            this.transactionProcess();
+        }
+    }
+
+    transactionProcess() {
+        let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
+        let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
+        this.ModLoader.clientSide.sendPacket(new WorldEvents_TransactionPacket(this.ModLoader.clientLobby, hash));
+    }
+
+    @NetworkHandler('WorldEvents_TransactionPacket')
+    onTransaction(packet: WorldEvents_TransactionPacket) {
+        let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
+        let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
+        const public_key = publicKey;
+        const verifier = crypto.createVerify('sha256');
+        verifier.update(Buffer.from(hash));
+        verifier.end();
+        const verified = verifier.verify(public_key, packet.sig);
+        if (verified) {
+            this.rewardContainer.sig = packet.sig;
+            new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
+            this.loadTickets();
+        }
+    }
+}
+
+export class WorldEventsServer {
+
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+    private_key: string;
+
+    constructor() {
+        this.private_key = "";
+        if (fs.existsSync(path.resolve(global.ModLoader.startdir, 'privateKey.pem'))) {
+            this.private_key = fs.readFileSync(path.resolve(global.ModLoader.startdir, 'privateKey.pem'), 'utf-8');
+        }
+    }
+
+    @ServerNetworkHandler('WorldEvents_TransactionPacket')
+    onTransaction(packet: WorldEvents_TransactionPacket) {
+        let _reply: WorldEvents_TransactionPacket = new WorldEvents_TransactionPacket(packet.lobby, packet.hash);
+        if (this.private_key !== "") {
+            let _file = Buffer.from(packet.hash);
+            const signer = crypto.createSign('sha256');
+            signer.update(_file);
+            signer.end();
+            let signature = signer.sign(this.private_key);
+            _reply.sig = signature;
+        }
+        this.ModLoader.serverSide.sendPacketToSpecificPlayer(_reply, packet.player);
+    }
+
 }
 
 export class WorldEvents {
@@ -459,4 +492,27 @@ export class WorldEvents {
     core!: IOOTCore;
     @SidedProxy(ProxySide.CLIENT, WorldEventRewards)
     rewards!: WorldEventRewards;
+    @SidedProxy(ProxySide.SERVER, WorldEventsServer)
+    rewardsServer!: WorldEventsServer;
+    eventStack: Map<string, EventController> = new Map<string, EventController>();
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET)
+    onEventData(eventURLs: Array<string>) {
+        this.loadEvents(eventURLs);
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET)
+    onEventDataServer(eventURLs: Array<string>) {
+        this.loadEvents(eventURLs);
+    }
+
+    private loadEvents(eventURLs: Array<string>) {
+        for (let i = 0; i < eventURLs.length; i++) {
+            if (this.eventStack.has(eventURLs[i])) continue;
+            let test = new EventController(this.ModLoader, this.core);
+            test.url = eventURLs[i];
+            test.preinit();
+            this.eventStack.set(eventURLs[i], test);
+        }
+    }
 }

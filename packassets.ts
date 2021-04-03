@@ -1,6 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
 import zip from 'adm-zip';
+import crypto from 'crypto';
 
 // Copied from ML core. Needed for the packing process.
 export class MonkeyPatch_Stringify {
@@ -33,7 +34,7 @@ export class MonkeyPatch_Stringify {
 const mp = new MonkeyPatch_Stringify();
 mp.patch();
 
-function pad(buf: Buffer){
+function pad(buf: Buffer) {
     let size = buf.byteLength;
     while (size % 0x10 !== 0) {
         size++;
@@ -43,26 +44,28 @@ function pad(buf: Buffer){
     return b;
 }
 
-if (!fse.existsSync(path.resolve("./dist/halloween2020.content"))) {
-    console.log("Packing Halloween assets...");
-    let og = process.cwd();
-    process.chdir("./OcarinaofTimeOnline-HolidayAssets/Halloween");
-    let zipFile: zip = new zip();
-    zipFile.addLocalFolder("./assets", "assets");
-    zipFile.writeZip("./assets.zip");
-    process.chdir(og);
-    const content = JSON.stringify({ data: pad(fse.readFileSync('./OcarinaofTimeOnline-HolidayAssets/Halloween/assets.zip')).swap32() });
-    fse.writeFileSync(path.resolve("./dist/halloween2020.content"), Buffer.from(content));
+let c = path.resolve("./cache/Z64O_Assets.content");
+
+if (fse.existsSync(c)) {
+    fse.unlinkSync(c);
 }
 
-if (!fse.existsSync(path.resolve("./dist/christmas2020.content"))) {
-    console.log("Packing Christmas assets...");
+if (1) {
     let og = process.cwd();
-    process.chdir("./OcarinaofTimeOnline-HolidayAssets/Christmas");
     let zipFile: zip = new zip();
-    zipFile.addLocalFolder("./assets/OOT", "assets");
-    zipFile.writeZip("./assets.zip");
+    process.chdir("./OcarinaofTimeOnline-HolidayAssets");
+    zipFile.addLocalFolder("./Rewards", "");
     process.chdir(og);
-    const content = JSON.stringify({ data: pad(fse.readFileSync('./OcarinaofTimeOnline-HolidayAssets/Christmas/assets.zip')).swap32() });
-    fse.writeFileSync(path.resolve("./dist/christmas2020.content"), Buffer.from(content));
+
+    const private_key = fse.readFileSync('./privateKey.pem', 'utf-8')
+    //File to be signed
+    let _file = pad(zipFile.toBuffer()).swap32();
+    //Signing
+    const signer = crypto.createSign('sha256');
+    signer.update(_file);
+    signer.end();
+    const signature = signer.sign(private_key)
+
+    let data: any = { data: _file, sig: signature };
+    fse.writeFileSync(c, Buffer.from(JSON.stringify(data)));
 }

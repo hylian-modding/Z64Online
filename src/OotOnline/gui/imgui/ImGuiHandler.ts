@@ -1,7 +1,6 @@
 import { onViUpdate, onTick, onCreateResources } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { ModelManagerClient } from "@OotOnline/data/models/ModelManager";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
@@ -37,7 +36,6 @@ export class ImGuiHandler {
     core!: IOOTCore;
     @ParentReference()
     parent!: IZ64OnlineHelpers;
-    modelManager!: ModelManagerClient;
     puppets: Array<Puppet> = [];
     scene: number = -1;
     // View
@@ -183,7 +181,7 @@ export class ImGuiHandler {
             } catch (err) {
                 this.ModLoader.logger.error(err);
             }
-            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator);
+            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator, this.core);
             return;
         }
 

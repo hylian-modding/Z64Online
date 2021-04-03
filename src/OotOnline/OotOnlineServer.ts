@@ -5,8 +5,8 @@ import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedPro
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { OotOnline } from './OotOnline';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { ServerNetworkHandler, IPacketHeader } from 'modloader64_api/NetworkHandler';
-import { Z64_PlayerScene, Z64OnlineEvents, Z64_ModifyModelPacket } from './Z64API/OotoAPI';
+import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
+import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
 import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { KeyLogManagerServer } from './data/keys/KeyLogManager';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
@@ -14,6 +14,8 @@ import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { Preinit } from 'modloader64_api/PluginLifecycle';
+import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 
 export class OotOnlineServer {
     @InjectCore()
@@ -53,11 +55,6 @@ export class OotOnlineServer {
         } catch (err) { }
     }
 
-    @ServerNetworkHandler('OotO_ModifyModelPacket')
-    onModelModification(packet: Z64_ModifyModelPacket) {
-        this.sendPacketToPlayersInScene(packet);
-    }
-
     @EventHandler(EventsServer.ON_LOBBY_CREATE)
     onLobbyCreated(lobby: string) {
         try {
@@ -66,6 +63,18 @@ export class OotOnlineServer {
         catch (err) {
             this.ModLoader.logger.error(err);
         }
+    }
+
+    @Preinit()
+    preinit() {
+        this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server");
+        this.ModLoader.config.setData("OotO_WorldEvents_Server", "Z64OEventsActive", []);
+        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET, (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OEventsActive"]);
+    }
+
+    @EventHandler(EventsServer.ON_LOBBY_DATA)
+    onLobbyData(ld: LobbyData) {
+        ld.data["Z64OEventsActive"] = (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OEventsActive"];
     }
 
     @EventHandler(EventsServer.ON_LOBBY_JOIN)

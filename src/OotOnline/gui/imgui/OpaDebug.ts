@@ -1,5 +1,7 @@
 import { IS_DEV_BUILD } from "@OotOnline/OotOnline";
 import IMemory from "modloader64_api/IMemory";
+import { Command } from "modloader64_api/OOT/ICommandBuffer";
+import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { IImGui } from "modloader64_api/Sylvain/ImGui";
 
 class OpaBuffer {
@@ -40,14 +42,16 @@ export class OpaDebug {
     emulator: IMemory;
     showOpaDebugger: boolean = false;
     displayBuffers: Array<OpaBuffer> = [];
+    core: IOOTCore;
 
-    constructor(imgui: IImGui, emulator: IMemory) {
+    constructor(imgui: IImGui, emulator: IMemory, core: IOOTCore) {
         this.ImGui = imgui;
         this.emulator = emulator;
         this.displayBuffers.push(new OpaBuffer("Opa", this.ImGui, this.emulator, 0x2BC, 0x2B8, 0x2C0));
         this.displayBuffers.push(new OpaBuffer("Xlu", this.ImGui, this.emulator, 0x2CC, 0x2C8, 0x2D0));
         this.displayBuffers.push(new OpaBuffer("Work", this.ImGui, this.emulator, 0x1B8, 0x1B4, 0x1BC));
         this.displayBuffers.push(new OpaBuffer("Overlay", this.ImGui, this.emulator, 0x2AC, 0x2A8, 0x2B0));
+        this.core = core;
     }
 
     onViUpdate() {
@@ -70,6 +74,9 @@ export class OpaDebug {
                 for (let i = 0; i < this.displayBuffers.length; i++) {
                     this.displayBuffers[i].onViUpdate();
                 }
+            }
+            if (this.ImGui.button("ARWING")){
+                this.core.commandBuffer.runCommand(Command.SPAWN_ACTOR, 0x806001A2);
             }
             this.ImGui.end();
         }

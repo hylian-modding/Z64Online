@@ -4,6 +4,7 @@ import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
 import { Puppet } from '@OotOnline/data/linkPuppet/Puppet';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { Packet } from 'modloader64_api/ModLoaderDefaultImpls';
+import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 
 export enum Z64OnlineEvents {
   PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
@@ -16,8 +17,8 @@ export enum Z64OnlineEvents {
   GAINED_HEART_CONTAINER = 'OotOnline:GainedHeartContainer',
   GAINED_PIECE_OF_HEART = 'OotOnline:GainedPieceOfHeart',
   MAGIC_METER_INCREASED = 'OotOnline:GainedMagicMeter',
-  CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult',
-  CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild',
+  CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult', // deprecated - use CUSTOM_MODEL_LOAD_ADULT
+  CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild', // deprecated - use CUSTOM_MODEL_LOAD_CHILD
   CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims',
   CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult',
   CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild',
@@ -43,7 +44,34 @@ export enum Z64OnlineEvents {
   CLEAR_EQUIPMENT = "OotOnline:ClearEquipment",
   EQUIPMENT_ZOBJ_LOADED = "OotOnline:EqZobjLoad",
   EQUIPMENT_LOAD_START = "OotOnline:EqZobjLoadStart",
-  EQUIPMENT_LOAD_END = "OotOnline:EqZobjLoadEnd"
+  EQUIPMENT_LOAD_END = "OotOnline:EqZobjLoadEnd",
+  DEBUG_DUMP_RAM = "OotOnline:DumpRam",
+  PUPPETS_CLEAR = "OotOnline:PuppetsClear",
+  ON_MODEL_MANAGER_READY = "OotOnline:ON_MODEL_MANAGER_READY",
+  CUSTOM_MODEL_LOAD_ADULT = "OotOnline:CUSTOM_MODEL_LOAD_ADULT",
+  CUSTOM_MODEL_LOAD_CHILD = "OotOnline:CUSTOM_MODEL_LOAD_CHILD",
+  PUPPET_AGE_CHANGED = 'OotOnline:PUPPET_AGE_CHANGED'
+}
+
+export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference {
+  let evt = new Z64Online_ModelAllocation(model, 0x69);
+  bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, evt);
+  evt.ref.isPlayerModel = !noautoGC;
+  return evt.ref;
+}
+
+export interface IModelScript {
+  onModelEquipped(): void;
+  onModelRemoved(): void;
+  onSceneChange(scene: number, ref: IModelReference): IModelReference;
+  onDay(ref: IModelReference): IModelReference;
+  onNight(ref: IModelReference): IModelReference;
+  onTunicChanged(ref: IModelReference): IModelReference;
+  onTick(): void;
+}
+
+export function DumpRam() {
+  bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
 }
 
 export class RemoteSoundPlayRequest {
@@ -99,12 +127,23 @@ export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
   return evt;
 }
 
+export interface IModelReference {
+  hash: string;
+  pointer: number;
+  isDead: boolean;
+  isPlayerModel: boolean;
+  isLoaded: boolean;
+  loadModel(): boolean;
+  unregister(): boolean;
+  script: IModelScript | undefined;
+}
+
 export class Z64Online_ModelAllocation {
+  name: string = "";
   model: Buffer;
   age: Age;
-  slot!: number;
-  pointer!: number;
-  rom!: number;
+  ref!: IModelReference;
+  script!: IModelScript;
 
   constructor(model: Buffer, age: Age) {
     this.model = model;
@@ -135,19 +174,6 @@ export class Z64_AllocateModelPacket extends Packet {
   }
 }
 
-export class Z64_ModifyModelPacket extends Packet {
-  mod: Buffer;
-  offset: number;
-  age: Age;
-
-  constructor(lobby: string, mod: Buffer, offset: number, age: Age) {
-    super('Z64OnlineLib_ModifyModelPacket', 'Z64OnlineLib', lobby, false);
-    this.mod = mod;
-    this.offset = offset;
-    this.age = age;
-  }
-}
-
 export class Z64_GiveModelPacket extends Packet {
 
   target: INetworkPlayer;
@@ -155,19 +181,6 @@ export class Z64_GiveModelPacket extends Packet {
   constructor(lobby: string, player: INetworkPlayer) {
     super('Z64OnlineLib_GiveModelPacket', 'Z64OnlineLib', lobby, true);
     this.target = player;
-  }
-}
-
-export class Z64_IconAllocatePacket extends Packet {
-  icon: Buffer;
-  age: Age;
-  hash: string;
-
-  constructor(buf: Buffer, age: Age, lobby: string, hash: string) {
-    super('Z64OnlineLib_IconAllocatePacket', 'Z64OnlineLib', lobby, true);
-    this.icon = buf;
-    this.age = age;
-    this.hash = hash;
   }
 }
 

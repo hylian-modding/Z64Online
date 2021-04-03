@@ -152,7 +152,6 @@ export class OotOSaveData {
 
   createSave(): Buffer {
     let obj = this.generateWrapper();
-    console.log(JSON.stringify(obj));
     return Buffer.from(JSON.stringify(obj));
   }
 

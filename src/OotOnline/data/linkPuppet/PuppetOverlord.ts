@@ -72,12 +72,12 @@ export class PuppetOverlordClient {
       }
     );
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
+    bus.emit(Z64OnlineEvents.PUPPETS_CLEAR, {});
   }
 
   localPlayerChangingScenes(entering_scene: number, age: Age) {
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
     this.fakeClientPuppet.scene = entering_scene;
-    this.fakeClientPuppet.age = age;
   }
 
   registerPuppet(player: INetworkPlayer) {
@@ -110,11 +110,7 @@ export class PuppetOverlordClient {
   changePuppetScene(player: INetworkPlayer, entering_scene: number, age: Age) {
     if (this.puppets.has(player.uuid)) {
       let puppet = this.puppets.get(player.uuid)!;
-      if (puppet.isSpawned && puppet.age !== age) {
-        puppet.despawn();
-      }
       puppet.scene = entering_scene;
-      puppet.age = age;
       this.ModLoader.logger.info(
         'Puppet ' + puppet.id + ' moved to scene ' + puppet.scene
       );
@@ -188,6 +184,7 @@ export class PuppetOverlordClient {
 
   sendPuppetPacket() {
     if (!this.amIAlone) {
+      this.fakeClientPuppet.data.onTick();
       let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
       if (this.Epona !== undefined) {
         packet.setHorseData(this.Epona);
@@ -200,9 +197,9 @@ export class PuppetOverlordClient {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
-      let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, actualPacket.data.sound.readUInt16BE(0));
-      bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
-      puppet.processIncomingPuppetData(actualPacket.data, e);
+      //let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, actualPacket.data.sound.readUInt16BE(0));
+      //bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
+      puppet.processIncomingPuppetData(actualPacket.data, new RemoteSoundPlayRequest(packet.player, puppet, 0));
       if (actualPacket.horse_data !== undefined) {
         puppet.processIncomingHorseData(actualPacket.horse_data);
       }
@@ -357,7 +354,6 @@ export class PuppetOverlordClient {
     let puppet = this.puppets.get(evt.player.uuid);
     if (puppet !== undefined) {
       if (puppet.isSpawning) return;
-      if (puppet.age !== evt.age) return;
       if (puppet.isShoveled) {
         puppet.despawn();
       }

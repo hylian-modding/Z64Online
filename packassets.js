@@ -7,6 +7,7 @@ exports.MonkeyPatch_Stringify = void 0;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var adm_zip_1 = __importDefault(require("adm-zip"));
+var crypto_1 = __importDefault(require("crypto"));
 // Copied from ML core. Needed for the packing process.
 var MonkeyPatch_Stringify = /** @class */ (function () {
     function MonkeyPatch_Stringify() {
@@ -40,25 +41,24 @@ function pad(buf) {
     buf.copy(b);
     return b;
 }
-if (!fs_extra_1["default"].existsSync(path_1["default"].resolve("./dist/halloween2020.content"))) {
-    console.log("Packing Halloween assets...");
-    var og = process.cwd();
-    process.chdir("./OcarinaofTimeOnline-HolidayAssets/Halloween");
-    var zipFile = new adm_zip_1["default"]();
-    zipFile.addLocalFolder("./assets", "assets");
-    zipFile.writeZip("./assets.zip");
-    process.chdir(og);
-    var content = JSON.stringify({ data: pad(fs_extra_1["default"].readFileSync('./OcarinaofTimeOnline-HolidayAssets/Halloween/assets.zip')).swap32() });
-    fs_extra_1["default"].writeFileSync(path_1["default"].resolve("./dist/halloween2020.content"), Buffer.from(content));
+var c = path_1["default"].resolve("./cache/Z64O_Assets.content");
+if (fs_extra_1["default"].existsSync(c)) {
+    fs_extra_1["default"].unlinkSync(c);
 }
-if (!fs_extra_1["default"].existsSync(path_1["default"].resolve("./dist/christmas2020.content"))) {
-    console.log("Packing Christmas assets...");
+if (1) {
     var og = process.cwd();
-    process.chdir("./OcarinaofTimeOnline-HolidayAssets/Christmas");
     var zipFile = new adm_zip_1["default"]();
-    zipFile.addLocalFolder("./assets/OOT", "assets");
-    zipFile.writeZip("./assets.zip");
+    process.chdir("./OcarinaofTimeOnline-HolidayAssets");
+    zipFile.addLocalFolder("./Rewards", "");
     process.chdir(og);
-    var content = JSON.stringify({ data: pad(fs_extra_1["default"].readFileSync('./OcarinaofTimeOnline-HolidayAssets/Christmas/assets.zip')).swap32() });
-    fs_extra_1["default"].writeFileSync(path_1["default"].resolve("./dist/christmas2020.content"), Buffer.from(content));
+    var private_key = fs_extra_1["default"].readFileSync('./privateKey.pem', 'utf-8');
+    //File to be signed
+    var _file = pad(zipFile.toBuffer()).swap32();
+    //Signing
+    var signer = crypto_1["default"].createSign('sha256');
+    signer.update(_file);
+    signer.end();
+    var signature = signer.sign(private_key);
+    var data = { data: _file, sig: signature };
+    fs_extra_1["default"].writeFileSync(c, Buffer.from(JSON.stringify(data)));
 }
