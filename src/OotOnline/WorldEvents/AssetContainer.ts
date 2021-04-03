@@ -34,6 +34,9 @@ export class AssetContainer{
     preinit(){
         try {
             let cache = path.resolve(this.cacheDir, path.parse(this.url).base);
+            if (this.cacheDir){
+                fs.mkdirSync(this.cacheDir);
+            }
             if (!fs.existsSync(cache)) {
                 this.stream(cache);
             } else {
