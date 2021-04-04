@@ -251,8 +251,8 @@ export class ModelAllocationManager {
 
   deallocateAllPlayers() {
     this.players.forEach((player: ModelPlayer) => {
-      this.deallocatePlayer(this.playerMLObjects.get(player.uuid)!);
       player.playerIsSpawned = false;
+      player.isDead = true;
     });
   }
 
