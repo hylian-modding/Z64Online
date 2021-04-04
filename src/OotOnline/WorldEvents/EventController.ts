@@ -45,7 +45,7 @@ export class EventController {
     preinit() {
         try {
             let cache = path.resolve(this.cacheDir, path.parse(this.url).base);
-            if (this.cacheDir) {
+            if (!fs.existsSync(this.cacheDir)){
                 fs.mkdirSync(this.cacheDir);
             }
             if (!fs.existsSync(cache)) {
