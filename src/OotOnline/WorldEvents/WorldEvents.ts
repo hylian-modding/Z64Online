@@ -147,7 +147,7 @@ export class WorldEventRewards {
                 this.allRewardTickets.set(ticket.uuid, ticket);
             }
         });
-        if (!fs.readFileSync("./storage/Z64O_Reward_Tickets.pak")) {
+        if (!fs.existsSync("./storage/Z64O_Reward_Tickets.pak")) {
             return;
         }
         let storage = new StorageContainer("Z64O_Reward_Tickets");
