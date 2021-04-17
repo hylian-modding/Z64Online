@@ -4,7 +4,7 @@ class Bg_Ice_Turara extends ActorHookBase {
   constructor() {
     super();
     this.actorID = 0x01c7;
-    this.hooks.push(new HookInfo(0x130, 0x4, true));
+    this.hooks.push(new HookInfo(0x154, 0x4, true));
   }
 }
 
