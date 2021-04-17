@@ -364,9 +364,8 @@ export class ActorHookingManagerClient {
         } else {
           if (hooks[i].isBehavior) {
             let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-            if (d < 0){
+            if (d === 0){
               // We're going to assume the behavior became zero here.
-              d = 0;
               actor.rdramWrite32(hooks[i].offset, d);
             }else{
               this.setActorBehavior(

@@ -146,9 +146,10 @@ export class ActorHookProcessor extends JSONTemplate {
           this.actor,
           this.hookBase.hooks[i].offset
         );
-        if (offset > 0) {
-          hookData.data.writeUInt32BE(offset, 0x0);
+        if (offset < 0) {
+          offset = 0;
         }
+        hookData.data.writeUInt32BE(offset, 0x0);
       } else {
         hookData.data = this.actor.rdramReadBuffer(
           this.hookBase.hooks[i].offset,
