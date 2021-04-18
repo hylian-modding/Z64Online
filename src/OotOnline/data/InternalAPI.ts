@@ -4,7 +4,8 @@ export const enum OOTO_PRIVATE_EVENTS{
     SERVER_EVENT_DATA_GET = "SERVER_EVENT_DATA_GET",
     CLIENT_WALLET_GET = "CLIENT_WALLET_GET",
     CLIENT_WALLET_SET = "CLIENT_WALLET_SET",
-    CLIENT_UNLOCK_TICKET = "CLIENT_UNLOCK_TICKET"
+    CLIENT_UNLOCK_TICKET = "CLIENT_UNLOCK_TICKET",
+    MOVED_SCENE_TABLE = "MOVED_SCENE_TABLE"
 }
 
 export interface RewardTicket {
@@ -13,6 +14,7 @@ export interface RewardTicket {
     event: string;
     category: string;
     game: string;
+    scripted: boolean | undefined;
 }
 
 export class OOTO_PRIVATE_ASSET_LOOKUP_OBJ{

@@ -2,7 +2,7 @@ import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
 import { Puppet } from '@OotOnline/data/linkPuppet/Puppet';
-import { Age } from 'modloader64_api/OOT/OOTAPI';
+import { Age, Tunic } from 'modloader64_api/OOT/OOTAPI';
 import { Packet } from 'modloader64_api/ModLoaderDefaultImpls';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 
@@ -50,7 +50,8 @@ export enum Z64OnlineEvents {
   ON_MODEL_MANAGER_READY = "OotOnline:ON_MODEL_MANAGER_READY",
   CUSTOM_MODEL_LOAD_ADULT = "OotOnline:CUSTOM_MODEL_LOAD_ADULT",
   CUSTOM_MODEL_LOAD_CHILD = "OotOnline:CUSTOM_MODEL_LOAD_CHILD",
-  PUPPET_AGE_CHANGED = 'OotOnline:PUPPET_AGE_CHANGED'
+  PUPPET_AGE_CHANGED = 'OotOnline:PUPPET_AGE_CHANGED',
+  SAVE_DATA_ITEM_SET = 'OotOnline:SAVE_DATA_ITEM_SET'
 }
 
 export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference {
@@ -66,7 +67,8 @@ export interface IModelScript {
   onSceneChange(scene: number, ref: IModelReference): IModelReference;
   onDay(ref: IModelReference): IModelReference;
   onNight(ref: IModelReference): IModelReference;
-  onTunicChanged(ref: IModelReference): IModelReference;
+  onTunicChanged(ref: IModelReference, tunic: Tunic): IModelReference;
+  onHealthChanged(max: number, health: number, ref: IModelReference): IModelReference;
   onTick(): void;
 }
 
@@ -191,5 +193,15 @@ export class Z64_EquipmentPakPacket extends Packet {
   constructor(age: Age, lobby: string) {
     super('Z64OnlineLib_EquipmentPakPacket', 'Z64OnlineLib', lobby, true);
     this.age = age;
+  }
+}
+
+export class Z64_SaveDataItemSet{
+  key: string;
+  value: boolean | number;
+
+  constructor(key: string, value: boolean | number){
+    this.key = key;
+    this.value = value;
   }
 }

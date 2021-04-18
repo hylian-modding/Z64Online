@@ -1,8 +1,8 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
-import { bus, EventHandler, EventsClient } from 'modloader64_api/EventHandler';
+import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct } from 'modloader64_api/OOT/OOTAPI';
-import { Z64OnlineEvents, Z64_PlayerScene } from './Z64API/OotoAPI';
+import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade } from 'modloader64_api/OOT/OOTAPI';
+import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
 import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
@@ -131,8 +131,6 @@ export class OotOnlineClient {
 
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
-        //this.opa = new ThiccOpa();
-        //this.opa.toggleSuperPoly(this.ModLoader.heap!, this.ModLoader);
     }
 
     updateInventory() {
@@ -198,19 +196,23 @@ export class OotOnlineClient {
     }
 
     updateSkulltulas() {
+        if (this.clientStorage.lastKnownSkullCount < this.core.save.questStatus.goldSkulltulas) {
+            this.clientStorage.lastKnownSkullCount = this.core.save.questStatus.goldSkulltulas;
+            this.updateInventory();
+        }
     }
 
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
-        let test = false;
+        let test = true;
         if (test) {
             this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
         }
-        setTimeout(() => {
+        this.ModLoader.utils.setTimeoutFrames(() => {
             if (this.LobbyConfig.data_syncing) {
                 this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
             }
-        }, 1000);
+        }, 50);
     }
 
     //------------------------------
@@ -232,8 +234,8 @@ export class OotOnlineClient {
         if (GHOST_MODE_TRIGGERED) {
             bus.emit(Z64OnlineEvents.GHOST_MODE, true);
         }
-        if (lobby.data.hasOwnProperty("Z64OEventsActive")){
-            if (lobby.data.Z64OEventsActive.length > 0){
+        if (lobby.data.hasOwnProperty("Z64OEventsActive")) {
+            if (lobby.data.Z64OEventsActive.length > 0) {
                 this.ModLoader.logger.info("Server sent event data.");
                 this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET, lobby.data.Z64OEventsActive);
             }
@@ -440,6 +442,34 @@ export class OotOnlineClient {
         }
     }
 
+    @EventHandler(Z64OnlineEvents.SAVE_DATA_ITEM_SET)
+    onSaveDataToggle(evt: Z64_SaveDataItemSet) {
+        switch (evt.key) {
+            case "bombchus":
+                this.core.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                break;
+            case "bombBag":
+                this.core.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
+                break;
+            case "quiver":
+                this.core.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
+                break;
+            case "bulletBag":
+                this.core.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
+                break;
+            case "dekuSticksCapacity":
+                this.core.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
+                break;
+            case "dekuNutsCapacity":
+                this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
+                break;
+            case "heartPieces":
+            case "double_defense":
+                bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+                break;
+        }
+    }
+
     @EventHandler(OotEvents.ON_AGE_CHANGE)
     onAgeChange(age: Age) {
         this.ModLoader.clientSide.sendPacket(
@@ -578,7 +608,7 @@ export class OotOnlineClient {
         fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024));
     }
 
-    private updateSyncContext(){
+    private updateSyncContext() {
         this.ModLoader.emulator.rdramWrite8(0x806FFF00, this.core.save.inventory.strength);
     }
 

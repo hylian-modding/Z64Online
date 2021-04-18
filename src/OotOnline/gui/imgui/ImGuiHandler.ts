@@ -181,7 +181,7 @@ export class ImGuiHandler {
             } catch (err) {
                 this.ModLoader.logger.error(err);
             }
-            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator, this.core);
+            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator, this.core, this.ModLoader);
             return;
         }
 

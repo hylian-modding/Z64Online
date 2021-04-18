@@ -63,10 +63,10 @@ export class ThiccOpa {
     newOvl = 0;
     newWrk = 0;
 
-    sizeOpa = defaultOpaS * 16;
-    sizeXlu = defaultXluS * 16;
+    sizeOpa = defaultOpaS * 8;
+    sizeXlu = defaultXluS * 8;
     sizeOvl = defaultOvlS; // Doesn't work? We're using the free space we get from moving the others for this!
-    sizeWrk = defaultWrkS * 4;
+    sizeWrk = defaultWrkS * 1;
 
     polylist = [
         // addr
@@ -107,7 +107,7 @@ export class ThiccOpa {
             let fullOpa = this.sizeOpa * 2;
             let fullXlu = this.sizeXlu * 2;
             let fullOvl = this.sizeOvl * 1;
-            let fullWrk = this.sizeWrk * 1;
+            let fullWrk = this.sizeWrk * 2;
 
             if (this.InitSUPERTHGA_Addr === 0) {
                 this.InitSUPERTHGA_Addr = heap.malloc(newFunc.byteLength + BYTEPADDING);
@@ -119,7 +119,7 @@ export class ThiccOpa {
                 // first buffer, top, pad from second buffer by bytepadding
                 this.polylist[POLYWRITE.ADDR][InitTHGA_Order.POLYOPA] = this.newOpa + fullOpa;
                 this.polylist[POLYWRITE.ADDR][InitTHGA_Order.POLYXLU] = this.newXlu + fullXlu;
-                this.polylist[POLYWRITE.ADDR][InitTHGA_Order.POLYOVL] = defaultOvl0 - (0xFF08 / 2); // use new free space of a single GfxPool buffer?
+                this.polylist[POLYWRITE.ADDR][InitTHGA_Order.POLYOVL] = defaultOvl0 //- (0xFF08 / 2); // use new free space of a single GfxPool buffer?
                 this.polylist[POLYWRITE.ADDR][InitTHGA_Order.POLYWRK] = this.newWrk + fullWrk;
 
                 // second buffer, top, pad from second buffer by bytepadding
@@ -131,7 +131,7 @@ export class ThiccOpa {
                 // size
                 this.polylist[POLYWRITE.SIZE][InitTHGA_Order.POLYOPA] = this.sizeOpa
                 this.polylist[POLYWRITE.SIZE][InitTHGA_Order.POLYXLU] = this.sizeXlu
-                this.polylist[POLYWRITE.SIZE][InitTHGA_Order.POLYOVL] = defaultOvlS + (0xFF08 / 2); // use new free space of a single GfxPool buffer?
+                this.polylist[POLYWRITE.SIZE][InitTHGA_Order.POLYOVL] = defaultOvlS //+ (0xFF08 / 2); // use new free space of a single GfxPool buffer?
                 this.polylist[POLYWRITE.SIZE][InitTHGA_Order.POLYWRK] = this.sizeWrk
             }
 

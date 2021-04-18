@@ -105,6 +105,8 @@ export class ModelAllocationManager {
         break;
     }
     this.localPlayer.currentScript = model.script;
+    if (this.localPlayer.currentScript !== undefined){
+    }
   }
 
   getLocalPlayerData(): ModelPlayer {

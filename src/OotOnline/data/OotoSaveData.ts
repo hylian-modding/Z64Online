@@ -1,3 +1,5 @@
+import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
+import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI";
 
@@ -134,7 +136,8 @@ export class OotOSaveData {
       "eventFlags",
       "itemFlags",
       "infTable",
-      "skulltulaFlags"
+      "skulltulaFlags",
+      "double_defense"
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -155,18 +158,13 @@ export class OotOSaveData {
     return Buffer.from(JSON.stringify(obj));
   }
 
-  private isGreaterThan(a: number, b: number) {
-    return a > b;
-  }
-
-  private isTrue(a: boolean) {
-    return a === true;
-  }
-
   private processBoolLoop(obj1: any, obj2: any) {
     Object.keys(obj1).forEach((key: string) => {
-      if (this.isTrue(obj1[key])) {
-        obj2[key] = true;
+      if (typeof (obj1[key]) === 'boolean') {
+        if (obj1[key] === true && obj2[key] === false) {
+          obj2[key] = true;
+          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet(key, obj2[key]));
+        }
       }
     });
   }
@@ -175,12 +173,14 @@ export class OotOSaveData {
     Object.keys(obj1).forEach((key: string) => {
       if (blacklist.indexOf(key) > -1) return;
       if (typeof (obj1[key]) === 'boolean') {
-        if (this.isTrue(obj1[key])) {
+        if (obj1[key] === true && obj2[key] === false) {
           obj2[key] = obj1[key];
+          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet(key, obj2[key]));
         }
       } else if (typeof (obj1[key]) === 'number') {
-        if (this.isGreaterThan(obj1[key], obj2[key])) {
+        if (obj1[key] > obj2[key]) {
           obj2[key] = obj1[key];
+          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet(key, obj2[key]));
         }
       }
     });
@@ -188,28 +188,34 @@ export class OotOSaveData {
 
   mergeSave(save: Buffer, storage: Save) {
     let obj: Save = JSON.parse(save.toString());
-    if (this.isGreaterThan(obj.death_counter, storage.death_counter)) {
+    if (obj.death_counter > storage.death_counter) {
       storage.death_counter = obj.death_counter;
     }
-    if (this.isGreaterThan(obj.heart_containers, storage.heart_containers)) {
+    if (obj.heart_containers > storage.heart_containers) {
       storage.heart_containers = obj.heart_containers;
+      bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
     }
-    if (this.isGreaterThan(obj.magic_meter_size, storage.magic_meter_size)) {
+    if (obj.magic_meter_size > storage.magic_meter_size) {
       storage.magic_meter_size = obj.magic_meter_size;
+      bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, storage.magic_meter_size);
     }
-    if (this.isGreaterThan(obj.magic_beans_purchased, storage.magic_beans_purchased)) {
+    if (obj.magic_beans_purchased > storage.magic_beans_purchased) {
       storage.magic_beans_purchased = obj.magic_beans_purchased;
     }
     this.processBoolLoop(obj.swords, storage.swords);
     this.processBoolLoop(obj.shields, storage.shields);
     this.processBoolLoop(obj.tunics, storage.tunics);
     this.processBoolLoop(obj.boots, storage.boots);
-    this.processBoolLoop(obj.questStatus, storage.questStatus);
+    this.processMixedLoop(obj.questStatus, storage.questStatus, []);
 
     this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem"]);
 
+    if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
+      storage.questStatus.heartPieces = 0;
+    }
+
     if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-      if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
+      if (obj.inventory.childTradeItem > storage.inventory.childTradeItem) {
         storage.inventory.childTradeItem = obj.inventory.childTradeItem;
       }
     }

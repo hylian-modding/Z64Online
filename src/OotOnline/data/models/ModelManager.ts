@@ -15,7 +15,7 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference } from '../../Z64API/OotoAPI';
+import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64OnlineAPI_QueryPuppet } from '../../Z64API/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -33,7 +33,7 @@ import { onTick, onViUpdate, Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Deprecated } from 'modloader64_api/Deprecated';
 import * as f3djs from 'f3djs';
-import { PuppetProxyGen_Adult, PuppetProxyGen_Child } from './PuppetProxyGen';
+import { PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix } from './PuppetProxyGen';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -52,8 +52,8 @@ export class ModelManagerClient {
   //
   proxySyncTick!: string;
   proxyNeedsSync: boolean = false;
-  customModelFilesAdult: Map<string, Buffer> = new Map<string, Buffer>();
-  customModelFilesChild: Map<string, Buffer> = new Map<string, Buffer>();
+  customModelFilesAdult: Map<string, IModelReference> = new Map<string, IModelReference>();
+  customModelFilesChild: Map<string, IModelReference> = new Map<string, IModelReference>();
   customModelFilesEquipment: Map<string, Buffer> = new Map<string, Buffer>();
   config!: Z64_EventConfig;
   //
@@ -66,29 +66,37 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
   onCustomModelAdult_new(evt: Z64Online_ModelAllocation) {
-    this.customModelFilesAdult.set(evt.name + " (Adult)", evt.model);
+    if (evt.model.readUInt32BE(0x500C) === 0xFFFFFFFF) {
+      evt.model.writeUInt32BE(0x06005380, 0x500C)
+    }
     let ref = this.allocationManager.registerModel(evt.model);
     if (evt.script !== undefined) {
       ref.script = evt.script;
     }
     evt.ref = ref;
+    this.customModelFilesAdult.set(evt.name + " (Adult)", evt.ref);
   }
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
   onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
-    this.customModelFilesChild.set(evt.name + " (Child)", evt.model);
+    if (evt.model.readUInt32BE(0x500C) === 0xFFFFFFFF) {
+      evt.model.writeUInt32BE(0x060053A8, 0x500C)
+    }
     let ref = this.allocationManager.registerModel(evt.model);
     if (evt.script !== undefined) {
       ref.script = evt.script;
     }
     evt.ref = ref;
+    this.customModelFilesChild.set(evt.name + " (Child)", evt.ref);
   }
 
   @Deprecated()
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
   onCustomModel(file: string) {
+    let evt= new Z64Online_ModelAllocation(fs.readFileSync(file), Age.ADULT);
     let figureOutName: string = path.parse(path.parse(file).dir).name;
-    this.customModelFilesAdult.set(figureOutName, fs.readFileSync(file));
+    evt.name = figureOutName;
+    bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT, evt);
   }
 
   @Deprecated()
@@ -100,8 +108,10 @@ export class ModelManagerClient {
   @Deprecated()
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
   onCustomModel2(file: string) {
+    let evt= new Z64Online_ModelAllocation(fs.readFileSync(file), Age.CHILD);
     let figureOutName: string = path.parse(path.parse(file).dir).name;
-    this.customModelFilesChild.set(figureOutName, fs.readFileSync(file));
+    evt.name = figureOutName;
+    bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD, evt);
   }
 
   @Deprecated()
@@ -326,7 +336,7 @@ export class ModelManagerClient {
         player.adult = model;
       }
       if (this.allocationManager.isPlayerAllocated(player)) {
-        this.setPuppetModel(player, model);
+        this.setPuppetModel(player, model, Z64OnlineAPI_QueryPuppet(packet.player).puppet!.age);
       }
     }, 10);
   }
@@ -399,7 +409,7 @@ export class ModelManagerClient {
     player.playerIsSpawned = true;
   }
 
-  private setPuppetModel(player: ModelPlayer, ref: IModelReference) {
+  private setPuppetModel(player: ModelPlayer, ref: IModelReference, age: Age) {
     player.adult.loadModel();
     player.child.loadModel();
     ref.loadModel();
@@ -422,9 +432,21 @@ export class ModelManagerClient {
         }
       });
     };
+    let fn2 = (__ref: IModelReference, obj: any) => {
+      Object.keys(obj).forEach((key: string) => {
+        let src: number = parseInt(obj[key]);
+        let data: Buffer = this.ModLoader.emulator.rdramReadBuffer(__ref.pointer + src, 0x40);
+        this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + parseInt(key), data);
+      });
+    };
 
     fn(player.adult, PuppetProxyGen_Adult);
     fn(player.child, PuppetProxyGen_Child);
+    if (age === Age.ADULT) {
+      fn2(player.adult, PuppetProxyGen_Matrix);
+    } else if (age === Age.CHILD) {
+      fn2(player.child, PuppetProxyGen_Matrix);
+    }
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -432,13 +454,13 @@ export class ModelManagerClient {
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetAdult, this.puppetChild)!;
     this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x58C, puppet.data.pointer);
     if (puppet.age === Age.CHILD && player.child !== undefined) {
-      this.setPuppetModel(player, player.child);
+      this.setPuppetModel(player, player.child, Age.CHILD);
     } else if (puppet.age === Age.ADULT && player.adult !== undefined) {
-      this.setPuppetModel(player, player.adult);
+      this.setPuppetModel(player, player.adult, Age.ADULT);
     } else if (puppet.age === Age.CHILD) {
-      this.setPuppetModel(player, this.puppetChild);
+      this.setPuppetModel(player, this.puppetChild, Age.CHILD);
     } else if (puppet.age === Age.ADULT) {
-      this.setPuppetModel(player, this.puppetAdult);
+      this.setPuppetModel(player, this.puppetAdult, Age.ADULT);
     }
   }
 
@@ -572,6 +594,7 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.adultCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
+      if (evt.script !== undefined) model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, model);
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(model)!.zobj;
@@ -599,6 +622,7 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.childCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
+      if (evt.script !== undefined) model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, model);
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(model)!.zobj;
@@ -676,6 +700,23 @@ export class ModelManagerClient {
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onNight(ref);
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.save.age);
+        a.ref = newRef;
+        if (this.core.save.age === Age.ADULT) {
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
+        } else {
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+        }
+      }, 1);
+    }
+  }
+
+  @EventHandler(OotEvents.ON_HEALTH_CHANGE)
+  onHealth(health: number) {
+    if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
+      let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
+      let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onHealthChanged(this.core.save.heart_containers * 0x10, health, ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
         let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.save.age);
         a.ref = newRef;
