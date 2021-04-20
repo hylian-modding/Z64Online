@@ -124,9 +124,13 @@ export class EmoteManager {
             this.core.link.anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
             this.currentEmoteFrame++;
             if (this.currentEmoteFrame > this.masterEmoteList[this.currentEmoteID].getTotalFrames()) {
-                this.isCurrentlyPlayingEmote = false;
-                this.core.link.redeadFreeze = 0x0;
-                this.currentEmoteFrame = -1;
+                if (this.masterEmoteList[this.currentEmoteID].loops){
+                    this.currentEmoteFrame = 0;
+                }else{
+                    this.isCurrentlyPlayingEmote = false;
+                    this.core.link.redeadFreeze = 0x0;
+                    this.currentEmoteFrame = -1;
+                }
             }
         }
     }
@@ -169,13 +173,15 @@ export class anim_binary_container {
     soundBuffer?: Buffer;
     soundid?: number;
     isBuiltInEmote: boolean = false;
+    loops: boolean;
 
-    constructor(name: string, buf: Buffer, sound: Sound | undefined = undefined, soundBuffer: Buffer | undefined = undefined, id: number | undefined = undefined) {
+    constructor(name: string, buf: Buffer, sound: Sound | undefined = undefined, soundBuffer: Buffer | undefined = undefined, id: number | undefined = undefined, loops: boolean = false) {
         this.name = name;
         this.data = buf;
         this.sound = sound;
         this.soundid = id;
         this.soundBuffer = soundBuffer;
+        this.loops = loops;
     }
 
     getTotalFrames() {

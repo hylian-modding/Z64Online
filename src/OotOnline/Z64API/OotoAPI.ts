@@ -95,6 +95,7 @@ export interface Z64Emote_Emote {
   buf: Buffer;
   sound?: Buffer;
   builtIn?: boolean;
+  loops: boolean;
 }
 
 export class Z64_PlayerScene {
