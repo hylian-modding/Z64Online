@@ -79,6 +79,7 @@ export interface Inventory {
   dekuSticksCapacity: number;
   swimming: number;
   strength: number;
+  magicBeansCount: number;
 }
 
 export interface QuestStatus {
@@ -186,7 +187,7 @@ export class OotOSaveData {
     });
   }
 
-  private isGreaterThan(obj1: number, obj2: number){
+  private isGreaterThan(obj1: number, obj2: number) {
     if (obj1 === 255) obj1 = 0;
     if (obj2 === 255) obj2 = 0;
     return (obj1 > obj2);
@@ -207,6 +208,9 @@ export class OotOSaveData {
     }
     if (obj.magic_beans_purchased > storage.magic_beans_purchased) {
       storage.magic_beans_purchased = obj.magic_beans_purchased;
+    }
+    if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
+      storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
     }
     this.processBoolLoop(obj.swords, storage.swords);
     this.processBoolLoop(obj.shields, storage.shields);
