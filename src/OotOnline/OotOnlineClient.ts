@@ -204,7 +204,7 @@ export class OotOnlineClient {
 
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
-        let test = true;
+        let test = false;
         if (test) {
             this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
         }

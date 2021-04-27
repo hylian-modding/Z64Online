@@ -186,6 +186,12 @@ export class OotOSaveData {
     });
   }
 
+  private isGreaterThan(obj1: number, obj2: number){
+    if (obj1 === 255) obj1 = 0;
+    if (obj2 === 255) obj2 = 0;
+    return (obj1 > obj2);
+  }
+
   mergeSave(save: Buffer, storage: Save) {
     let obj: Save = JSON.parse(save.toString());
     if (obj.death_counter > storage.death_counter) {
@@ -208,15 +214,21 @@ export class OotOSaveData {
     this.processBoolLoop(obj.boots, storage.boots);
     this.processMixedLoop(obj.questStatus, storage.questStatus, []);
 
-    this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem"]);
+    this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
 
     if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
       storage.questStatus.heartPieces = 0;
     }
 
     if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-      if (obj.inventory.childTradeItem > storage.inventory.childTradeItem) {
+      if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
         storage.inventory.childTradeItem = obj.inventory.childTradeItem;
+      }
+    }
+
+    if (obj.inventory.adultTradeItem !== InventoryItem.SOLD_OUT) {
+      if (this.isGreaterThan(obj.inventory.adultTradeItem, storage.inventory.adultTradeItem)) {
+        storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
       }
     }
 
