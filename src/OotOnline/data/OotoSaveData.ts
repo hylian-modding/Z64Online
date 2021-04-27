@@ -2,6 +2,8 @@ import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI"
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI";
+import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
+import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 
 export interface Save {
   death_counter: number;
@@ -19,6 +21,7 @@ export interface Save {
   itemFlags: Buffer;
   infTable: Buffer;
   skulltulaFlags: Buffer;
+  keys: Buffer;
 }
 
 export interface Swords {
@@ -114,10 +117,12 @@ export interface QuestStatus {
 export class OotOSaveData {
 
   private core: IOOTCore;
-  heart_containers!: number;
+  private ModLoader: IModLoaderAPI;
+  hash: string = "";
 
   constructor(core: IOOTCore, ModLoader: IModLoaderAPI) {
     this.core = core;
+    this.ModLoader = ModLoader;
   }
 
   private generateWrapper(): Save {
@@ -138,7 +143,8 @@ export class OotOSaveData {
       "itemFlags",
       "infTable",
       "skulltulaFlags",
-      "double_defense"
+      "double_defense",
+      "keys"
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -148,6 +154,7 @@ export class OotOSaveData {
     obj['skulltulaFlags'] = this.core.save.skulltulaFlags;
     obj['dungeonItemManager'] = JSON.parse(JSON.stringify(this.core.save.dungeonItemManager));
     obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
+    obj["keys"] = this.core.save.keyManager.getRawKeyBuffer();
     let obj2: any = {};
     for (let i = 0; i < keys.length; i++) {
       obj2[keys[i]] = obj[keys[i]];
@@ -157,7 +164,9 @@ export class OotOSaveData {
 
   createSave(): Buffer {
     let obj = this.generateWrapper();
-    return Buffer.from(JSON.stringify(obj));
+    let buf = Buffer.from(JSON.stringify(obj));
+    this.hash = this.ModLoader.utils.hashBuffer(buf);
+    return buf;
   }
 
   private processBoolLoop(obj1: any, obj2: any) {
@@ -194,7 +203,13 @@ export class OotOSaveData {
     return (obj1 > obj2);
   }
 
-  mergeSave(save: Buffer, storage: Save) {
+  private isNotEqual(obj1: number, obj2: number){
+    if (obj1 === 255) obj1 = 0;
+    if (obj2 === 255) obj2 = 0;
+    return (obj1 !== obj2);
+  }
+
+  mergeSave(save: Buffer, storage: Save, side: ProxySide) {
     let obj: Save = JSON.parse(save.toString());
     if (obj.death_counter > storage.death_counter) {
       storage.death_counter = obj.death_counter;
@@ -312,10 +327,23 @@ export class OotOSaveData {
     storage.itemFlags = itemFlags;
     storage.infTable = infTable;
     storage.skulltulaFlags = skulltulaFlags;
+
+    for (let i = 0; i < obj.keys.byteLength; i++) {
+      if (side === ProxySide.CLIENT) {
+        if (this.isNotEqual(obj.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
+          this.core.save.keyManager.setKeyCountByIndex(i, obj.keys[i]);
+          this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
+        }
+      }else{
+        if (this.isNotEqual(obj.keys[i], storage.keys[i])){
+          storage.keys[i] = obj.keys[i];
+        }
+      }
+    }
   }
 
   applySave(save: Buffer) {
-    this.mergeSave(save, this.core.save);
+    this.mergeSave(save, this.core.save as any, ProxySide.CLIENT);
   }
 
 }

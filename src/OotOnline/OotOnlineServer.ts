@@ -176,7 +176,7 @@ export class OotOnlineServer {
             return;
         }
         let data = new OotOSaveData(this.core, this.ModLoader);
-        data.mergeSave(packet.save, storage.save);
+        data.mergeSave(packet.save, storage.save, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(storage.save))));
     }
 

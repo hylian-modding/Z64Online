@@ -137,9 +137,23 @@ export class OotOnlineClient {
         this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
     }
 
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH)
+    updateKeyHash(evt: any) {
+        let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
+        this.clientStorage.keySaveHash = keyHash;
+    }
+
     autosaveSceneData() {
         if (!this.core.helper.isLinkEnteringLoadingZone() &&
             this.core.global.scene_framecount > 20) {
+            // Slap key checking in here too.
+            let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
+            if (keyHash !== this.clientStorage.keySaveHash) {
+                this.ModLoader.logger.debug("Key change detected.");
+                this.clientStorage.keySaveHash = keyHash;
+                this.clientStorage.needs_update = true;
+            }
+
             if (this.ModLoader.emulator.rdramRead8(0x80600144) === 0x1) {
                 return;
             }
