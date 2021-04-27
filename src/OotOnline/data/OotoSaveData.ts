@@ -147,6 +147,7 @@ export class OotOSaveData {
     obj['infTable'] = this.core.save.infTable;
     obj['skulltulaFlags'] = this.core.save.skulltulaFlags;
     obj['dungeonItemManager'] = JSON.parse(JSON.stringify(this.core.save.dungeonItemManager));
+    obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
     let obj2: any = {};
     for (let i = 0; i < keys.length; i++) {
       obj2[keys[i]] = obj[keys[i]];
