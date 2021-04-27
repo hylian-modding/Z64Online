@@ -8,7 +8,6 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
 import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
 import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
-import { KeyLogManagerServer } from './data/keys/KeyLogManager';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
@@ -26,8 +25,6 @@ export class OotOnlineServer {
     parent!: OotOnline;
     @SidedProxy(ProxySide.SERVER, ActorHookingManagerServer)
     actorHooks!: ActorHookingManagerServer;
-    @SidedProxy(ProxySide.SERVER, KeyLogManagerServer)
-    keys!: KeyLogManagerServer;
     @SidedProxy(ProxySide.SERVER, PuppetOverlordServer)
     puppets!: PuppetOverlordServer;
     @SidedProxy(ProxySide.SERVER, WorldEvents)

@@ -19,7 +19,6 @@ import { ModelPlayer } from './data/models/ModelPlayer';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { IActor } from 'modloader64_api/OOT/IActor';
-import { KeyLogManagerClient } from './data/keys/KeyLogManager';
 import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { RPCClient } from './data/RPCHandler';
@@ -57,8 +56,6 @@ export class OotOnlineClient {
     utility!: UtilityActorHelper;
     @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
-    @SidedProxy(ProxySide.CLIENT, KeyLogManagerClient)
-    keys!: KeyLogManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
     puppets!: PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, RPCClient)
@@ -633,9 +630,6 @@ export class OotOnlineClient {
                     this.updateBottles();
                     this.updateSkulltulas();
                     this.updateSyncContext();
-                    if (this.LobbyConfig.key_syncing) {
-                        this.keys.update();
-                    }
                     let state = this.core.link.state;
                     if (state === LinkState.STANDING && this.clientStorage.notifBuffer.length > 0) {
                         if (this.clientStorage.notifBuffer.length > 10) {
