@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ML64Postbuild": "tsc ./postbuild.ts --esModuleInterop && node ./postbuild.js",
     "packassets": "tsc ./packassets.ts --esModuleInterop && node ./packassets.js"
   },
   "repository": {
