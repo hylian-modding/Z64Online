@@ -45,6 +45,7 @@ function pad(buf: Buffer) {
 }
 
 let c = path.resolve("./cache/Z64O_Assets.content");
+let c2 = path.resolve(`./dist/Z64O_Assets_${Date.now().toString(16).toUpperCase()}.content`);
 
 if (fse.existsSync(c)) {
     fse.unlinkSync(c);
@@ -68,4 +69,5 @@ if (1) {
 
     let data: any = { data: _file, sig: signature };
     fse.writeFileSync(c, Buffer.from(JSON.stringify(data)));
+    fse.writeFileSync(c2, Buffer.from(JSON.stringify(data)));
 }

@@ -196,12 +196,13 @@ export class WorldEventRewards {
         }
     }
 
-    loadAssets() {
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
+    onAssetData(assetURLS: Array<string>) {
         this.assets = new AssetContainer(this.ModLoader, this.core, () => {
             this.migrateRewards();
             this.loadTickets();
         });
-        this.assets.url = "https://repo.modloader64.com/mods/Ooto/event/Z64O_Assets.content";
+        this.assets.url = assetURLS[0];
         this.assets.preinit();
     }
 
@@ -212,7 +213,6 @@ export class WorldEventRewards {
         this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "equipmentLoadout", {});
         this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
-        this.loadAssets();
     }
 
     private _getAllAssetByUUID(uuid: string): Buffer | undefined {
@@ -445,7 +445,6 @@ export class WorldEventRewards {
                     let evt = new Z64Online_ModelAllocation(c, Age.ADULT);
                     if (this.isAssetScripted(this.config.adultCostume).is) {
                         evt.script = this.isAssetScripted(this.config.adultCostume).script;
-                        console.log(evt.script);
                     }
                     bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, evt);
                 }
@@ -576,6 +575,10 @@ export class WorldEvents {
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET)
     onEventDataServer(eventURLs: Array<string>) {
         this.loadEvents(eventURLs);
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET)
+    onAssetDataServer(assetURLs: Array<string>) {
     }
 
     private loadEvents(eventURLs: Array<string>) {

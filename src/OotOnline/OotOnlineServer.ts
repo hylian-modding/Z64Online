@@ -66,12 +66,15 @@ export class OotOnlineServer {
     preinit() {
         this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server");
         this.ModLoader.config.setData("OotO_WorldEvents_Server", "Z64OEventsActive", []);
+        this.ModLoader.config.setData("OotO_WorldEvents_Server", "Z64OAssetsURL", []);
         this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET, (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OEventsActive"]);
+        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET, (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OAssetsURL"]);
     }
 
     @EventHandler(EventsServer.ON_LOBBY_DATA)
     onLobbyData(ld: LobbyData) {
         ld.data["Z64OEventsActive"] = (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OEventsActive"];
+        ld.data["Z64OAssetsURL"] = (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OAssetsURL"];
     }
 
     @EventHandler(EventsServer.ON_LOBBY_JOIN)

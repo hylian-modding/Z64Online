@@ -42,6 +42,7 @@ function pad(buf) {
     return b;
 }
 var c = path_1["default"].resolve("./cache/Z64O_Assets.content");
+var c2 = path_1["default"].resolve("./dist/Z64O_Assets_" + Date.now().toString(16).toUpperCase() + ".content");
 if (fs_extra_1["default"].existsSync(c)) {
     fs_extra_1["default"].unlinkSync(c);
 }
@@ -61,4 +62,5 @@ if (1) {
     var signature = signer.sign(private_key);
     var data = { data: _file, sig: signature };
     fs_extra_1["default"].writeFileSync(c, Buffer.from(JSON.stringify(data)));
+    fs_extra_1["default"].writeFileSync(c2, Buffer.from(JSON.stringify(data)));
 }
