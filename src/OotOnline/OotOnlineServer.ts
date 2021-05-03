@@ -7,7 +7,7 @@ import { OotOnline } from './OotOnline';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
 import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
-import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket } from './data/OotOPackets';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
@@ -181,6 +181,20 @@ export class OotOnlineServer {
         let data = new OotOSaveData(this.core, this.ModLoader);
         data.mergeSave(packet.save, storage.save, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(storage.save))));
+    }
+
+    @ServerNetworkHandler('OotO_UpdateKeyringPacket')
+    onKeySync_Server(packet: OotO_UpdateKeyringPacket){
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        let data = new OotOSaveData(this.core, this.ModLoader);
+        data.processKeyRing(packet.keys, storage.keys, ProxySide.SERVER);
+        this.ModLoader.serverSide.sendPacket(new OotO_UpdateKeyringPacket(storage.keys, packet.lobby));
     }
 
     @ServerNetworkHandler('Ooto_ClientSceneContextUpdate')

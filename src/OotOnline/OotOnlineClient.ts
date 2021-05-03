@@ -30,7 +30,7 @@ import { Texture } from 'modloader64_api/Sylvain/Gfx';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
-import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, OotO_ItemGetMessagePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, OotO_ItemGetMessagePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
@@ -146,12 +146,14 @@ export class OotOnlineClient {
     autosaveSceneData() {
         if (!this.core.helper.isLinkEnteringLoadingZone() &&
             this.core.global.scene_framecount > 20) {
+
             // Slap key checking in here too.
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
                 this.ModLoader.logger.debug("Key change detected.");
                 this.clientStorage.keySaveHash = keyHash;
-                this.clientStorage.needs_update = true;
+                let data = new OotOSaveData(this.core, this.ModLoader);
+                this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(data.createKeyRing(), this.ModLoader.clientLobby));
             }
 
             if (this.ModLoader.emulator.rdramRead8(0x80600144) === 0x1) {
@@ -245,16 +247,16 @@ export class OotOnlineClient {
         if (GHOST_MODE_TRIGGERED) {
             bus.emit(Z64OnlineEvents.GHOST_MODE, true);
         }
+        if (lobby.data.hasOwnProperty("Z64OAssetsURL")) {
+            if (lobby.data.Z64OAssetsURL.length > 0) {
+                this.ModLoader.logger.info("Server sent asset data.");
+                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
+            }
+        }
         if (lobby.data.hasOwnProperty("Z64OEventsActive")) {
             if (lobby.data.Z64OEventsActive.length > 0) {
                 this.ModLoader.logger.info("Server sent event data.");
                 this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET, lobby.data.Z64OEventsActive);
-            }
-        }
-        if (lobby.data.hasOwnProperty("Z64OAssetsURL")){
-            if (lobby.data.Z64OAssetsURL.length > 0){
-                this.ModLoader.logger.info("Server sent asset data.");
-                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
             }
         }
     }
@@ -376,6 +378,12 @@ export class OotOnlineClient {
     onSaveUpdate(packet: OotO_UpdateSaveDataPacket) {
         let data = new OotOSaveData(this.core, this.ModLoader);
         data.applySave(packet.save);
+    }
+
+    @NetworkHandler('OotO_UpdateKeyringPacket')
+    onKeyUpdate(packet: OotO_UpdateKeyringPacket) {
+        let data = new OotOSaveData(this.core, this.ModLoader);
+        data.processKeyRing(packet.keys, data.createKeyRing(), ProxySide.CLIENT);
     }
 
     @NetworkHandler('Ooto_ClientSceneContextUpdate')

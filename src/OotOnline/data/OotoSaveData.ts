@@ -1,3 +1,4 @@
+import { parseFlagChanges } from "@OotOnline/parseFlagChanges";
 import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
@@ -21,6 +22,10 @@ export interface Save {
   itemFlags: Buffer;
   infTable: Buffer;
   skulltulaFlags: Buffer;
+  dungeon_items: Buffer;
+}
+
+export interface KeyRing {
   keys: Buffer;
 }
 
@@ -144,7 +149,7 @@ export class OotOSaveData {
       "infTable",
       "skulltulaFlags",
       "double_defense",
-      "keys"
+      "dungeon_items"
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -152,14 +157,33 @@ export class OotOSaveData {
     obj['itemFlags'] = this.core.save.itemFlags;
     obj['infTable'] = this.core.save.infTable;
     obj['skulltulaFlags'] = this.core.save.skulltulaFlags;
-    obj['dungeonItemManager'] = JSON.parse(JSON.stringify(this.core.save.dungeonItemManager));
+    obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
     obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
-    obj["keys"] = this.core.save.keyManager.getRawKeyBuffer();
     let obj2: any = {};
     for (let i = 0; i < keys.length; i++) {
       obj2[keys[i]] = obj[keys[i]];
     }
     return obj2 as Save;
+  }
+
+  createKeyRing(): KeyRing {
+    let obj = { keys: this.core.save.keyManager.getRawKeyBuffer() } as KeyRing;
+    return obj;
+  }
+
+  processKeyRing(keys: KeyRing, storage: KeyRing, side: ProxySide) {
+    for (let i = 0; i < keys.keys.byteLength; i++) {
+      if (side === ProxySide.CLIENT) {
+        if (this.isNotEqual(keys.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
+          this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
+          this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
+        }
+      } else {
+        if (this.isNotEqual(keys.keys[i], storage.keys[i])) {
+          storage.keys[i] = keys.keys[i];
+        }
+      }
+    }
   }
 
   createSave(): Buffer {
@@ -203,7 +227,7 @@ export class OotOSaveData {
     return (obj1 > obj2);
   }
 
-  private isNotEqual(obj1: number, obj2: number){
+  private isNotEqual(obj1: number, obj2: number) {
     if (obj1 === 255) obj1 = 0;
     if (obj2 === 255) obj2 = 0;
     return (obj1 !== obj2);
@@ -233,6 +257,22 @@ export class OotOSaveData {
     this.processBoolLoop(obj.tunics, storage.tunics);
     this.processBoolLoop(obj.boots, storage.boots);
     this.processMixedLoop(obj.questStatus, storage.questStatus, []);
+
+    if (obj.inventory.bottle_1 === InventoryItem.NONE && storage.inventory.bottle_1 !== InventoryItem.NONE) {
+      obj.inventory.bottle_1 = storage.inventory.bottle_1;
+    }
+
+    if (obj.inventory.bottle_2 === InventoryItem.NONE && storage.inventory.bottle_2 !== InventoryItem.NONE) {
+      obj.inventory.bottle_2 = storage.inventory.bottle_2;
+    }
+
+    if (obj.inventory.bottle_3 === InventoryItem.NONE && storage.inventory.bottle_3 !== InventoryItem.NONE) {
+      obj.inventory.bottle_3 = storage.inventory.bottle_3;
+    }
+
+    if (obj.inventory.bottle_4 === InventoryItem.NONE && storage.inventory.bottle_4 !== InventoryItem.NONE) {
+      obj.inventory.bottle_4 = storage.inventory.bottle_4;
+    }
 
     this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
 
@@ -328,17 +368,12 @@ export class OotOSaveData {
     storage.infTable = infTable;
     storage.skulltulaFlags = skulltulaFlags;
 
-    for (let i = 0; i < obj.keys.byteLength; i++) {
-      if (side === ProxySide.CLIENT) {
-        if (this.isNotEqual(obj.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
-          this.core.save.keyManager.setKeyCountByIndex(i, obj.keys[i]);
-          this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
-        }
-      }else{
-        if (this.isNotEqual(obj.keys[i], storage.keys[i])){
-          storage.keys[i] = obj.keys[i];
-        }
-      }
+    if (side === ProxySide.CLIENT) {
+      let cur = this.core.save.dungeonItemManager.getRawBuffer();
+      parseFlagChanges(obj.dungeon_items, cur);
+      this.core.save.dungeonItemManager.setRawBuffer(cur);
+    } else {
+      parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
     }
   }
 

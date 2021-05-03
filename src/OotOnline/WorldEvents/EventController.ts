@@ -35,17 +35,18 @@ export class EventController {
         global.ModLoader.startupDelay++;
         this.ModLoader.logger.debug("Current ML startup delay level: " + global.ModLoader.startupDelay + ".");
         fetchUrl(this.url, (error: any, meta: any, body: any) => {
-            fs.writeFileSync(file, body.toString());
-            this.bundle = new ContentBundle(file, this.ModLoader);
-            this.setupEventPlugin();
-            global.ModLoader.startupDelay--;
+            fs.writeFile(file, body.toString(), () => {
+                this.bundle = new ContentBundle(file, this.ModLoader);
+                this.setupEventPlugin();
+                global.ModLoader.startupDelay--;
+            });
         });
     }
 
     preinit() {
         try {
             let cache = path.resolve(this.cacheDir, path.parse(this.url).base);
-            if (!fs.existsSync(this.cacheDir)){
+            if (!fs.existsSync(this.cacheDir)) {
                 fs.mkdirSync(this.cacheDir);
             }
             if (!fs.existsSync(cache)) {

@@ -20,10 +20,10 @@ gulp.task('postinstall', function () {
     return gulp.src('.');
 });
 
-gulp.task('build', function(){
+gulp.task('build', function () {
     return gulp.src('./src/**/*.ts')
-    .pipe(tsProject())
-    .pipe(gulp.dest('./build/src'));
+        .pipe(tsProject())
+        .pipe(gulp.dest('./build/src'));
 });
 
 gulp.task('default', gulp.series(['build', 'postinstall']));

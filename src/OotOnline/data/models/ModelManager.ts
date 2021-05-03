@@ -93,7 +93,7 @@ export class ModelManagerClient {
   @Deprecated()
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
   onCustomModel(file: string) {
-    let evt= new Z64Online_ModelAllocation(fs.readFileSync(file), Age.ADULT);
+    let evt = new Z64Online_ModelAllocation(fs.readFileSync(file), Age.ADULT);
     let figureOutName: string = path.parse(path.parse(file).dir).name;
     evt.name = figureOutName;
     bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT, evt);
@@ -108,7 +108,7 @@ export class ModelManagerClient {
   @Deprecated()
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
   onCustomModel2(file: string) {
-    let evt= new Z64Online_ModelAllocation(fs.readFileSync(file), Age.CHILD);
+    let evt = new Z64Online_ModelAllocation(fs.readFileSync(file), Age.CHILD);
     let figureOutName: string = path.parse(path.parse(file).dir).name;
     evt.name = figureOutName;
     bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD, evt);
@@ -213,31 +213,18 @@ export class ModelManagerClient {
   }
 
   setupPuppetModels(evt: any) {
-    if (!fs.existsSync(this.cacheDir)) {
-      fs.mkdirSync(this.cacheDir);
-    }
-    let child_path: string = path.join(this.cacheDir, "child.zobj");
+    let puppet_child: Buffer;
+    let puppet_adult: Buffer;
     let adult_path: string = path.join(this.cacheDir, "adult.zobj");
-
-    let puppet_child: Buffer = Buffer.alloc(1);
-    let puppet_adult: Buffer = Buffer.alloc(1);
-
-    if (fs.existsSync(child_path) && fs.existsSync(adult_path)) {
-      puppet_child = fs.readFileSync(child_path);
-      puppet_adult = fs.readFileSync(adult_path);
-    } else {
-      let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-      this.ModLoader.logger.info("Setting up puppet models...");
-      puppet_child = Buffer.alloc(0x37800);
-      tools.decompressDMAFileFromRom(evt.rom, 503).copy(puppet_child);
-      puppet_adult = Buffer.alloc(0x37800);
-      tools.decompressDMAFileFromRom(evt.rom, 502).copy(puppet_adult);
-      puppet_child = PatchTypes.get(".bps")!.patch(puppet_child, fs.readFileSync(path.join(__dirname, "zobjs", "ChildLink.bps")));
-      puppet_adult = trimBuffer(PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "AdultLink.bps"))));
-      puppet_adult = PatchTypes.get(".bps")!.patch(puppet_adult, fs.readFileSync(path.join(__dirname, "zobjs", "Mirror_Shield_Fix.bps")));
-      fs.writeFileSync(child_path, trimBuffer(puppet_child));
-      fs.writeFileSync(adult_path, trimBuffer(puppet_adult));
-    }
+    let child_path: string = path.join(this.cacheDir, "child.zobj");
+    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+    this.ModLoader.logger.info("Setting up puppet models...");
+    puppet_child = this.ModLoader.utils.clearBuffer(tools.decompressDMAFileFromRom(evt.rom, 503));
+    puppet_adult = this.ModLoader.utils.clearBuffer(tools.decompressDMAFileFromRom(evt.rom, 502));
+    fs.readFileSync(path.resolve(__dirname, "zobjs", "adult.zobj")).copy(puppet_adult);
+    fs.readFileSync(path.resolve(__dirname, "zobjs", "child.zobj")).copy(puppet_child);
+    fs.writeFileSync(adult_path, puppet_adult);
+    fs.writeFileSync(child_path, puppet_child);
 
     this.ModLoader.utils.setTimeoutFrames(() => {
       this.puppetAdult = this.allocationManager.registerModel(puppet_adult);
@@ -607,16 +594,16 @@ export class ModelManagerClient {
   onChangeModelChild(evt: Z64Online_ModelAllocation) {
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().child.hash === evt.ref.hash) return;
-      this.allocationManager.SetLocalPlayerModel(Age.ADULT, evt.ref);
+      this.allocationManager.SetLocalPlayerModel(Age.CHILD, evt.ref);
       this.onSceneChange(-1);
-      this.clientStorage.adultModel = this.allocationManager.getModel(evt.ref)!.zobj;
+      this.clientStorage.childModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
       return;
     }
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, this.puppetChild);
-      this.clientStorage.adultModel = this.allocationManager.getModel(this.puppetChild)!.zobj;
+      this.clientStorage.childModel = this.allocationManager.getModel(this.puppetChild)!.zobj;
     } else {
       if (copy.readUInt32BE(0x500C) === 0xFFFFFFFF) {
         copy.writeUInt32BE(this.childCodePointer, 0x500C)

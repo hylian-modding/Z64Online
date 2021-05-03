@@ -3,16 +3,16 @@ import { ContentBundle } from "./ContentBundle";
 import fs from 'fs';
 import path from 'path';
 
-export class AssetContainer{
+export class AssetContainer {
 
     ModLoader!: IModLoaderAPI;
     core: any;
     readonly cacheDir: string = global.ModLoader.startdir + "/cache";
     url!: string;
     bundle!: ContentBundle;
-    callback: ()=>void;
+    callback: () => void;
 
-    constructor(ModLoader: IModLoaderAPI, core: any, callback: ()=>void) {
+    constructor(ModLoader: IModLoaderAPI, core: any, callback: () => void) {
         this.ModLoader = ModLoader;
         this.core = core;
         this.callback = callback;
@@ -24,17 +24,19 @@ export class AssetContainer{
         global.ModLoader.startupDelay++;
         this.ModLoader.logger.debug("Current ML startup delay level: " + global.ModLoader.startupDelay + ".");
         fetchUrl(this.url, (error: any, meta: any, body: any) => {
-            fs.writeFileSync(file, body.toString());
-            this.bundle = new ContentBundle(file, this.ModLoader);
-            global.ModLoader.startupDelay--;
-            this.callback();
+            fs.writeFile(file, body.toString(), (err: NodeJS.ErrnoException | null) => {
+                if (err) console.log(err);
+                this.bundle = new ContentBundle(file, this.ModLoader);
+                global.ModLoader.startupDelay--;
+                this.callback();
+            });
         });
     }
 
-    preinit(){
+    preinit() {
         try {
             let cache = path.resolve(this.cacheDir, path.parse(this.url).base);
-            if (!fs.existsSync(this.cacheDir)){
+            if (!fs.existsSync(this.cacheDir)) {
                 fs.mkdirSync(this.cacheDir);
             }
             if (!fs.existsSync(cache)) {

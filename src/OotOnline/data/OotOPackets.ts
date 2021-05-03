@@ -11,6 +11,7 @@ import {
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
+import { KeyRing } from './OotoSaveData';
 
 export class Ooto_PuppetPacket {
   data: PuppetData;
@@ -82,14 +83,25 @@ export class Ooto_DownloadRequestPacket extends Packet {
   }
 }
 
-export class OotO_UpdateSaveDataPacket extends Packet{
+export class OotO_UpdateSaveDataPacket extends Packet {
 
   save: Buffer;
 
-  constructor(lobby: string, save: Buffer){
+  constructor(lobby: string, save: Buffer) {
     super('OotO_UpdateSaveDataPacket', 'OotOnline', lobby, false);
     this.save = save;
   }
+}
+
+export class OotO_UpdateKeyringPacket extends Packet {
+
+  keys: KeyRing;
+
+  constructor(keys: KeyRing, lobby: string) {
+    super('OotO_UpdateKeyringPacket', 'OotOnline', lobby, false);
+    this.keys = keys;
+  }
+
 }
 
 export class Ooto_ClientSceneContextUpdate extends Packet {

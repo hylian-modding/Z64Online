@@ -385,7 +385,7 @@ export class WorldEventRewards {
                             }
                             if (this.ModLoader.ImGui.treeNode("Child###OotOCustomModels_Child")) {
                                 this.customModelFilesChild.forEach((value: IModelReference, key: string) => {
-                                    if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.adultCostume)) {
+                                    if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.childCostume)) {
                                         this.config.childCostume = key;
                                         this.ModLoader.utils.setTimeoutFrames(() => {
                                             let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD);
