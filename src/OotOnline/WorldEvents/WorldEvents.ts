@@ -474,7 +474,9 @@ export class WorldEventRewards {
                 }
             }
             if (this.config.voice !== "") {
-                // TODO
+                if (this.customSoundGroups.has(this.config.voice)){
+                    bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voice);
+                }
             }
             let keys = Object.keys(this.config.equipmentLoadout);
             if (keys.length > 0) {
