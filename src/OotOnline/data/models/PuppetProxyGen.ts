@@ -16,7 +16,15 @@ export const PuppetProxyGen_Adult: any = {
     // Bow
     "0x600": "0x5180",
     // Hookshot
-    "0x610": "0x5190"
+    "0x610": "0x5190",
+    // Hylian Shield (back)
+    "0x628": "0x5258",
+    // Mirror Shield (back)
+    "0x630": "0x5268",
+    // Master Sword (in sheath)
+    "0x638": "0x5238",
+    // Biggoron Sword (in sheath)
+    "0x640": "0x5238"
 };
 
 export const PuppetProxyGen_Child: any = {
@@ -32,7 +40,11 @@ export const PuppetProxyGen_Child: any = {
     // Slingshot
     "0x608": "0x5190",
     // Boomerang
-    "0x618": "0x51B0"
+    "0x618": "0x51B0",
+    // Deku Shield (back)
+    "0x620": "0x5268",
+    // Kokiri Sword (in sheath),
+    "0x634": "0x5228"
 };
 
 export const PuppetProxyGen_Matrix: any = {

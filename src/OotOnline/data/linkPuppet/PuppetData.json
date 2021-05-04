@@ -18,7 +18,10 @@
     "anim": 134,
     "str": 1,
     "ears": 12,
-    "age": 4
+    "age": 4,
+    "tunic": 3,
+    "strength": 1,
+    "gauntlet": 3
   },
   "sources": {
     "pos": 2149427796,
@@ -39,7 +42,10 @@
     "anim": 2153775104,
     "str": 2154823424,
     "ears": 2151346560,
-    "age": 2148640212
+    "age": 2148640212,
+    "tunic": 3735928559,
+    "strength": 3735928559,
+    "gauntlet": 3735928559
   },
   "destinations": {
     "pos": 36,
@@ -60,6 +66,9 @@
     "anim": 748,
     "str": 916,
     "ears": 944,
-    "age": 892
+    "age": 892,
+    "tunic": 904,
+    "strength": 916,
+    "gauntlet": 896
   }
 }

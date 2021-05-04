@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
@@ -69,6 +69,7 @@ export class OotOnlineClient {
     resourcesLoaded: boolean = false;
     itemIcons: Map<string, Texture> = new Map<string, Texture>();
     opa!: ThiccOpa;
+    synxContext: number = -1;
 
     @onCreateResources()
     onResource() {
@@ -128,6 +129,8 @@ export class OotOnlineClient {
 
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
+        this.synxContext = this.ModLoader.heap!.malloc(0xFF);
+        global.ModLoader["OotO_SyncContext"] = this.synxContext;
     }
 
     updateInventory() {
@@ -623,7 +626,15 @@ export class OotOnlineClient {
     }
 
     private updateSyncContext() {
-        this.ModLoader.emulator.rdramWrite8(0x806FFF00, this.core.save.inventory.strength);
+        this.ModLoader.emulator.rdramWrite8(this.synxContext, this.core.save.inventory.strength);
+        this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x1, this.ModLoader.emulator.rdramReadBuffer(0x800F7AD8 + (this.core.link.tunic * 0x3), 0x3));
+        if (this.core.save.inventory.strength > Strength.GORON_BRACELET) {
+            if (this.core.save.inventory.strength === Strength.SILVER_GAUNTLETS) {
+                this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4, 0x3));
+            } else {
+                this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
+            }
+        }
     }
 
     @onTick()

@@ -14,11 +14,6 @@
   "modloader64_deps": {
     "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
   },
-  "modloader64_aliases": {
-    "Z64Lib": [
-      "libs/Z64Lib"
-    ]
-  },
   "dependencies": {
     "f3djs": "git+https://github.com/CrookedPoe/f3djs.git",
     "fetch": "^1.1.0"
