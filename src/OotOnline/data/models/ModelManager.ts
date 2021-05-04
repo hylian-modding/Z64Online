@@ -23,8 +23,7 @@ import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import path from 'path';
 import { ModelReference } from './ModelContainer';
-import { PatchTypes } from 'modloader64_api/Patchers/PatchManager';
-import { Z64RomTools, trimBuffer } from 'Z64Lib/API/Z64RomTools';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { OOTAdultManifest } from 'Z64Lib/API/OOT/OOTAdultManfest';
 import { OOTChildManifest } from 'Z64Lib/API/OOT/OOTChildManifest';
@@ -63,6 +62,9 @@ export class ModelManagerClient {
   childCodePointer: number = 0xBEEFDEAD;
   titleScreenFix: any;
   lockManager: boolean = false;
+  //
+  adult_proxy_refs: Array<Buffer> = [];
+  child_proxy_refs: Array<Buffer> = [];
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
   onCustomModelAdult_new(evt: Z64Online_ModelAllocation) {
@@ -176,6 +178,12 @@ export class ModelManagerClient {
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       this.ModLoader.logger.info("(Adult) Setting up zobj proxy.");
       let proxy = fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Adult_Proxy.zobj"));
+      let internals: Array<number> = require('./zobjs/adult_internal_refs.json');
+      for (let i = 0; i < internals.length; i++) {
+        let buf = Buffer.alloc(0x8);
+        model.copy(buf, 0, internals[i], internals[i] + 0x8);
+        this.adult_proxy_refs.push(buf);
+      }
       let alloc = new Z64Online_ModelAllocation(model, Age.ADULT);
       this.allocationManager.getLocalPlayerData().additionalData.set("adult_rom", manifest.inject(this.ModLoader, evt.rom, proxy, true));
       this.ModLoader.utils.setTimeoutFrames(() => {
@@ -198,6 +206,12 @@ export class ModelManagerClient {
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       this.ModLoader.logger.info("(Child) Setting up zobj proxy.");
       let proxy = fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Child_Proxy_v2.zobj"));
+      let internals: Array<number> = require('./zobjs/child_internal_refs.json');
+      for (let i = 0; i < internals.length; i++) {
+        let buf = Buffer.alloc(0x8);
+        model.copy(buf, 0, internals[i], internals[i] + 0x8);
+        this.child_proxy_refs.push(buf);
+      }
       let alloc = new Z64Online_ModelAllocation(model, Age.CHILD);
       this.allocationManager.getLocalPlayerData().additionalData.set("child_rom", manifest.inject(this.ModLoader, evt.rom, proxy, true));
       this.ModLoader.utils.setTimeoutFrames(() => {
@@ -330,16 +344,15 @@ export class ModelManagerClient {
 
   @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
   onModelAllocate_Equipment(packet: Z64_EquipmentPakPacket) {
-    /* this.ModLoader.utils.setTimeoutFrames(() => {
+    this.ModLoader.utils.setTimeoutFrames(() => {
       let player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
-
+      player.equipment.clear();
       packet.zobjs.forEach((value: Buffer, index: number) => {
         let def = zlib.inflateSync(value);
         let model = this.allocationManager.registerModel(def)!;
         player.equipment.set("0x" + index.toString(16), model);
       });
-      // TODO: FIX THIS SHIT LATER.
-    }, 10); */
+    }, 20);
   }
 
   @EventHandler(EventsClient.ON_PLAYER_LEAVE)
@@ -427,8 +440,41 @@ export class ModelManagerClient {
       });
     };
 
-    fn(player.adult, PuppetProxyGen_Adult);
-    fn(player.child, PuppetProxyGen_Child);
+    let adult_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Adult));
+    let child_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Child));
+
+    player.equipment.forEach((value: IModelReference) => {
+      let data = this.getEquipmentManifest(value);
+      let table: any = {};
+      let player = new ModelPlayer("TEMP");
+      if (age === Age.ADULT) {
+        table = data.manifest.OOT.adult;
+      } else if (age === Age.CHILD) {
+        table = data.manifest.OOT.child;
+      }
+      let replacements: Array<number> = [];
+      Object.keys(table).forEach((key: string) => {
+        let i = data.lut + (parseInt(key) * 0x8) + 0x4;
+        let offset = parseInt(table[key]) + 0x4;
+        replacements.push(offset);
+        this.ModLoader.emulator.rdramWrite32(player.proxyPointer + (offset - 0x5000), data.model.readUInt32BE(i));
+      });
+      Object.keys(adult_generator_table).forEach((key: string) => {
+        let k = parseInt(adult_generator_table[key]);
+        if (replacements.indexOf(k) > -1) {
+          adult_generator_table[k] = `0x${replacements[replacements.indexOf(k)].toString(16)}`;
+        }
+      });
+      Object.keys(child_generator_table).forEach((key: string) => {
+        let k = parseInt(child_generator_table[key]);
+        if (replacements.indexOf(k) > -1) {
+          child_generator_table[k] = `0x${replacements[replacements.indexOf(k)].toString(16)}`;
+        }
+      });
+    });
+
+    fn(player.adult, adult_generator_table);
+    fn(player.child, child_generator_table);
     if (age === Age.ADULT) {
       fn2(player.adult, PuppetProxyGen_Matrix);
     } else if (age === Age.CHILD) {
@@ -530,6 +576,12 @@ export class ModelManagerClient {
         let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().adult.pointer + 0x5380) - 0x150;
         let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x150);
         this.ModLoader.emulator.rdramWriteBuffer(link.pointer + 0xEC60 - 0x150, buf);
+
+        let internals: Array<number> = require('./zobjs/adult_internal_refs.json');
+        for (let i = 0; i < internals.length; i++) {
+          this.ModLoader.emulator.rdramWriteBuffer(this.allocationManager.getLocalPlayerData().adult.pointer + internals[i], this.adult_proxy_refs[i]);
+        }
+
         this.dealWithEquipmentPaks(Age.ADULT);
         this.hat_hook();
         this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("adult_rom")!, this.ModLoader.emulator.rdramReadBuffer(link.pointer, 0x37800));
@@ -543,6 +595,12 @@ export class ModelManagerClient {
         let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().child.pointer + 0x53A8) - 0x150;
         let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x1B0);
         this.ModLoader.emulator.rdramWriteBuffer(link.pointer + 0xEC60 - 0x150, buf);
+
+        let internals: Array<number> = require('./zobjs/child_internal_refs.json');
+        for (let i = 0; i < internals.length; i++) {
+          this.ModLoader.emulator.rdramWriteBuffer(this.allocationManager.getLocalPlayerData().child.pointer + internals[i], this.child_proxy_refs[i]);
+        }
+
         this.dealWithEquipmentPaks(Age.CHILD);
         this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("child_rom")!, this.ModLoader.emulator.rdramReadBuffer(link.pointer, 0x22380));
         curRef = this.allocationManager.getLocalPlayerData().child;
