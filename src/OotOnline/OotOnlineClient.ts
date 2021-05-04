@@ -454,17 +454,6 @@ export class OotOnlineClient {
 
     @EventHandler(Z64OnlineEvents.MAGIC_METER_INCREASED)
     onNeedsMagic(size: Magic) {
-        switch (size) {
-            case Magic.NONE:
-                this.core.save.magic_current = MagicQuantities.NONE;
-                break;
-            case Magic.NORMAL:
-                this.core.save.magic_current = MagicQuantities.NORMAL;
-                break;
-            case Magic.EXTENDED:
-                this.core.save.magic_current = MagicQuantities.EXTENDED;
-                break;
-        }
     }
 
     @EventHandler(Z64OnlineEvents.SAVE_DATA_ITEM_SET)
