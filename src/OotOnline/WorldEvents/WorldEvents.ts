@@ -14,7 +14,7 @@ import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
 import { ContentBundle } from './ContentBundle';
 import { EventController } from './EventController';
-import { OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
+import { OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
 import { WorldEvents_TransactionPacket } from './WorldEventPackets';
 import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import crypto from 'crypto';
@@ -173,13 +173,11 @@ export class WorldEventRewards {
             this.rewardContainer.tickets[i] = this.allRewardTickets.get(this.rewardContainer.tickets[i].uuid)!;
             let ticket = this.rewardContainer.tickets[i];
             if (ticket.game !== "OotO") continue;
-            console.log(`${ticket.name} -> ${this.rewardTicketsByEvent.has(ticket.event)}`);
             this.rewardTicketsByUUID.set(ticket.uuid, ticket);
             if (!this.rewardTicketsByEvent.has(ticket.event)) {
                 this.rewardTicketsByEvent.set(ticket.event, new Map<string, RewardTicket[]>());
             }
             if (!this.rewardTicketsByEvent.get(ticket.event)!.has(ticket.category)) {
-                console.log(ticket.event);
                 this.rewardTicketsByEvent.get(ticket.event)!.set(ticket.category, []);
             }
             this.rewardTicketsByEvent.get(ticket.event)!.get(ticket.category)!.push(ticket);
@@ -279,6 +277,7 @@ export class WorldEventRewards {
             if (this.ModLoader.ImGui.beginMainMenuBar()) {
                 if (this.ModLoader.ImGui.beginMenu("Mods")) {
                     if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                        this.ModLoader.ImGui.text(`ML Coins: ${this.rewardContainer.coins}.`);
                         if (this.ModLoader.ImGui.menuItem("Costume Manager")) {
                             this.rewardsWindowStatus[0] = !this.rewardsWindowStatus[0];
                         }
@@ -514,8 +513,14 @@ export class WorldEventRewards {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_WALLET_SET)
     coinChange(evt: OOTO_PRIVATE_COIN_LOOKUP_OBJ) {
-        evt.coins += evt.coins;
+        this.rewardContainer.coins += evt.coins;
         this.transactionProcess();
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_DOES_HAVE)
+    onCheck(evt: OOTO_PRIVATE_ASSET_HAS_CHECK){
+        evt.has = this.rewardContainer.tickets.find(t =>{ return t.uuid === evt.ticket.uuid }) !== undefined;
+        console.log(evt);
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_TICKET)

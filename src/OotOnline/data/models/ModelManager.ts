@@ -10,7 +10,7 @@ import {
 } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '../../OotOnlineStorageClient';
 import zlib from 'zlib';
-import { Age, OotEvents, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
+import { Age, OotEvents, IOOTCore, IOvlPayloadResult, Tunic } from 'modloader64_api/OOT/OOTAPI';
 import {
   INetworkPlayer,
   NetworkHandler,
@@ -227,6 +227,9 @@ export class ModelManagerClient {
   }
 
   setupPuppetModels(evt: any) {
+    if (!fs.existsSync(this.cacheDir)) {
+      fs.mkdirSync(this.cacheDir);
+    }
     let puppet_child: Buffer;
     let puppet_adult: Buffer;
     let adult_path: string = path.join(this.cacheDir, "adult.zobj");
@@ -337,7 +340,7 @@ export class ModelManagerClient {
         player.adult = model;
       }
       if (this.allocationManager.isPlayerAllocated(player)) {
-        this.setPuppetModel(player, model, Z64OnlineAPI_QueryPuppet(packet.player).puppet!.age);
+        this.setPuppetModel(player, model, packet.age);
       }
     }, 10);
   }
@@ -579,7 +582,7 @@ export class ModelManagerClient {
 
         let internals: Array<number> = require('./zobjs/adult_internal_refs.json');
         for (let i = 0; i < internals.length; i++) {
-          this.ModLoader.emulator.rdramWriteBuffer(this.allocationManager.getLocalPlayerData().adult.pointer + internals[i], this.adult_proxy_refs[i]);
+          this.ModLoader.emulator.rdramWriteBuffer(link.pointer + internals[i], this.adult_proxy_refs[i]);
         }
 
         this.dealWithEquipmentPaks(Age.ADULT);
@@ -598,7 +601,7 @@ export class ModelManagerClient {
 
         let internals: Array<number> = require('./zobjs/child_internal_refs.json');
         for (let i = 0; i < internals.length; i++) {
-          this.ModLoader.emulator.rdramWriteBuffer(this.allocationManager.getLocalPlayerData().child.pointer + internals[i], this.child_proxy_refs[i]);
+          this.ModLoader.emulator.rdramWriteBuffer(link.pointer + internals[i], this.child_proxy_refs[i]);
         }
 
         this.dealWithEquipmentPaks(Age.CHILD);
@@ -762,6 +765,23 @@ export class ModelManagerClient {
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onHealthChanged(this.core.save.heart_containers * 0x10, health, ref);
+      this.ModLoader.utils.setTimeoutFrames(() => {
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.save.age);
+        a.ref = newRef;
+        if (this.core.save.age === Age.ADULT) {
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
+        } else {
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+        }
+      }, 1);
+    }
+  }
+
+  @EventHandler(OotEvents.ON_TUNIC_CHANGE)
+  onTunic(tunic: Tunic) {
+    if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
+      let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
+      let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(ref, tunic);
       this.ModLoader.utils.setTimeoutFrames(() => {
         let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.save.age);
         a.ref = newRef;

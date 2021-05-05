@@ -1,11 +1,11 @@
 {
   "name": "OotOnline",
-  "version": "3.0.10",
+  "version": "3.0.12",
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
   "scripts": {
     "test": "modloader64 -r",
-    "packassets": "tsc ./packassets.ts --esModuleInterop && node ./packassets.js"
+    "packassets": "ts-node ./packassets.ts"
   },
   "repository": {
     "type": "git",
