@@ -22,9 +22,9 @@ export const PuppetProxyGen_Adult: any = {
     // Mirror Shield (back)
     "0x630": "0x5268",
     // Master Sword (in sheath)
-    "0x638": "0x5238",
+    "0x640": "0x5238",
     // Biggoron Sword (in sheath)
-    "0x640": "0x5238"
+    "0x648": "0x5238"
 };
 
 export const PuppetProxyGen_Child: any = {
@@ -44,7 +44,7 @@ export const PuppetProxyGen_Child: any = {
     // Deku Shield (back)
     "0x620": "0x5268",
     // Kokiri Sword (in sheath),
-    "0x634": "0x5228"
+    "0x638": "0x5228"
 };
 
 export const PuppetProxyGen_Matrix: any = {
