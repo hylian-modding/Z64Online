@@ -476,7 +476,8 @@ export class ActorHookingManagerClient {
       packet.scene !== this.core.global.scene ||
       packet.room !== this.core.global.room ||
       this.core.helper.isLinkEnteringLoadingZone() ||
-      this.core.global.scene_framecount < 100
+      this.core.global.scene_framecount < 100 ||
+      this.core.helper.isPaused()
     ) {
       return;
     }
