@@ -21,7 +21,8 @@
     "age": 4,
     "tunic": 3,
     "strength": 1,
-    "gauntlet": 3
+    "gauntlet": 3,
+    "ocarina": 1
   },
   "sources": {
     "pos": 2149427796,
@@ -45,7 +46,8 @@
     "age": 2148640212,
     "tunic": 3735928559,
     "strength": 3735928559,
-    "gauntlet": 3735928559
+    "gauntlet": 3735928559,
+    "ocarina": 2148640331
   },
   "destinations": {
     "pos": 36,
@@ -69,6 +71,7 @@
     "age": 892,
     "tunic": 904,
     "strength": 916,
-    "gauntlet": 896
+    "gauntlet": 896,
+    "ocarina": 921
   }
 }
