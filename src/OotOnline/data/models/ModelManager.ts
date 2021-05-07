@@ -32,9 +32,10 @@ import { onTick, onViUpdate, Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Deprecated } from 'modloader64_api/Deprecated';
 import * as f3djs from 'f3djs';
-import { PuppetProxyGen_Adult, PuppetProxyGen_Child } from './PuppetProxyGen';
+import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix } from './PuppetProxyGen';
 import { CostumeHelper } from '@OotOnline/WorldEvents/CostumeHelper';
 import { EquipmentManifest } from './EquipmentManifest';
+import { MatrixTranslate } from './MatrixTranslate';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -449,17 +450,37 @@ export class ModelManagerClient {
         }
       });
     };
+    let fn2 = (__ref: IModelReference, obj: any) => {
+      Object.keys(obj).forEach((key: string) => {
+        let src: number = parseInt(obj[key]);
+        let data: Buffer = this.ModLoader.emulator.rdramReadBuffer(__ref.pointer + src, 0x40);
+        this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + parseInt(key), data);
+      });
+    };
 
     let adult_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Adult));
     let child_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Child));
 
-    player.equipment.forEach((value: IModelReference)=>{
+    player.equipment.forEach((value: IModelReference) => {
       let man = this.getEquipmentManifest(value);
-      
+      Object.keys(man.manifest.OOT.child).forEach((key: string) => {
+        let i = man.lut + (parseInt(key) * 0x8);
+        child_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.child[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
+      });
+
+      Object.keys(man.manifest.OOT.adult).forEach((key: string) => {
+        let i = man.lut + (parseInt(key) * 0x8);
+        adult_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.adult[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
+      });
     });
 
     fn(player.adult, adult_generator_table, this.ModLoader);
     fn(player.child, child_generator_table, this.ModLoader);
+    if (age === Age.ADULT) {
+      fn2(player.adult, PuppetProxyGen_Matrix);
+    } else if (age === Age.CHILD) {
+      fn2(player.child, PuppetProxyGen_Matrix);
+    }
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -531,7 +552,7 @@ export class ModelManagerClient {
       }
       Object.keys(table).forEach((key: string) => {
         let i = data.lut + (parseInt(key) * 0x8) + 0x4;
-        let offset = parseInt(table[key]) + 0x4;
+        let offset = parseInt(EqManifestToOffsetMap_Link[table[key]]) + 0x4;
         this.ModLoader.emulator.rdramWrite32(player.proxyPointer + offset, data.model.readUInt32BE(i));
       });
     });
@@ -587,6 +608,15 @@ export class ModelManagerClient {
         curRef = this.allocationManager.getLocalPlayerData().child;
       }
     }
+
+    /*     this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC698, Buffer.alloc(0x170));
+        this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC700, MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(186.0, 60.0, -10.7, -807.0, 0.02, 31.5, 1.0)));
+        this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC740, Buffer.from('DA3800000400c700', 'hex'));
+        this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC748, this.ModLoader.utils.cloneBuffer(f3djs.gsSPDisplayList(this.allocationManager.getLocalPlayerData().child.pointer + 0x51B0)));
+        this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC750, Buffer.from('D838000200000064', 'hex'));
+        this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC758, this.ModLoader.utils.cloneBuffer(f3djs.gsSPEndDisplayList()));
+        this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC698, this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(0x0400C740))); */
+
     if (scene > -1 && this.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
       this.ModLoader.utils.setTimeoutFrames(() => {
