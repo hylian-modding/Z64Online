@@ -83,7 +83,8 @@ export const EqManifestToOffsetMap_Puppet: any = {
     "slingshot": "0x608",
     "boomerang": "0x618",
     "ocarina_0": "0x6C0",
-    "ocarina_1": "0x6C8"
+    "ocarina_1_c": "0x6C8",
+    "ocarina_1_a": "0x6D0"
 };
 
 export const EqManifestToOffsetMap_Link: any = {
@@ -113,7 +114,8 @@ export const EqManifestToOffsetMap_Link: any = {
     "slingshot": "0x5190",
     "boomerang": "0x51B0",
     "ocarina_0": "0x5198",
-    "ocarina_1": "0x51A0"
+    "ocarina_1_c": "0x51A0",
+    "ocarina_1_a": "0x5188"
 };
 
 export const PuppetProxyGen_Matrix: any = {
