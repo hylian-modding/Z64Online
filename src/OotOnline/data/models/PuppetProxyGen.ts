@@ -26,7 +26,9 @@ export const PuppetProxyGen_Adult: any = {
     // Ocarina of Time
     "0x6D0": "0x5188",
     // Hookshot Hook
-    "0x6D8": "0x5218"
+    "0x6D8": "0x5218",
+    // Megaton Hammer
+    "0x6E0": "0x5170"
 };
 
 export const PuppetProxyGen_Child: any = {
@@ -84,7 +86,8 @@ export const EqManifestToOffsetMap_Puppet: any = {
     "boomerang": "0x618",
     "ocarina_0": "0x6C0",
     "ocarina_1_c": "0x6C8",
-    "ocarina_1_a": "0x6D0"
+    "ocarina_1_a": "0x6D0",
+    "hammer": "0x6E0"
 };
 
 export const EqManifestToOffsetMap_Link: any = {
@@ -115,7 +118,8 @@ export const EqManifestToOffsetMap_Link: any = {
     "boomerang": "0x51B0",
     "ocarina_0": "0x5198",
     "ocarina_1_c": "0x51A0",
-    "ocarina_1_a": "0x5188"
+    "ocarina_1_a": "0x5188",
+    "hammer": "0x5170"
 };
 
 export const PuppetProxyGen_Matrix: any = {
