@@ -123,6 +123,6 @@ export const EqManifestToOffsetMap_Link: any = {
 };
 
 export const PuppetProxyGen_Matrix: any = {
-    "0x6E0": "0x5010", // Hilt matrix
-    "0x720": "0x5050" // Shield matrix
+    "0x6F0": "0x5010", // Hilt matrix
+    "0x730": "0x5050" // Shield matrix
 };
