@@ -4,7 +4,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
-import { EventHandler } from "modloader64_api/EventHandler";
+import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { IZ64OnlineHelpers, Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
 import Vector3 from "modloader64_api/math/Vector3";
 import { glmatrix_matrix4, glmatrix_vec4 } from 'modloader64_api/math/glmatrix';
@@ -211,6 +211,9 @@ export class ImGuiHandler {
                         }
                         if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
                             this.showActorBrowser = !this.showActorBrowser;
+                        }
+                        if (this.ModLoader.ImGui.button("DUMP RAM")){
+                            bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
                         }
                     }
                     this.ModLoader.ImGui.endMenu();

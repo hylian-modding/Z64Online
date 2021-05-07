@@ -485,12 +485,14 @@ export class WorldEventRewards {
                     let c = this.getAssetByUUID(value);
                     if (c !== undefined) {
                         bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, c));
+                        bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
                     } else {
                         // Probably custom gear.
                         if (this.customModelsFilesEquipment.has(key)) {
                             let item = this.customModelsFilesEquipment.get(key)!.find(i => { return i.name === value });
                             if (item !== undefined) {
                                 bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, item.data));
+                                bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
                             }
                         }
                     }

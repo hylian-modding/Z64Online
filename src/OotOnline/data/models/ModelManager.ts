@@ -32,7 +32,9 @@ import { onTick, onViUpdate, Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Deprecated } from 'modloader64_api/Deprecated';
 import * as f3djs from 'f3djs';
-import { PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix } from './PuppetProxyGen';
+import { PuppetProxyGen_Adult, PuppetProxyGen_Child } from './PuppetProxyGen';
+import { CostumeHelper } from '@OotOnline/WorldEvents/CostumeHelper';
+import { EquipmentManifest } from './EquipmentManifest';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -144,12 +146,12 @@ export class ModelManagerClient {
     let copy = this.ModLoader.utils.cloneBuffer(eq.data);
     let ref = this.allocationManager.registerModel(copy);
     ref = this.allocationManager.allocateModel(ref)!;
-    this.allocationManager.getLocalPlayerData().equipment.set(eq.name, ref);
+    this.allocationManager.getLocalPlayerData().equipment.set(CostumeHelper.getEquipmentCategory(copy), ref);
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_PAK)
   onLoadEQExternal(eq: Z64Online_EquipmentPak) {
-    this.customModelFilesEquipment.set(eq.name, eq.data);
+    this.customModelFilesEquipment.set(CostumeHelper.getEquipmentCategory(eq.data), eq.data);
   }
 
   @EventHandler(Z64OnlineEvents.CLEAR_EQUIPMENT)
@@ -324,11 +326,14 @@ export class ModelManagerClient {
     }, 100);
 
     this.ModLoader.logger.info('Done.');
-    this.ModLoader.clientSide.sendPacket(new Z64_GiveModelPacket(this.ModLoader.clientLobby, this.ModLoader.me));
+    this.ModLoader.utils.setTimeoutFrames(() => {
+      this.ModLoader.clientSide.sendPacket(new Z64_GiveModelPacket(this.ModLoader.clientLobby, this.ModLoader.me));
+    }, 100);
   }
 
   @NetworkHandler('Z64OnlineLib_AllocateModelPacket')
   onModelAllocate_client(packet: Z64_AllocateModelPacket) {
+    console.log(packet);
     this.ModLoader.utils.setTimeoutFrames(() => {
       let z = zlib.inflateSync(packet.model);
       if (z.byteLength <= 1) return;
@@ -342,18 +347,24 @@ export class ModelManagerClient {
       if (this.allocationManager.isPlayerAllocated(player)) {
         this.setPuppetModel(player, model, packet.age);
       }
-    }, 10);
+    }, 20);
   }
 
   @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
   onModelAllocate_Equipment(packet: Z64_EquipmentPakPacket) {
+    console.log(packet);
     this.ModLoader.utils.setTimeoutFrames(() => {
       let player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
       player.equipment.clear();
       packet.zobjs.forEach((value: Buffer, index: number) => {
         let def = zlib.inflateSync(value);
         let model = this.allocationManager.registerModel(def)!;
-        player.equipment.set("0x" + index.toString(16), model);
+        model.loadModel();
+        let man = this.getEquipmentManifest(model);
+        player.equipment.set(man.cat, model);
+        if (this.allocationManager.isPlayerAllocated(player)) {
+          this.setPuppetModel(player, packet.age === Age.ADULT ? player.adult : player.child, packet.age);
+        }
       });
     }, 20);
   }
@@ -365,6 +376,7 @@ export class ModelManagerClient {
 
   @NetworkHandler("Z64OnlineLib_GiveModelPacket")
   onPlayerJoin_client(packet: Z64_GiveModelPacket) {
+    console.log(packet);
     if (packet.target.uuid !== this.ModLoader.me.uuid) {
       if (this.clientStorage.adultModel.byteLength > 1) {
         let def = zlib.deflateSync(this.clientStorage.adultModel);
@@ -424,65 +436,30 @@ export class ModelManagerClient {
     this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x584, ref.pointer + 0x4000);
 
     // Support for mismatched age equips.
-    let fn = (__ref: IModelReference, obj: any) => {
+    let fn = function (__ref: IModelReference, obj: any, ModLoader: IModLoaderAPI) {
       Object.keys(obj).forEach((key: string) => {
         let dest: number = parseInt(key);
         if (typeof (obj[key]) === 'string') {
           let src: number = parseInt(obj[key]);
-          this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, f3djs.gsSPBranchList(__ref.pointer + src));
+          ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(__ref.pointer + src)));
         } else if (Buffer.isBuffer(obj[key])) {
-          this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, obj[key]);
+          ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, obj[key]);
+        } else if (Array.isArray(obj[key])) {
+          ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, ModLoader.emulator.rdramReadBuffer(__ref.pointer + obj[key][0], obj[key][1]));
         }
-      });
-    };
-    let fn2 = (__ref: IModelReference, obj: any) => {
-      Object.keys(obj).forEach((key: string) => {
-        let src: number = parseInt(obj[key]);
-        let data: Buffer = this.ModLoader.emulator.rdramReadBuffer(__ref.pointer + src, 0x40);
-        this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + parseInt(key), data);
       });
     };
 
     let adult_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Adult));
     let child_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Child));
 
-    player.equipment.forEach((value: IModelReference) => {
-      let data = this.getEquipmentManifest(value);
-      let table: any = {};
-      let player = new ModelPlayer("TEMP");
-      if (age === Age.ADULT) {
-        table = data.manifest.OOT.adult;
-      } else if (age === Age.CHILD) {
-        table = data.manifest.OOT.child;
-      }
-      let replacements: Array<number> = [];
-      Object.keys(table).forEach((key: string) => {
-        let i = data.lut + (parseInt(key) * 0x8) + 0x4;
-        let offset = parseInt(table[key]) + 0x4;
-        replacements.push(offset);
-        this.ModLoader.emulator.rdramWrite32(player.proxyPointer + (offset - 0x5000), data.model.readUInt32BE(i));
-      });
-      Object.keys(adult_generator_table).forEach((key: string) => {
-        let k = parseInt(adult_generator_table[key]);
-        if (replacements.indexOf(k) > -1) {
-          adult_generator_table[k] = `0x${replacements[replacements.indexOf(k)].toString(16)}`;
-        }
-      });
-      Object.keys(child_generator_table).forEach((key: string) => {
-        let k = parseInt(child_generator_table[key]);
-        if (replacements.indexOf(k) > -1) {
-          child_generator_table[k] = `0x${replacements[replacements.indexOf(k)].toString(16)}`;
-        }
-      });
+    player.equipment.forEach((value: IModelReference)=>{
+      let man = this.getEquipmentManifest(value);
+      
     });
 
-    fn(player.adult, adult_generator_table);
-    fn(player.child, child_generator_table);
-    if (age === Age.ADULT) {
-      fn2(player.adult, PuppetProxyGen_Matrix);
-    } else if (age === Age.CHILD) {
-      fn2(player.child, PuppetProxyGen_Matrix);
-    }
+    fn(player.adult, adult_generator_table, this.ModLoader);
+    fn(player.child, child_generator_table, this.ModLoader);
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -531,9 +508,10 @@ export class ModelManagerClient {
       curIndex++;
     }
     str = str.substr(0, str.length - 1);
-    let data = JSON.parse(str);
+    let data: EquipmentManifest = JSON.parse(str);
     let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
-    return { manifest: data, model: rp, lut: start };
+    let cat = CostumeHelper.getEquipmentCategory(rp);
+    return { manifest: data, model: rp, lut: start, cat };
   }
 
   private dealWithEquipmentPaks(age: Age) {

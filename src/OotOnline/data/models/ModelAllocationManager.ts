@@ -214,7 +214,7 @@ export class ModelAllocationManager {
     this.players.set(player.uuid, mp);
     let b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(proxy, 0, true, pointer);
 
-    let dummy = f3djs.gsSPBranchList(pointer + 0x3C0);
+    let dummy = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(pointer + 0x3C0));
     for (let i = 0; i < 0x20; i++) {
       dummy.copy(proxy, 0x590 + (i * 8));
     }

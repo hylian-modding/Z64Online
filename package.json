@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "modloader64 -r",
-    "packassets": "ts-node ./packassets.ts"
+    "packassets": "modloader64 -cbd && ts-node ./packassets.ts"
   },
   "repository": {
     "type": "git",

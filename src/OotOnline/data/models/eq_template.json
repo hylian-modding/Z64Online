@@ -1,7 +1,10 @@
 {
     "OOT": {
-        "adult": {"0": {"slot": "glasses"}},
-        "child": {}
+        "adult": {},
+        "child": {
+            "0": "sword0_hilt",
+            "1": "sword0_blade"
+        }
     },
     "MM": {
         "human": {},
