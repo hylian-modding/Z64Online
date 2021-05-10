@@ -157,7 +157,7 @@ export class Z64Online_ModelAllocation {
   model: Buffer;
   age: Age;
   ref!: IModelReference;
-  script!: IModelScript;
+  script: IModelScript | undefined;
 
   constructor(model: Buffer, age: Age) {
     this.model = model;
@@ -168,6 +168,7 @@ export class Z64Online_ModelAllocation {
 export class Z64Online_EquipmentPak {
   name: string;
   data: Buffer;
+  remove: boolean = false;
 
   constructor(name: string, data: Buffer) {
     this.name = name;

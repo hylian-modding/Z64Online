@@ -289,7 +289,7 @@ export class WorldEventRewards {
             }
             if (this.rewardsWindowStatus[0]) {
                 if (this.ModLoader.ImGui.begin("Costume Manager###OotO:EventRewards", this.rewardsWindowStatus)) {
-                    if (this.ModLoader.ImGui.smallButton("Remove costumes")) {
+                    if (this.ModLoader.ImGui.smallButton("Remove all costumes")) {
                         this.config.adultCostume = "";
                         this.config.childCostume = "";
                         this.config.equipmentLoadout = {};
@@ -308,13 +308,19 @@ export class WorldEventRewards {
                                 if (event.has("Adult")) {
                                     event.get("Adult")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
-                                        if (this.ModLoader.ImGui.menuItem(name, undefined, name === this.config.adultCostume)) {
-                                            this.config.adultCostume = ticket.uuid;
+                                        if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.adultCostume)) {
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.ADULT);
+                                            if (this.isAssetScripted(ticket.uuid).is) {
+                                                evt.script = this.isAssetScripted(ticket.uuid).script;
+                                            }
+                                            if (ticket.uuid === this.config.adultCostume) {
+                                                this.config.adultCostume = "";
+                                                evt.model = Buffer.alloc(1);
+                                                evt.script = undefined;
+                                            } else {
+                                                this.config.adultCostume = ticket.uuid;
+                                            }
                                             this.ModLoader.utils.setTimeoutFrames(() => {
-                                                let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.ADULT);
-                                                if (this.isAssetScripted(ticket.uuid).is) {
-                                                    evt.script = this.isAssetScripted(ticket.uuid).script;
-                                                }
                                                 bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, evt);
                                             }, 1);
                                             this.ModLoader.config.save();
@@ -327,13 +333,19 @@ export class WorldEventRewards {
                                 if (event.has("Child")) {
                                     event.get("Child")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
-                                        if (this.ModLoader.ImGui.menuItem(name, undefined, name === this.config.childCostume)) {
-                                            this.config.childCostume = ticket.uuid;
+                                        if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.childCostume)) {
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.CHILD);
+                                            if (this.isAssetScripted(ticket.uuid).is) {
+                                                evt.script = this.isAssetScripted(ticket.uuid).script;
+                                            }
+                                            if (ticket.uuid === this.config.childCostume) {
+                                                this.config.childCostume = "";
+                                                evt.model = Buffer.alloc(1);
+                                                evt.script = undefined;
+                                            } else {
+                                                this.config.childCostume = ticket.uuid;
+                                            }
                                             this.ModLoader.utils.setTimeoutFrames(() => {
-                                                let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.CHILD);
-                                                if (this.isAssetScripted(ticket.uuid).is) {
-                                                    evt.script = this.isAssetScripted(ticket.uuid).script;
-                                                }
                                                 bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, evt);
                                             }, 1);
                                             this.ModLoader.config.save();
@@ -348,10 +360,16 @@ export class WorldEventRewards {
                                         if (this.ModLoader.ImGui.treeNode(key2 + "###" + key + key2)) {
                                             value.forEach((ticket: RewardTicket) => {
                                                 let name = path.parse(ticket.name).name;
-                                                if (this.ModLoader.ImGui.menuItem(name, undefined, this.config.equipmentLoadout[key2] === name)) {
-                                                    this.config.equipmentLoadout[key2] = ticket.uuid;
+                                                if (this.ModLoader.ImGui.menuItem(name, undefined, this.config.equipmentLoadout[key2] === ticket.uuid)) {
+                                                    let evt = new Z64Online_EquipmentPak(key2, this.getAssetByUUID(ticket.uuid)!);
+                                                    if (this.config.equipmentLoadout[key2] === ticket.uuid) {
+                                                        this.config.equipmentLoadout[key2] = "";
+                                                        evt.remove = true;
+                                                    } else {
+                                                        this.config.equipmentLoadout[key2] = ticket.uuid;
+                                                    }
                                                     this.ModLoader.utils.setTimeoutFrames(() => {
-                                                        bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key2, this.getAssetByUUID(ticket.uuid)!));
+                                                        bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, evt);
                                                         bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
                                                     }, 1);
                                                     this.ModLoader.config.save();
@@ -371,10 +389,14 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Adult###OotOCustomModels_Adult")) {
                                 this.customModelFilesAdult.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.adultCostume)) {
-                                        this.config.adultCostume = key;
-                                        this.ModLoader.utils.setTimeoutFrames(() => {
-                                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.ADULT);
+                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.ADULT);
+                                        if (key === this.config.adultCostume) {
+                                            this.config.adultCostume = "";
+                                        } else {
                                             evt.ref = value;
+                                            this.config.adultCostume = key;
+                                        }
+                                        this.ModLoader.utils.setTimeoutFrames(() => {
                                             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, evt);
                                         }, 1);
                                         this.ModLoader.config.save();
@@ -385,10 +407,14 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Child###OotOCustomModels_Child")) {
                                 this.customModelFilesChild.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.childCostume)) {
-                                        this.config.childCostume = key;
-                                        this.ModLoader.utils.setTimeoutFrames(() => {
-                                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD);
+                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD);
+                                        if (key === this.config.childCostume) {
+                                            this.config.childCostume = "";
+                                        } else {
+                                            this.config.childCostume = key;
                                             evt.ref = value;
+                                        }
+                                        this.ModLoader.utils.setTimeoutFrames(() => {
                                             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, evt);
                                         }, 1);
                                         this.ModLoader.config.save();
@@ -401,9 +427,15 @@ export class WorldEventRewards {
                                     if (this.ModLoader.ImGui.treeNode(key + "###" + "OotOCustomModels_Equipment_" + key)) {
                                         for (let i = 0; i < value.length; i++) {
                                             if (this.ModLoader.ImGui.menuItem(value[i].name, undefined, this.config.equipmentLoadout[key] === value[i].name)) {
-                                                this.config.equipmentLoadout[key] = value[i].name;
+                                                let evt = new Z64Online_EquipmentPak(key, value[i].data);
+                                                if (this.config.equipmentLoadout[key] === value[i].name) {
+                                                    this.config.equipmentLoadout[key] = "";
+                                                    evt.remove = true;
+                                                } else {
+                                                    this.config.equipmentLoadout[key] = value[i].name;
+                                                }
                                                 this.ModLoader.utils.setTimeoutFrames(() => {
-                                                    bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, value[i].data));
+                                                    bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, evt);
                                                     bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
                                                 }, 1);
                                                 this.ModLoader.config.save();
@@ -417,8 +449,13 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Voice###OotOCustomVoice")) {
                                 this.customSoundGroups.forEach((value: any, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.voice)) {
-                                        this.config.voice = key;
-                                        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, key);
+                                        if (key === this.config.voice) {
+                                            this.config.voice = "";
+                                            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
+                                        } else {
+                                            this.config.voice = key;
+                                            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, key);
+                                        }
                                         this.ModLoader.config.save();
                                     }
                                 });
@@ -473,7 +510,7 @@ export class WorldEventRewards {
                 }
             }
             if (this.config.voice !== "") {
-                if (this.customSoundGroups.has(this.config.voice)){
+                if (this.customSoundGroups.has(this.config.voice)) {
                     bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voice);
                 }
             }
@@ -520,8 +557,8 @@ export class WorldEventRewards {
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_DOES_HAVE)
-    onCheck(evt: OOTO_PRIVATE_ASSET_HAS_CHECK){
-        evt.has = this.rewardContainer.tickets.find(t =>{ return t.uuid === evt.ticket.uuid }) !== undefined;
+    onCheck(evt: OOTO_PRIVATE_ASSET_HAS_CHECK) {
+        evt.has = this.rewardContainer.tickets.find(t => { return t.uuid === evt.ticket.uuid }) !== undefined;
         console.log(evt);
     }
 

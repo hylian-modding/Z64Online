@@ -35,7 +35,6 @@ import * as f3djs from 'f3djs';
 import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix } from './PuppetProxyGen';
 import { CostumeHelper } from '@OotOnline/WorldEvents/CostumeHelper';
 import { EquipmentManifest } from './EquipmentManifest';
-import { MatrixTranslate } from './MatrixTranslate';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -148,6 +147,9 @@ export class ModelManagerClient {
     let ref = this.allocationManager.registerModel(copy);
     ref = this.allocationManager.allocateModel(ref)!;
     this.allocationManager.getLocalPlayerData().equipment.set(CostumeHelper.getEquipmentCategory(copy), ref);
+    if (eq.remove){
+      this.allocationManager.getLocalPlayerData().equipment.delete(CostumeHelper.getEquipmentCategory(copy));
+    }
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_PAK)
@@ -647,7 +649,6 @@ export class ModelManagerClient {
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, this.puppetAdult);
-      this.allocationManager.SetLocalPlayerModel(Age.CHILD, this.puppetChild);
       this.clientStorage.adultModel = this.allocationManager.getModel(this.puppetAdult)!.zobj;
       this.onSceneChange(-1);
       evt.ref = this.puppetAdult;
@@ -668,6 +669,7 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY)
   onChangeModelChild(evt: Z64Online_ModelAllocation) {
+    console.log(evt);
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().child.hash === evt.ref.hash) return;
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, evt.ref);
@@ -678,8 +680,11 @@ export class ModelManagerClient {
     }
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
-      this.allocationManager.SetLocalPlayerModel(Age.ADULT, this.puppetChild);
+      this.allocationManager.SetLocalPlayerModel(Age.CHILD, this.puppetChild);
       this.clientStorage.childModel = this.allocationManager.getModel(this.puppetChild)!.zobj;
+      this.onSceneChange(-1);
+      evt.ref = this.puppetAdult;
+      this.proxyNeedsSync = true;
     } else {
       if (copy.readUInt32BE(0x500C) === 0xFFFFFFFF) {
         copy.writeUInt32BE(this.childCodePointer, 0x500C)
