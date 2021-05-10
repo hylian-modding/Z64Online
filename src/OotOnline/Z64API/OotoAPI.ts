@@ -51,7 +51,18 @@ export enum Z64OnlineEvents {
   CUSTOM_MODEL_LOAD_ADULT = "OotOnline:CUSTOM_MODEL_LOAD_ADULT",
   CUSTOM_MODEL_LOAD_CHILD = "OotOnline:CUSTOM_MODEL_LOAD_CHILD",
   PUPPET_AGE_CHANGED = 'OotOnline:PUPPET_AGE_CHANGED',
-  SAVE_DATA_ITEM_SET = 'OotOnline:SAVE_DATA_ITEM_SET'
+  SAVE_DATA_ITEM_SET = 'OotOnline:SAVE_DATA_ITEM_SET',
+  LOCAL_MODEL_CHANGE_FINISHED = "OotOnline:LOCAL_MODEL_CHANGE_FINISHED"
+}
+
+export class Z64Online_LocalModelChangeProcessEvt{
+  adult: IModelReference;
+  child: IModelReference;
+
+  constructor(adult: IModelReference, child: IModelReference){
+    this.adult = adult;
+    this.child = child;
+  }
 }
 
 export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference {

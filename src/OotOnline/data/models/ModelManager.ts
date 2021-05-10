@@ -15,7 +15,7 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64OnlineAPI_QueryPuppet } from '../../Z64API/OotoAPI';
+import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64OnlineAPI_QueryPuppet, Z64Online_LocalModelChangeProcessEvt } from '../../Z64API/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -569,11 +569,12 @@ export class ModelManagerClient {
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: number) {
     if (this.lockManager) return;
+    this.allocationManager.getLocalPlayerData().adult.loadModel();
+    this.allocationManager.getLocalPlayerData().child.loadModel();
     let curRef: IModelReference | undefined;
     if (this.core.save.age === Age.ADULT) {
       let link = this.doesLinkObjExist(Age.ADULT);
       if (link.exists) {
-        this.allocationManager.getLocalPlayerData().adult.loadModel();
         this.ModLoader.emulator.rdramWriteBuffer(link.pointer, this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().adult.pointer, 0x5380));
         let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().adult.pointer + 0x5380) - 0x150;
         let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x150);
@@ -592,7 +593,6 @@ export class ModelManagerClient {
     } else {
       let link = this.doesLinkObjExist(Age.CHILD);
       if (link.exists) {
-        this.allocationManager.getLocalPlayerData().child.loadModel();
         this.ModLoader.emulator.rdramWriteBuffer(link.pointer, this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().child.pointer, 0x53A8));
         let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().child.pointer + 0x53A8) - 0x150;
         let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x1B0);
@@ -607,6 +607,8 @@ export class ModelManagerClient {
         this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("child_rom")!, this.ModLoader.emulator.rdramReadBuffer(link.pointer, 0x22380));
         curRef = this.allocationManager.getLocalPlayerData().child;
       }
+      this.ModLoader.emulator.rdramWrite32(link.pointer + 0x6000, this.allocationManager.getLocalPlayerData().adult.pointer);
+      this.ModLoader.emulator.rdramWrite32(link.pointer + 0x6004, this.allocationManager.getLocalPlayerData().adult.pointer);
     }
 
     /*     this.ModLoader.emulator.rdramWritePtrBuffer(0x8016A66C, 0xC698, Buffer.alloc(0x170));
@@ -629,6 +631,7 @@ export class ModelManagerClient {
         }
       }, 1);
     }
+    bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.allocationManager.getLocalPlayerData().adult, this.allocationManager.getLocalPlayerData().child));
   }
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY)
@@ -644,7 +647,11 @@ export class ModelManagerClient {
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, this.puppetAdult);
+      this.allocationManager.SetLocalPlayerModel(Age.CHILD, this.puppetChild);
       this.clientStorage.adultModel = this.allocationManager.getModel(this.puppetAdult)!.zobj;
+      this.onSceneChange(-1);
+      evt.ref = this.puppetAdult;
+      this.proxyNeedsSync = true;
     } else {
       if (copy.readUInt32BE(0x500C) === 0xFFFFFFFF) {
         copy.writeUInt32BE(this.adultCodePointer, 0x500C)
@@ -725,6 +732,18 @@ export class ModelManagerClient {
     if (link_object_pointer === 0) return { exists: false, pointer: 0 };
     link_object_pointer = this.ModLoader.emulator.rdramRead32(link_object_pointer);
     return { exists: this.ModLoader.emulator.rdramReadBuffer(link_object_pointer + 0x5000, 0xB).toString() === "MODLOADER64", pointer: link_object_pointer };
+  }
+
+  findGameplayKeep() {
+    let obj_list: number = 0x801D9C44;
+    let obj_id = 0x00010000;
+    for (let i = 4; i < 0x514; i += 4) {
+      let value = this.ModLoader.emulator.rdramRead32(obj_list + i);
+      if (value === obj_id) {
+        return this.ModLoader.emulator.rdramRead32(obj_list + i + 4);
+      }
+    }
+    return -1;
   }
 
   @onTick()
