@@ -12,7 +12,6 @@ import { Z64_EventConfig } from './Z64_EventConfig';
 import fs from 'fs';
 import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
-import { ContentBundle } from './ContentBundle';
 import { EventController } from './EventController';
 import { OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
 import { WorldEvents_TransactionPacket } from './WorldEventPackets';

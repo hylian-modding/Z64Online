@@ -15,7 +15,7 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64OnlineAPI_QueryPuppet, Z64Online_LocalModelChangeProcessEvt } from '../../Z64API/OotoAPI';
+import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64Online_LocalModelChangeProcessEvt } from '../../Z64API/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
