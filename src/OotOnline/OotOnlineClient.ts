@@ -137,7 +137,13 @@ export class OotOnlineClient {
         this.clientStorage.needs_update = false;
         let data = new OotOSaveData(this.core, this.ModLoader);
         let save = data.createSave();
-        this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
+        if (this.clientStorage.lastPushHash !== data.hash) {
+            this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
+            this.clientStorage.lastPushHash = data.hash;
+            this.ModLoader.utils.setTimeoutFrames(() => {
+                this.clientStorage.lastPushHash = "!";
+            }, (20 * 60));
+        }
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH)

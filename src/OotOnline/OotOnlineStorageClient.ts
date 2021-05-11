@@ -6,6 +6,7 @@ import { Z64Online_ModelAllocation } from './Z64API/OotoAPI';
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
   keySaveHash = "!";
+  lastPushHash = "!";
   needs_update = false;
   lastKnownSkullCount = -1;
   bottleCache: InventoryItem[] = [
