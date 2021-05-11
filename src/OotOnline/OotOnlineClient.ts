@@ -9,7 +9,6 @@ import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
 import fs from 'fs';
 import { OotOnlineStorageClient } from './OotOnlineStorageClient';
 import { DiscordStatus } from 'modloader64_api/Discord';
-import { UtilityActorHelper } from './data/utilityActorHelper';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { Init, Preinit, Postinit, onTick, onCreateResources } from 'modloader64_api/PluginLifecycle';
 import { parseFlagChanges } from './parseFlagChanges';
@@ -52,8 +51,6 @@ export class OotOnlineClient {
     emotes!: EmoteManager;
     @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
     modelManager!: ModelManagerClient;
-    @SidedProxy(ProxySide.CLIENT, UtilityActorHelper)
-    utility!: UtilityActorHelper;
     @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
@@ -551,15 +548,6 @@ export class OotOnlineClient {
                 (success: boolean, result: number) => { }
             );
         }
-    }
-
-    @EventHandler(ModLoaderEvents.ON_CRASH)
-    onEmuCrash(evt: any) {
-        fs.writeFileSync(
-            './Ooto_storagedump.json',
-            JSON.stringify(this.clientStorage, null, 2)
-        );
-        this.utility.makeRamDump();
     }
 
     @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
