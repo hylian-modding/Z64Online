@@ -30,7 +30,6 @@ export class EmoteManager {
         let id: number | undefined;
         let e = new anim_binary_container(emote.name, emote.buf, s, emote.sound, id);
         if (emote.sound !== undefined) {
-            console.log("LOADING EMOTE SOUND");
             s = this.ModLoader.sound.initSound(emote.sound);
             e.sound = s;
             id = this.currentEmoteSoundID++;
@@ -39,6 +38,7 @@ export class EmoteManager {
         if (emote.builtIn !== undefined) {
             e.isBuiltInEmote = emote.builtIn;
         }
+        e.loops = emote.loops;
         this.masterEmoteList.push(e);
     }
 
@@ -59,7 +59,6 @@ export class EmoteManager {
         if (this.displayingEmoteWindow[0]) {
             if (this.ModLoader.ImGui.begin("Emotes###OotO:Emotes", this.displayingEmoteWindow, WindowFlags.NoCollapse)) {
                 if (this.ModLoader.ImGui.checkbox("Mute All", this.muteAll)) {
-                    this.muteAll[0] = !this.muteAll[0];
                 }
                 if (this.isCurrentlyPlayingEmote) {
                     if (this.ModLoader.ImGui.smallButton("Stop")) {
