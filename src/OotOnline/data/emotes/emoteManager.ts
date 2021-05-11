@@ -59,6 +59,7 @@ export class EmoteManager {
         if (this.displayingEmoteWindow[0]) {
             if (this.ModLoader.ImGui.begin("Emotes###OotO:Emotes", this.displayingEmoteWindow, WindowFlags.NoCollapse)) {
                 if (this.ModLoader.ImGui.checkbox("Mute All", this.muteAll)) {
+                    this.muteAll[0] = !this.muteAll[0];
                 }
                 if (this.isCurrentlyPlayingEmote) {
                     if (this.ModLoader.ImGui.smallButton("Stop")) {
@@ -107,8 +108,6 @@ export class EmoteManager {
     onTick(frame: number) {
         if (this.isCurrentlyPlayingEmote) {
             if (this.currentEmoteFrame === 5 && this.masterEmoteList[this.currentEmoteID].sound !== undefined) {
-                console.log("PLAYING EMOTE SOUND");
-                console.log(this.masterEmoteList[this.currentEmoteID].sound!.status);
                 if (this.masterEmoteList[this.currentEmoteID].sound!.status !== SoundSourceStatus.Playing) {
                     if (!this.muteAll[0]) {
                         this.masterEmoteList[this.currentEmoteID].sound!.play();
