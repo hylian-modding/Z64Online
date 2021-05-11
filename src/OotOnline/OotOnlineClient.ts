@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Magic, MagicQuantities, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Magic, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
@@ -14,7 +14,6 @@ import { Init, Preinit, Postinit, onTick, onCreateResources } from 'modloader64_
 import { parseFlagChanges } from './parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
-import { ModelPlayer } from './data/models/ModelPlayer';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { IActor } from 'modloader64_api/OOT/IActor';
