@@ -2,7 +2,7 @@ import { onViUpdate, onTick, onCreateResources } from "modloader64_api/PluginLif
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, Magic, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { IZ64OnlineHelpers, Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
@@ -214,6 +214,9 @@ export class ImGuiHandler {
                         }
                         if (this.ModLoader.ImGui.button("DUMP RAM")){
                             bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
+                        }
+                        if (this.ModLoader.ImGui.button("MAGIC GET")){
+                            this.core.save.magic_meter_size = Magic.NORMAL;
                         }
                     }
                     this.ModLoader.ImGui.endMenu();

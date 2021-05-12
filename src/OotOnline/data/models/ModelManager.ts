@@ -423,7 +423,7 @@ export class ModelManagerClient {
     let param_pointer = (this.clientStorage.overlayCache["puppet.ovl"] as IOvlPayloadResult).params;
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetAdult, this.puppetChild)!;
     this.ModLoader.emulator.rdramWrite32(param_pointer + 0x8, player.proxyPointer);
-    this.ModLoader.emulator.rdramWrite16(param_pointer + 0xE, 0);
+    this.ModLoader.emulator.rdramWrite16(param_pointer + 0xE, puppet.age);
     player.playerIsSpawned = true;
   }
 

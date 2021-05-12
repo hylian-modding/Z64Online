@@ -10,13 +10,18 @@ interface SyncData {
 }
 
 const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData.json"));
+const dummy_buffer: Buffer = Buffer.alloc(0xFF);
 
 export class PuppetData {
 	pointer: number;
 	ModLoader: IModLoaderAPI;
+	header: SmartBuffer;
 	buf: SmartBuffer;
 	ageLastFrame: Age = Age.ADULT;
 	age: Age = Age.ADULT;
+	localCache: Map<string, Buffer> = new Map<string, Buffer>();
+	tickRate: number = 20;
+	tickCount: number = 0;
 
 	private readonly copyFields: string[] = new Array<string>();
 
@@ -24,22 +29,52 @@ export class PuppetData {
 		this.pointer = pointer;
 		this.ModLoader = ModLoader;
 		this.buf = new SmartBuffer();
+		this.header = new SmartBuffer();
 		this.copyFields.push("bundle");
+	}
+
+	getEntry(key: string) {
+		if (key === "tunic") {
+			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 1, 0x3);
+		} else if (key === "strength") {
+			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 0, 0x1);
+		} else if (key === "gauntlet") {
+			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 5, 0x3);
+		} else {
+			return this.ModLoader.emulator.rdramReadBuffer(parseInt(SYNC_DATA.sources[key]), SYNC_DATA.lengths[key]);
+		}
 	}
 
 	onTick() {
 		this.buf.clear();
-		Object.keys(SYNC_DATA.sources).forEach((key: string) => {
-			if (key === "tunic") {
-				this.buf.writeBuffer(this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 1, 0x3));
-			} else if (key === "strength") {
-				this.buf.writeUInt8(this.ModLoader.emulator.rdramRead8(global.ModLoader["OotO_SyncContext"] + 0));
-			}else if (key === "gauntlet"){
-				this.buf.writeBuffer(this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 5, 0x3));
-			} else {
-				this.buf.writeBuffer(this.ModLoader.emulator.rdramReadBuffer(parseInt(SYNC_DATA.sources[key]), SYNC_DATA.lengths[key]));
+		this.header.clear();
+		this.tickCount++;
+		let keys = Object.keys(SYNC_DATA.sources);
+		if (this.tickCount > this.tickRate) {
+			this.tickCount = 0;
+			this.localCache.clear();
+		}
+		for (let i = 0; i < keys.length; i++) {
+			let key = keys[i];
+			if (!this.localCache.has(key)) {
+				this.localCache.set(key, dummy_buffer);
 			}
-		});
+			let entry = this.getEntry(key);
+			if (this.localCache.get(key)!.equals(entry)) {
+				this.header.writeUInt8(0);
+			} else {
+				this.header.writeUInt8(1);
+				this.localCache.set(key, entry);
+			}
+		}
+		let h = this.header.toBuffer();
+		this.buf.writeBuffer(h);
+		for (let i = 0; i < keys.length; i++) {
+			let key = keys[i];
+			if (h[i] === 1) {
+				this.buf.writeBuffer(this.localCache.get(key)!);
+			}
+		}
 	}
 
 	get bundle(): Buffer {
@@ -50,15 +85,20 @@ export class PuppetData {
 		this.buf.clear();
 		this.buf.writeBuffer(buf);
 		this.buf.readOffset = 0;
-		Object.keys(SYNC_DATA.destinations).forEach((key: string) => {
-			if (key === "age") {
-				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
-				this.age = data.readUInt32BE(0);
-				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
-			} else {
-				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), this.buf.readBuffer(SYNC_DATA.lengths[key]));
-			}
-		});
+		let keys = Object.keys(SYNC_DATA.destinations);
+		let header = this.buf.readBuffer(keys.length);
+		for (let i = 0; i < keys.length; i++) {
+			if (header[i] === 0) continue;
+			let key = keys[i];
+			if (header)
+				if (key === "age") {
+					let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
+					this.age = data.readUInt32BE(0);
+					this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
+				} else {
+					this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), this.buf.readBuffer(SYNC_DATA.lengths[key]));
+				}
+		}
 	}
 
 	toJSON() {
