@@ -336,7 +336,6 @@ export class ModelManagerClient {
 
   @NetworkHandler('Z64OnlineLib_AllocateModelPacket')
   onModelAllocate_client(packet: Z64_AllocateModelPacket) {
-    console.log(packet);
     this.ModLoader.utils.setTimeoutFrames(() => {
       let z = zlib.inflateSync(packet.model);
       if (z.byteLength <= 1) return;
@@ -355,7 +354,6 @@ export class ModelManagerClient {
 
   @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
   onModelAllocate_Equipment(packet: Z64_EquipmentPakPacket) {
-    console.log(packet);
     this.ModLoader.utils.setTimeoutFrames(() => {
       let player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
       player.equipment.clear();
@@ -379,7 +377,6 @@ export class ModelManagerClient {
 
   @NetworkHandler("Z64OnlineLib_GiveModelPacket")
   onPlayerJoin_client(packet: Z64_GiveModelPacket) {
-    console.log(packet);
     if (packet.target.uuid !== this.ModLoader.me.uuid) {
       if (this.clientStorage.adultModel.byteLength > 1) {
         let def = zlib.deflateSync(this.clientStorage.adultModel);
@@ -669,7 +666,6 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY)
   onChangeModelChild(evt: Z64Online_ModelAllocation) {
-    console.log(evt);
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().child.hash === evt.ref.hash) return;
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, evt.ref);
