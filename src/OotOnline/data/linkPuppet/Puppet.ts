@@ -19,7 +19,8 @@ export class Puppet {
   core: IOOTCore;
   void!: Vector3;
   ModLoader: IModLoaderAPI;
-  horse!: HorseData;
+  horse: HorseData | undefined;
+  horseSpawning: boolean = false;
   parent: IZ64OnlineHelpers;
 
   constructor(
@@ -68,11 +69,6 @@ export class Puppet {
         if (success) {
           this.data.pointer = result;
           this.doNotDespawnMe(this.data.pointer);
-          if (this.hasAttachedHorse()) {
-            let horse: number = this.getAttachedHorse();
-            this.doNotDespawnMe(horse);
-            this.horse = new HorseData(this.core.link, this, this.core);
-          }
           this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x24);
           this.isSpawned = true;
           this.isSpawning = false;
@@ -94,14 +90,23 @@ export class Puppet {
           (this.data as any)[key] = (data as any)[key];
         }
       });
-      if (this.data.ageLastFrame !== this.age){
+      if (this.data.ageLastFrame !== this.age) {
         bus.emit(Z64OnlineEvents.PUPPET_AGE_CHANGED, this);
       }
     }
   }
 
   processIncomingHorseData(data: HorseData) {
-    if (this.isSpawned && !this.isShoveled && this.horse !== undefined) {
+    if (this.horse === undefined && !this.horseSpawning) {
+      this.horseSpawning = true;
+      (this.parent.getClientStorage()?.overlayCache["horse-3.ovl"] as IOvlPayloadResult).spawn(this.parent.getClientStorage()?.overlayCache["horse-3.ovl"], (success: boolean, result: number) => {
+        if (success) {
+          this.horse = new HorseData(result, this, this.core);
+        }
+        this.horseSpawning = false;
+      });
+    }
+    if (this.isSpawned && !this.isShoveled && this.horse !== undefined && !this.horseSpawning) {
       Object.keys(data).forEach((key: string) => {
         (this.horse as any)[key] = (data as any)[key];
       });
@@ -111,9 +116,9 @@ export class Puppet {
   shovel() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        if (this.getAttachedHorse() > 0) {
-          let horse: number = this.getAttachedHorse();
-          this.ModLoader.math.rdramWriteV3(horse + 0x24, this.void);
+        if (this.horse !== undefined){
+          this.ModLoader.math.rdramWriteV3(this.horse.pointer + 0x24, this.void);
+          this.ModLoader.logger.debug(`Horse for puppet ${this.id} shoveled.`);
         }
         this.ModLoader.math.rdramWriteV3(this.data.pointer + 0x24, this.void);
         this.ModLoader.logger.debug('Puppet ' + this.id + ' shoveled.');
@@ -125,10 +130,10 @@ export class Puppet {
   despawn() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        if (this.getAttachedHorse() > 0) {
-          let horse: number = this.getAttachedHorse();
-          this.ModLoader.emulator.rdramWrite32(horse + 0x130, 0x0);
-          this.ModLoader.emulator.rdramWrite32(horse + 0x134, 0x0);
+        if (this.horse !== undefined){
+          this.horse.puppet.rdramWrite32(0x130, 0x0);
+          this.horse.puppet.rdramWrite32(0x134, 0x0);
+          this.horse = undefined;
         }
         this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x130, 0x0);
         this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0x0);
@@ -141,9 +146,6 @@ export class Puppet {
     }
   }
 
-  getAttachedHorse(): number {
-    return this.ModLoader.emulator.dereferencePointer(this.data.pointer + 0x011C);
-  }
 
   hasAttachedHorse(): boolean {
     return this.ModLoader.emulator.rdramRead32(this.data.pointer + 0x011C) > 0;

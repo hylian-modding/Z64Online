@@ -36,7 +36,7 @@ export class PuppetOverlordClient {
   >();
   @ParentReference()
   parent!: IZ64OnlineHelpers;
-  private Epona!: HorseData;
+  private Epona: HorseData | undefined;
   private queuedSpawn: boolean = false;
 
   @ModLoaderAPIInject()
@@ -304,7 +304,7 @@ export class PuppetOverlordClient {
     if (actor.actorID === 0x0014) {
       // Epona spawned.
       this.ModLoader.logger.debug("Epona spawned");
-      this.Epona = new HorseData(actor, this.fakeClientPuppet, this.core);
+      this.Epona = new HorseData((actor as any)["instance"], this.fakeClientPuppet, this.core);
     }
   }
 
@@ -312,7 +312,6 @@ export class PuppetOverlordClient {
   onEponaDespawned(actor: IActor) {
     if (actor.actorID === 0x0014) {
       // Epona despawned.
-      //@ts-ignore
       this.Epona = undefined;
       this.ModLoader.logger.debug("Epona despawned");
     }

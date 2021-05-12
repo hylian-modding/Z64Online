@@ -4,21 +4,19 @@ import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 
 export class HorseData{
 
-    actor: IActor;
+    pointer: number;
     parent: Puppet;
     puppet!: IActor;
     private readonly copyFields: string[] = ["pos", "rot", "anim_id", "speed"];
 
-    constructor(actor: IActor, parent: Puppet, core: IOOTCore){
-        this.actor = actor;
+    constructor(pointer: number, parent: Puppet, core: IOOTCore){
+        this.puppet = core.actorManager.createIActorFromPointer(pointer);
+        this.pointer = pointer;
         this.parent = parent;
-        if (this.parent.hasAttachedHorse()){
-            this.puppet = core.actorManager.createIActorFromPointer(this.parent.getAttachedHorse());
-        }
     }
 
     get pos(): Buffer{
-        return this.actor.position.getRawPos();
+        return this.puppet.position.getRawPos();
     }
 
     set pos(buf: Buffer){
@@ -26,7 +24,7 @@ export class HorseData{
     }
 
     get rot(): Buffer{
-        return this.actor.rotation.getRawRot();
+        return this.puppet.rotation.getRawRot();
     }
 
     set rot(buf: Buffer){
@@ -34,7 +32,7 @@ export class HorseData{
     }
 
     get anim_id(): number{
-        return this.actor.rdramRead32(0x1a4);
+        return this.puppet.rdramRead32(0x1a4);
     }
 
     set anim_id(id: number){
@@ -42,7 +40,7 @@ export class HorseData{
     }
 
     get speed(): number{
-        return this.actor.rdramRead32(0x1b8);
+        return this.puppet.rdramRead32(0x1b8);
     }
 
     set speed(s: number){
