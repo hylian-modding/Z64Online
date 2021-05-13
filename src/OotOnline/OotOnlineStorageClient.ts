@@ -1,7 +1,6 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
 import { OotO_ItemGetMessagePacket } from './data/OotOPackets';
-import { Z64Online_ModelAllocation } from './Z64API/OotoAPI';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';

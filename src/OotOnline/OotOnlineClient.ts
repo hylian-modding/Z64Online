@@ -1,6 +1,6 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { INetworkPlayer, LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
+import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IOOTCore, OotEvents, InventoryItem, Magic, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
@@ -34,7 +34,7 @@ import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
-export class OotOnlineClient {
+export default class OotOnlineClient {
     @InjectCore()
     core!: IOOTCore;
 

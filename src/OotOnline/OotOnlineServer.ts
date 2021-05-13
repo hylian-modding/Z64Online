@@ -16,7 +16,7 @@ import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 
-export class OotOnlineServer {
+export default class OotOnlineServer {
     @InjectCore()
     core!: IOOTCore;
     @ModLoaderAPIInject()

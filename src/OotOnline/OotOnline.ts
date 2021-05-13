@@ -2,8 +2,6 @@ import { IPlugin, IPluginServerConfig, IModLoaderAPI } from "modloader64_api/IMo
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { OotOnlineClient } from "./OotOnlineClient";
-import { OotOnlineServer } from "./OotOnlineServer";
 import { IPacketHeader } from "modloader64_api/NetworkHandler";
 import { OotOnlineStorageClient } from "./OotOnlineStorageClient";
 import path from 'path';
@@ -36,10 +34,10 @@ export class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfi
   ModLoader!: IModLoaderAPI;
   @InjectCore()
   core!: IOOTCore;
-  @SidedProxy(ProxySide.CLIENT, OotOnlineClient)
-  client!: OotOnlineClient;
-  @SidedProxy(ProxySide.SERVER, OotOnlineServer)
-  server!: OotOnlineServer;
+  @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, "OotOnlineClient.js"))
+  client!: any;
+  @SidedProxy(ProxySide.SERVER, path.resolve(__dirname, "OotOnlineServer.js"))
+  server!: any;
 
   sendPacketToPlayersInScene(packet: IPacketHeader): void {
     if (this.server !== undefined) {
