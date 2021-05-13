@@ -1,5 +1,4 @@
 import { IPlugin, IPluginServerConfig, IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { IZ64OnlineHelpers } from "./Z64API/OotoAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
@@ -7,6 +6,9 @@ import { OotOnlineClient } from "./OotOnlineClient";
 import { OotOnlineServer } from "./OotOnlineServer";
 import { IPacketHeader } from "modloader64_api/NetworkHandler";
 import { OotOnlineStorageClient } from "./OotOnlineStorageClient";
+import path from 'path';
+import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
+import { IZ64OnlineHelpers } from "./data/InternalAPI";
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -28,6 +30,7 @@ export class OotOnlineConfigCategory {
   nameplates: boolean = true;
 }
 
+@ExternalAPIProvider("Z64Lib", require('./libs/Z64Lib/package.json').version, path.resolve(__dirname, "libs", "Z64Lib"))
 export class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfig {
 
   ModLoader!: IModLoaderAPI;

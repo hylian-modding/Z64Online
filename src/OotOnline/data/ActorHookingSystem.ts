@@ -23,7 +23,7 @@ import {
 } from 'modloader64_api/NetworkHandler';
 import IMemory from 'modloader64_api/IMemory';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import { IZ64OnlineHelpers, Z64OnlineAPI_QueryPuppet, Z64OnlineEvents } from '../Z64API/OotoAPI';
+import { Z64OnlineEvents } from '../Z64API/OotoAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
@@ -32,6 +32,7 @@ import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { addToKillFeedQueue } from 'modloader64_api/Announcements';
 import { MLPatchLib } from '@OotOnline/WorldEvents/ML64PatchLib';
+import { IZ64OnlineHelpers } from './InternalAPI';
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;

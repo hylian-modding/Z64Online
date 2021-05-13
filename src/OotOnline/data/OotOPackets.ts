@@ -241,3 +241,36 @@ export class OotO_ItemGetMessagePacket extends Packet {
     this.icon = icon;
   }
 }
+
+export class Z64_AllocateModelPacket extends Packet {
+  model: Buffer;
+  age: Age;
+  hash: string;
+
+  constructor(model: Buffer, age: Age, lobby: string, hash: string) {
+    super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
+    this.model = model;
+    this.age = age;
+    this.hash = hash;
+  }
+}
+
+export class Z64_GiveModelPacket extends Packet {
+
+  target: INetworkPlayer;
+
+  constructor(lobby: string, player: INetworkPlayer) {
+    super('Z64OnlineLib_GiveModelPacket', 'Z64OnlineLib', lobby, true);
+    this.target = player;
+  }
+}
+
+export class Z64_EquipmentPakPacket extends Packet {
+  zobjs: Array<Buffer> = [];
+  age: Age;
+
+  constructor(age: Age, lobby: string) {
+    super('Z64OnlineLib_EquipmentPakPacket', 'Z64OnlineLib', lobby, true);
+    this.age = age;
+  }
+}

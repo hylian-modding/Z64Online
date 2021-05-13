@@ -8,10 +8,11 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient, bus } from 'modloader64_api/EventHandler';
-import { IZ64OnlineHelpers, Z64OnlineEvents, PuppetQuery, RemoteSoundPlayRequest } from '@OotOnline/Z64API/OotoAPI';
+import { Z64OnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/Z64API/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
+import { IZ64OnlineHelpers, PuppetQuery } from '../InternalAPI';
 
 export let ACTOR_T_PADDING: number = 0;
 

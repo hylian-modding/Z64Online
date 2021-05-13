@@ -1,3 +1,9 @@
+import { OotOnlineStorageClient } from "@OotOnline/OotOnlineStorageClient";
+import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
+import { bus } from "modloader64_api/EventHandler";
+import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
+import { Puppet } from "./linkPuppet/Puppet";
+
 export const enum OOTO_PRIVATE_EVENTS{
     ASSET_LOOKUP = "ASSET_LOOKUP",
     CLIENT_EVENT_DATA_GET = "CLIENT_EVENT_DATA_GET",
@@ -53,3 +59,19 @@ export class OOTO_PRIVATE_COIN_LOOKUP_OBJ{
         this.coins = coins;
     }
 }
+
+export interface IZ64OnlineHelpers {
+    sendPacketToPlayersInScene(packet: IPacketHeader): void;
+    getClientStorage(): OotOnlineStorageClient | null;
+  }
+  
+  export interface PuppetQuery {
+    puppet: Puppet | undefined;
+    player: INetworkPlayer;
+  }
+  
+  export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
+    let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
+    bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
+    return evt;
+  }

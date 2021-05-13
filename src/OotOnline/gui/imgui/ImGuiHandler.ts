@@ -5,7 +5,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOOTCore, Magic, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
-import { IZ64OnlineHelpers, Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
+import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
 import Vector3 from "modloader64_api/math/Vector3";
 import { glmatrix_matrix4, glmatrix_vec4 } from 'modloader64_api/math/glmatrix';
 import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
@@ -19,6 +19,7 @@ import { IActor } from "modloader64_api/OOT/IActor";
 import fse from 'fs-extra';
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { OpaDebug } from "./OpaDebug";
+import { IZ64OnlineHelpers } from "@OotOnline/data/InternalAPI";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');

@@ -1,10 +1,12 @@
-import { IPacketHeader, INetworkPlayer } from 'modloader64_api/NetworkHandler';
+import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
-import { OotOnlineStorageClient } from '@OotOnline/OotOnlineStorageClient';
-import { Puppet } from '@OotOnline/data/linkPuppet/Puppet';
 import { Age, Tunic } from 'modloader64_api/OOT/OOTAPI';
-import { Packet } from 'modloader64_api/ModLoaderDefaultImpls';
-import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
+import path from 'path';
+
+@ExternalAPIProvider("OotOAPI", "3.0.0", path.resolve(__dirname))
+export class OotOAPIProvider{
+}
 
 export enum Z64OnlineEvents {
   PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
@@ -121,24 +123,8 @@ export class Z64_PlayerScene {
   }
 }
 
-export interface IZ64OnlineHelpers {
-  sendPacketToPlayersInScene(packet: IPacketHeader): void;
-  getClientStorage(): OotOnlineStorageClient | null;
-}
-
 export function Z64OnlineAPI_EnableGhostMode() {
   bus.emit(Z64OnlineEvents.GHOST_MODE, {});
-}
-
-export interface PuppetQuery {
-  puppet: Puppet | undefined;
-  player: INetworkPlayer;
-}
-
-export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
-  let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
-  bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
-  return evt;
 }
 
 export interface IModelReference {
@@ -173,39 +159,6 @@ export class Z64Online_EquipmentPak {
   constructor(name: string, data: Buffer) {
     this.name = name;
     this.data = data;
-  }
-}
-
-export class Z64_AllocateModelPacket extends Packet {
-  model: Buffer;
-  age: Age;
-  hash: string;
-
-  constructor(model: Buffer, age: Age, lobby: string, hash: string) {
-    super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
-    this.model = model;
-    this.age = age;
-    this.hash = hash;
-  }
-}
-
-export class Z64_GiveModelPacket extends Packet {
-
-  target: INetworkPlayer;
-
-  constructor(lobby: string, player: INetworkPlayer) {
-    super('Z64OnlineLib_GiveModelPacket', 'Z64OnlineLib', lobby, true);
-    this.target = player;
-  }
-}
-
-export class Z64_EquipmentPakPacket extends Packet {
-  zobjs: Array<Buffer> = [];
-  age: Age;
-
-  constructor(age: Age, lobby: string) {
-    super('Z64OnlineLib_EquipmentPakPacket', 'Z64OnlineLib', lobby, true);
-    this.age = age;
   }
 }
 

@@ -2,11 +2,11 @@ import { Age, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
-import { Z64OnlineEvents, IZ64OnlineHelpers, RemoteSoundPlayRequest } from '../../Z64API/OotoAPI';
+import { Z64OnlineEvents, RemoteSoundPlayRequest } from '../../Z64API/OotoAPI';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
-import fs from 'fs';
+import { IZ64OnlineHelpers } from '../InternalAPI';
 
 export class Puppet {
   player: INetworkPlayer;
