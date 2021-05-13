@@ -99,7 +99,7 @@ export class Puppet {
   processIncomingHorseData(data: HorseData) {
     if (this.horse === undefined && !this.horseSpawning) {
       this.horseSpawning = true;
-      (this.parent.getClientStorage()?.overlayCache["horse-3.ovl"] as IOvlPayloadResult).spawn(this.parent.getClientStorage()?.overlayCache["horse-3.ovl"], (success: boolean, result: number) => {
+      (this.parent.getClientStorage()!.overlayCache["horse-3.ovl"] as IOvlPayloadResult).spawn(this.parent.getClientStorage()!.overlayCache["horse-3.ovl"], (success: boolean, result: number) => {
         if (success) {
           this.horse = new HorseData(result, this, this.core);
         }
