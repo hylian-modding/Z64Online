@@ -1,6 +1,6 @@
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { EventHandler, bus } from 'modloader64_api/EventHandler';
-import { OotEvents, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import {
   ActorHookBase,
   ActorHookProcessor,
@@ -30,8 +30,7 @@ import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
-import { addToKillFeedQueue } from 'modloader64_api/Announcements';
-import { MLPatchLib } from '@OotOnline/WorldEvents/ML64PatchLib';
+import { MLPatchLib } from '@OotOnline/Z64API/ML64PatchLib';
 import { IZ64OnlineHelpers } from './InternalAPI';
 // Actor Hooking Stuff
 
@@ -365,10 +364,10 @@ export class ActorHookingManagerClient {
         } else {
           if (hooks[i].isBehavior) {
             let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-            if (d === 0){
+            if (d === 0) {
               // We're going to assume the behavior became zero here.
               actor.rdramWrite32(hooks[i].offset, d);
-            }else{
+            } else {
               this.setActorBehavior(
                 this.ModLoader.emulator,
                 actor,
@@ -592,7 +591,7 @@ export class ActorHookingManagerClient {
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
-  onPrePatch(evt: any){
+  onPrePatch(evt: any) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
     let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
     fs.writeFileSync("./cache/vanilla_zelda.ovl", buf);
@@ -624,11 +623,11 @@ export class ActorHookingManagerClient {
         buf.writeUInt8(0x0B, 0x7236);
       }
       tools.recompressActorFileIntoRom(evt.rom, 0x0179, buf);
-      
+
       let patch_path: string = path.resolve(__dirname, "actorPatches");
-      fs.readdirSync(patch_path).forEach((file: string)=>{
+      fs.readdirSync(patch_path).forEach((file: string) => {
         let f: string = path.resolve(patch_path, file);
-        if (fs.existsSync(f)){
+        if (fs.existsSync(f)) {
           let patch: Buffer = fs.readFileSync(f);
           let target: number = parseInt(path.parse(f).name.split("-")[0].trim());
           let exp: string = path.resolve(__dirname, "..", "payloads", "E0", path.parse(f).name + ".ovl");
