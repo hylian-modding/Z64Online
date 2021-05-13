@@ -5,7 +5,6 @@ import { IOOTCore, OotEvents, InventoryItem, Magic, Age, IInventory, IOvlPayload
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
-import { GUITunnelPacket } from 'modloader64_api/GUITunnel';
 import fs from 'fs';
 import { OotOnlineStorageClient } from './OotOnlineStorageClient';
 import { DiscordStatus } from 'modloader64_api/Discord';
@@ -94,7 +93,6 @@ export class OotOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
-        this.ModLoader.config.setData("OotOnline", "mapTracker", false);
         this.ModLoader.config.setData("OotOnline", "keySync", true);
         this.ModLoader.config.setData("OotOnline", "notifications", true);
         this.ModLoader.config.setData("OotOnline", "nameplates", true);
@@ -110,9 +108,6 @@ export class OotOnlineClient {
 
     @Postinit()
     postinit() {
-        if (this.config.mapTracker) {
-            this.ModLoader.gui.openWindow(698, 805, path.resolve(path.join(__dirname, 'gui', 'map.html')));
-        }
         this.clientStorage.scene_keys = JSON.parse(fs.readFileSync(__dirname + '/data/scene_numbers.json').toString());
         this.clientStorage.localization = JSON.parse(fs.readFileSync(__dirname + '/data/en_US.json').toString());
         let status: DiscordStatus = new DiscordStatus('Playing OotOnline', 'On the title screen');
@@ -266,11 +261,6 @@ export class OotOnlineClient {
         }
     }
 
-    @EventHandler(EventsClient.ON_PLAYER_LEAVE)
-    onPlayerLeft(player: INetworkPlayer) {
-        this.ModLoader.gui.tunnel.send('OotOnline:onPlayerLeft', new GUITunnelPacket('OotOnline', 'OotOnline:onPlayerLeft', player));
-    }
-
     //------------------------------
     // Scene handling
     //------------------------------
@@ -296,14 +286,6 @@ export class OotOnlineClient {
                 )
             );
         }
-    }
-
-    @EventHandler(OotEvents.ON_ROOM_CHANGE)
-    onRoomChange(room: number) {
-        this.ModLoader.gui.tunnel.send(
-            'OotOnline:onRoomChanged',
-            new GUITunnelPacket('OotOnline', 'OotOnline:onRoomChanged', room)
-        );
     }
 
     @NetworkHandler('Ooto_ScenePacket')
@@ -487,6 +469,7 @@ export class OotOnlineClient {
                 bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
                 break;
         }
+
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
