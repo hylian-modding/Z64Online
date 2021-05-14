@@ -353,7 +353,7 @@ export default class OotOnlineClient {
         if (!packet.host) {
             if (packet.save) {
                 let s = new OotOSaveData(this.core, this.ModLoader);
-                s.applySave(packet.save!);
+                s.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");

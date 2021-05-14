@@ -186,6 +186,15 @@ export class OotOSaveData {
     }
   }
 
+  processKeyRing_OVERWRITE(keys: KeyRing, storage: KeyRing, side: ProxySide) {
+    for (let i = 0; i < keys.keys.byteLength; i++) {
+      if (side === ProxySide.CLIENT) {
+        this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
+        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
+      }
+    }
+  }
+
   createSave(): Buffer {
     let obj = this.generateWrapper();
     let buf = Buffer.from(JSON.stringify(obj));
@@ -221,6 +230,25 @@ export class OotOSaveData {
     });
   }
 
+  private processBoolLoop_OVERWRITE(obj1: any, obj2: any) {
+    Object.keys(obj1).forEach((key: string) => {
+      if (typeof (obj1[key]) === 'boolean') {
+        obj2[key] = obj1[key];
+      }
+    });
+  }
+
+  private processMixedLoop_OVERWRITE(obj1: any, obj2: any, blacklist: Array<string>) {
+    Object.keys(obj1).forEach((key: string) => {
+      if (blacklist.indexOf(key) > -1) return;
+      if (typeof (obj1[key]) === 'boolean') {
+        obj2[key] = obj1[key];
+      } else if (typeof (obj1[key]) === 'number') {
+        obj2[key] = obj1[key];
+      }
+    });
+  }
+
   private isGreaterThan(obj1: number, obj2: number) {
     if (obj1 === 255) obj1 = 0;
     if (obj2 === 255) obj2 = 0;
@@ -231,6 +259,42 @@ export class OotOSaveData {
     if (obj1 === 255) obj1 = 0;
     if (obj2 === 255) obj2 = 0;
     return (obj1 !== obj2);
+  }
+
+  forceOverrideSave(save: Buffer, storage: Save, side: ProxySide) {
+    let obj: Save = JSON.parse(save.toString());
+
+    storage.death_counter = obj.death_counter;
+    storage.heart_containers = obj.heart_containers;
+    storage.magic_meter_size = obj.magic_meter_size;
+    storage.magic_beans_purchased = obj.magic_beans_purchased;
+    storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
+
+    this.processBoolLoop_OVERWRITE(obj.swords, storage.swords);
+    this.processBoolLoop_OVERWRITE(obj.shields, storage.shields);
+    this.processBoolLoop_OVERWRITE(obj.tunics, storage.tunics);
+    this.processBoolLoop_OVERWRITE(obj.boots, storage.boots);
+    this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
+
+    obj.inventory.bottle_1 = storage.inventory.bottle_1;
+    obj.inventory.bottle_2 = storage.inventory.bottle_2;
+    obj.inventory.bottle_3 = storage.inventory.bottle_3;
+    obj.inventory.bottle_4 = storage.inventory.bottle_4;
+
+    this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
+
+    storage.inventory.childTradeItem = obj.inventory.childTradeItem;
+    storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
+
+    storage.permSceneData = obj.permSceneData;
+    storage.eventFlags = obj.eventFlags;
+    storage.itemFlags = obj.itemFlags;
+    storage.infTable = obj.infTable;
+    storage.skulltulaFlags = obj.skulltulaFlags;
+
+    if (side === ProxySide.CLIENT) {
+      this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
+    }
   }
 
   mergeSave(save: Buffer, storage: Save, side: ProxySide) {
