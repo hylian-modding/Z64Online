@@ -241,7 +241,7 @@ export class PuppetOverlordClient {
     }
     if (
       !this.core.helper.isLinkEnteringLoadingZone() &&
-      this.core.helper.isInterfaceShown() &&
+      !this.core.helper.Player_InBlockingCsMode() &&
       !this.isCurrentlyWarping()
     ) {
       this.processNewPlayers();
