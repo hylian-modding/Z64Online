@@ -65,6 +65,10 @@ export class PuppetData {
 		if (this.tickCount > this.tickRate) {
 			this.tickCount = 0;
 			this.localCache.clear();
+			for (let i = 0; i < keys.length; i++) {
+				this.localCache.set(keys[i], dummy_buffer);
+				this.remoteCache.set(keys[i], dummy_buffer);
+			}
 		}
 		for (let i = 0; i < keys.length; i++) {
 			let key = keys[i];
