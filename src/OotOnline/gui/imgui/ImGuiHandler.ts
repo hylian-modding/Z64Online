@@ -157,23 +157,6 @@ export class ImGuiHandler {
 
     @onViUpdate()
     onViUpdate() {
-        /* this.ModLoader.ImGui.begin("OotOnline Debugger", [true]);
-        this.ModLoader.ImGui.text("Model heap size: " + this.modelManager.allocationManager.MAX_MODELS * 0x37800 + " bytes");
-        this.ModLoader.ImGui.text("Allocations: " + (this.modelManager.allocationManager.MAX_MODELS - this.modelManager.allocationManager.getAvailableSlots()) + "/" + this.modelManager.allocationManager.MAX_MODELS);
-        this.ModLoader.ImGui.text("Local player using custom model: " + (this.modelManager.customModelFileChild !== '' || this.modelManager.customModelFileAdult !== ''));
-        this.ModLoader.ImGui.text("Local player using custom anims: " + (this.modelManager.customModelFileAnims !== ''));
-        this.ModLoader.ImGui.newLine();
-        for (let i = 0; i < this.modelManager.allocationManager.MAX_MODELS; i++) {
-            if (this.modelManager.allocationManager.getModelInSlot(i) !== undefined) {
-                let m = this.modelManager.allocationManager.getModelInSlot(i);
-                let hasAdult: boolean = m.model.adult.zobj.byteLength > 1;
-                let hasChild: boolean = m.model.child.zobj.byteLength > 1;
-                this.ModLoader.ImGui.text("Model Slot " + i + ":");
-                this.ModLoader.ImGui.checkbox("Adult (Size: " + m.model.adult.zobj.byteLength + " bytes)", [hasAdult]);
-                this.ModLoader.ImGui.checkbox("Child (Size: " + m.model.child.zobj.byteLength + " bytes)", [hasChild]);
-            }
-        }
-        this.ModLoader.ImGui.end();*/
         if (this.font === undefined) {
             try {
                 this.font = this.ModLoader.Gfx.createFont();
@@ -186,9 +169,11 @@ export class ImGuiHandler {
             return;
         }
 
+        // #ifdef IS_DEV_BUILD
         if (this.opa !== undefined) {
             this.opa.onViUpdate();
         }
+        // #endif
 
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
@@ -201,25 +186,25 @@ export class ImGuiHandler {
                         this.settings.notifications = !this.settings.notifications
                         this.ModLoader.config.save();
                     }
-                    if (IS_DEV_BUILD) {
-                        if (this.ModLoader.ImGui.beginMenu("Teleport")) {
-                            this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
-                            this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
-                            if (this.ModLoader.ImGui.button("Warp")) {
-                                this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
-                            }
-                            this.ModLoader.ImGui.endMenu();
-                        }
-                        if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
-                            this.showActorBrowser = !this.showActorBrowser;
-                        }
-                        if (this.ModLoader.ImGui.button("DUMP RAM")){
-                            bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
-                        }
-                        if (this.ModLoader.ImGui.button("MAGIC GET")){
-                            this.core.save.magic_meter_size = Magic.NORMAL;
-                        }
-                    }
+                    // #ifdef IS_DEV_BUILD
+                    if (this.ModLoader.ImGui.beginMenu("Teleport")) {
+                      this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
+                      this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
+                      if (this.ModLoader.ImGui.button("Warp")) {
+                          this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
+                      }
+                      this.ModLoader.ImGui.endMenu();
+                  }
+                  if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
+                      this.showActorBrowser = !this.showActorBrowser;
+                  }
+                  if (this.ModLoader.ImGui.button("DUMP RAM")){
+                      bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
+                  }
+                  if (this.ModLoader.ImGui.button("MAGIC GET")){
+                      this.core.save.magic_meter_size = Magic.NORMAL;
+                  }
+                    // #endif
                     this.ModLoader.ImGui.endMenu();
                 }
                 this.ModLoader.ImGui.endMenu();
@@ -231,33 +216,7 @@ export class ImGuiHandler {
             return;
         }
 
-        /*if (!this.helper.isLinkEnteringLoadingZone()) {
-            for (let i = 0; i < 12 * 8; i += 8) {
-                let count = this.emulator.rdramReadPtr32(
-                    global.ModLoader.global_context_pointer,
-                    this.actor_array_addr + i
-                );
-                let ptr = this.emulator.dereferencePointer(
-                    global.ModLoader.global_context_pointer
-                );
-                if (count > 0) {
-                    let pointer = this.emulator.dereferencePointer(
-                        ptr + this.actor_array_addr + (i + 4)
-                    );
-                    this.actors_pointers_this_frame.push(pointer);
-                    let next = this.emulator.dereferencePointer(
-                        pointer + this.actor_next_offset
-                    );
-                    while (next > 0) {
-                        this.actors_pointers_this_frame.push(next);
-                        next = this.emulator.dereferencePointer(
-                            next + this.actor_next_offset
-                        );
-                    }
-                }
-            }
-        }*/
-
+        // #ifdef IS_DEV_BUILD
         if (this.showActorBrowser) {
             let treeNodeDepth = 0;
             if (this.ModLoader.ImGui.begin("Actor Browser###OotO:ActorDebug")) {
@@ -379,6 +338,7 @@ export class ImGuiHandler {
             }
             this.ModLoader.ImGui.end();
         }
+        // #endif
 
         for (let i = 0; i < this.puppets.length; i++) {
             if (this.puppets[i].scene === this.scene) {

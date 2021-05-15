@@ -149,10 +149,8 @@ export class OpaDebug {
         if (this.ImGui.beginMainMenuBar()) {
             if (this.ImGui.beginMenu("Mods")) {
                 if (this.ImGui.beginMenu("OotO")) {
-                    if (IS_DEV_BUILD) {
-                        if (this.ImGui.menuItem("Opa Debugger")) {
-                            this.showOpaDebugger = !this.showOpaDebugger;
-                        }
+                    if (this.ImGui.menuItem("Opa Debugger")) {
+                        this.showOpaDebugger = !this.showOpaDebugger;
                     }
                     this.ImGui.endMenu();
                 }
