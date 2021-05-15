@@ -2,26 +2,13 @@ import { parseFlagChanges } from "@OotOnline/parseFlagChanges";
 import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI";
+import { IInventoryCounts, IInventoryFields, InventoryItem, IOOTCore, ISaveContext, SceneStruct } from "modloader64_api/OOT/OOTAPI";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 
-export interface Save {
-  death_counter: number;
-  heart_containers: number;
-  magic_meter_size: number;
-  swords: Swords;
-  shields: Shields;
-  tunics: Tunics;
-  boots: Boots;
+export interface Save extends Pick<ISaveContext, 'death_counter' | 'heart_containers' | 'magic_meter_size' | 'swords' | 'shields'
+  | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags'> {
   inventory: Inventory;
-  questStatus: QuestStatus;
-  magic_beans_purchased: number;
-  permSceneData: Buffer;
-  eventFlags: Buffer;
-  itemFlags: Buffer;
-  infTable: Buffer;
-  skulltulaFlags: Buffer;
   dungeon_items: Buffer;
 }
 
@@ -29,94 +16,7 @@ export interface KeyRing {
   keys: Buffer;
 }
 
-export interface Swords {
-  kokiriSword: boolean;
-  masterSword: boolean;
-  giantKnife: boolean;
-  biggoronSword: boolean;
-}
-
-export interface Shields {
-  dekuShield: boolean;
-  hylianShield: boolean;
-  mirrorShield: boolean;
-}
-
-export interface Tunics {
-  kokiriTunic: boolean;
-  goronTunic: boolean;
-  zoraTunic: boolean;
-}
-
-export interface Boots {
-  kokiriBoots: boolean;
-  ironBoots: boolean;
-  hoverBoots: boolean;
-}
-
-export interface Inventory {
-  dekuSticks: boolean;
-  dekuNuts: boolean;
-  bombs: boolean;
-  bombchus: boolean;
-  magicBeans: boolean;
-  fairySlingshot: boolean;
-  fairyBow: boolean;
-  fireArrows: boolean;
-  iceArrows: boolean;
-  lightArrows: boolean;
-  dinsFire: boolean;
-  faroresWind: boolean;
-  nayrusLove: boolean;
-  ocarina: number;
-  hookshot: number;
-  boomerang: boolean;
-  lensOfTruth: boolean;
-  megatonHammer: boolean;
-  bottle_1: number;
-  bottle_2: number;
-  bottle_3: number;
-  bottle_4: number;
-  childTradeItem: number;
-  adultTradeItem: number;
-  wallet: number;
-  quiver: number;
-  bulletBag: number;
-  bombBag: number;
-  dekuNutsCapacity: number;
-  dekuSticksCapacity: number;
-  swimming: number;
-  strength: number;
-  magicBeansCount: number;
-}
-
-export interface QuestStatus {
-  gerudoMembershipCard: boolean;
-  stoneOfAgony: boolean;
-  displayGoldSkulltulas: boolean;
-  goldSkulltulas: number;
-  heartPieces: number;
-  zeldasLullaby: boolean;
-  eponasSong: boolean;
-  sariasSong: boolean;
-  sunsSong: boolean;
-  songOfTime: boolean;
-  songOfStorms: boolean;
-  preludeOfLight: boolean;
-  minuetOfForest: boolean;
-  boleroOfFire: boolean;
-  serenadeOfWater: boolean;
-  nocturneOfShadow: boolean;
-  requiemOfSpirit: boolean;
-  lightMedallion: boolean;
-  forestMedallion: boolean;
-  waterMedallion: boolean;
-  fireMedallion: boolean;
-  spiritMedallion: boolean;
-  shadowMedallion: boolean;
-  kokiriEmerald: boolean;
-  goronRuby: boolean;
-  zoraSapphire: boolean;
+export interface Inventory extends IInventoryFields, Pick<IInventoryCounts, 'magicBeansCount'> {
 }
 
 export class OotOSaveData {
