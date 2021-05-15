@@ -5,6 +5,7 @@ import { OotO_ItemGetMessagePacket } from './data/OotOPackets';
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
   keySaveHash = "!";
+  lastbeans = 0;
   lastPushHash = "!";
   needs_update = false;
   lastKnownSkullCount = -1;

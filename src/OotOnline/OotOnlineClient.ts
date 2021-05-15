@@ -146,14 +146,17 @@ export default class OotOnlineClient {
     autosaveSceneData() {
         if (!this.core.helper.isLinkEnteringLoadingZone() &&
             this.core.global.scene_framecount > 20) {
-
             // Slap key checking in here too.
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
-                this.ModLoader.logger.debug("Key change detected.");
                 this.clientStorage.keySaveHash = keyHash;
                 let data = new OotOSaveData(this.core, this.ModLoader);
                 this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(data.createKeyRing(), this.ModLoader.clientLobby));
+            }
+            // and beans too why not.
+            if (this.clientStorage.lastbeans !== this.core.save.inventory.magicBeansCount) {
+                this.clientStorage.lastbeans = this.core.save.inventory.magicBeansCount;
+                this.updateInventory();
             }
 
             if (this.ModLoader.emulator.rdramRead8(0x80600144) === 0x1) {
