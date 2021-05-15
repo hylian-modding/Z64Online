@@ -92,13 +92,13 @@ export function DumpRam() {
 export class RemoteSoundPlayRequest {
 
   player: INetworkPlayer;
-  puppet: any;
+  pos: Buffer;
   sound_id: number;
   isCanceled: boolean = false;
 
-  constructor(player: INetworkPlayer, puppet: any, sound_id: number) {
+  constructor(player: INetworkPlayer, pos: Buffer, sound_id: number) {
     this.player = player;
-    this.puppet = puppet;
+    this.pos = pos;
     this.sound_id = sound_id;
   }
 }

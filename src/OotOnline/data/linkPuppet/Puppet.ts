@@ -31,7 +31,7 @@ export class Puppet {
     parent: IZ64OnlineHelpers
   ) {
     this.player = player;
-    this.data = new PuppetData(pointer, ModLoader);
+    this.data = new PuppetData(this, pointer, ModLoader);
     this.scene = 81;
     this.ModLoader = ModLoader;
     this.core = core;
@@ -78,18 +78,14 @@ export class Puppet {
     }
   }
 
-  processIncomingPuppetData(data: PuppetData, remote: RemoteSoundPlayRequest) {
+  processIncomingPuppetData(data: PuppetData) {
     if (this.isSpawned && !this.isShoveled) {
       this.data.ageLastFrame = this.age;
-      Object.keys(data).forEach((key: string) => {
-        if (key === "sound") {
-          if (!remote.isCanceled) {
-            (this.data as any)[key] = (data as any)[key];
-          }
-        } else {
-          (this.data as any)[key] = (data as any)[key];
-        }
-      });
+      let keys = Object.keys(data);
+      for (let i = 0; i < keys.length; i++) {
+        let key = keys[i];
+        (this.data as any)[key] = (data as any)[key];
+      }
       if (this.data.ageLastFrame !== this.age) {
         bus.emit(Z64OnlineEvents.PUPPET_AGE_CHANGED, this);
       }
@@ -116,7 +112,7 @@ export class Puppet {
   shovel() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        if (this.horse !== undefined){
+        if (this.horse !== undefined) {
           this.ModLoader.math.rdramWriteV3(this.horse.pointer + 0x24, this.void);
           this.ModLoader.logger.debug(`Horse for puppet ${this.id} shoveled.`);
         }
@@ -130,7 +126,7 @@ export class Puppet {
   despawn() {
     if (this.isSpawned) {
       if (this.data.pointer > 0) {
-        if (this.horse !== undefined){
+        if (this.horse !== undefined) {
           this.horse.puppet.rdramWrite32(0x130, 0x0);
           this.horse.puppet.rdramWrite32(0x134, 0x0);
           this.horse = undefined;

@@ -3,7 +3,6 @@ import { IOOTCore, Age, OotEvents } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer, NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_PuppetWrapperPacket } from '../OotOPackets';
-import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
@@ -184,7 +183,7 @@ export class PuppetOverlordClient {
   }
 
   sendPuppetPacket() {
-    if (!this.amIAlone) {
+    if (!this.amIAlone && !this.core.helper.Player_InBlockingCsMode()) {
       this.fakeClientPuppet.data.onTick();
       let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
       if (this.Epona !== undefined) {
@@ -198,32 +197,11 @@ export class PuppetOverlordClient {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
       let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
-      //let e = new RemoteSoundPlayRequest(packet.player, actualPacket.data, actualPacket.data.sound.readUInt16BE(0));
-      //bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
-      puppet.processIncomingPuppetData(actualPacket.data, new RemoteSoundPlayRequest(packet.player, puppet, 0));
+      puppet.processIncomingPuppetData(actualPacket.data);
       if (actualPacket.horse_data !== undefined) {
         puppet.processIncomingHorseData(actualPacket.horse_data);
       }
     }
-  }
-
-  generateCrashDump() {
-    let _puppets: any = {};
-    this.puppets.forEach(
-      (value: Puppet, key: string, map: Map<string, Puppet>) => {
-        _puppets[key] = {
-          isSpawned: value.isSpawned,
-          isSpawning: value.isSpawning,
-          isShoveled: value.isShoveled,
-          pointer: value.data.pointer,
-          player: value.player,
-        };
-      }
-    );
-    fs.writeFileSync(
-      './PuppetOverlord_crashdump.json',
-      JSON.stringify(_puppets, null, 2)
-    );
   }
 
   isCurrentlyWarping() {
@@ -283,7 +261,8 @@ export class PuppetOverlordClient {
     if (
       this.core.helper.isTitleScreen() ||
       this.core.helper.isPaused() ||
-      this.core.helper.isLinkEnteringLoadingZone()
+      this.core.helper.isLinkEnteringLoadingZone() ||
+      this.core.helper.Player_InBlockingCsMode()
     ) {
       return;
     }
@@ -293,11 +272,6 @@ export class PuppetOverlordClient {
   @EventHandler(OotEvents.ON_AGE_CHANGE)
   onAgeChange(age: Age) {
     this.localPlayerLoadingZone();
-  }
-
-  @EventHandler(ModLoaderEvents.ON_CRASH)
-  onEmuCrash(evt: any) {
-    this.generateCrashDump();
   }
 
   @EventHandler(OotEvents.ON_ACTOR_SPAWN)

@@ -97,7 +97,7 @@ export class SoundManagerClient {
     @EventHandler(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND)
     onSound(remote: RemoteSoundPlayRequest) {
         if (this.PlayerSounds.has(remote.player.uuid)) {
-            let rawPos: Buffer = remote.puppet.pos;
+            let rawPos: Buffer = remote.pos;
             let v = new Vector3(rawPos.readFloatBE(0), rawPos.readFloatBE(4), rawPos.readFloatBE(8));
             this.PlayerSounds.get(remote.player.uuid)!.forEach((value: sf.Sound[], key: number) => {
                 for (let i = 0; i < value.length; i++) {

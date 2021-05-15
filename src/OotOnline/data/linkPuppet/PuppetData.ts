@@ -2,6 +2,10 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { SmartBuffer } from 'smart-buffer';
 import path from 'path';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
+import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoAPI';
+import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
+import { Puppet } from './Puppet';
+import { bus } from 'modloader64_api/EventHandler';
 
 interface SyncData {
 	lengths: any;
@@ -13,6 +17,7 @@ const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData.json"));
 const dummy_buffer: Buffer = Buffer.alloc(0xFF);
 
 export class PuppetData {
+	parent: Puppet;
 	pointer: number;
 	ModLoader: IModLoaderAPI;
 	header: SmartBuffer;
@@ -20,17 +25,24 @@ export class PuppetData {
 	ageLastFrame: Age = Age.ADULT;
 	age: Age = Age.ADULT;
 	localCache: Map<string, Buffer> = new Map<string, Buffer>();
+	remoteCache: Map<string, Buffer> = new Map<string, Buffer>();
 	tickRate: number = 20;
 	tickCount: number = 0;
 
 	private readonly copyFields: string[] = new Array<string>();
 
-	constructor(pointer: number, ModLoader: IModLoaderAPI) {
+	constructor(parent: Puppet, pointer: number, ModLoader: IModLoaderAPI) {
+		this.parent = parent;
 		this.pointer = pointer;
 		this.ModLoader = ModLoader;
 		this.buf = new SmartBuffer();
 		this.header = new SmartBuffer();
 		this.copyFields.push("bundle");
+		let keys = Object.keys(SYNC_DATA.sources);
+		for (let i = 0; i < keys.length; i++) {
+			this.localCache.set(keys[i], dummy_buffer);
+			this.remoteCache.set(keys[i], dummy_buffer);
+		}
 	}
 
 	getEntry(key: string) {
@@ -56,9 +68,6 @@ export class PuppetData {
 		}
 		for (let i = 0; i < keys.length; i++) {
 			let key = keys[i];
-			if (!this.localCache.has(key)) {
-				this.localCache.set(key, dummy_buffer);
-			}
 			let entry = this.getEntry(key);
 			if (this.localCache.get(key)!.equals(entry)) {
 				this.header.writeUInt8(0);
@@ -90,14 +99,22 @@ export class PuppetData {
 		for (let i = 0; i < keys.length; i++) {
 			if (header[i] === 0) continue;
 			let key = keys[i];
-			if (header)
-				if (key === "age") {
-					let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
-					this.age = data.readUInt32BE(0);
+			if (key === "age") {
+				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
+				this.age = data.readUInt32BE(0);
+				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
+			}else if (key === "sound"){
+				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
+				let e = new RemoteSoundPlayRequest(this.parent.player, this.remoteCache.get("pos")!, data.readUInt16BE(0));
+				bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
+				if (!e.isCanceled){
 					this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
-				} else {
-					this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), this.buf.readBuffer(SYNC_DATA.lengths[key]));
 				}
+			} else {
+				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
+				this.remoteCache.set(key, data);
+				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
+			}
 		}
 	}
 
