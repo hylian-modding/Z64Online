@@ -7,7 +7,7 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 
 export interface Save extends Pick<ISaveContext, 'death_counter' | 'heart_containers' | 'magic_meter_size' | 'swords' | 'shields'
-  | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags'> {
+  | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'poe_collector_score' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags'> {
   inventory: Inventory;
   dungeon_items: Buffer;
 }
@@ -43,6 +43,7 @@ export class OotOSaveData {
       'inventory',
       'questStatus',
       'magic_beans_purchased',
+      'poe_collector_score',
       "permSceneData",
       "eventFlags",
       "itemFlags",
@@ -169,6 +170,7 @@ export class OotOSaveData {
     storage.magic_meter_size = obj.magic_meter_size;
     storage.magic_beans_purchased = obj.magic_beans_purchased;
     storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
+    storage.poe_collector_score = obj.poe_collector_score;
 
     this.processBoolLoop_OVERWRITE(obj.swords, storage.swords);
     this.processBoolLoop_OVERWRITE(obj.shields, storage.shields);
@@ -215,6 +217,9 @@ export class OotOSaveData {
     }
     if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
       storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
+    }
+    if (obj.poe_collector_score > storage.poe_collector_score) {
+      storage.poe_collector_score = obj.poe_collector_score;
     }
     this.processBoolLoop(obj.swords, storage.swords);
     this.processBoolLoop(obj.shields, storage.shields);
