@@ -1,6 +1,5 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
-import { OotO_ItemGetMessagePacket } from './data/OotOPackets';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
@@ -21,6 +20,5 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   localization: any = {};
   scene_keys: any = {};
   first_time_sync = false;
-  notifBuffer: Array<OotO_ItemGetMessagePacket> = [];
   playerModelCache: any = {};
 }

@@ -3,7 +3,6 @@ import { SmartBuffer } from 'smart-buffer';
 import path from 'path';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoAPI';
-import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
 
@@ -13,7 +12,7 @@ interface SyncData {
 	destinations: any;
 }
 
-const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData.json"));
+const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetFields.json"));
 const dummy_buffer: Buffer = Buffer.alloc(0xFF);
 
 export class PuppetData {

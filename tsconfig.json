@@ -19,7 +19,8 @@
       "@OotOnline/*": [
         "./src/OotOnline/*"
       ]
-    }
+    },
+    "noImplicitAny": false
   },
   "include": [
     "src/**/*.ts",

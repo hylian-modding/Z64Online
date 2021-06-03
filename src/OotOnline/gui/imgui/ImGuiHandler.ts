@@ -112,7 +112,7 @@ export class ImGuiHandler {
     }
 
     getmtx(addr: number) {
-        let m = [];
+        let m: number[] = [];
         let offset = 0;
         for (let i = 0; i < 4; i++) {
             let a = this.ModLoader.emulator.rdramReadF32(addr + offset + 0);
@@ -188,22 +188,22 @@ export class ImGuiHandler {
                     }
                     // #ifdef IS_DEV_BUILD
                     if (this.ModLoader.ImGui.beginMenu("Teleport")) {
-                      this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
-                      this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
-                      if (this.ModLoader.ImGui.button("Warp")) {
-                          this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
-                      }
-                      this.ModLoader.ImGui.endMenu();
-                  }
-                  if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
-                      this.showActorBrowser = !this.showActorBrowser;
-                  }
-                  if (this.ModLoader.ImGui.button("DUMP RAM")){
-                      bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
-                  }
-                  if (this.ModLoader.ImGui.button("MAGIC GET")){
-                      this.core.save.magic_meter_size = Magic.NORMAL;
-                  }
+                        this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
+                        this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
+                        if (this.ModLoader.ImGui.button("Warp")) {
+                            this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
+                    if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
+                        this.showActorBrowser = !this.showActorBrowser;
+                    }
+                    if (this.ModLoader.ImGui.button("DUMP RAM")) {
+                        bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
+                    }
+                    if (this.ModLoader.ImGui.button("MAGIC GET")) {
+                        this.core.save.magic_meter_size = Magic.NORMAL;
+                    }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
                 }

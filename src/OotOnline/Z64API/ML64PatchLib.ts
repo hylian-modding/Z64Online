@@ -26,6 +26,7 @@ export class MLPatchLib {
     throttleLimit = 6;
 
     create(rom_name: string, og: Buffer, mod: Buffer): Buffer {
+        // #ifdef IS_DEV_BUILD
 
         let hash = (buf: Buffer) => {
             return crypto.createHash('md5').update(buf).digest('hex');
@@ -144,6 +145,8 @@ export class MLPatchLib {
         patch.writeBuffer(firstChunk.toBuffer());
         patch.writeBuffer(zlib.deflateSync(chunks.toBuffer()));
         return patch.toBuffer();
+        // #endif
+        return Buffer.alloc(1);
     }
 
     private generateCommand(length: number, find: number, cache: any, _hash: string, chunk: SmartBuffer, data: Buffer) {

@@ -1,1 +1,0 @@
-init_vars   0x808011dc

@@ -27,7 +27,7 @@ import { Texture } from 'modloader64_api/Sylvain/Gfx';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
-import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, OotO_ItemGetMessagePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
@@ -220,10 +220,12 @@ export default class OotOnlineClient {
 
     @EventHandler(OotEvents.ON_SAVE_LOADED)
     onSaveLoaded(evt: any) {
+        // #ifdef IS_DEV_BUILD
         let test = false;
         if (test) {
             this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
         }
+        // #endif
         this.ModLoader.utils.setTimeoutFrames(() => {
             if (this.LobbyConfig.data_syncing) {
                 this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
@@ -361,7 +363,10 @@ export default class OotOnlineClient {
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
         }
-        this.clientStorage.first_time_sync = true;
+        this.ModLoader.utils.setTimeoutFrames(() => {
+            this.clientStorage.first_time_sync = true;
+            this.updateBottles(true);
+        }, 20);
     }
 
     @NetworkHandler('OotO_UpdateSaveDataPacket')
@@ -412,11 +417,6 @@ export default class OotOnlineClient {
         if (Object.keys(parseFlagChanges(packet.temp, buf5) > 0)) {
             this.core.global.liveSceneData_temp = buf5;
         }
-    }
-
-    @NetworkHandler("OotO_ItemGetMessagePacket")
-    onMessage(packet: OotO_ItemGetMessagePacket) {
-        this.clientStorage.notifBuffer.push(packet);
     }
 
     healPlayer() {
@@ -638,23 +638,6 @@ export default class OotOnlineClient {
                     this.updateSkulltulas();
                     this.updateSyncContext();
                     let state = this.core.link.state;
-                    if (state === LinkState.STANDING && this.clientStorage.notifBuffer.length > 0) {
-                        if (this.clientStorage.notifBuffer.length > 10) {
-                            let size = this.clientStorage.notifBuffer.length;
-                            this.clientStorage.notifBuffer.length = 0;
-                            this.clientStorage.notifBuffer.push(new OotO_ItemGetMessagePacket("You obtained " + size + " items.", this.ModLoader.clientLobby));
-                        }
-                        while (this.clientStorage.notifBuffer.length > 0) {
-                            let packet = this.clientStorage.notifBuffer.shift()!;
-                            if (this.config.notifications) {
-                                if (packet.icon !== undefined) {
-                                    addToKillFeedQueue(packet.text, this.itemIcons.get(packet.icon));
-                                } else {
-                                    addToKillFeedQueue(packet.text);
-                                }
-                            }
-                        }
-                    }
                     if (state === LinkState.BUSY || state === LinkState.GETTING_ITEM || state === LinkState.TALKING) {
                         this.clientStorage.needs_update = true;
                     } else if (

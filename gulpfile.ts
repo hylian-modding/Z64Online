@@ -5,7 +5,6 @@ import fse from 'fs-extra'
 import path from 'path'
 import zip from 'adm-zip'
 import crypto from 'crypto'
-import { writeFileSync } from 'fs'
 var recursive = require('recursive-readdir')
 
 // Copied from ML core. Needed for the packing process.
@@ -26,11 +25,11 @@ export class MonkeyPatch_Stringify {
             }
             return this.original(value, replacer, space)
         }
-        ;(JSON as any)['stringify'] = this.replacement as Function
+            ; (JSON as any)['stringify'] = this.replacement as Function
     }
 
     unpatch() {
-        ;(JSON as any)['stringify'] = this.original as Function
+        ; (JSON as any)['stringify'] = this.original as Function
     }
 }
 
@@ -57,7 +56,7 @@ gulp.task('postinstall', function () {
                 dereference: true,
             }
         )
-    } catch (err) {}
+    } catch (err) { }
     return gulp.src('./node_modules/Z64Lib')
 })
 
@@ -79,7 +78,12 @@ gulp.task('build', function () {
             fs.writeFileSync(files[i], uprocess.processFile(files[i], defines))
         }
         console.log('compiling')
-        child_process.execSync('npx tsc')
+        try{
+            child_process.execSync('npx tsc')
+        }catch(err){
+            console.log(err.stack);
+        }
+        fse.copySync("./src", "./build/src")
         console.log('restoring')
         back.forEach((file: Buffer, name: string) => {
             fs.writeFileSync(name, file)
@@ -88,7 +92,7 @@ gulp.task('build', function () {
     return gulp.src('./src/**/*.ts')
 })
 
-gulp.task('build_production', function () {
+gulp.task('_build_production', function () {
     //console.log("enforcing style")
     //child_process.execSync(`npx prettier --write "**/*.ts"`)
     var uprocess = require('uprocess')
@@ -105,7 +109,12 @@ gulp.task('build_production', function () {
             fs.writeFileSync(files[i], uprocess.processFile(files[i], defines))
         }
         console.log('compiling')
-        child_process.execSync('npx tsc')
+        try{
+            child_process.execSync('npx tsc')
+        }catch(err){
+            console.log(err.stack);
+        }
+        fse.copySync("./src", "./build/src")
         console.log('restoring')
         back.forEach((file: Buffer, name: string) => {
             fs.writeFileSync(name, file)
@@ -113,6 +122,37 @@ gulp.task('build_production', function () {
     })
     return gulp.src('./src/**/*.ts')
 })
+
+gulp.task('clean_up_crap', function(){
+    let trash: string[] = ['.ts', '.map', '.lock'];
+    recursive('./build', function (err: any, files: any) {
+        for (let i = 0; i < files.length; i++) {
+            files[i] = path.resolve(`./${files[i]}`)
+            if (trash.indexOf(path.parse(files[i]).ext) > -1) {
+                fs.removeSync(files[i]);
+            }
+        }
+    })
+    return gulp.src('./src/**/*.ts')
+});
+
+gulp.task('crush', function(){
+    recursive('./build', function (err: any, files: any) {
+        for (let i = 0; i < files.length; i++) {
+            files[i] = path.resolve(`./${files[i]}`)
+            if (path.parse(files[i]).ext !== ".js") continue;
+            if (files[i].indexOf("node_modules") > -1) continue;
+            fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
+            let lzma: any = require("lzma");
+            let data = Buffer.from(lzma.compress(fs.readFileSync(files[i])));
+            fs.writeFileSync(path.resolve(path.parse(files[i]).dir, path.parse(files[i]).name + ".mlz"), data.toString('base64'));
+            fs.removeSync(files[i]);
+        }
+    })
+    return gulp.src('./src/**/*.ts')
+});
+
+gulp.task("build_production", gulp.series(['_build_production', 'clean_up_crap', 'crush', 'postinstall']))
 
 gulp.task('packassets', function () {
     let c = path.resolve('./cache/Z64O_Assets.content')

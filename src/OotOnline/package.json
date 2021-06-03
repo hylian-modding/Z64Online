@@ -1,6 +1,6 @@
 {
   "name": "OotOnline",
-  "version": "3.0.17",
+  "version": "3.0.46",
   "description": "",
   "main": "OotOnline.js",
   "author": "denoflions",
@@ -15,7 +15,6 @@
     "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
   },
   "dependencies": {
-    "f3djs": "git+https://github.com/CrookedPoe/f3djs.git",
-    "fetch": "^1.1.0"
+    "f3djs": "git+https://github.com/CrookedPoe/f3djs.git"
   }
 }

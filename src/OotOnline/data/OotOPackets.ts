@@ -232,16 +232,6 @@ export class OotO_isRandoPacket extends Packet {
   }
 }
 
-export class OotO_ItemGetMessagePacket extends Packet {
-  text: string;
-  icon?: string;
-  constructor(text: string, lobby: string, icon?: string) {
-    super('OotO_ItemGetMessagePacket', 'OotOnline', lobby, true);
-    this.text = text;
-    this.icon = icon;
-  }
-}
-
 export class Z64_AllocateModelPacket extends Packet {
   model: Buffer;
   age: Age;
