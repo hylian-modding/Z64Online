@@ -568,8 +568,7 @@ export default class OotOnlineClient {
         this.clientStorage.first_time_sync = false;
     }
 
-    // TODO: Kill this and reimplement.
-    @Deprecated()
+    @Deprecated('Bugfix actor should be removed and reimplemented better.')
     @EventHandler(OotEvents.ON_ACTOR_SPAWN)
     onActorSpawned(actor: IActor) {
         // 0x87 = Forest Temple Elevator.

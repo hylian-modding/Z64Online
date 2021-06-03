@@ -518,6 +518,7 @@ export class WorldEventRewards {
                 for (let i = 0; i < keys.length; i++) {
                     let key = keys[i];
                     let value = this.config.equipmentLoadout[key];
+                    if (value === '') continue;
                     let c = this.getAssetByUUID(value);
                     if (c !== undefined) {
                         bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, c));

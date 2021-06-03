@@ -95,7 +95,7 @@ export class ModelManagerClient {
     this.customModelFilesChild.set(evt.name + " (Child)", evt.ref);
   }
 
-  @Deprecated()
+  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT -> Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT')
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
   onCustomModel(file: string) {
     let evt = new Z64Online_ModelAllocation(fs.readFileSync(file), Age.ADULT);
@@ -104,13 +104,13 @@ export class ModelManagerClient {
     bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT, evt);
   }
 
-  @Deprecated()
+  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT is deprecated.')
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT)
   onCustomModelBufferAdult(buf: Buffer) {
     this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT is deprecated. Please stop using this event.");
   }
 
-  @Deprecated()
+  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_APPLIED_CHILD -> Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD')
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
   onCustomModel2(file: string) {
     let evt = new Z64Online_ModelAllocation(fs.readFileSync(file), Age.CHILD);
@@ -119,7 +119,7 @@ export class ModelManagerClient {
     bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD, evt);
   }
 
-  @Deprecated()
+  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD is deprecated.')
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD)
   onCustomModelBufferChild(buf: Buffer) {
     this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD is deprecated. Please stop using this event.");
