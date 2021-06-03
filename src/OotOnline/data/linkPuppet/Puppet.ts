@@ -22,6 +22,7 @@ export class Puppet {
   horse: HorseData | undefined;
   horseSpawning: boolean = false;
   parent: IZ64OnlineHelpers;
+  renderFn: number = -1;
 
   constructor(
     player: INetworkPlayer,
@@ -73,8 +74,18 @@ export class Puppet {
           this.isSpawned = true;
           this.isSpawning = false;
           bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
+          this.renderFn = this.ModLoader.emulator.rdramRead32(this.data.pointer + 0x134);
         }
       });
+    }
+  }
+
+  toggleVisibility(t: boolean) {
+    if (!this.isSpawned) return;
+    if (t) {
+      this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, this.renderFn);
+    } else {
+      this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0);
     }
   }
 

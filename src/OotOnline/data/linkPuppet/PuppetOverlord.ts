@@ -6,12 +6,14 @@ import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_Pupp
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
-import { EventHandler, EventsClient, bus } from 'modloader64_api/EventHandler';
+import { EventHandler, EventsClient, bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { Z64OnlineEvents, RemoteSoundPlayRequest } from '@OotOnline/Z64API/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
-import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
-import { IZ64OnlineHelpers, PuppetQuery } from '../InternalAPI';
+import { ParentReference, ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
+import { IZ64OnlineHelpers, OOTO_PRIVATE_EVENTS, PuppetQuery } from '../InternalAPI';
+import path from 'path';
+import AntiGanonCrash from './AntiGanonCrash';
 
 export let ACTOR_T_PADDING: number = 0;
 
@@ -43,6 +45,10 @@ export class PuppetOverlordClient {
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
+
+  // Ganon crash fix
+  @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, 'AntiGanonCrash.js'), 'OcarinaofTime')
+  private ganonFix!: AntiGanonCrash;
 
   @Postinit()
   postinit(
@@ -183,7 +189,7 @@ export class PuppetOverlordClient {
   }
 
   sendPuppetPacket() {
-    if (!this.amIAlone && !this.core.helper.Player_InBlockingCsMode()) {
+    if (!this.amIAlone) {
       this.fakeClientPuppet.data.onTick();
       let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
       if (this.Epona !== undefined) {
@@ -219,7 +225,7 @@ export class PuppetOverlordClient {
     }
     if (
       !this.core.helper.isLinkEnteringLoadingZone() &&
-      !this.core.helper.Player_InBlockingCsMode() &&
+      this.core.helper.isInterfaceShown() &&
       !this.isCurrentlyWarping()
     ) {
       this.processNewPlayers();
@@ -261,8 +267,7 @@ export class PuppetOverlordClient {
     if (
       this.core.helper.isTitleScreen() ||
       this.core.helper.isPaused() ||
-      this.core.helper.isLinkEnteringLoadingZone() ||
-      this.core.helper.Player_InBlockingCsMode()
+      this.core.helper.isLinkEnteringLoadingZone()
     ) {
       return;
     }
@@ -336,6 +341,13 @@ export class PuppetOverlordClient {
         // The system will auto-respawn these in a couple of frames.
       }
     }
+  }
+
+  @PrivateEventHandler(OOTO_PRIVATE_EVENTS.TOGGLE_PUPPET_VISIBILITY)
+  togglePuppetVisibility(t: boolean) {
+    this.puppets.forEach((puppet: Puppet) => {
+      puppet.toggleVisibility(t);
+    });
   }
 
 }
