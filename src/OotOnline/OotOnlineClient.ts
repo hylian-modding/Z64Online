@@ -31,6 +31,7 @@ import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRe
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
+import { Deprecated } from 'modloader64_api/Deprecated';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -541,13 +542,6 @@ export default class OotOnlineClient {
             let result: IOvlPayloadResult = evt.result;
             this.clientStorage.overlayCache[evt.file] = result;
         }
-        if (evt.file === "puppet.ovl") {
-            let result: IOvlPayloadResult = evt.result;
-            this.ModLoader.emulator.rdramWrite32(0x80600140, result.params);
-        } else if (evt.file === "flag_fixer.ovl") {
-            let result: IOvlPayloadResult = evt.result;
-            this.ModLoader.emulator.rdramWrite32(0x80600150, result.params);
-        }
     }
 
     @EventHandler(EventsClient.ON_INJECT_FINISHED)
@@ -574,7 +568,8 @@ export default class OotOnlineClient {
         this.clientStorage.first_time_sync = false;
     }
 
-    // This spawns the helper actor to fix some flag issues.
+    // TODO: Kill this and reimplement.
+    @Deprecated()
     @EventHandler(OotEvents.ON_ACTOR_SPAWN)
     onActorSpawned(actor: IActor) {
         // 0x87 = Forest Temple Elevator.
