@@ -339,7 +339,12 @@ export class ModelManagerClient {
     this.ModLoader.utils.setTimeoutFrames(() => {
       let z = zlib.inflateSync(packet.model);
       if (z.byteLength <= 1) return;
-      let player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
+      let player: ModelPlayer;
+      if (this.allocationManager.doesPlayerExist(packet.player)) {
+        player = this.allocationManager.getPlayer(packet.player)!;
+      } else {
+        player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
+      }
       let model = this.allocationManager.registerModel(z)!;
       if (packet.age === Age.CHILD) {
         player.child = model;
@@ -428,6 +433,9 @@ export class ModelManagerClient {
     player.adult.loadModel();
     player.child.loadModel();
     ref.loadModel();
+
+    if (this.core.save.age !== age) return;
+
     this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer, this.ModLoader.emulator.rdramReadBuffer(ref.pointer + 0x5000, 0x3C0));
     let skeleton = this.ModLoader.emulator.rdramReadPtr32(ref.pointer + 0x500C, 0) - 0x150;
     let buf = this.ModLoader.emulator.rdramReadBuffer(skeleton, 0x1B0);
@@ -684,7 +692,7 @@ export class ModelManagerClient {
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, this.puppetChild);
       this.clientStorage.childModel = this.allocationManager.getModel(this.puppetChild)!.zobj;
       this.onSceneChange(-1);
-      evt.ref = this.puppetAdult;
+      evt.ref = this.puppetChild;
       this.proxyNeedsSync = true;
     } else {
       if (copy.readUInt32BE(0x500C) === 0xFFFFFFFF) {
