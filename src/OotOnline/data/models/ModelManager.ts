@@ -50,7 +50,6 @@ export class ModelManagerClient {
   customModelFileAdultIcon = '';
   customModelFileChildIcon = '';
   cacheDir: string = "./cache";
-  isThreaded: boolean = false;
   //
   proxySyncTick!: string;
   proxyNeedsSync: boolean = false;
