@@ -148,7 +148,7 @@ export class ModelManagerClient {
     let ref = this.allocationManager.registerModel(copy);
     ref = this.allocationManager.allocateModel(ref)!;
     this.allocationManager.getLocalPlayerData().equipment.set(CostumeHelper.getEquipmentCategory(copy), ref);
-    if (eq.remove){
+    if (eq.remove) {
       this.allocationManager.getLocalPlayerData().equipment.delete(CostumeHelper.getEquipmentCategory(copy));
     }
   }
@@ -638,6 +638,7 @@ export class ModelManagerClient {
   onChangeModel(evt: Z64Online_ModelAllocation) {
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().adult.hash === evt.ref.hash) return;
+      if (this.allocationManager.getLocalPlayerData().adult.script !== undefined) this.allocationManager.getLocalPlayerData().adult.script!.onModelRemoved();
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, evt.ref);
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(evt.ref)!.zobj;
@@ -656,7 +657,10 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.adultCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
-      if (evt.script !== undefined) model.script = evt.script;
+      if (evt.script !== undefined) {
+        model.script = evt.script;
+        model.script.onModelEquipped();
+      }
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, model);
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(model)!.zobj;
@@ -669,6 +673,7 @@ export class ModelManagerClient {
   onChangeModelChild(evt: Z64Online_ModelAllocation) {
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().child.hash === evt.ref.hash) return;
+      if (this.allocationManager.getLocalPlayerData().child.script !== undefined) this.allocationManager.getLocalPlayerData().child.script!.onModelRemoved();
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, evt.ref);
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(evt.ref)!.zobj;
@@ -687,7 +692,10 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.childCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
-      if (evt.script !== undefined) model.script = evt.script;
+      if (evt.script !== undefined) {
+        model.script = evt.script;
+        model.script.onModelEquipped();
+      }
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, model);
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(model)!.zobj;
