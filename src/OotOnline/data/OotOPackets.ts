@@ -190,39 +190,6 @@ export class Ooto_BottleUpdatePacket extends Packet {
   }
 }
 
-export class Ooto_SceneGUIPacket extends Packet {
-  scene: number;
-  age: Age;
-  iconAdult!: string;
-  iconChild!: string;
-
-  constructor(
-    scene: number,
-    age: Age,
-    lobby: string,
-    iconAdult?: Buffer,
-    iconChild?: Buffer
-  ) {
-    super('Ooto_SceneGUIPacket', 'OotOnline', lobby, false);
-    this.scene = scene;
-    this.age = age;
-    if (iconAdult !== undefined) {
-      this.iconAdult = iconAdult.toString('base64');
-    }
-    if (iconChild !== undefined) {
-      this.iconChild = iconChild.toString('base64');
-    }
-  }
-
-  setAdultIcon(iconAdult: Buffer) {
-    this.iconAdult = iconAdult.toString('base64');
-  }
-
-  setChildIcon(iconChild: Buffer) {
-    this.iconChild = iconChild.toString('base64');
-  }
-}
-
 export class OotO_isRandoPacket extends Packet {
 
   isRando: boolean = true;
