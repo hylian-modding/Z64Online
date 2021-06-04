@@ -831,8 +831,10 @@ export class ModelManagerClient {
     }
   }
 
+  // #ifdef IS_DEV_BUILD
   @onViUpdate()
   onVi() {
     //this.allocationManager.onVi();
   }
+  // #endif
 }

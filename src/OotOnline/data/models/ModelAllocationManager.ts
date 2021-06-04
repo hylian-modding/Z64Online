@@ -25,6 +25,7 @@ export class ModelAllocationManager {
   }
 
   onVi() {
+    // #ifdef IS_DEV_BUILD
     if (this.ModLoader.ImGui.begin("Model Debug Menu")) {
       this.ModLoader.ImGui.columns(2);
       this.ModLoader.ImGui.text("Model reference data");
@@ -52,6 +53,7 @@ export class ModelAllocationManager {
       });
       this.ModLoader.ImGui.end();
     }
+    // #endif
   }
 
   doGC() {
