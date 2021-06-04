@@ -6,7 +6,7 @@
   "scripts": {
     "test": "modloader64 -r",
     "dist": "modloader64 -c && gulp build_production && modloader64 -d",
-    "packassets": "modloader64 -cbd && ts-node ./packassets.ts"
+    "packassets": "gulp packassets"
   },
   "repository": {
     "type": "git",

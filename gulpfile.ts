@@ -142,7 +142,11 @@ gulp.task('crush', function(){
             files[i] = path.resolve(`./${files[i]}`)
             if (path.parse(files[i]).ext !== ".js") continue;
             if (files[i].indexOf("node_modules") > -1) continue;
-            fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
+            try{
+                fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
+            }catch(err){
+                console.log("Failed to minify " + files[i]);
+            }
             let lzma: any = require("lzma");
             let data = Buffer.from(lzma.compress(fs.readFileSync(files[i])));
             fs.writeFileSync(path.resolve(path.parse(files[i]).dir, path.parse(files[i]).name + ".mlz"), data.toString('base64'));
