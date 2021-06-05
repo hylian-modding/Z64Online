@@ -78,6 +78,7 @@ export class OotOSaveData {
         if (this.isNotEqual(keys.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
           this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
           this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
+          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet(i.toString(), keys.keys[i]));
         }
       } else {
         if (this.isNotEqual(keys.keys[i], storage.keys[i])) {
@@ -343,6 +344,7 @@ export class OotOSaveData {
       let cur = this.core.save.dungeonItemManager.getRawBuffer();
       parseFlagChanges(obj.dungeon_items, cur);
       this.core.save.dungeonItemManager.setRawBuffer(cur);
+      bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
     } else {
       parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
     }

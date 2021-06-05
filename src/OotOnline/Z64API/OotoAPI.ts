@@ -21,9 +21,9 @@ export enum Z64OnlineEvents {
   MAGIC_METER_INCREASED = 'OotOnline:GainedMagicMeter',
   CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult', // deprecated - use CUSTOM_MODEL_LOAD_ADULT
   CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild', // deprecated - use CUSTOM_MODEL_LOAD_CHILD
-  CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims',
-  CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult',
-  CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild',
+  CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims', // deprecated - use CUSTOM_ANIMATION_BANK_REGISTER
+  CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult', // deprecated
+  CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild', // deprecated
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
@@ -54,7 +54,9 @@ export enum Z64OnlineEvents {
   CUSTOM_MODEL_LOAD_CHILD = "OotOnline:CUSTOM_MODEL_LOAD_CHILD",
   PUPPET_AGE_CHANGED = 'OotOnline:PUPPET_AGE_CHANGED',
   SAVE_DATA_ITEM_SET = 'OotOnline:SAVE_DATA_ITEM_SET',
-  LOCAL_MODEL_CHANGE_FINISHED = "OotOnline:LOCAL_MODEL_CHANGE_FINISHED"
+  LOCAL_MODEL_CHANGE_FINISHED = "OotOnline:LOCAL_MODEL_CHANGE_FINISHED",
+  CUSTOM_ANIMATION_BANK_REGISTER = "OotOnline:CUSTOM_ANIMATION_BANK_REGISTER",
+  FORCE_CUSTOM_ANIMATION_BANK = "OotOnline:FORCE_CUSTOM_ANIMATION_BANK"
 }
 
 export class Z64Online_LocalModelChangeProcessEvt{
@@ -169,5 +171,15 @@ export class Z64_SaveDataItemSet{
   constructor(key: string, value: boolean | number){
     this.key = key;
     this.value = value;
+  }
+}
+
+export class Z64_AnimationBank{
+  name: string;
+  bank: Buffer;
+
+  constructor(name: string, bank: Buffer){
+    this.name = name;
+    this.bank = bank;
   }
 }

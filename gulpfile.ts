@@ -61,34 +61,11 @@ gulp.task('postinstall', function () {
 })
 
 gulp.task('build', function () {
-    //console.log("enforcing style")
-    //child_process.execSync(`npx prettier --write "**/*.ts"`)
-    var uprocess = require('uprocess')
-    var defines = {
-        IS_DEV_BUILD: true
+    try {
+        child_process.execSync('npx tsc')
+    } catch (err) {
+        console.log(err.stack);
     }
-    let back: Map<string, Buffer> = new Map<string, Buffer>()
-    recursive('./src', function (err: any, files: any) {
-        for (let i = 0; i < files.length; i++) {
-            files[i] = path.resolve(`./${files[i]}`)
-            if (path.parse(files[i]).ext !== '.ts') {
-                continue
-            }
-            back.set(files[i], fs.readFileSync(files[i]))
-            fs.writeFileSync(files[i], uprocess.processFile(files[i], defines))
-        }
-        console.log('compiling')
-        try{
-            child_process.execSync('npx tsc')
-        }catch(err){
-            console.log(err.stack);
-        }
-        fse.copySync("./src", "./build/src")
-        console.log('restoring')
-        back.forEach((file: Buffer, name: string) => {
-            fs.writeFileSync(name, file)
-        })
-    })
     return gulp.src('./src/**/*.ts')
 })
 
@@ -109,9 +86,9 @@ gulp.task('_build_production', function () {
             fs.writeFileSync(files[i], uprocess.processFile(files[i], defines))
         }
         console.log('compiling')
-        try{
+        try {
             child_process.execSync('npx tsc')
-        }catch(err){
+        } catch (err) {
             console.log(err.stack);
         }
         fse.copySync("./src", "./build/src")
@@ -123,7 +100,7 @@ gulp.task('_build_production', function () {
     return gulp.src('./src/**/*.ts')
 })
 
-gulp.task('clean_up_crap', function(){
+gulp.task('clean_up_crap', function () {
     let trash: string[] = ['.ts', '.map', '.lock'];
     recursive('./build', function (err: any, files: any) {
         for (let i = 0; i < files.length; i++) {
@@ -136,15 +113,15 @@ gulp.task('clean_up_crap', function(){
     return gulp.src('./src/**/*.ts')
 });
 
-gulp.task('crush', function(){
+gulp.task('crush', function () {
     recursive('./build', function (err: any, files: any) {
         for (let i = 0; i < files.length; i++) {
             files[i] = path.resolve(`./${files[i]}`)
             if (path.parse(files[i]).ext !== ".js") continue;
             if (files[i].indexOf("node_modules") > -1) continue;
-            try{
+            try {
                 fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
-            }catch(err){
+            } catch (err) {
                 console.log("Failed to minify " + files[i]);
             }
             let lzma: any = require("lzma");

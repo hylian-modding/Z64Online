@@ -13,7 +13,11 @@ export const EVENT_ARR_SIZE = 0x1c;
 export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
-export const IS_DEV_BUILD: boolean = true;
+
+export let IS_DEV_BUILD: boolean = false;
+// #ifdef IS_DEV_BUILD
+IS_DEV_BUILD = true;
+// #endif
 
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
@@ -26,10 +30,12 @@ export class OotOnlineConfigCategory {
   keySync: boolean = true;
   notifications: boolean = true;
   nameplates: boolean = true;
+  muteNetworkedSounds: boolean = false;
+  muteLocalSounds: boolean = false;
 }
 
 @ExternalAPIProvider("Z64Lib", require(path.resolve(__dirname, "libs", "Z64Lib", "package.json")).version, path.resolve(__dirname, "libs", "Z64Lib"))
-export class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfig {
+export default class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfig {
 
   ModLoader!: IModLoaderAPI;
   @InjectCore()
@@ -66,5 +72,3 @@ export class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfi
   }
 
 }
-
-module.exports = OotOnline;

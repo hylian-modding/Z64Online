@@ -5,7 +5,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
 import { bus, EventHandler, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation } from '@OotOnline/Z64API/OotoAPI';
+import { IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/Z64API/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
 import { CostumeHelper } from './CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
@@ -44,10 +44,15 @@ export class WorldEventRewards {
     @InjectCore()
     core!: IOOTCore;
     rewardsWindowStatus: bool_ref = [false];
+
     customModelFilesAdult: Map<string, IModelReference> = new Map<string, IModelReference>();
     customModelFilesChild: Map<string, IModelReference> = new Map<string, IModelReference>();
     customModelsFilesEquipment: Map<string, Z64Online_EquipmentPak[]> = new Map<string, Z64Online_EquipmentPak[]>();
+
     customSoundGroups: Map<string, any> = new Map<string, any>();
+
+    anims: Map<string, Buffer> = new Map<string, Buffer>();
+
     allRewardTickets: Map<string, RewardTicket> = new Map<string, RewardTicket>();
     rewardTicketsByEvent: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
     rewardTicketsForEquipment: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
@@ -79,6 +84,13 @@ export class WorldEventRewards {
         // I don't understand how something with a key of undefined keeps ending up in here.
         //@ts-ignore
         this.customSoundGroups.delete(undefined);
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER)
+    onAnimReg(evt: Map<string, Buffer>) {
+        evt.forEach((value: Buffer, key: string) => {
+            this.anims.set(key, value);
+        });
     }
 
     private migrateRewards() {
@@ -210,6 +222,7 @@ export class WorldEventRewards {
         this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "equipmentLoadout", {});
         this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
+        this.ModLoader.config.setData("OotO_WorldEvents", "anim_bank", "");
     }
 
     private _getAllAssetByUUID(uuid: string): Buffer | undefined {
@@ -276,7 +289,6 @@ export class WorldEventRewards {
             if (this.ModLoader.ImGui.beginMainMenuBar()) {
                 if (this.ModLoader.ImGui.beginMenu("Mods")) {
                     if (this.ModLoader.ImGui.beginMenu("OotO")) {
-                        this.ModLoader.ImGui.text(`ML Coins: ${this.rewardContainer.coins}.`);
                         if (this.ModLoader.ImGui.menuItem("Costume Manager")) {
                             this.rewardsWindowStatus[0] = !this.rewardsWindowStatus[0];
                         }
@@ -383,7 +395,7 @@ export class WorldEventRewards {
                             this.ModLoader.ImGui.treePop();
                         }
                     });
-                    if (this.customModelFilesAdult.size > 0 || this.customModelFilesChild.size > 0 || this.customModelsFilesEquipment.size > 0 || this.customSoundGroups.size > 0) {
+                    if (this.customModelFilesAdult.size > 0 || this.customModelFilesChild.size > 0 || this.customModelsFilesEquipment.size > 0 || this.customSoundGroups.size > 0 || this.anims.size > 0) {
                         if (this.ModLoader.ImGui.treeNode("Custom###OotOCustomModels")) {
                             if (this.ModLoader.ImGui.treeNode("Adult###OotOCustomModels_Adult")) {
                                 this.customModelFilesAdult.forEach((value: IModelReference, key: string) => {
@@ -460,6 +472,21 @@ export class WorldEventRewards {
                                 });
                                 this.ModLoader.ImGui.treePop();
                             }
+                            if (this.ModLoader.ImGui.treeNode("Animation Banks###OotOCustomAnims")) {
+                                this.anims.forEach((value: Buffer, key: string) => {
+                                    if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.anim_bank)) {
+                                        if (key === this.config.anim_bank) {
+                                            this.config.anim_bank = "";
+                                            bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("vanilla", Buffer.alloc(1)));
+                                        } else {
+                                            this.config.anim_bank = key;
+                                            bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank(key, value));
+                                        }
+                                        this.ModLoader.config.save();
+                                    }
+                                });
+                                this.ModLoader.ImGui.treePop();
+                            }
                             this.ModLoader.ImGui.treePop();
                         }
                     }
@@ -511,6 +538,11 @@ export class WorldEventRewards {
             if (this.config.voice !== "") {
                 if (this.customSoundGroups.has(this.config.voice)) {
                     bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voice);
+                }
+            }
+            if (this.config.anim_bank !== "") {
+                if (this.anims.has(this.config.anim_bank)) {
+                    bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank(this.config.anim_bank, this.anims.get(this.config.anim_bank)!));
                 }
             }
             let keys = Object.keys(this.config.equipmentLoadout);

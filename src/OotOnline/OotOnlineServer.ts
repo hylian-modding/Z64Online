@@ -3,8 +3,7 @@ import { ActorHookingManagerServer } from './data/ActorHookingSystem';
 import { OotOnlineStorage } from './OotOnlineStorage';
 import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { OotOnline } from './OotOnline';
-import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
+import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
 import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
 import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket } from './data/OotOPackets';
@@ -22,7 +21,7 @@ export default class OotOnlineServer {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @ParentReference()
-    parent!: OotOnline;
+    parent!: IPlugin;
     @SidedProxy(ProxySide.SERVER, ActorHookingManagerServer)
     actorHooks!: ActorHookingManagerServer;
     @SidedProxy(ProxySide.SERVER, PuppetOverlordServer)

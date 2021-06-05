@@ -1,8 +1,8 @@
-import { onViUpdate, onTick, onCreateResources } from "modloader64_api/PluginLifecycle";
+import { onViUpdate, onTick } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOOTCore, Magic, OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
@@ -12,7 +12,7 @@ import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
-import { IS_DEV_BUILD, OotOnlineConfigCategory } from "@OotOnline/OotOnline";
+import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 import { changeKillfeedFont } from "modloader64_api/Announcements";
 import IMemory from "modloader64_api/IMemory";
 import { IActor } from "modloader64_api/OOT/IActor";
@@ -39,6 +39,7 @@ export class ImGuiHandler {
     parent!: IZ64OnlineHelpers;
     puppets: Array<Puppet> = [];
     scene: number = -1;
+    settings!: OotOnlineConfigCategory
     // View
     eye: Vector3 = new Vector3()
     cp: Vector3 = new Vector3()
@@ -47,9 +48,9 @@ export class ImGuiHandler {
     p: Array<number> = new Array<number>(16);
     font!: Font;
     puppetsDespawn: Array<number> = [];
+    // #ifdef IS_DEV_BUILD
     teleportDest: string_ref = [""];
     cutsceneDest: string_ref = [""];
-    settings!: OotOnlineConfigCategory
     showActorBrowser: boolean = false;
     actorCategories: Array<string> = ["Switches", "Backgrounds", "Player", "Bomb", "NPC", "Enemy", "Prop", "Item", "Misc", "Boss", "Door", "Chest"];
     actorNames: any;
@@ -57,9 +58,12 @@ export class ImGuiHandler {
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
     opa!: OpaDebug;
+    // #endif
 
     constructor() {
+        // #ifdef IS_DEV_BUILD
         this.actorNames = JSON.parse(fse.readFileSync(path.resolve(__dirname, "ACTOR_NAMES.json")).toString());
+        // #endif
     }
 
     @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -162,10 +166,13 @@ export class ImGuiHandler {
                 this.font = this.ModLoader.Gfx.createFont();
                 this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 22, 2);
                 changeKillfeedFont(this.font);
+                global.ModLoader["FONT"] = this.font;
             } catch (err) {
                 this.ModLoader.logger.error(err);
             }
+            // #ifdef IS_DEV_BUILD
             this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator, this.core, this.ModLoader);
+            // #endif
             return;
         }
 
@@ -178,13 +185,24 @@ export class ImGuiHandler {
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("OotO")) {
-                    if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.settings.nameplates, true)) {
-                        this.settings.nameplates = !this.settings.nameplates;
-                        this.ModLoader.config.save();
-                    }
-                    if (this.ModLoader.ImGui.menuItem("Show notifications", undefined, this.settings.notifications, true)) {
-                        this.settings.notifications = !this.settings.notifications
-                        this.ModLoader.config.save();
+                    if (this.ModLoader.ImGui.beginMenu("Settings")) {
+                        if (this.ModLoader.ImGui.menuItem("Mute custom sounds (local)", undefined, this.settings.muteLocalSounds)) {
+                            this.settings.muteLocalSounds = !this.settings.muteLocalSounds;
+                            this.ModLoader.config.save();
+                        }
+                        if (this.ModLoader.ImGui.menuItem("Mute custom sounds (remote)", undefined, this.settings.muteNetworkedSounds)) {
+                            this.settings.muteNetworkedSounds = !this.settings.muteNetworkedSounds;
+                            this.ModLoader.config.save();
+                        }
+                        if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.settings.nameplates, true)) {
+                            this.settings.nameplates = !this.settings.nameplates;
+                            this.ModLoader.config.save();
+                        }
+                        if (this.ModLoader.ImGui.menuItem("Show notifications", undefined, this.settings.notifications, true)) {
+                            this.settings.notifications = !this.settings.notifications
+                            this.ModLoader.config.save();
+                        }
+                        this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD
                     if (this.ModLoader.ImGui.beginMenu("Teleport")) {
@@ -201,19 +219,12 @@ export class ImGuiHandler {
                     if (this.ModLoader.ImGui.button("DUMP RAM")) {
                         bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
                     }
-                    if (this.ModLoader.ImGui.button("MAGIC GET")) {
-                        this.core.save.magic_meter_size = Magic.NORMAL;
-                    }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
                 }
                 this.ModLoader.ImGui.endMenu();
             }
             this.ModLoader.ImGui.endMainMenuBar();
-        }
-
-        if (!this.settings.nameplates) {
-            return;
         }
 
         // #ifdef IS_DEV_BUILD
@@ -339,6 +350,10 @@ export class ImGuiHandler {
             this.ModLoader.ImGui.end();
         }
         // #endif
+
+        if (!this.settings.nameplates) {
+            return;
+        }
 
         for (let i = 0; i < this.puppets.length; i++) {
             if (this.puppets[i].scene === this.scene) {

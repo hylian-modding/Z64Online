@@ -9,7 +9,7 @@ import fs from 'fs';
 import { OotOnlineStorageClient } from './OotOnlineStorageClient';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { Init, Preinit, Postinit, onTick, onCreateResources } from 'modloader64_api/PluginLifecycle';
+import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { parseFlagChanges } from './parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
@@ -22,8 +22,6 @@ import { RPCClient } from './data/RPCHandler';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
-import { addToKillFeedQueue } from 'modloader64_api/Announcements';
-import { Texture } from 'modloader64_api/Sylvain/Gfx';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
@@ -32,6 +30,8 @@ import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { Deprecated } from 'modloader64_api/Deprecated';
+import { Notifications } from './gui/imgui/Notifications';
+import AnimationManager from './data/models/AnimationManager';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -50,6 +50,8 @@ export default class OotOnlineClient {
     emotes!: EmoteManager;
     @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
     modelManager!: ModelManagerClient;
+    @SidedProxy(ProxySide.CLIENT, AnimationManager)
+    animManager!: AnimationManager;
     @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
@@ -62,25 +64,12 @@ export default class OotOnlineClient {
     gui!: ImGuiHandler;
     @SidedProxy(ProxySide.CLIENT, WorldEvents)
     worldEvents!: WorldEvents;
-    resourcesLoaded: boolean = false;
-    itemIcons: Map<string, Texture> = new Map<string, Texture>();
+    @SidedProxy(ProxySide.CLIENT, Notifications)
+    notificationManager!: Notifications;
     opa!: ThiccOpa;
     synxContext: number = -1;
 
-    @onCreateResources()
-    onResource() {
-        if (!this.resourcesLoaded) {
-            let base: string = path.resolve(__dirname, "gui", "sprites");
-            fs.readdirSync(base).forEach((file: string) => {
-                let p = path.resolve(base, file);
-                let t: Texture = this.ModLoader.Gfx.createTexture();
-                t.loadFromFile(p);
-                this.itemIcons.set(file, t);
-                //this.ModLoader.logger.debug("Loaded " + file + ".");
-            });
-            this.resourcesLoaded = true;
-        }
-    }
+
 
     @EventHandler(Z64OnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -97,6 +86,8 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "keySync", true);
         this.ModLoader.config.setData("OotOnline", "notifications", true);
         this.ModLoader.config.setData("OotOnline", "nameplates", true);
+        this.ModLoader.config.setData("OotOnline", "muteNetworkedSounds", false);
+        this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
         this.gui.settings = this.config;
     }
 
@@ -145,8 +136,7 @@ export default class OotOnlineClient {
     }
 
     autosaveSceneData() {
-        if (!this.core.helper.isLinkEnteringLoadingZone() &&
-            this.core.global.scene_framecount > 20) {
+        if (!this.core.helper.isLinkEnteringLoadingZone() && this.core.global.scene_framecount > 20 && this.clientStorage.first_time_sync) {
             // Slap key checking in here too.
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
@@ -443,10 +433,6 @@ export default class OotOnlineClient {
         this.healPlayer();
     }
 
-    @EventHandler(Z64OnlineEvents.MAGIC_METER_INCREASED)
-    onNeedsMagic(size: Magic) {
-    }
-
     @EventHandler(Z64OnlineEvents.SAVE_DATA_ITEM_SET)
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
         switch (evt.key) {
@@ -473,7 +459,6 @@ export default class OotOnlineClient {
                 bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
                 break;
         }
-
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
@@ -542,11 +527,6 @@ export default class OotOnlineClient {
             let result: IOvlPayloadResult = evt.result;
             this.clientStorage.overlayCache[evt.file] = result;
         }
-    }
-
-    @EventHandler(EventsClient.ON_INJECT_FINISHED)
-    onStartupFinished(evt: any) {
-        //this.core.toggleMapSelectKeybind();
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)

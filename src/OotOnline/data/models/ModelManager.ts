@@ -44,7 +44,6 @@ export class ModelManagerClient {
   core!: IOOTCore;
   clientStorage!: OotOnlineStorageClient;
   allocationManager!: ModelAllocationManager;
-  customModelFileAnims = '';
   customModelRepointsAdult = __dirname + '/zobjs/adult.json';
   customModelRepointsChild = __dirname + '/zobjs/child.json';
   customModelFileAdultIcon = '';
@@ -124,9 +123,10 @@ export class ModelManagerClient {
     this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD is deprecated. Please stop using this event.");
   }
 
+  @Deprecated('CUSTOM_MODEL_APPLIED_ANIMATIONS is deprecated')
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS)
   onCustomModel3(file: string) {
-    this.customModelFileAnims = file;
+    this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS is deprecated. Please stop using this event.");
   }
 
   @Deprecated()

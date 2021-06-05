@@ -11,6 +11,7 @@ import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
+import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     totalSize: number;
@@ -44,6 +45,7 @@ export class SoundManagerClient {
     localSoundPaks: Map<string, any> = new Map<string, any>();
     originalData!: Buffer;
     config!: Z64_EventConfig;
+    client_config!: OotOnlineConfigCategory;
 
     getRandomInt(min: number, max: number) {
         min = Math.ceil(min);
@@ -87,6 +89,7 @@ export class SoundManagerClient {
 
     @EventHandler(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND)
     onSound(remote: RemoteSoundPlayRequest) {
+        if (this.client_config.muteNetworkedSounds) return;
         if (this.PlayerSounds.has(remote.player.uuid)) {
             let rawPos: Buffer = remote.pos;
             let v = new Vector3(rawPos.readFloatBE(0), rawPos.readFloatBE(4), rawPos.readFloatBE(8));
@@ -141,6 +144,7 @@ export class SoundManagerClient {
     onPost() {
         this.ModLoader.clientSide.sendPacket(new OotO_SoundPackRequestPacket(this.ModLoader.clientLobby));
         bus.emit(Z64OnlineEvents.POST_LOADED_SOUND_LIST, this.localSoundPaks);
+        this.client_config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
     }
 
     @EventHandler(EventsClient.ON_PLAYER_LEAVE)
@@ -176,6 +180,8 @@ export class SoundManagerClient {
                 return;
             }
         }
+
+        if (this.client_config.muteLocalSounds) return;
 
         if (this.core.link.current_sound_id > 0) {
             if (this.sounds.has(this.core.link.current_sound_id)) {
