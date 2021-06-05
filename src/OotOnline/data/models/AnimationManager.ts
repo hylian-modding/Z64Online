@@ -47,6 +47,7 @@ export default class AnimationManager{
         }else{
             this.ModLoader.rom.romWriteBuffer(this.animationBankAddress, evt.bank);
         }
+        this.ModLoader.publicBus.emit(Z64OnlineEvents.CUSTOM_ANIMATION_BANK_EQUIPPED, this.animationBankAddress);
     }
 
 }
