@@ -51,7 +51,7 @@ export class Notifications {
     onVi() {
         if (this.curMessage !== "") {
             this.ModLoader.Gfx.addSprite(this.ModLoader.ImGui.getBackgroundDrawList(), this.icon, xywh(0, 0, 32, 32), xywh(0, 0, 64, 64), rgba(0xFF, 0xFF, 0xFF, 0xFF), FlipFlags.None);
-            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), global.ModLoader["FONT"], this.curMessage, xy(34, 0), rgba(0, 0, 0, 0xFF), rgba(0xFF, 0xFF, 0xFF, 0xFF), xy(1, 1));
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), global.ModLoader["FONT"], this.curMessage, xy(66, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), rgba(0, 0, 0, 0xFF), xy(1, 1));
             this.timer++;
             if (this.timer > this.MAX_TIMER) {
                 this.curMessage = "";
