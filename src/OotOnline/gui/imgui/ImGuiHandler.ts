@@ -12,7 +12,7 @@ import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
-import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
+import { BUILD_DATE, OotOnlineConfigCategory, VERSION_NUMBER } from "@OotOnline/OotOnline";
 import { changeKillfeedFont } from "modloader64_api/Announcements";
 import IMemory from "modloader64_api/IMemory";
 import { IActor } from "modloader64_api/OOT/IActor";
@@ -175,6 +175,14 @@ export class ImGuiHandler {
             // #endif
             return;
         }
+
+        // #ifdef IS_DEV_BUILD
+        if (this.core.helper.isTitleScreen()){
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "OotOnline", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Version: ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 68), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Build Date: ${BUILD_DATE}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 36), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
+        }
+        // #endif
 
         // #ifdef IS_DEV_BUILD
         if (this.opa !== undefined) {
@@ -397,7 +405,7 @@ export class ImGuiHandler {
                                 && v4.z < v4.w) {
 
                                 winX = Math.round(((vxyz.x + 1.0) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.x)
-                                winY = Math.round(((1.0 - vxyz.y) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.y)
+                                winY = Math.round(((1.0 - vxyz.y) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.y) + 80;
 
                                 let x_scale = this.ModLoader.ImGui.getMainViewport().size.x / 320
                                 let y_scale = this.ModLoader.ImGui.getMainViewport().size.y / 240

@@ -62,6 +62,9 @@ gulp.task('postinstall', function () {
 
 gulp.task('build', function () {
     try {
+        let meta = JSON.parse(fs.readFileSync("./src/OotOnline/package.json").toString());
+        meta.date = new Date().toUTCString();
+        fs.writeFileSync("./src/OotOnline/package.json", JSON.stringify(meta, null, 2));
         child_process.execSync('npx tsc')
     } catch (err) {
         console.log(err.stack);
@@ -87,6 +90,9 @@ gulp.task('_build_production', function () {
         }
         console.log('compiling')
         try {
+            let meta = JSON.parse(fs.readFileSync("./src/OotOnline/package.json").toString());
+            meta.date = new Date().toUTCString();
+            fs.writeFileSync("./src/OotOnline/package.json", JSON.stringify(meta, null, 2));
             child_process.execSync('npx tsc')
         } catch (err) {
             console.log(err.stack);

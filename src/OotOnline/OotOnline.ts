@@ -19,6 +19,9 @@ export let IS_DEV_BUILD: boolean = false;
 IS_DEV_BUILD = true;
 // #endif
 
+export const VERSION_NUMBER: number = require('./package.json').version;
+export const BUILD_DATE: number = require('./package.json').date;
+
 export interface IOotOnlineLobbyConfig {
   data_syncing: boolean;
   actor_syncing: boolean;
