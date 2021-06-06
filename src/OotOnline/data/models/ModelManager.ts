@@ -273,9 +273,9 @@ export class ModelManagerClient {
   syncProxiedObject() {
     if (this.proxyNeedsSync) {
       let def = zlib.deflateSync(this.clientStorage.adultModel);
-      this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(def, Age.ADULT, this.ModLoader.clientLobby, this.ModLoader.utils.hashBuffer(def)));
+      this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(def, Age.ADULT, this.ModLoader.clientLobby, this.ModLoader.utils.hashBuffer(def), this.core.save.age));
       let def2 = zlib.deflateSync(this.clientStorage.childModel);
-      this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(def2, Age.CHILD, this.ModLoader.clientLobby, this.ModLoader.utils.hashBuffer(def2)));
+      this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(def2, Age.CHILD, this.ModLoader.clientLobby, this.ModLoader.utils.hashBuffer(def2), this.core.save.age));
       let p = new Z64_EquipmentPakPacket(this.core.save.age, this.ModLoader.clientLobby);
       this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference, key: string) => {
         let model = this.allocationManager.getModel(value);
@@ -352,7 +352,7 @@ export class ModelManagerClient {
         player.adult = model;
       }
       if (this.allocationManager.isPlayerAllocated(player)) {
-        this.setPuppetModel(player, model, packet.age);
+        this.setPuppetModel(player, model, packet.age, packet.ageThePlayerActuallyIs);
       }
     }, 20);
   }
@@ -369,7 +369,7 @@ export class ModelManagerClient {
         let man = this.getEquipmentManifest(model);
         player.equipment.set(man.cat, model);
         if (this.allocationManager.isPlayerAllocated(player)) {
-          this.setPuppetModel(player, packet.age === Age.ADULT ? player.adult : player.child, packet.age);
+          this.setPuppetModel(player, packet.age === Age.ADULT ? player.adult : player.child, packet.age, packet.age);
         }
       });
     }, 20);
@@ -390,7 +390,8 @@ export class ModelManagerClient {
             def,
             Age.ADULT,
             this.ModLoader.clientLobby,
-            this.ModLoader.utils.hashBuffer(def)
+            this.ModLoader.utils.hashBuffer(def),
+            this.core.save.age
           ), packet.target
         );
       }
@@ -402,7 +403,8 @@ export class ModelManagerClient {
             def,
             Age.CHILD,
             this.ModLoader.clientLobby,
-            this.ModLoader.utils.hashBuffer(def)
+            this.ModLoader.utils.hashBuffer(def),
+            this.core.save.age
           ),
           packet.target
         );
@@ -429,12 +431,12 @@ export class ModelManagerClient {
     player.playerIsSpawned = true;
   }
 
-  private setPuppetModel(player: ModelPlayer, ref: IModelReference, age: Age) {
+  private setPuppetModel(player: ModelPlayer, ref: IModelReference, modelAge: Age, playerAge: Age) {
     player.adult.loadModel();
     player.child.loadModel();
     ref.loadModel();
 
-    if (this.core.save.age !== age) return;
+    if (playerAge !== modelAge) return;
 
     this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer, this.ModLoader.emulator.rdramReadBuffer(ref.pointer + 0x5000, 0x3C0));
     let skeleton = this.ModLoader.emulator.rdramReadPtr32(ref.pointer + 0x500C, 0) - 0x150;
@@ -483,9 +485,9 @@ export class ModelManagerClient {
 
     fn(player.adult, adult_generator_table, this.ModLoader);
     fn(player.child, child_generator_table, this.ModLoader);
-    if (age === Age.ADULT) {
+    if (modelAge === Age.ADULT) {
       fn2(player.adult, PuppetProxyGen_Matrix);
-    } else if (age === Age.CHILD) {
+    } else if (modelAge === Age.CHILD) {
       fn2(player.child, PuppetProxyGen_Matrix);
     }
   }
@@ -495,13 +497,13 @@ export class ModelManagerClient {
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetAdult, this.puppetChild)!;
     this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x58C, puppet.data.pointer);
     if (puppet.age === Age.CHILD && player.child !== undefined) {
-      this.setPuppetModel(player, player.child, Age.CHILD);
+      this.setPuppetModel(player, player.child, Age.CHILD, Age.CHILD);
     } else if (puppet.age === Age.ADULT && player.adult !== undefined) {
-      this.setPuppetModel(player, player.adult, Age.ADULT);
+      this.setPuppetModel(player, player.adult, Age.ADULT, Age.ADULT);
     } else if (puppet.age === Age.CHILD) {
-      this.setPuppetModel(player, this.puppetChild, Age.CHILD);
+      this.setPuppetModel(player, this.puppetChild, Age.CHILD, Age.CHILD);
     } else if (puppet.age === Age.ADULT) {
-      this.setPuppetModel(player, this.puppetAdult, Age.ADULT);
+      this.setPuppetModel(player, this.puppetAdult, Age.ADULT, Age.ADULT);
     }
   }
 

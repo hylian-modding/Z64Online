@@ -203,12 +203,14 @@ export class Z64_AllocateModelPacket extends Packet {
   model: Buffer;
   age: Age;
   hash: string;
+  ageThePlayerActuallyIs: Age;
 
-  constructor(model: Buffer, age: Age, lobby: string, hash: string) {
+  constructor(model: Buffer, age: Age, lobby: string, hash: string, actualAge: Age) {
     super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
     this.model = model;
     this.age = age;
     this.hash = hash;
+    this.ageThePlayerActuallyIs = actualAge;
   }
 }
 

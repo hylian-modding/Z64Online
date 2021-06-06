@@ -7,7 +7,6 @@ import fs from 'fs';
 import path from 'path';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
-import * as f3djs from 'f3djs';
 import { IModelReference } from '@OotOnline/Z64API/OotoAPI';
 
 export class ModelAllocationManager {
@@ -215,12 +214,6 @@ export class ModelAllocationManager {
     mp.proxyData = proxy;
     this.players.set(player.uuid, mp);
     let b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(proxy, 0, true, pointer);
-
-    let dummy = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(pointer + 0x3C0));
-    for (let i = 0; i < 0x20; i++) {
-      dummy.copy(proxy, 0x590 + (i * 8));
-    }
-
     this.ModLoader.emulator.rdramWriteBuffer(pointer, b);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;

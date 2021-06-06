@@ -20,6 +20,7 @@ import fse from 'fs-extra';
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { OpaDebug } from "./OpaDebug";
 import { IZ64OnlineHelpers } from "@OotOnline/data/InternalAPI";
+import { Command } from "modloader64_api/OOT/ICommandBuffer";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -51,6 +52,7 @@ export class ImGuiHandler {
     // #ifdef IS_DEV_BUILD
     teleportDest: string_ref = [""];
     cutsceneDest: string_ref = [""];
+    sound_id: string_ref = [""];
     showActorBrowser: boolean = false;
     actorCategories: Array<string> = ["Switches", "Backgrounds", "Player", "Bomb", "NPC", "Enemy", "Prop", "Item", "Misc", "Boss", "Door", "Chest"];
     actorNames: any;
@@ -213,6 +215,13 @@ export class ImGuiHandler {
                         this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD
+                    if (this.ModLoader.ImGui.beginMenu("Game Sounds")){
+                        this.ModLoader.ImGui.inputText("sound id", this.sound_id);
+                        if (this.ModLoader.ImGui.button("play")){
+                            this.core.commandBuffer.runCommand(Command.PLAY_SOUND, parseInt(this.sound_id[0]));
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
                     if (this.ModLoader.ImGui.beginMenu("Teleport")) {
                         this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
                         this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
