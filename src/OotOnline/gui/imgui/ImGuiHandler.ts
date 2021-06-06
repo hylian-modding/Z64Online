@@ -377,7 +377,6 @@ export class ImGuiHandler {
                 try {
                     if (this.puppets[i] !== undefined) {
                         let lp = this.ModLoader.math.rdramReadV3(this.puppets[i].data.pointer + 0x38);
-                        lp.y += 53;
                         let text = this.puppets[i].player.nickname;
 
                         let fovy = this.ModLoader.emulator.rdramReadF32(0x801C8570) // view.fovy
@@ -414,7 +413,7 @@ export class ImGuiHandler {
                                 && v4.z < v4.w) {
 
                                 winX = Math.round(((vxyz.x + 1.0) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.x)
-                                winY = Math.round(((1.0 - vxyz.y) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.y) + 80;
+                                winY = Math.round(((1.0 - vxyz.y) / 2.0) * this.ModLoader.ImGui.getMainViewport().size.y);
 
                                 let x_scale = this.ModLoader.ImGui.getMainViewport().size.x / 320
                                 let y_scale = this.ModLoader.ImGui.getMainViewport().size.y / 240
