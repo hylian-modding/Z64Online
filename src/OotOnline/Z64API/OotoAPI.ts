@@ -3,9 +3,10 @@ import { bus } from 'modloader64_api/EventHandler';
 import { Age, Tunic } from 'modloader64_api/OOT/OOTAPI';
 import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import path from 'path';
+import { IPuppet } from './IPuppet';
 
 @ExternalAPIProvider("OotOAPI", "3.0.0", path.resolve(__dirname))
-export class OotOAPIProvider{
+export class OotOAPIProvider {
 }
 
 export enum Z64OnlineEvents {
@@ -60,11 +61,11 @@ export enum Z64OnlineEvents {
   CUSTOM_ANIMATION_BANK_EQUIPPED = "OotOnline:CUSTOM_ANIMATION_BANK_EQUIPPED"
 }
 
-export class Z64Online_LocalModelChangeProcessEvt{
+export class Z64Online_LocalModelChangeProcessEvt {
   adult: IModelReference;
   child: IModelReference;
 
-  constructor(adult: IModelReference, child: IModelReference){
+  constructor(adult: IModelReference, child: IModelReference) {
     this.adult = adult;
     this.child = child;
   }
@@ -165,22 +166,33 @@ export class Z64Online_EquipmentPak {
   }
 }
 
-export class Z64_SaveDataItemSet{
+export class Z64_SaveDataItemSet {
   key: string;
   value: boolean | number;
 
-  constructor(key: string, value: boolean | number){
+  constructor(key: string, value: boolean | number) {
     this.key = key;
     this.value = value;
   }
 }
 
-export class Z64_AnimationBank{
+export class Z64_AnimationBank {
   name: string;
   bank: Buffer;
 
-  constructor(name: string, bank: Buffer){
+  constructor(name: string, bank: Buffer) {
     this.name = name;
     this.bank = bank;
   }
+}
+
+export interface PuppetQuery {
+  puppet: IPuppet | undefined;
+  player: INetworkPlayer;
+}
+
+export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
+  let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
+  bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
+  return evt;
 }

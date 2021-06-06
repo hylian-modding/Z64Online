@@ -7,8 +7,9 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
 import { IZ64OnlineHelpers } from '../InternalAPI';
+import { IPuppet } from '@OotOnline/Z64API/IPuppet';
 
-export class Puppet {
+export class Puppet implements IPuppet{
   player: INetworkPlayer;
   id: string;
   data: PuppetData;

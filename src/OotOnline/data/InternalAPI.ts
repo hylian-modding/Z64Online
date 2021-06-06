@@ -4,7 +4,7 @@ import { bus } from "modloader64_api/EventHandler";
 import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
 import { Puppet } from "./linkPuppet/Puppet";
 
-export const enum OOTO_PRIVATE_EVENTS{
+export const enum OOTO_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
     CLIENT_EVENT_DATA_GET = "CLIENT_EVENT_DATA_GET",
     SERVER_EVENT_DATA_GET = "SERVER_EVENT_DATA_GET",
@@ -31,33 +31,33 @@ export interface RewardTicket {
     price: number;
 }
 
-export class OOTO_PRIVATE_ASSET_LOOKUP_OBJ{
+export class OOTO_PRIVATE_ASSET_LOOKUP_OBJ {
 
     uuid: string;
     asset!: Buffer;
     ticket!: RewardTicket;
 
-    constructor(uuid: string){
+    constructor(uuid: string) {
         this.uuid = uuid;
     }
 
 }
 
-export class OOTO_PRIVATE_ASSET_HAS_CHECK{
+export class OOTO_PRIVATE_ASSET_HAS_CHECK {
 
     ticket: RewardTicket;
     has: boolean = false;
 
-    constructor(ticket: RewardTicket){
+    constructor(ticket: RewardTicket) {
         this.ticket = ticket;
     }
 
 }
 
-export class OOTO_PRIVATE_COIN_LOOKUP_OBJ{
+export class OOTO_PRIVATE_COIN_LOOKUP_OBJ {
     coins: number;
 
-    constructor(coins: number){
+    constructor(coins: number) {
         this.coins = coins;
     }
 }
@@ -65,15 +65,4 @@ export class OOTO_PRIVATE_COIN_LOOKUP_OBJ{
 export interface IZ64OnlineHelpers {
     sendPacketToPlayersInScene(packet: IPacketHeader): void;
     getClientStorage(): OotOnlineStorageClient | null;
-  }
-  
-  export interface PuppetQuery {
-    puppet: Puppet | undefined;
-    player: INetworkPlayer;
-  }
-  
-  export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
-    let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
-    bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
-    return evt;
-  }
+}

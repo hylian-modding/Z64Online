@@ -5,6 +5,7 @@ import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoAPI';
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
+import { IPuppetData } from '@OotOnline/Z64API/IPuppetData';
 
 interface SyncData {
 	lengths: any;
@@ -15,7 +16,7 @@ interface SyncData {
 const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetFields.json"));
 const dummy_buffer: Buffer = Buffer.alloc(0xFF);
 
-export class PuppetData {
+export class PuppetData implements IPuppetData{
 	parent: Puppet;
 	pointer: number;
 	ModLoader: IModLoaderAPI;
