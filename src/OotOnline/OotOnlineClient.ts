@@ -32,6 +32,7 @@ import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { Deprecated } from 'modloader64_api/Deprecated';
 import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './data/models/AnimationManager';
+import { PvPModule } from './data/pvp/PvPModule';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -66,6 +67,10 @@ export default class OotOnlineClient {
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.CLIENT, Notifications)
     notificationManager!: Notifications;
+    // #ifdef IS_DEV_BUILD
+    @SidedProxy(ProxySide.CLIENT, PvPModule)
+    pvp!: PvPModule;
+    // #endif
     opa!: ThiccOpa;
     synxContext: number = -1;
 
