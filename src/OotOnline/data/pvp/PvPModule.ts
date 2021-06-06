@@ -11,3 +11,10 @@ export class PvPModule{
     core!: IOOTCore;
 
 }
+
+export class PvPServer{
+
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+
+}

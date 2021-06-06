@@ -74,8 +74,6 @@ export default class OotOnlineClient {
     opa!: ThiccOpa;
     synxContext: number = -1;
 
-
-
     @EventHandler(Z64OnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
         this.LobbyConfig.actor_syncing = false;

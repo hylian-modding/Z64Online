@@ -14,8 +14,10 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
+import { PvPServer } from './data/pvp/PvPModule';
 
 export default class OotOnlineServer {
+
     @InjectCore()
     core!: IOOTCore;
     @ModLoaderAPIInject()
@@ -28,6 +30,10 @@ export default class OotOnlineServer {
     puppets!: PuppetOverlordServer;
     @SidedProxy(ProxySide.SERVER, WorldEvents)
     worldEvents!: WorldEvents;
+    // #ifdef IS_DEV_BUILD
+    @SidedProxy(ProxySide.SERVER, PvPServer)
+    pvp!: PvPServer;
+    // #endif
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
