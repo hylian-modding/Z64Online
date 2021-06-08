@@ -219,14 +219,6 @@ export class ImGuiHandler {
                         this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD
-                    if (this.ModLoader.ImGui.beginMenu("Danger")) {
-                        if (this.ModLoader.ImGui.button("Do it")) {
-                            this.core.commandBuffer.arbitraryFunctionCall(0x800CDCCC, 0).then((value: Buffer)=>{
-                                console.log(value);
-                            });
-                        }
-                        this.ModLoader.ImGui.endMenu();
-                    }
                     if (this.ModLoader.ImGui.beginMenu("Teleport")) {
                         this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
                         this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);

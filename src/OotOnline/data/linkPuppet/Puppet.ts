@@ -47,14 +47,6 @@ export class Puppet implements IPuppet {
     return this.data.age;
   }
 
-  debug_movePuppetToPlayer() {
-    let t = JSON.stringify(this.data);
-    let copy = JSON.parse(t);
-    Object.keys(copy).forEach((key: string) => {
-      (this.data as any)[key] = copy[key];
-    });
-  }
-
   doNotDespawnMe(p: number) {
     this.ModLoader.emulator.rdramWrite8(p + 0x3, 0xff);
   }
@@ -77,7 +69,7 @@ export class Puppet implements IPuppet {
         this.isSpawning = false;
         bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
         this.renderFn = this.ModLoader.emulator.rdramRead32(this.data.pointer + 0x134);
-      }).catch((reason: string)=>{
+      }).catch((reason: string) => {
         this.ModLoader.logger.error(reason);
       });
     }

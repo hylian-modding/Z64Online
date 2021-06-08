@@ -27,7 +27,6 @@ export interface IPuppet {
     renderFn: number;
     modelProxyPointer: number;
     readonly age: Age;
-    debug_movePuppetToPlayer(): void;
     doNotDespawnMe(p: number): void;
     spawn(): void;
     toggleVisibility(t: boolean): void;

@@ -33,6 +33,7 @@ import { Deprecated } from 'modloader64_api/Deprecated';
 import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
+import { PuppetStressTest } from './data/linkPuppet/PuppetStressTest';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -70,6 +71,8 @@ export default class OotOnlineClient {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.CLIENT, PvPModule)
     pvp!: PvPModule;
+    @SidedProxy(ProxySide.CLIENT, PuppetStressTest)
+    testing!: PuppetStressTest;
     // #endif
     opa!: ThiccOpa;
     synxContext: number = -1;
@@ -118,6 +121,8 @@ export default class OotOnlineClient {
     onHeapReady() {
         this.synxContext = this.ModLoader.heap!.malloc(0xFF);
         global.ModLoader["OotO_SyncContext"] = this.synxContext;
+/*         this.opa = new ThiccOpa();
+        this.opa.toggleSuperPoly(this.ModLoader.heap!, this.ModLoader); */
     }
 
     updateInventory() {
