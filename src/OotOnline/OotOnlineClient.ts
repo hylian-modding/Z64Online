@@ -53,7 +53,7 @@ export default class OotOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
-    @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
+    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
     puppets!: PuppetOverlordClient;
@@ -516,7 +516,7 @@ export default class OotOnlineClient {
             addr2,
             0x24
         );
-        if (buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))) {
+        /* if (buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))) {
             buf[0x1] = raw_inventory[buf[0x4]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
             this.core.commandBuffer.runCommand(
@@ -542,7 +542,7 @@ export default class OotOnlineClient {
                 0x00000003,
                 (success: boolean, result: number) => { }
             );
-        }
+        } */
     }
 
     @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
@@ -579,7 +579,7 @@ export default class OotOnlineClient {
         // 0x102 = Windmill Blades.
         // 0xF8 = Hyrule Castle Gate.
         // 0xCB = Ingo.
-        if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8 || (actor.actorID === 0xCB && actor.variable === 0x2)) {
+        /* if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8 || (actor.actorID === 0xCB && actor.variable === 0x2)) {
             (this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
                 let ff: IActor = this.core.actorManager.createIActorFromPointer(result);
                 if (actor.actorID === 0x0087) {
@@ -594,7 +594,7 @@ export default class OotOnlineClient {
                 this.ModLoader.logger.debug("Summoning the bugfix actor...");
                 return {};
             });
-        }
+        } */
     }
 
     @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
@@ -628,7 +628,9 @@ export default class OotOnlineClient {
                     return;
                 }
                 if (this.LobbyConfig.actor_syncing) {
-                    this.actorHooks.tick();
+                    if (this.actorHooks){
+                        this.actorHooks.tick();
+                    }
                 }
                 if (this.LobbyConfig.data_syncing) {
                     this.autosaveSceneData();

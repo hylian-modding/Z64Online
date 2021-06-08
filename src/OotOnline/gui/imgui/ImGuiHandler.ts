@@ -2,7 +2,7 @@ import { onViUpdate, onTick } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
@@ -179,7 +179,7 @@ export class ImGuiHandler {
         }
 
         // #ifdef IS_DEV_BUILD
-        if (this.core.helper.isTitleScreen()){
+        if (this.core.helper.isTitleScreen()) {
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "OotOnline", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Version: ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 68), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Build Date: ${BUILD_DATE}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 36), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
@@ -212,26 +212,27 @@ export class ImGuiHandler {
                             this.settings.notifications = !this.settings.notifications
                             this.ModLoader.config.save();
                         }
-                        if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)){
+                        if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)) {
                             this.settings.notificationSound = !this.settings.notificationSound;
                             this.ModLoader.config.save();
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD
-                    if (this.ModLoader.ImGui.beginMenu("Game Sounds")){
-                        this.ModLoader.ImGui.inputText("sound id", this.sound_id);
-                        if (this.ModLoader.ImGui.button("play")){
-                            this.core.commandBuffer.runCommand(Command.PLAY_SOUND, parseInt(this.sound_id[0]));
+                    if (this.ModLoader.ImGui.beginMenu("Danger")) {
+                        if (this.ModLoader.ImGui.button("Do it")) {
+                            this.core.commandBuffer.arbitraryFunctionCall(0x800CDCCC, 0).then((value: Buffer)=>{
+                                console.log(value);
+                            });
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
                     if (this.ModLoader.ImGui.beginMenu("Teleport")) {
                         this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
                         this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
-                        if (this.ModLoader.ImGui.button("Warp")) {
-                            this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
-                        }
+                        /*                         if (this.ModLoader.ImGui.button("Warp")) {
+                                                    this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
+                                                } */
                         this.ModLoader.ImGui.endMenu();
                     }
                     if (this.ModLoader.ImGui.menuItem("Actor Browser")) {

@@ -488,19 +488,6 @@ export class ActorHookingManagerClient {
         spawn_param = 0x80600160;
         break;
       case BOMBCHU_ID:
-        spawn_param = 0x80600170;
-        this.ModLoader.emulator.rdramWrite8(0x600172, pos[0]);
-        this.ModLoader.emulator.rdramWrite8(0x600173, pos[1]);
-
-        this.ModLoader.emulator.rdramWrite8(0x60019F, pos[4]);
-        this.ModLoader.emulator.rdramWrite8(0x6001A0, pos[5]);
-        var f: number = this.ModLoader.emulator.rdramReadF32(0x60019F);
-        f += 100.0;
-        this.ModLoader.emulator.rdramWriteF32(0x60019F, f);
-
-        this.ModLoader.emulator.rdramWrite16(0x600174, this.ModLoader.emulator.rdramRead16(0x60019F));
-        this.ModLoader.emulator.rdramWrite8(0x600176, pos[8]);
-        this.ModLoader.emulator.rdramWrite8(0x600177, pos[9]);
         break;
       case FW_ID:
         this.ModLoader.emulator.rdramWrite16(0x600180, FW_ID);
@@ -534,7 +521,7 @@ export class ActorHookingManagerClient {
         spawn_param = 0x80600190;
         break;
     }
-    this.core.commandBuffer.runCommand(
+    /* this.core.commandBuffer.runCommand(
       Command.SPAWN_ACTOR,
       spawn_param,
       (success: boolean, result: number) => {
@@ -587,7 +574,7 @@ export class ActorHookingManagerClient {
           }
         }
       }
-    );
+    ); */
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)

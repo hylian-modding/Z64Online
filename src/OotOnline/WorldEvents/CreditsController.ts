@@ -32,9 +32,9 @@ export class CreditsController {
 
     @onTick()
     onTick() {
-        if (this.playingCredits) {
+/*         if (this.playingCredits) {
             this.core.commandBuffer.runCommand(Command.PLAY_MUSIC, 0);
-        }
+        } */
     }
 
     @onViUpdate()

@@ -25,6 +25,7 @@ export interface IPuppet {
     horseSpawning: boolean;
     parent: IZ64OnlineHelpers;
     renderFn: number;
+    modelProxyPointer: number;
     readonly age: Age;
     debug_movePuppetToPlayer(): void;
     doNotDespawnMe(p: number): void;

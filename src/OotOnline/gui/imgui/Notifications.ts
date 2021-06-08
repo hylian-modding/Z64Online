@@ -15,6 +15,7 @@ import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 import { IZ64OnlineHelpers, OOTO_PRIVATE_EVENTS } from "@OotOnline/data/InternalAPI";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
+import Vector3 from "modloader64_api/math/Vector3";
 
 class Notif {
     msg: string;
@@ -81,9 +82,9 @@ export class Notifications {
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS)
-    onLock(evt: any){
+    onLock(evt: any) {
         this.lockIncomingItems = true;
-        this.ModLoader.utils.setTimeoutFrames(()=>{
+        this.ModLoader.utils.setTimeoutFrames(() => {
             this.lockIncomingItems = false;
         }, 20);
     }
@@ -136,7 +137,7 @@ export class Notifications {
                 this.curMessage = this.messages.shift()!;
                 if (!this.curMessage.noSound || !this.config.notificationSound) {
                     this.ModLoader.utils.setTimeoutFrames(() => {
-                        this.core.commandBuffer.runCommand(Command.PLAY_SOUND, this.boop);
+                        this.core.commandBuffer.playSound(this.boop, new Vector3(0, 0, 0), 0, 0, 0, 0);
                     }, 1);
                 }
             }
