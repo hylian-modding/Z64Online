@@ -88,6 +88,7 @@ export default class OotOnlineClient {
         this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
         this.ModLoader.config.setData("OotOnline", "keySync", true);
         this.ModLoader.config.setData("OotOnline", "notifications", true);
+        this.ModLoader.config.setData("OotOnline", "notificationSound", true);
         this.ModLoader.config.setData("OotOnline", "nameplates", true);
         this.ModLoader.config.setData("OotOnline", "muteNetworkedSounds", false);
         this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
@@ -120,10 +121,12 @@ export default class OotOnlineClient {
     }
 
     updateInventory() {
+        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
         this.clientStorage.needs_update = false;
         let data = new OotOSaveData(this.core, this.ModLoader);
         let save = data.createSave();
         if (this.clientStorage.lastPushHash !== data.hash) {
+            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
             this.clientStorage.lastPushHash = data.hash;
             this.ModLoader.utils.setTimeoutFrames(() => {
@@ -349,6 +352,12 @@ export default class OotOnlineClient {
     // The server is giving me data.
     @NetworkHandler('Ooto_DownloadResponsePacket')
     onDownloadPacket_client(packet: Ooto_DownloadResponsePacket) {
+        if (
+            this.core.helper.isTitleScreen() ||
+            !this.core.helper.isSceneNumberValid()
+        ) {
+            return;
+        }
         if (!packet.host) {
             if (packet.save) {
                 let s = new OotOSaveData(this.core, this.ModLoader);
@@ -365,12 +374,24 @@ export default class OotOnlineClient {
 
     @NetworkHandler('OotO_UpdateSaveDataPacket')
     onSaveUpdate(packet: OotO_UpdateSaveDataPacket) {
+        if (
+            this.core.helper.isTitleScreen() ||
+            !this.core.helper.isSceneNumberValid()
+        ) {
+            return;
+        }
         let data = new OotOSaveData(this.core, this.ModLoader);
         data.applySave(packet.save);
     }
 
     @NetworkHandler('OotO_UpdateKeyringPacket')
     onKeyUpdate(packet: OotO_UpdateKeyringPacket) {
+        if (
+            this.core.helper.isTitleScreen() ||
+            !this.core.helper.isSceneNumberValid()
+        ) {
+            return;
+        }
         let data = new OotOSaveData(this.core, this.ModLoader);
         data.processKeyRing(packet.keys, data.createKeyRing(), ProxySide.CLIENT);
     }

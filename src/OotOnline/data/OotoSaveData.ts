@@ -164,6 +164,7 @@ export class OotOSaveData {
   }
 
   forceOverrideSave(save: Buffer, storage: Save, side: ProxySide) {
+    this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
     let obj: Save = JSON.parse(save.toString());
 
     storage.death_counter = obj.death_counter;
