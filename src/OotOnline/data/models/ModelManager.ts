@@ -507,6 +507,11 @@ export class ModelManagerClient {
     }
   }
 
+  @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_DESPAWNED)
+  onPuppetDespawned(puppet: Puppet) {
+    this.allocationManager.getPlayer(puppet.player)!.isDead = true;
+  }
+
   @EventHandler(Z64OnlineEvents.PUPPET_AGE_CHANGED)
   onPuppetAgeChange(puppet: Puppet) {
     this.onPuppetSpawned(puppet);
