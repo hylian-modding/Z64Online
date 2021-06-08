@@ -7,7 +7,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { EventHandler, EventsClient, bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { Z64OnlineEvents, RemoteSoundPlayRequest, PuppetQuery } from '@OotOnline/Z64API/OotoAPI';
+import { Z64OnlineEvents, PuppetQuery } from '@OotOnline/Z64API/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 import { ParentReference, ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';

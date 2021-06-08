@@ -212,6 +212,10 @@ export class ImGuiHandler {
                             this.settings.notifications = !this.settings.notifications
                             this.ModLoader.config.save();
                         }
+                        if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)){
+                            this.settings.notificationSound = !this.settings.notificationSound;
+                            this.ModLoader.config.save();
+                        }
                         this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD
