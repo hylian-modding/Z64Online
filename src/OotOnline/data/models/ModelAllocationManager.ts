@@ -201,7 +201,9 @@ export class ModelAllocationManager {
 
   allocatePlayer(player: INetworkPlayer, defaultAdult: IModelReference, defaultChild: IModelReference): ModelPlayer | undefined {
     let mp = this.createPlayer(player, defaultAdult, defaultChild)!;
-    if (mp.isDead) mp.proxyPointer = -1;
+    if (mp.isDead){
+      this.doGC();
+    }
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
@@ -228,10 +230,9 @@ export class ModelAllocationManager {
     if (!this.doesPlayerExist(player)) return;
     let alloc = this.getPlayer(player)!;
     if (alloc.proxyPointer <= 0) return;
-    if (alloc.isDead) return;
 
     this.ModLoader.heap!.free(alloc.proxyPointer);
-    alloc.isDead = true;
+    alloc.proxyPointer = -1;
     this.ModLoader.logger.debug("[Model Manager]: Freed 0x" + alloc.proxyData.byteLength.toString(16) + " bytes from player " + player.nickname + ".");
   }
 
