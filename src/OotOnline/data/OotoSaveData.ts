@@ -1,4 +1,3 @@
-import { ISaveSyncData } from "@OotOnline/common/ISaveSyncData";
 import { IOOTSyncSave } from "@OotOnline/common/types/OotAliases";
 import { IKeyRing } from "@OotOnline/common/save/IKeyRing";
 import { parseFlagChanges } from "@OotOnline/parseFlagChanges";
@@ -8,6 +7,7 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
+import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 
 export class OotOSaveData implements ISaveSyncData{
 
