@@ -590,13 +590,6 @@ export class ActorHookingManagerClient {
     );
   }
 
-  @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_PRE)
-  onPrePatch(evt: any) {
-    let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
-    fs.writeFileSync("./cache/vanilla_zelda.ovl", buf);
-  }
-
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
     try {
@@ -617,7 +610,7 @@ export class ActorHookingManagerClient {
 
       // Change Zelda's actor category from 'NPC' to 'Chest'.
       // This fixes Ganon's Tower Collapse.
-      let buf: Buffer = fs.readFileSync("./cache/vanilla_zelda.ovl");
+      let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
       if (buf.readUInt32BE(0x7234) === 0x01790400) {
         this.ModLoader.logger.info("Patching Zelda...");
         buf.writeUInt8(0x0B, 0x7236);
