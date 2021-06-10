@@ -10,7 +10,7 @@ import { OotOnlineStorageClient } from './OotOnlineStorageClient';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle';
-import { parseFlagChanges } from './parseFlagChanges';
+import { parseFlagChanges } from './common/lib/parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
