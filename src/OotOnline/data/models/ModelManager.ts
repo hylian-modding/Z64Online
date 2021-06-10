@@ -196,7 +196,7 @@ export class ModelManagerClient {
         this.allocationManager.getLocalPlayerData().adult = alloc.ref;
       }, 2);
       // Assume pointer based on age.
-      let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+      let code_file: Buffer = tools.getCodeFile(evt.rom);
       let offset: number = 0xE65A0;
       model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
       this.adultCodePointer = code_file.readUInt32BE(offset);
@@ -224,7 +224,7 @@ export class ModelManagerClient {
         this.allocationManager.getLocalPlayerData().child = alloc.ref;
       }, 2);
       // Assume pointer based on age.
-      let code_file: Buffer = tools.decompressDMAFileFromRom(evt.rom, 27);
+      let code_file: Buffer = tools.getCodeFile(evt.rom);
       let offset: number = 0xE65A0 + 0x4;
       model.writeUInt32BE(code_file.readUInt32BE(offset), 0x500c);
       this.childCodePointer = code_file.readUInt32BE(offset);
