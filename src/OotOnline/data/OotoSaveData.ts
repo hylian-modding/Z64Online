@@ -265,37 +265,37 @@ export class OotOSaveData implements ISaveSyncData{
       let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
       let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
       for (let j = 0; j < struct.chests.byteLength; j++) {
-        if (struct.chests[j] !== cur.chests[i]) {
+        if (struct.chests[j] !== cur.chests[j]) {
           cur.chests[j] |= struct.chests[j];
         }
       }
       for (let j = 0; j < struct.collectible.byteLength; j++) {
-        if (struct.collectible[j] !== cur.collectible[i]) {
+        if (struct.collectible[j] !== cur.collectible[j]) {
           cur.collectible[j] |= struct.collectible[j];
         }
       }
       for (let j = 0; j < struct.room_clear.byteLength; j++) {
-        if (struct.room_clear[j] !== cur.room_clear[i]) {
+        if (struct.room_clear[j] !== cur.room_clear[j]) {
           cur.room_clear[j] |= struct.room_clear[j];
         }
       }
       for (let j = 0; j < struct.switches.byteLength; j++) {
-        if (struct.switches[j] !== cur.switches[i]) {
+        if (struct.switches[j] !== cur.switches[j]) {
           cur.switches[j] |= struct.switches[j];
         }
       }
       for (let j = 0; j < struct.visited_floors.byteLength; j++) {
-        if (struct.visited_floors[j] !== cur.visited_floors[i]) {
+        if (struct.visited_floors[j] !== cur.visited_floors[j]) {
           cur.visited_floors[j] |= struct.visited_floors[j];
         }
       }
       for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
-        if (struct.visited_rooms[j] !== cur.visited_rooms[i]) {
+        if (struct.visited_rooms[j] !== cur.visited_rooms[j]) {
           cur.visited_rooms[j] |= struct.visited_rooms[j];
         }
       }
       for (let j = 0; j < struct.unused.byteLength; j++) {
-        if (struct.unused[j] !== cur.unused[i]) {
+        if (struct.unused[j] !== cur.unused[j]) {
           cur.unused[j] = struct.unused[j];
         }
       }
