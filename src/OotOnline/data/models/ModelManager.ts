@@ -10,7 +10,7 @@ import {
 } from 'modloader64_api/EventHandler';
 import { OotOnlineStorageClient } from '../../OotOnlineStorageClient';
 import zlib from 'zlib';
-import { Age, OotEvents, IOOTCore, IOvlPayloadResult, Tunic } from 'modloader64_api/OOT/OOTAPI';
+import { Age, OotEvents, IOOTCore, IOvlPayloadResult, Tunic, Scene } from 'modloader64_api/OOT/OOTAPI';
 import {
   INetworkPlayer,
   NetworkHandler,
@@ -591,7 +591,7 @@ export class ModelManagerClient {
   }
 
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
-  onSceneChange(scene: number) {
+  onSceneChange(scene: Scene) {
     if (this.lockManager) return;
     this.allocationManager.getLocalPlayerData().adult.loadModel();
     this.allocationManager.getLocalPlayerData().child.loadModel();

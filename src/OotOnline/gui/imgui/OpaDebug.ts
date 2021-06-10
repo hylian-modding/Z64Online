@@ -1,10 +1,7 @@
 import { OOTO_PRIVATE_EVENTS } from "@OotOnline/data/InternalAPI";
-import { DecodeImmediate, DecodeOpcode, EncodeImmediate, EncodeInstruction, OPCODE_DEFAULT } from "@OotOnline/common/lib/OpcodeBullshit";
-import { IS_DEV_BUILD } from "@OotOnline/OotOnline";
-import { Heap } from "modloader64_api/heap";
+import { DecodeImmediate, DecodeOpcode, EncodeImmediate, OPCODE_DEFAULT } from "@OotOnline/common/lib/OpcodeBullshit";
 import IMemory from "modloader64_api/IMemory";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { Command } from "modloader64_api/OOT/ICommandBuffer";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { IImGui } from "modloader64_api/Sylvain/ImGui";
 import { SmartBuffer } from 'smart-buffer';
