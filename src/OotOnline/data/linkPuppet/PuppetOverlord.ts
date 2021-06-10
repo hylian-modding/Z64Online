@@ -1,5 +1,5 @@
 import { Puppet } from './Puppet';
-import { IOOTCore, Age, OotEvents } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, Age, OotEvents, Scene } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer, NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_PuppetWrapperPacket } from '../OotOPackets';
@@ -81,7 +81,7 @@ export class PuppetOverlordClient {
     bus.emit(Z64OnlineEvents.PUPPETS_CLEAR, {});
   }
 
-  localPlayerChangingScenes(entering_scene: number, age: Age) {
+  localPlayerChangingScenes(entering_scene: Scene, age: Age) {
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
     this.fakeClientPuppet.scene = entering_scene;
   }
@@ -113,7 +113,7 @@ export class PuppetOverlordClient {
     }
   }
 
-  changePuppetScene(player: INetworkPlayer, entering_scene: number) {
+  changePuppetScene(player: INetworkPlayer, entering_scene: Scene) {
     if (this.puppets.has(player.uuid)) {
       let puppet = this.puppets.get(player.uuid)!;
       puppet.scene = entering_scene;
@@ -252,7 +252,7 @@ export class PuppetOverlordClient {
   }
 
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
-  onSceneChange(scene: number) {
+  onSceneChange(scene: Scene) {
     this.localPlayerLoadingZone();
     this.localPlayerChangingScenes(scene, this.core.save.age);
   }

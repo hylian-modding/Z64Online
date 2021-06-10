@@ -1,4 +1,4 @@
-import { IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, IOvlPayloadResult, Scene } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
@@ -17,7 +17,7 @@ export class Puppet implements IPuppet{
   isSpawned = false;
   isSpawning = false;
   isShoveled = false;
-  scene: number;
+  scene: Scene;
   core: IOOTCore;
   void!: Vector3;
   ModLoader: IModLoaderAPI;

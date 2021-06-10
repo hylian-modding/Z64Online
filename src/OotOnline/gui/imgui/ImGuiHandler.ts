@@ -2,7 +2,7 @@ import { onViUpdate, onTick } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, OotEvents, Scene } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
@@ -39,7 +39,7 @@ export class ImGuiHandler {
     @ParentReference()
     parent!: IZ64OnlineHelpers;
     puppets: Array<Puppet> = [];
-    scene: number = -1;
+    scene: Scene = -1;
     settings!: OotOnlineConfigCategory
     // View
     eye: Vector3 = new Vector3()
@@ -88,7 +88,7 @@ export class ImGuiHandler {
     }
 
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
-    onSceneChanged(scene: number) {
+    onSceneChanged(scene: Scene) {
         this.scene = scene;
     }
 

@@ -7,6 +7,7 @@ import { PuppetData } from './linkPuppet/PuppetData';
 import {
   Age,
   InventoryItem,
+  Scene,
 } from 'modloader64_api/OOT/OOTAPI';
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
@@ -37,10 +38,10 @@ export class Ooto_PuppetWrapperPacket extends UDPPacket {
 }
 
 export class Ooto_ScenePacket extends Packet {
-  scene: number;
+  scene: Scene;
   age: Age;
 
-  constructor(lobby: string, scene: number, age: Age) {
+  constructor(lobby: string, scene: Scene, age: Age) {
     super('Ooto_ScenePacket', 'OotOnline', lobby, true);
     this.scene = scene;
     this.age = age;
@@ -110,7 +111,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
   collect: Buffer;
   clear: Buffer;
   temp: Buffer;
-  scene: number;
+  scene: Scene;
 
   constructor(
     chests: Buffer,
@@ -119,7 +120,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     clear: Buffer,
     temp: Buffer,
     lobby: string,
-    scene: number
+    scene: Scene
   ) {
     super('Ooto_ClientSceneContextUpdate', 'OotOnline', lobby, false);
     this.chests = chests;
@@ -133,12 +134,12 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
 
 export class Ooto_ActorPacket extends Packet {
   actorData: ActorPacketData;
-  scene: number;
+  scene: Scene;
   room: number;
 
   constructor(
     data: ActorPacketData,
-    scene: number,
+    scene: Scene,
     room: number,
     lobby: string
   ) {
@@ -151,7 +152,7 @@ export class Ooto_ActorPacket extends Packet {
 
 export class Ooto_ActorDeadPacket extends Packet {
   actorUUID: string;
-  scene: number;
+  scene: Scene;
   room: number;
 
   constructor(aid: string, scene: number, room: number, lobby: string) {
@@ -165,10 +166,10 @@ export class Ooto_ActorDeadPacket extends Packet {
 export class Ooto_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
   room: number;
-  scene: number;
+  scene: Scene;
   constructor(
     data: ActorPacketData,
-    scene: number,
+    scene: Scene,
     room: number,
     lobby: string
   ) {
