@@ -281,37 +281,37 @@ export class OotOSaveData {
       let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
       let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
       for (let j = 0; j < struct.chests.byteLength; j++) {
-        if (struct.chests[j] !== cur.chests[i]) {
+        if (struct.chests[j] !== cur.chests[j]) {
           cur.chests[j] |= struct.chests[j];
         }
       }
       for (let j = 0; j < struct.collectible.byteLength; j++) {
-        if (struct.collectible[j] !== cur.collectible[i]) {
+        if (struct.collectible[j] !== cur.collectible[j]) {
           cur.collectible[j] |= struct.collectible[j];
         }
       }
       for (let j = 0; j < struct.room_clear.byteLength; j++) {
-        if (struct.room_clear[j] !== cur.room_clear[i]) {
+        if (struct.room_clear[j] !== cur.room_clear[j]) {
           cur.room_clear[j] |= struct.room_clear[j];
         }
       }
       for (let j = 0; j < struct.switches.byteLength; j++) {
-        if (struct.switches[j] !== cur.switches[i]) {
+        if (struct.switches[j] !== cur.switches[j]) {
           cur.switches[j] |= struct.switches[j];
         }
       }
       for (let j = 0; j < struct.visited_floors.byteLength; j++) {
-        if (struct.visited_floors[j] !== cur.visited_floors[i]) {
+        if (struct.visited_floors[j] !== cur.visited_floors[j]) {
           cur.visited_floors[j] |= struct.visited_floors[j];
         }
       }
       for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
-        if (struct.visited_rooms[j] !== cur.visited_rooms[i]) {
+        if (struct.visited_rooms[j] !== cur.visited_rooms[j]) {
           cur.visited_rooms[j] |= struct.visited_rooms[j];
         }
       }
       for (let j = 0; j < struct.unused.byteLength; j++) {
-        if (struct.unused[j] !== cur.unused[i]) {
+        if (struct.unused[j] !== cur.unused[j]) {
           cur.unused[j] = struct.unused[j];
         }
       }
@@ -343,45 +343,50 @@ export class OotOSaveData {
     if (obj.scarecrowsSongChildFlag > storage.scarecrowsSongChildFlag) {
       storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
     }
-    for (let i = 0; i < obj.scarecrowsSong.byteLength; i += 0x8) {
-      let struct = new ScarecrowSongNoteStruct(obj.scarecrowsSong.slice(i, i + 0x8));
-      let cur = new ScarecrowSongNoteStruct(scarecrowsSong.slice(i, i + 0x8));
-      for (let j = 0; j < struct.note.byteLength; j++) {
-        if (cur.note[i] !== 0 && struct.note[j] !== cur.note[i]) { // Should only update if player has not taught a song to Bonooru already
-          cur.note[j] |= struct.note[j];
-        }
-      }
-      for (let j = 0; j < struct.unused.byteLength; j++) {
-        if (struct.unused[j] !== cur.unused[i]) {
-          cur.unused[j] |= struct.unused[j];
-        }
-      }
-      for (let j = 0; j < struct.duration.byteLength; j++) {
-        if (cur.duration[i] !== 0 && struct.duration[j] !== cur.duration[i]) {
-          if (struct.duration[j] > 16) { // Attempt to cap note and silence length just in case
-            struct.duration[j] = 16;
+    if (!Object.values(scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined")) {
+      for (let i = 0; i < obj.scarecrowsSong.byteLength; i += 0x8) {
+        let struct = new ScarecrowSongNoteStruct(obj.scarecrowsSong.slice(i, i + 0x8));
+        let cur = new ScarecrowSongNoteStruct(scarecrowsSong.slice(i, i + 0x8));
+        for (let j = 0; j < struct.note.byteLength; j++) {
+          if (struct.note[j] !== cur.note[j]) {
+            cur.note[j] = struct.note[j];
           }
-          cur.duration[j] |= struct.duration[j];
         }
-      }
-      for (let j = 0; j < struct.volume.byteLength; j++) {
-        if (cur.volume[i] !== 0 && struct.volume[j] !== cur.volume[i]) {
-          cur.volume[j] |= struct.volume[j];
+        for (let j = 0; j < struct.unused.byteLength; j++) {
+          if (struct.unused[j] !== cur.unused[j]) {
+            cur.unused[j] = struct.unused[j];
+          }
         }
-      }
-      for (let j = 0; j < struct.vibrato.byteLength; j++) {
-        if (cur.vibrato[i] !== 0 && struct.vibrato[j] !== cur.vibrato[i]) {
-          cur.vibrato[j] |= struct.vibrato[j];
+        for (let j = 0; j < struct.duration.byteLength; j++) {
+          if (struct.duration[j] !== cur.duration[j]) {
+            if (j == 0 && struct.duration[j] > 0) { // Cap note/silence duration to 16 seconds?
+              struct.duration[j] = 0;
+            }
+            if (j == 1 && struct.duration[j] > 16) {
+              struct.duration[j] = 16;
+            }
+            cur.duration[j] = struct.duration[j];
+          }
         }
-      }
-      for (let j = 0; j < struct.pitch.byteLength; j++) {
-        if (cur.pitch[i] !== 0 && struct.pitch[j] !== cur.pitch[i]) {
-          cur.pitch[j] |= struct.pitch[j];
+        for (let j = 0; j < struct.volume.byteLength; j++) {
+          if (struct.volume[j] !== cur.volume[j]) {
+            cur.volume[j] = struct.volume[j];
+          }
         }
-      }
-      for (let j = 0; j < struct.special.byteLength; j++) {
-        if (cur.special[i] !== 0 && struct.special[j] !== cur.special[i]) {
-          cur.special[j] |= struct.special[j];
+        for (let j = 0; j < struct.vibrato.byteLength; j++) {
+          if (struct.vibrato[j] !== cur.vibrato[j]) {
+            cur.vibrato[j] = struct.vibrato[j];
+          }
+        }
+        for (let j = 0; j < struct.pitch.byteLength; j++) {
+          if (struct.pitch[j] !== cur.pitch[j]) {
+            cur.pitch[j] = struct.pitch[j];
+          }
+        }
+        for (let j = 0; j < struct.special.byteLength; j++) {
+          if (struct.special[j] !== cur.special[j]) {
+            cur.special[j] = struct.special[j];
+          }
         }
       }
     }
