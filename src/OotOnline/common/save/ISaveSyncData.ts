@@ -4,7 +4,7 @@
 */
 import { IKeyRing } from "@OotOnline/common/save/IKeyRing";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { IZ64SyncSave } from "./Types";
+import { IZ64SyncSave } from "../types/Types";
 
 export interface ISaveSyncData {
     hash: string;
