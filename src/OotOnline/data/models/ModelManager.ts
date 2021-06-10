@@ -32,7 +32,7 @@ import { onTick, onViUpdate, Preinit } from 'modloader64_api/PluginLifecycle';
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Deprecated } from 'modloader64_api/Deprecated';
 import * as f3djs from 'f3djs';
-import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix } from './PuppetProxyGen';
+import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix, PuppetProxyGen_Matrix_Keys } from './PuppetProxyGen';
 import { CostumeHelper } from '@OotOnline/WorldEvents/CostumeHelper';
 import { EquipmentManifest } from './EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
@@ -470,11 +470,26 @@ export class ModelManagerClient {
     let adult_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Adult));
     let child_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Child));
 
+    if (modelAge === Age.ADULT) {
+      fn2(player.adult, PuppetProxyGen_Matrix);
+    } else if (modelAge === Age.CHILD) {
+      fn2(player.child, PuppetProxyGen_Matrix);
+    }
+
     player.equipment.forEach((value: IModelReference) => {
       let man = this.getEquipmentManifest(value);
       Object.keys(man.manifest.OOT.child).forEach((key: string) => {
         let i = man.lut + (parseInt(key) * 0x8);
-        child_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.child[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
+        if (PuppetProxyGen_Matrix_Keys.indexOf(key) > -1) {
+          /** @TODO Do this better. */
+          if (key === PuppetProxyGen_Matrix_Keys[0]) {
+            fn2(value, { "0x6F0": `0x${this.ModLoader.emulator.rdramReadPtr32(value.pointer + i, 4).toString(16)}` });
+          } else if (key === PuppetProxyGen_Matrix_Keys[1]) {
+            fn2(value, { "0x730": `0x${this.ModLoader.emulator.rdramReadPtr32(value.pointer + i, 4).toString(16)}` });
+          }
+        } else {
+          child_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.child[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
+        }
       });
 
       Object.keys(man.manifest.OOT.adult).forEach((key: string) => {
@@ -485,11 +500,6 @@ export class ModelManagerClient {
 
     fn(player.adult, adult_generator_table, this.ModLoader);
     fn(player.child, child_generator_table, this.ModLoader);
-    if (modelAge === Age.ADULT) {
-      fn2(player.adult, PuppetProxyGen_Matrix);
-    } else if (modelAge === Age.CHILD) {
-      fn2(player.child, PuppetProxyGen_Matrix);
-    }
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
