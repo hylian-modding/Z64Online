@@ -55,9 +55,11 @@ export class Notifications {
 
     @EventHandler(Z64OnlineEvents.SAVE_DATA_ITEM_SET)
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
+        if (!this.resourcesLoaded) return;
         if (SpriteMap.has(evt.key) && !this.lockIncomingItems) {
-            if (!this.resourcesLoaded) return;
-            this.messages.push(new Notif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get(evt.key)!)!, this.MAX_TIMER));
+            if (this.parent.getClientStorage()!.localization.hasOwnProperty(SpriteMap.get(evt.key)!)) {
+                this.messages.push(new Notif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get(evt.key)!)!, this.MAX_TIMER));
+            }
         }
     }
 
@@ -81,9 +83,9 @@ export class Notifications {
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS)
-    onLock(evt: any){
+    onLock(evt: any) {
         this.lockIncomingItems = true;
-        this.ModLoader.utils.setTimeoutFrames(()=>{
+        this.ModLoader.utils.setTimeoutFrames(() => {
             this.lockIncomingItems = false;
         }, 20);
     }
