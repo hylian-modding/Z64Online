@@ -15,14 +15,14 @@ export class ModelReference implements IModelReference {
     this.ModLoader = ModLoader;
   }
 
-  loadModel(): boolean{
+  loadModel(): boolean {
     this.ModLoader.privateBus.emit("LOAD_MODEL", this);
     return this.isLoaded;
   }
-  
-  unregister(): boolean{
+
+  unregister(): boolean {
     this.ModLoader.privateBus.emit("KILL_MODEL", this)
-    return  this.isDead;
+    return this.isDead;
   }
 }
 

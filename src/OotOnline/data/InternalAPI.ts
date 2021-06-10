@@ -1,8 +1,5 @@
 import { OotOnlineStorageClient } from "@OotOnline/OotOnlineStorageClient";
-import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
-import { bus } from "modloader64_api/EventHandler";
-import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
-import { Puppet } from "./linkPuppet/Puppet";
+import { IPacketHeader } from "modloader64_api/NetworkHandler";
 
 export const enum OOTO_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",

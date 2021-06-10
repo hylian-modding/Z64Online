@@ -22,7 +22,7 @@ import { Puppet } from '../linkPuppet/Puppet';
 import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import path from 'path';
-import { ModelReference } from './ModelContainer';
+import { ModelReference } from '../../common/cosmetics/ModelContainer';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { OOTAdultManifest } from 'Z64Lib/API/OOT/OOTAdultManfest';
@@ -33,8 +33,8 @@ import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { Deprecated } from 'modloader64_api/Deprecated';
 import * as f3djs from 'f3djs';
 import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix, PuppetProxyGen_Matrix_Keys } from './PuppetProxyGen';
-import { CostumeHelper } from '@OotOnline/WorldEvents/CostumeHelper';
-import { EquipmentManifest } from './EquipmentManifest';
+import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
+import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
 
 export class ModelManagerClient {

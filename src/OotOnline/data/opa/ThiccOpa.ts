@@ -1,7 +1,7 @@
 import { Heap } from 'modloader64_api/heap'
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI'
-import { get_aligned, get_lower, get_upper } from "./CodeCave"
-import { DecodeImmediate, DecodeJumpTarget, DecodeOpcode, DecodeRegisterTarget, Instruction, JAL_ENCODE, OPCODEINDEXTYPE, OPCODE_DEFAULT, OPCODE_SPECIAL0, REGISTER } from "./OpcodeBullshit"
+import { get_aligned, get_lower, get_upper } from "../../common/lib/CodeCave"
+import { DecodeImmediate, DecodeJumpTarget, DecodeOpcode, DecodeRegisterTarget, Instruction, JAL_ENCODE, OPCODEINDEXTYPE, OPCODE_DEFAULT, OPCODE_SPECIAL0, REGISTER } from "../../common/lib/OpcodeBullshit"
 import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 
 enum InitTHGA_Order {

@@ -44,6 +44,7 @@ export const SpriteMap: Map<string, string> = new Map(
         ["fireArrows", "item_fire_arrow"],
         ["bottle_25", "item_fish"],
         ["TODO_SKULLTULA_TOKEN", "item_gold_skulltula_token"],
+        ["adultTradeItem_51", "item_goron_sword_broken"],
         ["", ""]
     ]
 );

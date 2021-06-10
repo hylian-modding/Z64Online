@@ -113,7 +113,7 @@ export class PuppetOverlordClient {
     }
   }
 
-  changePuppetScene(player: INetworkPlayer, entering_scene: number, age: Age) {
+  changePuppetScene(player: INetworkPlayer, entering_scene: number) {
     if (this.puppets.has(player.uuid)) {
       let puppet = this.puppets.get(player.uuid)!;
       puppet.scene = entering_scene;
@@ -259,7 +259,7 @@ export class PuppetOverlordClient {
 
   @NetworkHandler('Ooto_ScenePacket')
   onSceneChange_client(packet: Ooto_ScenePacket) {
-    this.changePuppetScene(packet.player, packet.scene, packet.age);
+    this.changePuppetScene(packet.player, packet.scene);
   }
 
   @NetworkHandler('Ooto_PuppetPacket')

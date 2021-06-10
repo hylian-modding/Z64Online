@@ -6,6 +6,7 @@ import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoA
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
 import { IPuppetData } from '@OotOnline/Z64API/IPuppetData';
+import { AgeorForm } from '@OotOnline/common/types/Types';
 
 interface SyncData {
 	lengths: any;
@@ -22,8 +23,8 @@ export class PuppetData implements IPuppetData{
 	ModLoader: IModLoaderAPI;
 	header: SmartBuffer;
 	buf: SmartBuffer;
-	ageLastFrame: Age = Age.ADULT;
-	age: Age = Age.ADULT;
+	ageLastFrame: AgeorForm = Age.ADULT;
+	age: AgeorForm = Age.ADULT;
 	localCache: Map<string, Buffer> = new Map<string, Buffer>();
 	remoteCache: Map<string, Buffer> = new Map<string, Buffer>();
 	tickRate: number = 20;
