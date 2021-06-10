@@ -1,7 +1,7 @@
 import { ModelPlayer } from './ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { ModelObject, ModelReference } from './ModelContainer';
+import { ModelObject, ModelReference } from '../../common/cosmetics/ModelContainer';
 import { zzstatic } from 'Z64Lib/API/zzstatic';
 import fs from 'fs';
 import path from 'path';

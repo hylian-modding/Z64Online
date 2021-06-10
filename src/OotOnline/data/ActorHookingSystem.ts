@@ -30,7 +30,7 @@ import { Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
-import { MLPatchLib } from '@OotOnline/Z64API/ML64PatchLib';
+import { MLPatchLib } from '@OotOnline/common/lib/ML64PatchLib';
 import { IZ64OnlineHelpers } from './InternalAPI';
 // Actor Hooking Stuff
 

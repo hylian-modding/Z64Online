@@ -1,25 +1,15 @@
+import { ISaveSyncData } from "@OotOnline/common/ISaveSyncData";
+import { IOOTSyncSave } from "@OotOnline/common/types/OotAliases";
+import { IKeyRing } from "@OotOnline/common/save/IKeyRing";
 import { parseFlagChanges } from "@OotOnline/parseFlagChanges";
 import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { IInventoryCounts, IInventoryFields, InventoryItem, IOOTCore, ISaveContext, SceneStruct } from "modloader64_api/OOT/OOTAPI";
+import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 
-export interface Save extends Pick<ISaveContext, 'death_counter' | 'heart_containers' | 'magic_meter_size' | 'swords' | 'shields'
-  | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'poe_collector_score' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags'> {
-  inventory: Inventory;
-  dungeon_items: Buffer;
-}
-
-export interface KeyRing {
-  keys: Buffer;
-}
-
-export interface Inventory extends IInventoryFields, Pick<IInventoryCounts, 'magicBeansCount'> {
-}
-
-export class OotOSaveData {
+export class OotOSaveData implements ISaveSyncData{
 
   private core: IOOTCore;
   private ModLoader: IModLoaderAPI;
@@ -30,7 +20,7 @@ export class OotOSaveData {
     this.ModLoader = ModLoader;
   }
 
-  private generateWrapper(): Save {
+  private generateWrapper(): IOOTSyncSave {
     let obj: any = {};
     let keys = [
       'death_counter',
@@ -64,15 +54,15 @@ export class OotOSaveData {
     for (let i = 0; i < keys.length; i++) {
       obj2[keys[i]] = obj[keys[i]];
     }
-    return obj2 as Save;
+    return obj2 as IOOTSyncSave;
   }
 
-  createKeyRing(): KeyRing {
-    let obj = { keys: this.core.save.keyManager.getRawKeyBuffer() } as KeyRing;
+  createKeyRing(): IKeyRing {
+    let obj = { keys: this.core.save.keyManager.getRawKeyBuffer() } as IKeyRing;
     return obj;
   }
 
-  processKeyRing(keys: KeyRing, storage: KeyRing, side: ProxySide) {
+  processKeyRing(keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         if (this.isNotEqual(keys.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
@@ -88,7 +78,7 @@ export class OotOSaveData {
     }
   }
 
-  processKeyRing_OVERWRITE(keys: KeyRing, storage: KeyRing, side: ProxySide) {
+  processKeyRing_OVERWRITE(keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
@@ -163,9 +153,9 @@ export class OotOSaveData {
     return (obj1 !== obj2);
   }
 
-  forceOverrideSave(save: Buffer, storage: Save, side: ProxySide) {
+  forceOverrideSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
     this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-    let obj: Save = JSON.parse(save.toString());
+    let obj: IOOTSyncSave = JSON.parse(save.toString());
 
     storage.death_counter = obj.death_counter;
     storage.heart_containers = obj.heart_containers;
@@ -203,8 +193,8 @@ export class OotOSaveData {
     }
   }
 
-  mergeSave(save: Buffer, storage: Save, side: ProxySide) {
-    let obj: Save = JSON.parse(save.toString());
+  mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
+    let obj: IOOTSyncSave = JSON.parse(save.toString());
     if (obj.death_counter > storage.death_counter) {
       storage.death_counter = obj.death_counter;
     }

@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Magic, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
@@ -18,7 +18,6 @@ import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
-import { RPCClient } from './data/RPCHandler';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
@@ -57,8 +56,6 @@ export default class OotOnlineClient {
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
     puppets!: PuppetOverlordClient;
-    @SidedProxy(ProxySide.CLIENT, RPCClient)
-    rcp!: RPCClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)

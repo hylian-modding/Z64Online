@@ -7,18 +7,18 @@ import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
 import { bus, EventHandler, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/Z64API/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
-import { CostumeHelper } from './CostumeHelper';
+import { CostumeHelper } from '../common/events/CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
 import fs from 'fs';
 import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
-import { EventController } from './EventController';
+import { EventController } from '../common/events/EventController';
 import { OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
-import { WorldEvents_TransactionPacket } from './WorldEventPackets';
+import { WorldEvents_TransactionPacket } from '../common/events/WorldEventPackets';
 import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import crypto from 'crypto';
-import { AssetContainer } from './AssetContainer';
-import { publicKey } from './publicKey';
+import { AssetContainer } from '../common/events/AssetContainer';
+import { publicKey } from '../common/events/publicKey';
 
 export interface Z64_EventReward {
     name: string;

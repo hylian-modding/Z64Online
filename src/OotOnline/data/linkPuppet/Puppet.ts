@@ -1,4 +1,4 @@
-import { Age, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
@@ -8,6 +8,7 @@ import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
 import { IZ64OnlineHelpers } from '../InternalAPI';
 import { IPuppet } from '@OotOnline/Z64API/IPuppet';
+import { AgeorForm } from '@OotOnline/common/types/Types';
 
 export class Puppet implements IPuppet{
   player: INetworkPlayer;
@@ -41,7 +42,7 @@ export class Puppet implements IPuppet{
     this.parent = parent;
   }
 
-  get age(): Age {
+  get age(): AgeorForm {
     return this.data.age;
   }
 
