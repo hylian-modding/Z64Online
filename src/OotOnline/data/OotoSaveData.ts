@@ -9,7 +9,7 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 
-export class OotOSaveData implements ISaveSyncData{
+export class OotOSaveData implements ISaveSyncData {
 
   private core: IOOTCore;
   private ModLoader: IModLoaderAPI;
