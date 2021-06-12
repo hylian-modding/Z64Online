@@ -591,7 +591,6 @@ export class WorldEventRewards {
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_DOES_HAVE)
     onCheck(evt: OOTO_PRIVATE_ASSET_HAS_CHECK) {
         evt.has = this.rewardContainer.tickets.find(t => { return t.uuid === evt.ticket.uuid }) !== undefined;
-        console.log(evt);
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_TICKET)
