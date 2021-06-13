@@ -359,6 +359,7 @@ export default class OotOnlineClient {
             if (packet.save) {
                 let s = new OotOSaveData(this.core, this.ModLoader);
                 s.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
+                s.processKeyRing_OVERWRITE(packet.keys!, s.createKeyRing(), ProxySide.CLIENT);
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");

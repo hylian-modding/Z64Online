@@ -66,6 +66,7 @@ export class Ooto_BankSyncPacket extends Packet {
 export class Ooto_DownloadResponsePacket extends Packet {
 
   save?: Buffer;
+  keys?: IKeyRing;
   host: boolean;
 
   constructor(lobby: string, host: boolean) {
