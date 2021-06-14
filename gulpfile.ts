@@ -157,7 +157,7 @@ gulp.task('packassets', function () {
     zipFile.addLocalFolder('./Rewards', '')
     process.chdir(og)
 
-    const private_key = fse.readFileSync('./privateKey.pem', 'utf-8')
+    const private_key = fse.readFileSync('./OotO.pem', 'utf-8')
     //File to be signed
     let _file = pad(zipFile.toBuffer()).swap32()
     //Signing

@@ -160,6 +160,7 @@ export default class OotOnlineServer {
             // Game is running, get data.
             let resp = new Ooto_DownloadResponsePacket(packet.lobby, false);
             resp.save = Buffer.from(JSON.stringify(storage.save));
+            resp.keys = storage.keys;
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         } else {
             // Game is not running, give me your data.

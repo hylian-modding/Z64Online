@@ -9,7 +9,9 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 
-export class OotOSaveData implements ISaveSyncData {
+const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
+
+export class OotOSaveData implements ISaveSyncData{
 
   private core: IOOTCore;
   private ModLoader: IModLoaderAPI;
@@ -252,8 +254,10 @@ export class OotOSaveData implements ISaveSyncData {
     }
 
     if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-      if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
-        storage.inventory.childTradeItem = obj.inventory.childTradeItem;
+      if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) === -1){
+        if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
+          storage.inventory.childTradeItem = obj.inventory.childTradeItem;
+        }
       }
     }
 

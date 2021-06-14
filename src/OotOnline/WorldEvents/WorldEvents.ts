@@ -13,7 +13,7 @@ import fs from 'fs';
 import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
 import { EventController } from '../common/events/EventController';
-import { OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
+import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
 import { WorldEvents_TransactionPacket } from '../common/events/WorldEventPackets';
 import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import crypto from 'crypto';
@@ -33,6 +33,7 @@ export interface RewardContainer {
     tickets: RewardTicket[];
     coins: number;
     sig: Buffer;
+    externalData: any;
 }
 
 export class WorldEventRewards {
@@ -57,7 +58,7 @@ export class WorldEventRewards {
     rewardTicketsByEvent: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
     rewardTicketsForEquipment: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
     rewardTicketsByUUID: Map<string, RewardTicket> = new Map<string, RewardTicket>();
-    rewardContainer: RewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1) };
+    rewardContainer: RewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1), externalData: {} };
     assets!: AssetContainer;
 
     constructor() {
@@ -175,7 +176,7 @@ export class WorldEventRewards {
                 if (verified) {
                     this.ModLoader.logger.debug("Rewards file OK.");
                 } else {
-                    this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1) };
+                    this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1), externalData: {} };
                     this.ModLoader.logger.error("This rewards file has been tampered with.");
                 }
             }
@@ -607,6 +608,19 @@ export class WorldEventRewards {
         this.ModLoader.clientSide.sendPacket(new WorldEvents_TransactionPacket(this.ModLoader.clientLobby, hash));
     }
 
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SAVE_EXTERNAL_EVENT_DATA)
+    onSaveEvent(evt: ExternalEventData) {
+        this.rewardContainer.externalData[evt.tag] = evt.data;
+        this.transactionProcess();
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.GET_EXTERNAL_EVENT_DATA)
+    onLoadEvent(evt: ExternalEventData) {
+        if (this.rewardContainer.externalData.hasOwnProperty(evt.tag)) {
+            evt.data = this.rewardContainer.externalData[evt.tag];
+        }
+    }
+
     @NetworkHandler('WorldEvents_TransactionPacket')
     onTransaction(packet: WorldEvents_TransactionPacket) {
         let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
@@ -632,8 +646,8 @@ export class WorldEventsServer {
 
     constructor() {
         this.private_key = "";
-        if (fs.existsSync(path.resolve(global.ModLoader.startdir, 'privateKey.pem'))) {
-            this.private_key = fs.readFileSync(path.resolve(global.ModLoader.startdir, 'privateKey.pem'), 'utf-8');
+        if (fs.existsSync(path.resolve(global.ModLoader.startdir, 'OotO.pem'))) {
+            this.private_key = fs.readFileSync(path.resolve(global.ModLoader.startdir, 'OotO.pem'), 'utf-8');
         }
     }
 
