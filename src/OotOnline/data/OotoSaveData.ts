@@ -171,16 +171,7 @@ export class OotOSaveData implements ISaveSyncData{
     this.processBoolLoop_OVERWRITE(obj.tunics, storage.tunics);
     this.processBoolLoop_OVERWRITE(obj.boots, storage.boots);
     this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
-
-    storage.inventory.bottle_1 = obj.inventory.bottle_1;
-    storage.inventory.bottle_2 = obj.inventory.bottle_2;
-    storage.inventory.bottle_3 = obj.inventory.bottle_3;
-    storage.inventory.bottle_4 = obj.inventory.bottle_4;
-
-    this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
-
-    storage.inventory.childTradeItem = obj.inventory.childTradeItem;
-    storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
+    this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
 
     storage.poe_collector_score = obj.poe_collector_score;
 

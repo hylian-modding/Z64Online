@@ -1,12 +1,12 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
+import { OotOSaveData } from './data/OotoSaveData';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   autoSaveHash = '!';
   keySaveHash = "!";
   lastbeans = 0;
   lastPushHash = "!";
-  needs_update = false;
   lastKnownSkullCount = -1;
   bottleCache: InventoryItem[] = [
     InventoryItem.NONE,

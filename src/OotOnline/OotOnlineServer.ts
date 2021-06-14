@@ -61,6 +61,14 @@ export default class OotOnlineServer {
     onLobbyCreated(lobby: string) {
         try {
             this.ModLoader.lobbyManager.createLobbyStorage(lobby, this.parent, new OotOnlineStorage());
+            let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+                lobby,
+                this.parent
+            ) as OotOnlineStorage;
+            if (storage === null) {
+                return;
+            }
+            storage.saveManager = new OotOSaveData(this.core, this.ModLoader);
         }
         catch (err) {
             this.ModLoader.logger.error(err);
@@ -184,8 +192,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        data.mergeSave(packet.save, storage.save, ProxySide.SERVER);
+        storage.saveManager.mergeSave(packet.save, storage.save, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(storage.save))));
     }
 
@@ -198,8 +205,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        data.processKeyRing(packet.keys, storage.keys, ProxySide.SERVER);
+        storage.saveManager.processKeyRing(packet.keys, storage.keys, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new OotO_UpdateKeyringPacket(storage.keys, packet.lobby));
     }
 

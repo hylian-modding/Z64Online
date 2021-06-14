@@ -109,6 +109,10 @@ export default class OotOnlineClient {
         status.partyMax = 30;
         status.partySize = 1;
         this.ModLoader.gui.setDiscordStatus(status);
+        this.clientStorage.saveManager = new OotOSaveData(this.core, this.ModLoader);
+        this.ModLoader.utils.setIntervalFrames(()=>{
+            this.inventoryUpdateTick();
+        }, 20);
     }
 
     @EventHandler(EventsClient.ON_HEAP_READY)
@@ -118,14 +122,12 @@ export default class OotOnlineClient {
     }
 
     updateInventory() {
-        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
-        this.clientStorage.needs_update = false;
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        let save = data.createSave();
-        if (this.clientStorage.lastPushHash !== data.hash) {
+        let save = this.clientStorage.saveManager.createSave();
+        if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
+            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
-            this.clientStorage.lastPushHash = data.hash;
+            this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
             this.ModLoader.utils.setTimeoutFrames(() => {
                 this.clientStorage.lastPushHash = "!";
             }, (20 * 60));
@@ -144,8 +146,7 @@ export default class OotOnlineClient {
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
                 this.clientStorage.keySaveHash = keyHash;
-                let data = new OotOSaveData(this.core, this.ModLoader);
-                this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(data.createKeyRing(), this.ModLoader.clientLobby));
+                this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby));
             }
             // and beans too why not.
             if (this.clientStorage.lastbeans !== this.core.save.inventory.magicBeansCount) {
@@ -357,9 +358,8 @@ export default class OotOnlineClient {
         }
         if (!packet.host) {
             if (packet.save) {
-                let s = new OotOSaveData(this.core, this.ModLoader);
-                s.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
-                s.processKeyRing_OVERWRITE(packet.keys!, s.createKeyRing(), ProxySide.CLIENT);
+                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
+                this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
@@ -378,8 +378,7 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        data.applySave(packet.save);
+        this.clientStorage.saveManager.applySave(packet.save);
     }
 
     @NetworkHandler('OotO_UpdateKeyringPacket')
@@ -390,8 +389,7 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        data.processKeyRing(packet.keys, data.createKeyRing(), ProxySide.CLIENT);
+        this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
     }
 
     @NetworkHandler('Ooto_ClientSceneContextUpdate')
@@ -634,19 +632,13 @@ export default class OotOnlineClient {
                     this.updateBottles();
                     this.updateSkulltulas();
                     this.updateSyncContext();
-                    let state = this.core.link.state;
-                    if (state === LinkState.BUSY || state === LinkState.GETTING_ITEM || state === LinkState.TALKING) {
-                        this.clientStorage.needs_update = true;
-                    } else if (
-                        state === LinkState.STANDING &&
-                        this.clientStorage.needs_update &&
-                        this.LobbyConfig.data_syncing
-                    ) {
-                        this.updateInventory();
-                        this.clientStorage.needs_update = false;
-                    }
                 }
             }
         }
+    }
+
+    inventoryUpdateTick(){
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        this.updateInventory();
     }
 }
