@@ -479,9 +479,6 @@ export default class OotOnlineClient {
             case "double_defense":
                 bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
                 break;
-            case "poe_collector_score":
-                bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, {});
-                break;
         }
     }
 

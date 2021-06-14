@@ -8,7 +8,7 @@ export interface IOOTInventorySync extends IOOTInventoryFields, Pick<IOOTInvento
 }
 
 export interface IOOTSyncSave extends Pick<IOOTSaveContext, 'death_counter' | 'heart_containers' | 'magic_meter_size' | 'swords' | 'shields'
-  | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'poe_collector_score' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags' | 'scarecrowsSongChildFlag' | 'scarecrowsSong'> {
+  | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'poe_collector_score' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags' | 'scarecrowsSongChildFlag' | 'scarecrowsSongAdultFlag' | 'scarecrowsSong'> {
   inventory: IOOTInventorySync;
   dungeon_items: Buffer;
 }
