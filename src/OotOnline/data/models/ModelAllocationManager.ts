@@ -85,6 +85,7 @@ export class ModelAllocationManager {
       }
     });
     proxies.forEach((isDead: boolean, ref: ModelPlayer) => {
+      console.log(ref);
       ref.isDead = isDead;
       if (ref.isDead) {
         this._deallocatePlayerByUUID(ref.uuid);
@@ -106,7 +107,7 @@ export class ModelAllocationManager {
         break;
     }
     this.localPlayer.currentScript = model.script;
-    if (this.localPlayer.currentScript !== undefined){
+    if (this.localPlayer.currentScript !== undefined) {
     }
   }
 
@@ -201,9 +202,7 @@ export class ModelAllocationManager {
 
   allocatePlayer(player: INetworkPlayer, defaultAdult: IModelReference, defaultChild: IModelReference): ModelPlayer | undefined {
     let mp = this.createPlayer(player, defaultAdult, defaultChild)!;
-    if (mp.isDead){
-      this.doGC();
-    }
+    if (mp.isLoaded) mp.isDead = false;
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
@@ -219,6 +218,7 @@ export class ModelAllocationManager {
     this.ModLoader.emulator.rdramWriteBuffer(pointer, b);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;
+    mp.isLoaded = true;
     return mp;
   }
 
@@ -233,6 +233,7 @@ export class ModelAllocationManager {
 
     this.ModLoader.heap!.free(alloc.proxyPointer);
     alloc.proxyPointer = -1;
+    alloc.isLoaded = false;
     this.ModLoader.logger.debug("[Model Manager]: Freed 0x" + alloc.proxyData.byteLength.toString(16) + " bytes from player " + player.nickname + ".");
   }
 
