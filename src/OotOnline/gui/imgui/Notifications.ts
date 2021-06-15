@@ -124,6 +124,7 @@ export class Notifications {
                         this.messages.push(new ScarecrowNotif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get("scarecrowsSong")!)!, btnNotes, this.MAX_TIMER));
                         this.ModLoader.logger.info('Learned Scarecrow\'s Song:' + str);
                     }
+                    this.ModLoader.logger.info('Visit Bonooru as a child if you\'d like to change it to something else.');
                 }
                 else {
                     this.messages.push(new Notif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get(evt.key)!)!, this.MAX_TIMER));

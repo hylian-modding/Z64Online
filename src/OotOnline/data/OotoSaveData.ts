@@ -305,10 +305,10 @@ export class OotOSaveData implements ISaveSyncData{
       let value = obj.eventFlags.readUInt8(i);
       if (eventFlags[i] !== value) {
         eventFlags[i] |= value;
-        if (i == 18 && eventFlags[i] >= 16) {
-          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongAdultFlag', obj.scarecrowsSong));
-        }
       }
+    }
+    if (obj.eventFlags[18] > storage.eventFlags[18]) {
+      bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongAdultFlag', obj.scarecrowsSong));
     }
     for (let i = 0; i < obj.itemFlags.byteLength; i++) {
       let value = obj.itemFlags.readUInt8(i);
