@@ -17,10 +17,12 @@ export class ModelAllocationManager {
   private models: Map<string, ModelObject> = new Map<string, ModelObject>();
   private references: Map<string, IModelReference> = new Map<string, IModelReference>();
   private cleanupRoutine: any;
+  private zz: zzstatic;
 
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
     this.cleanupRoutine = this.ModLoader.utils.setIntervalFrames(() => { this.doGC() }, 1200);
+    this.zz = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME);
   }
 
   onVi() {
@@ -162,7 +164,7 @@ export class ModelAllocationManager {
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
-      b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(b, 0, false, ref.pointer)
+      b = this.zz.doRepoint(b, 0, true, ref.pointer)
     } catch (err) {
     }
     this.ModLoader.emulator.rdramWriteBuffer(ref.pointer, b);
