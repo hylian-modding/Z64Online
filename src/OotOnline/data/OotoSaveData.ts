@@ -44,7 +44,6 @@ export class OotOSaveData implements ISaveSyncData{
       "double_defense",
       "dungeon_items",
       'scarecrowsSongChildFlag',
-      'scarecrowsSongAdultFlag',
       "scarecrowsSong"
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -55,7 +54,6 @@ export class OotOSaveData implements ISaveSyncData{
     obj['skulltulaFlags'] = this.core.save.skulltulaFlags;
     obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
     obj['scarecrowsSongChildFlag'] = this.core.save.scarecrowsSongChildFlag;
-    obj['scarecrowsSongAdultFlag'] = this.core.save.scarecrowsSongAdultFlag;
     obj['scarecrowsSong'] = this.core.save.scarecrowsSong;
     obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
     let obj2: any = {};
@@ -186,7 +184,6 @@ export class OotOSaveData implements ISaveSyncData{
     storage.infTable = obj.infTable;
     storage.skulltulaFlags = obj.skulltulaFlags;
     storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
-    storage.scarecrowsSongAdultFlag = obj.scarecrowsSongAdultFlag;
     storage.scarecrowsSong = obj.scarecrowsSong;
 
     if (side === ProxySide.CLIENT) {
@@ -308,6 +305,9 @@ export class OotOSaveData implements ISaveSyncData{
       let value = obj.eventFlags.readUInt8(i);
       if (eventFlags[i] !== value) {
         eventFlags[i] |= value;
+        if (i == 18 && eventFlags[i] >= 16) {
+          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongAdultFlag', obj.scarecrowsSong));
+        }
       }
     }
     for (let i = 0; i < obj.itemFlags.byteLength; i++) {
@@ -330,11 +330,9 @@ export class OotOSaveData implements ISaveSyncData{
     }
     if (obj.scarecrowsSongChildFlag > storage.scarecrowsSongChildFlag) {
       storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
+      bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongChildFlag', obj.scarecrowsSong));
     }
-    if (obj.scarecrowsSongAdultFlag > storage.scarecrowsSongAdultFlag) {
-      storage.scarecrowsSongAdultFlag = obj.scarecrowsSongAdultFlag;
-    }
-    if (!Object.values(scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined")) {
+    if (Object.values(obj.scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined") && !Object.values(scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined")) {
       for (let i = 0; i < obj.scarecrowsSong.byteLength; i += 0x8) {
         let struct = new ScarecrowSongNoteStruct(obj.scarecrowsSong.slice(i, i + 0x8));
         let cur = new ScarecrowSongNoteStruct(scarecrowsSong.slice(i, i + 0x8));

@@ -103,8 +103,8 @@ export const SpriteMap: Map<string, string> = new Map(
         ["waterMedallion", "quest_slot_21"],
         ["fireMedallion", "quest_slot_22"],
         ["forestMedallion", "quest_slot_23"],
-        ["scarecrowsSongChildFlag", "scarecrows_song"],
-        ["scarecrowsSongAdultFlag", "scarecrows_song"],
+        ["scarecrowsSongChildFlag", "scarecrows_song"], // Requires adjustment for localization in the future.
+        ["scarecrowsSongAdultFlag", "scarecrows_song"], // Or at least to reduce redundancy.
         ["scarecrowsSong", "scarecrows_song"],
         ["TODO_SMALL_KEY", "small_key"],
         ["TODO_BOMBS_1", "upgrade_bombs_0"],
