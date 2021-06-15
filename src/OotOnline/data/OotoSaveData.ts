@@ -4,7 +4,7 @@ import { parseFlagChanges } from "@OotOnline/common/lib/parseFlagChanges";
 import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI";
+import { InventoryItem, IOOTCore, SceneStruct, ScarecrowSongNoteStruct } from "modloader64_api/OOT/OOTAPI";
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
@@ -44,7 +44,9 @@ export class OotOSaveData implements ISaveSyncData {
       "skulltulaFlags",
       "double_defense",
       "dungeon_items",
-      "triforcePieces"
+      "triforcePieces",
+      'scarecrowsSongChildFlag',
+      "scarecrowsSong"
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -53,6 +55,8 @@ export class OotOSaveData implements ISaveSyncData {
     obj['infTable'] = this.core.save.infTable;
     obj['skulltulaFlags'] = this.core.save.skulltulaFlags;
     obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
+    obj['scarecrowsSongChildFlag'] = this.core.save.scarecrowsSongChildFlag;
+    obj['scarecrowsSong'] = this.core.save.scarecrowsSong;
     obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
     obj["triforcePieces"] = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
     let obj2: any = {};
@@ -167,7 +171,6 @@ export class OotOSaveData implements ISaveSyncData {
     storage.magic_meter_size = obj.magic_meter_size;
     storage.magic_beans_purchased = obj.magic_beans_purchased;
     storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
-    storage.poe_collector_score = obj.poe_collector_score;
 
     this.processBoolLoop_OVERWRITE(obj.swords, storage.swords);
     this.processBoolLoop_OVERWRITE(obj.shields, storage.shields);
@@ -183,6 +186,8 @@ export class OotOSaveData implements ISaveSyncData {
     storage.itemFlags = obj.itemFlags;
     storage.infTable = obj.infTable;
     storage.skulltulaFlags = obj.skulltulaFlags;
+    storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
+    storage.scarecrowsSong = obj.scarecrowsSong;
 
     if (side === ProxySide.CLIENT) {
       this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
@@ -259,6 +264,7 @@ export class OotOSaveData implements ISaveSyncData {
     let itemFlags = storage.itemFlags;
     let infTable = storage.infTable;
     let skulltulaFlags = storage.skulltulaFlags;
+    let scarecrowsSong = storage.scarecrowsSong;
 
     let backupTriforcePieces: number | undefined;
 
@@ -311,6 +317,9 @@ export class OotOSaveData implements ISaveSyncData {
         eventFlags[i] |= value;
       }
     }
+    if (obj.eventFlags[18] > storage.eventFlags[18]) {
+      bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongAdultFlag', obj.scarecrowsSong));
+    }
     for (let i = 0; i < obj.itemFlags.byteLength; i++) {
       let value = obj.itemFlags.readUInt8(i);
       if (itemFlags[i] !== value) {
@@ -329,12 +338,64 @@ export class OotOSaveData implements ISaveSyncData {
         skulltulaFlags[i] |= value;
       }
     }
+    if (obj.scarecrowsSongChildFlag > storage.scarecrowsSongChildFlag) {
+      storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
+      bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongChildFlag', obj.scarecrowsSong));
+    }
+    if (Object.values(obj.scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined") && !Object.values(scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined")) {
+      for (let i = 0; i < obj.scarecrowsSong.byteLength; i += 0x8) {
+        let struct = new ScarecrowSongNoteStruct(obj.scarecrowsSong.slice(i, i + 0x8));
+        let cur = new ScarecrowSongNoteStruct(scarecrowsSong.slice(i, i + 0x8));
+        for (let j = 0; j < struct.note.byteLength; j++) {
+          if (struct.note[j] !== cur.note[j]) {
+            cur.note[j] = struct.note[j];
+          }
+        }
+        for (let j = 0; j < struct.unused.byteLength; j++) {
+          if (struct.unused[j] !== cur.unused[j]) {
+            cur.unused[j] = struct.unused[j];
+          }
+        }
+        for (let j = 0; j < struct.duration.byteLength; j++) {
+          if (struct.duration[j] !== cur.duration[j]) {
+            if (j == 0 && struct.duration[j] > 0) { // Cap note/silence duration to 16 seconds?
+              struct.duration[j] = 0;
+            }
+            if (j == 1 && struct.duration[j] > 16) {
+              struct.duration[j] = 16;
+            }
+            cur.duration[j] = struct.duration[j];
+          }
+        }
+        for (let j = 0; j < struct.volume.byteLength; j++) {
+          if (struct.volume[j] !== cur.volume[j]) {
+            cur.volume[j] = struct.volume[j];
+          }
+        }
+        for (let j = 0; j < struct.vibrato.byteLength; j++) {
+          if (struct.vibrato[j] !== cur.vibrato[j]) {
+            cur.vibrato[j] = struct.vibrato[j];
+          }
+        }
+        for (let j = 0; j < struct.pitch.byteLength; j++) {
+          if (struct.pitch[j] !== cur.pitch[j]) {
+            cur.pitch[j] = struct.pitch[j];
+          }
+        }
+        for (let j = 0; j < struct.special.byteLength; j++) {
+          if (struct.special[j] !== cur.special[j]) {
+            cur.special[j] = struct.special[j];
+          }
+        }
+      }
+    }
 
     storage.permSceneData = permSceneData;
     storage.eventFlags = eventFlags;
     storage.itemFlags = itemFlags;
     storage.infTable = infTable;
     storage.skulltulaFlags = skulltulaFlags;
+    storage.scarecrowsSong = scarecrowsSong;
 
     if (side === ProxySide.CLIENT) {
       let cur = this.core.save.dungeonItemManager.getRawBuffer();
