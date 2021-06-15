@@ -127,7 +127,6 @@ export default class OotOnlineClient {
             TriforceHuntHelper.isRandomizer = this.clientStorage.isOotR;
             if (this.multiworld.isRomMultiworld()) {
                 this.clientStorage.isMultiworld = true;
-                this.ModLoader.logger.info(`Multiworld rom detected. Version ${this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramReadPtr32(this.multiworld.contextPointer, 0x0))}`);
                 this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.multiworld.contextPointer, 0x0) + 0x4);
                 this.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
             }
