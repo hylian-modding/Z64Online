@@ -162,7 +162,7 @@ export class ModelAllocationManager {
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
-      b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(b, 0, false, ref.pointer)
+      b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(b, 0, true, ref.pointer)
     } catch (err) {
     }
     this.ModLoader.emulator.rdramWriteBuffer(ref.pointer, b);
