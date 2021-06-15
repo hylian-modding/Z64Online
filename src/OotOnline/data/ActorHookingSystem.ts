@@ -341,6 +341,7 @@ export class ActorHookingManagerClient {
 
   @NetworkHandler('Ooto_ActorPacket')
   onActorPacket(packet: Ooto_ActorPacket) {
+    if (packet.player.data.world !== this.ModLoader.me.data.world) return;
     // Specifically deal with doors first.
     if (this.transitionHookTicks.has(packet.actorData.actor.actorUUID)) {
       this.transitionHookTicks.get(
@@ -461,6 +462,7 @@ export class ActorHookingManagerClient {
 
   @NetworkHandler('Ooto_ActorDeadPacket')
   onActorDead(packet: Ooto_ActorDeadPacket) {
+    if (packet.player.data.world !== this.ModLoader.me.data.world) return;
     if (this.bombsRemote.has(packet.actorUUID)) {
       this.bombsRemote.delete(packet.actorUUID);
     } else if (this.chusRemote.has(packet.actorUUID)) {
@@ -481,6 +483,7 @@ export class ActorHookingManagerClient {
     ) {
       return;
     }
+    if (packet.player.data.world !== this.ModLoader.me.data.world) return;
     let spawn_param = 0;
     let pos = this.core.link.position.getRawPos();
     switch (packet.actorData.actor.actorID) {

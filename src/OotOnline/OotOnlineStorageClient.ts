@@ -1,8 +1,10 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
-import { OotOSaveData } from './data/OotoSaveData';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
+  world: number = 0;
+  isOotR: boolean = false;
+  isMultiworld: boolean = false;
   autoSaveHash = '!';
   keySaveHash = "!";
   lastbeans = 0;

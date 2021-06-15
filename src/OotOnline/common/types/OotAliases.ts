@@ -11,4 +11,5 @@ export interface IOOTSyncSave extends Pick<IOOTSaveContext, 'death_counter' | 'h
   | 'tunics' | 'boots' | 'questStatus' | 'magic_beans_purchased' | 'poe_collector_score' | 'permSceneData' | 'eventFlags' | 'itemFlags' | 'infTable' | 'skulltulaFlags'> {
   inventory: IOOTInventorySync;
   dungeon_items: Buffer;
+  triforcePieces: number;
 }

@@ -8,10 +8,11 @@ import { InventoryItem, IOOTCore, SceneStruct } from "modloader64_api/OOT/OOTAPI
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
+import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 
-export class OotOSaveData implements ISaveSyncData{
+export class OotOSaveData implements ISaveSyncData {
 
   private core: IOOTCore;
   private ModLoader: IModLoaderAPI;
@@ -42,7 +43,8 @@ export class OotOSaveData implements ISaveSyncData{
       "infTable",
       "skulltulaFlags",
       "double_defense",
-      "dungeon_items"
+      "dungeon_items",
+      "triforcePieces"
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -52,6 +54,7 @@ export class OotOSaveData implements ISaveSyncData{
     obj['skulltulaFlags'] = this.core.save.skulltulaFlags;
     obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
     obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
+    obj["triforcePieces"] = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
     let obj2: any = {};
     for (let i = 0; i < keys.length; i++) {
       obj2[keys[i]] = obj[keys[i]];
@@ -183,6 +186,7 @@ export class OotOSaveData implements ISaveSyncData{
 
     if (side === ProxySide.CLIENT) {
       this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
+      TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
     }
   }
 
@@ -237,7 +241,7 @@ export class OotOSaveData implements ISaveSyncData{
     }
 
     if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-      if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) === -1){
+      if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) === -1) {
         if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
           storage.inventory.childTradeItem = obj.inventory.childTradeItem;
         }
@@ -255,6 +259,12 @@ export class OotOSaveData implements ISaveSyncData{
     let itemFlags = storage.itemFlags;
     let infTable = storage.infTable;
     let skulltulaFlags = storage.skulltulaFlags;
+
+    let backupTriforcePieces: number | undefined;
+
+    if (side === ProxySide.CLIENT) {
+      backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
+    }
 
     for (let i = 0; i < obj.permSceneData.byteLength; i += 0x1C) {
       let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
@@ -330,9 +340,16 @@ export class OotOSaveData implements ISaveSyncData{
       let cur = this.core.save.dungeonItemManager.getRawBuffer();
       parseFlagChanges(obj.dungeon_items, cur);
       this.core.save.dungeonItemManager.setRawBuffer(cur);
+      TriforceHuntHelper.setTriforcePieces(this.ModLoader, backupTriforcePieces!);
+      if (TriforceHuntHelper.getTriforcePieces(this.ModLoader) < obj.triforcePieces) {
+        TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
+      }
       bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
     } else {
       parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
+      if (obj.triforcePieces > storage.triforcePieces) {
+        storage.triforcePieces = obj.triforcePieces;
+      }
     }
   }
 

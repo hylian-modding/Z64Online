@@ -88,20 +88,24 @@ export class Ooto_DownloadRequestPacket extends Packet {
 export class OotO_UpdateSaveDataPacket extends Packet {
 
   save: Buffer;
+  world: number;
 
-  constructor(lobby: string, save: Buffer) {
+  constructor(lobby: string, save: Buffer, world: number) {
     super('OotO_UpdateSaveDataPacket', 'OotOnline', lobby, false);
     this.save = save;
+    this.world = world;
   }
 }
 
 export class OotO_UpdateKeyringPacket extends Packet {
 
   keys: IKeyRing;
+  world: number;
 
-  constructor(keys: IKeyRing, lobby: string) {
+  constructor(keys: IKeyRing, lobby: string, world: number) {
     super('OotO_UpdateKeyringPacket', 'OotOnline', lobby, false);
     this.keys = keys;
+    this.world = world;
   }
 
 }
@@ -189,15 +193,6 @@ export class Ooto_BottleUpdatePacket extends Packet {
     super('Ooto_BottleUpdatePacket', 'OotOnline', lobby, true);
     this.slot = slot;
     this.contents = contents;
-  }
-}
-
-export class OotO_isRandoPacket extends Packet {
-
-  isRando: boolean = true;
-
-  constructor(lobby: string) {
-    super("OotO_isRandoPacket", "OotOnline", lobby, false);
   }
 }
 

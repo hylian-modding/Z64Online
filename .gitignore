@@ -45,3 +45,4 @@ src/Vanillamizer_skipintro.bps
 shop.json
 OotO.pem
 cache/
+*.bps

@@ -1,12 +1,12 @@
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from 'modloader64_api/EventHandler';
 import { ActorHookingManagerServer } from './data/ActorHookingSystem';
-import { OotOnlineStorage } from './OotOnlineStorage';
+import { OotOnlineSave_Server, OotOnlineStorage } from './OotOnlineStorage';
 import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
 import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
-import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, OotO_isRandoPacket, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket } from './data/OotOPackets';
+import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket } from './data/OotOPackets';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
@@ -164,16 +164,21 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (storage.saveGameSetup) {
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+            this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
+            storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
+        }
+        let world = storage.worlds[packet.player.data.world];
+        if (world.saveGameSetup) {
             // Game is running, get data.
             let resp = new Ooto_DownloadResponsePacket(packet.lobby, false);
-            resp.save = Buffer.from(JSON.stringify(storage.save));
-            resp.keys = storage.keys;
+            resp.save = Buffer.from(JSON.stringify(world.save));
+            resp.keys = world.keys;
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         } else {
             // Game is not running, give me your data.
-            storage.save = JSON.parse(packet.save.toString());
-            storage.saveGameSetup = true;
+            world.save = JSON.parse(packet.save.toString());
+            world.saveGameSetup = true;
             let resp = new Ooto_DownloadResponsePacket(packet.lobby, true);
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
@@ -192,8 +197,9 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        storage.saveManager.mergeSave(packet.save, storage.save, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(storage.save))));
+        let world = storage.worlds[packet.player.data.world];
+        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
+        this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
     }
 
     @ServerNetworkHandler('OotO_UpdateKeyringPacket')
@@ -205,17 +211,14 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        storage.saveManager.processKeyRing(packet.keys, storage.keys, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new OotO_UpdateKeyringPacket(storage.keys, packet.lobby));
+        let world = storage.worlds[packet.player.data.world];
+        storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);
+        this.ModLoader.serverSide.sendPacket(new OotO_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
     }
 
     @ServerNetworkHandler('Ooto_ClientSceneContextUpdate')
     onSceneContextSync_server(packet: Ooto_ClientSceneContextUpdate) {
         this.sendPacketToPlayersInScene(packet);
-    }
-
-    @ServerNetworkHandler("OotO_isRandoPacket")
-    onRandoPacket(packet: OotO_isRandoPacket) {
     }
 
 }
