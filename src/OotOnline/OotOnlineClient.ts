@@ -194,7 +194,7 @@ export default class OotOnlineClient {
                 return;
             }
             this.core.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.global.scene));
+            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.global.scene, this.clientStorage.world));
         }
     }
 
@@ -390,7 +390,7 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        if (packet.player.data.world !== this.clientStorage.world) return;
+        if (packet.world !== this.clientStorage.world) return;
         this.clientStorage.saveManager.applySave(packet.save);
     }
 
@@ -402,7 +402,7 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        if (packet.player.data.world !== this.clientStorage.world) return;
+        if (packet.world !== this.clientStorage.world) return;
         this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
     }
 
@@ -418,7 +418,7 @@ export default class OotOnlineClient {
         if (this.core.global.scene !== packet.scene) {
             return;
         }
-        if (packet.player.data.world !== this.clientStorage.world) return;
+        if (packet.world !== this.clientStorage.world) return;
         let buf1: Buffer = this.core.global.liveSceneData_chests;
         if (Object.keys(parseFlagChanges(packet.chests, buf1) > 0)) {
             this.core.global.liveSceneData_chests = buf1;
@@ -656,14 +656,13 @@ export default class OotOnlineClient {
                     this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    if (!this.clientStorage.isMultiworld) {
-                        this.autosaveSceneData();
-                        this.updateBottles();
-                        this.updateSkulltulas();
-                    }else{
+                    this.autosaveSceneData();
+                    this.updateBottles();
+                    this.updateSkulltulas();
+                    this.updateSyncContext();
+                    if (this.clientStorage.isMultiworld){
                         this.updateMultiworld();
                     }
-                    this.updateSyncContext();
                 }
             }
         }

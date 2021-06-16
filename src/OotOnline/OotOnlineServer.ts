@@ -145,13 +145,6 @@ export default class OotOnlineServer {
 
     @ServerNetworkHandler('Ooto_BottleUpdatePacket')
     onBottle_server(packet: Ooto_BottleUpdatePacket) {
-        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            packet.lobby,
-            this.parent
-        ) as OotOnlineStorage;
-        if (storage === null) {
-            return;
-        }
     }
 
     // Client is logging in and wants to know how to proceed.

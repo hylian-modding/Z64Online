@@ -611,7 +611,7 @@ export class WorldEventRewards {
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SAVE_EXTERNAL_EVENT_DATA)
     onSaveEvent(evt: ExternalEventData) {
         this.rewardContainer.externalData[evt.tag] = evt.data;
-        this.transactionProcess();
+        new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.GET_EXTERNAL_EVENT_DATA)
