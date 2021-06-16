@@ -16,6 +16,8 @@ import path from 'path';
 import AntiGanonCrash from './AntiGanonCrash';
 
 export let ACTOR_T_PADDING: number = 0;
+export let ALL_PUPPETS_INVISIBLE: boolean = false;
+export let FORBID_PUPPETS: boolean = false;
 
 export class PuppetOverlordServer {
 
@@ -216,6 +218,7 @@ export class PuppetOverlordClient {
 
   @onTick()
   onTick() {
+    if (FORBID_PUPPETS) return;
     if (
       this.core.helper.isTitleScreen() ||
       !this.core.helper.isSceneNumberValid() ||
@@ -348,6 +351,18 @@ export class PuppetOverlordClient {
     this.puppets.forEach((puppet: Puppet) => {
       puppet.toggleVisibility(t);
     });
+    ALL_PUPPETS_INVISIBLE = t;
+  }
+
+  @PrivateEventHandler(OOTO_PRIVATE_EVENTS.FORBID_PUPPETS)
+  toggleForbiddance(t: boolean){
+    FORBID_PUPPETS = t;
+    if (FORBID_PUPPETS){
+      this.ModLoader.logger.debug("Puppet forbiddance true.");
+      this.localPlayerLoadingZone();
+    }else{
+      this.ModLoader.logger.debug("Puppet forbiddance false.");
+    }
   }
 
 }

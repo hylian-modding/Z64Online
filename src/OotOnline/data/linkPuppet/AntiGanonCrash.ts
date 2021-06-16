@@ -15,17 +15,17 @@ export default class AntiGanonCrash {
     ModLoader!: IModLoaderAPI;
     ganon: IActor | undefined;
     ganonUUID: string = "";
-    ganonState: number = -1;
+    ganonHP: number = 0;
     stage: number = 0;
 
     @EventHandler(OotEvents.ON_ACTOR_SPAWN)
     onActorSpawned(actor: IActor) {
         if (actor.actorID === 0x17A) {
             // Ganon is spawned.
+            this.ganonHP = 30;
             this.ganon = actor;
             this.ganonUUID = this.ganon.actorUUID;
-            this.ganonState = this.ganon.rdramRead32(0x300);
-            this.ModLoader.logger.debug("Setting up Ganon crash fix part 1");
+            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.FORBID_PUPPETS, true);
             this.stage++;
         }
     }
@@ -39,20 +39,11 @@ export default class AntiGanonCrash {
 
     @onTick()
     onTick() {
-        if (this.ganon !== undefined) {
-            if (this.stage === 1) {
-                if (this.ganonState === 0 && this.ganon!.rdramRead32(0x300) === 1) {
-                    this.ganonState = this.ganon!.rdramRead32(0x300);
-                    this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_PUPPET_VISIBILITY, false);
-                    this.stage++;
-                    this.ModLoader.logger.debug("Setting up Ganon crash fix part 2");
-                }
-            } else if (this.stage === 2) {
-                if (!this.core.helper.Player_InBlockingCsMode()) {
-                    this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_PUPPET_VISIBILITY, true);
-                    this.ModLoader.logger.debug("Unhooking stuff for Ganon crash fix.");
-                    this.stage++;
-                }
+        if (this.stage === 1 && this.ganon !== undefined){
+            if (this.ganon!.health === 8) return;
+            if (this.ganonHP > this.ganon!.health){
+                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.FORBID_PUPPETS, false);
+                this.stage++;
             }
         }
     }
@@ -64,8 +55,8 @@ export default class AntiGanonCrash {
 
     private resetModule() {
         this.ganon = undefined;
-        this.ganonState = -1;
-        this.stage = 0;
         this.ganonUUID = "";
+        this.stage = 0;
+        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.FORBID_PUPPETS, false);
     }
 }

@@ -9,6 +9,7 @@ import { HorseData } from './HorseData';
 import { IZ64OnlineHelpers } from '../InternalAPI';
 import { IPuppet } from '@OotOnline/Z64API/IPuppet';
 import { AgeorForm } from '@OotOnline/common/types/Types';
+import { ALL_PUPPETS_INVISIBLE } from './PuppetOverlord';
 
 export class Puppet implements IPuppet{
   player: INetworkPlayer;
@@ -77,6 +78,9 @@ export class Puppet implements IPuppet{
           this.isSpawning = false;
           bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
           this.renderFn = this.ModLoader.emulator.rdramRead32(this.data.pointer + 0x134);
+          if (ALL_PUPPETS_INVISIBLE){
+            this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0);
+          }
         }
       });
     }
