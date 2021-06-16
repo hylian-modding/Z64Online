@@ -192,6 +192,15 @@ export class ImGuiHandler {
         }
         // #endif
 
+        if (this.ModLoader.isModLoaded("Multiworld64")){
+            if (this.ModLoader.ImGui.begin("MULTIWORLD64 WARNING")){
+                this.ModLoader.ImGui.text("You appear to be running Multiworld64.");
+                this.ModLoader.ImGui.text("This mod is unnecessary as OotO 3.X natively supports multiworld.");
+                this.ModLoader.ImGui.text("You should delete Multiworld64 to avoid conflicts.");
+            }
+            this.ModLoader.ImGui.end();
+        }
+
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("OotO")) {
