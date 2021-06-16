@@ -87,7 +87,6 @@ export class ModelAllocationManager {
       }
     });
     proxies.forEach((isDead: boolean, ref: ModelPlayer) => {
-      console.log(ref);
       ref.isDead = isDead;
       if (ref.isDead) {
         this._deallocatePlayerByUUID(ref.uuid);
