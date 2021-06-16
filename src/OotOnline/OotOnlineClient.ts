@@ -141,9 +141,6 @@ export default class OotOnlineClient {
             this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
-            this.ModLoader.utils.setTimeoutFrames(() => {
-                this.clientStorage.lastPushHash = "!";
-            }, (20 * 60));
         }
     }
 
@@ -299,6 +296,7 @@ export default class OotOnlineClient {
                 )
             );
         }
+        this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
     }
 
     @NetworkHandler('Ooto_ScenePacket')
