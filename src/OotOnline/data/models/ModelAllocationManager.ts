@@ -100,6 +100,9 @@ export class ModelAllocationManager {
   }
 
   SetLocalPlayerModel(age: Age, model: IModelReference) {
+    if (this.localPlayer.currentScript !== undefined) {
+      this.localPlayer.currentScript.onModelRemoved();
+    }
     switch (age) {
       case Age.ADULT:
         this.localPlayer.adult = model;
@@ -110,6 +113,7 @@ export class ModelAllocationManager {
     }
     this.localPlayer.currentScript = model.script;
     if (this.localPlayer.currentScript !== undefined) {
+      this.localPlayer.currentScript.onModelEquipped();
     }
   }
 
