@@ -131,7 +131,6 @@ export default class OotOnlineClient {
                 this.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
             }
         }
-        this.ModLoader.me.data["world"] = this.clientStorage.world;
     }
 
     updateInventory() {
@@ -656,6 +655,7 @@ export default class OotOnlineClient {
                     this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
+                    this.ModLoader.me.data["world"] = this.clientStorage.world;
                     this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSkulltulas();
