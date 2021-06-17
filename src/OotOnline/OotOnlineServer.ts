@@ -193,6 +193,7 @@ export default class OotOnlineServer {
         if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
+            storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
