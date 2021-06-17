@@ -176,8 +176,8 @@ export class WorldEventRewards {
                 if (verified) {
                     this.ModLoader.logger.debug("Rewards file OK.");
                 } else {
-                    this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1), externalData: {} };
-                    this.ModLoader.logger.error("This rewards file has been tampered with.");
+                    //this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1), externalData: {} };
+                    this.ModLoader.logger.error("This rewards file has an invalid signature.");
                 }
             }
         }
@@ -623,11 +623,9 @@ export class WorldEventRewards {
 
     @NetworkHandler('WorldEvents_TransactionPacket')
     onTransaction(packet: WorldEvents_TransactionPacket) {
-        let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
-        let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
         const public_key = publicKey;
         const verifier = crypto.createVerify('sha256');
-        verifier.update(Buffer.from(hash));
+        verifier.update(Buffer.from(packet.hash));
         verifier.end();
         const verified = verifier.verify(public_key, packet.sig);
         if (verified) {
