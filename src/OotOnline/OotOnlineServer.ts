@@ -190,6 +190,10 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+            this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
+            storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
+        }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
@@ -203,6 +207,10 @@ export default class OotOnlineServer {
         ) as OotOnlineStorage;
         if (storage === null) {
             return;
+        }
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+            this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
+            storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);

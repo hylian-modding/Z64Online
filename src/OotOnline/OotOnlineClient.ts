@@ -232,6 +232,7 @@ export default class OotOnlineClient {
         // #endif
         this.ModLoader.utils.setTimeoutFrames(() => {
             if (this.LobbyConfig.data_syncing) {
+                this.ModLoader.me.data["world"] = this.clientStorage.world;
                 this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
             }
         }, 50);
@@ -648,6 +649,7 @@ export default class OotOnlineClient {
             this.core.helper.isSceneNumberValid()
         ) {
             if (!this.core.helper.isPaused()) {
+                this.ModLoader.me.data["world"] = this.clientStorage.world;
                 if (!this.clientStorage.first_time_sync) {
                     return;
                 }
@@ -655,7 +657,6 @@ export default class OotOnlineClient {
                     this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    this.ModLoader.me.data["world"] = this.clientStorage.world;
                     this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSkulltulas();
