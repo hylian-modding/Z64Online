@@ -14,11 +14,7 @@ import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
 import { EventController } from '../common/events/EventController';
 import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
-import { WorldEvents_TransactionPacket } from '../common/events/WorldEventPackets';
-import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
-import crypto from 'crypto';
 import { AssetContainer } from '../common/events/AssetContainer';
-import { publicKey } from '../common/events/publicKey';
 
 export interface Z64_EventReward {
     name: string;
@@ -164,22 +160,13 @@ export class WorldEventRewards {
         }
         let storage = new StorageContainer("Z64O_Reward_Tickets");
         this.rewardContainer = storage.loadObject() as RewardContainer;
-        if (this.rewardContainer.coins > 0) {
-            if (this.rewardContainer.sig.byteLength > 1) {
-                let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
-                let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
-                const public_key = publicKey;
-                const verifier = crypto.createVerify('sha256');
-                verifier.update(Buffer.from(hash));
-                verifier.end();
-                const verified = verifier.verify(public_key, this.rewardContainer.sig);
-                if (verified) {
-                    this.ModLoader.logger.debug("Rewards file OK.");
-                } else {
-                    //this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1), externalData: {} };
-                    this.ModLoader.logger.error("This rewards file has an invalid signature.");
-                }
-            }
+        let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
+        let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
+        const verified = hash === this.rewardContainer.sig.toString();
+        if (verified) {
+            this.ModLoader.logger.debug("Rewards file OK.");
+        } else {
+            this.ModLoader.logger.error("This rewards file has an invalid signature.");
         }
         for (let i = 0; i < this.rewardContainer.tickets.length; i++) {
             this.rewardContainer.tickets[i] = this.allRewardTickets.get(this.rewardContainer.tickets[i].uuid)!;
@@ -605,7 +592,9 @@ export class WorldEventRewards {
     transactionProcess() {
         let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
         let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
-        this.ModLoader.clientSide.sendPacket(new WorldEvents_TransactionPacket(this.ModLoader.clientLobby, hash));
+        this.rewardContainer.sig = Buffer.from(hash);
+        new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
+        this.loadTickets();
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SAVE_EXTERNAL_EVENT_DATA)
@@ -620,49 +609,9 @@ export class WorldEventRewards {
             evt.data = this.rewardContainer.externalData[evt.tag];
         }
     }
-
-    @NetworkHandler('WorldEvents_TransactionPacket')
-    onTransaction(packet: WorldEvents_TransactionPacket) {
-        const public_key = publicKey;
-        const verifier = crypto.createVerify('sha256');
-        verifier.update(Buffer.from(packet.hash));
-        verifier.end();
-        const verified = verifier.verify(public_key, packet.sig);
-        if (verified) {
-            this.rewardContainer.sig = packet.sig;
-            new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
-            this.loadTickets();
-        }
-    }
 }
 
 export class WorldEventsServer {
-
-    @ModLoaderAPIInject()
-    ModLoader!: IModLoaderAPI;
-    private_key: string;
-
-    constructor() {
-        this.private_key = "";
-        if (fs.existsSync(path.resolve(global.ModLoader.startdir, 'OotO.pem'))) {
-            this.private_key = fs.readFileSync(path.resolve(global.ModLoader.startdir, 'OotO.pem'), 'utf-8');
-        }
-    }
-
-    @ServerNetworkHandler('WorldEvents_TransactionPacket')
-    onTransaction(packet: WorldEvents_TransactionPacket) {
-        let _reply: WorldEvents_TransactionPacket = new WorldEvents_TransactionPacket(packet.lobby, packet.hash);
-        if (this.private_key !== "") {
-            let _file = Buffer.from(packet.hash);
-            const signer = crypto.createSign('sha256');
-            signer.update(_file);
-            signer.end();
-            let signature = signer.sign(this.private_key);
-            _reply.sig = signature;
-        }
-        this.ModLoader.serverSide.sendPacketToSpecificPlayer(_reply, packet.player);
-    }
-
 }
 
 export class WorldEvents {
