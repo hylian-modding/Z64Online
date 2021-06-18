@@ -671,6 +671,7 @@ export default class OotOnlineClient {
 
     inventoryUpdateTick() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        if (this.core.helper.Player_InBlockingCsMode()) return;
         this.updateInventory();
     }
 }
