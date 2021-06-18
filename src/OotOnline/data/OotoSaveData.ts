@@ -46,7 +46,8 @@ export class OotOSaveData implements ISaveSyncData {
       "dungeon_items",
       "triforcePieces",
       'scarecrowsSongChildFlag',
-      "scarecrowsSong"
+      "scarecrowsSong",
+      'checksum'
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -202,6 +203,12 @@ export class OotOSaveData implements ISaveSyncData {
   mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
     try{
       let obj: IOOTSyncSave = JSON.parse(save.toString());
+
+      // Another title screen safety check.
+      if (obj.checksum === 0){
+        return;
+      }
+
       if (obj.death_counter > storage.death_counter) {
         storage.death_counter = obj.death_counter;
       }

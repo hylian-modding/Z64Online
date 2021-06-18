@@ -134,6 +134,8 @@ export default class OotOnlineClient {
     }
 
     updateInventory() {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        if (this.core.helper.Player_InBlockingCsMode()) return;
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
@@ -671,8 +673,6 @@ export default class OotOnlineClient {
     }
 
     inventoryUpdateTick() {
-        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
-        if (this.core.helper.Player_InBlockingCsMode()) return;
         this.updateInventory();
     }
 }
