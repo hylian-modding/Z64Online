@@ -216,12 +216,12 @@ export class WorldEventRewards {
     private _getAllAssetByUUID(uuid: string): Buffer | undefined {
         let ticket = this.allRewardTickets.get(uuid)!;
         if (ticket === undefined) {
-            this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
+            //this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
             return undefined
         };
         let asset = this.assets.bundle.files.get(ticket.name)!;
         if (asset === undefined) {
-            this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
+            //this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
             return undefined;
         }
         if (ticket.scripted) {
@@ -235,12 +235,12 @@ export class WorldEventRewards {
     private getAssetByUUID(uuid: string): Buffer | undefined {
         let ticket = this.rewardTicketsByUUID.get(uuid)!;
         if (ticket === undefined) {
-            this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
+            //this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
             return undefined
         };
         let asset = this.assets.bundle.files.get(ticket.name)!;
         if (asset === undefined) {
-            this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
+            //this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
             return undefined;
         }
         if (ticket.scripted) {
@@ -254,12 +254,12 @@ export class WorldEventRewards {
     private isAssetScripted(uuid: string) {
         let ticket = this.rewardTicketsByUUID.get(uuid)!;
         if (ticket === undefined) {
-            this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
+            //this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
             return { is: false };
         };
         let asset = this.assets.bundle.files.get(ticket.name)!;
         if (asset === undefined) {
-            this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
+            //this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
             return { is: false };
         }
         if (ticket.scripted === undefined) return { is: false };
