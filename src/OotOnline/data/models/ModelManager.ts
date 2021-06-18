@@ -154,7 +154,7 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_PAK)
   onLoadEQExternal(eq: Z64Online_EquipmentPak) {
-    this.customModelFilesEquipment.set(CostumeHelper.getEquipmentCategory(eq.data), eq.data);
+    this.customModelFilesEquipment.set(eq.name, eq.data);
   }
 
   @EventHandler(Z64OnlineEvents.CLEAR_EQUIPMENT)
