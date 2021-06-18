@@ -167,7 +167,7 @@ export class ModelAllocationManager {
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
-      b = this.zz.doRepoint(b, 0, true, ref.pointer)
+      b = this.zz.doRepoint(b, 0, false, ref.pointer)
     } catch (err) {
     }
     this.ModLoader.emulator.rdramWriteBuffer(ref.pointer, b);
@@ -219,7 +219,7 @@ export class ModelAllocationManager {
     mp.proxyPointer = pointer;
     mp.proxyData = proxy;
     this.players.set(player.uuid, mp);
-    let b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(proxy, 0, true, pointer);
+    let b = this.zz.doRepoint(proxy, 0, false, pointer);
     this.ModLoader.emulator.rdramWriteBuffer(pointer, b);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;
