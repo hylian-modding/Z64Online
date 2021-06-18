@@ -342,6 +342,7 @@ export default class OotOnlineClient {
         if (packet.player.data.world !== this.clientStorage.world) return;
         this.clientStorage.bottleCache[packet.slot] = packet.contents;
         let inventory = this.core.save.inventory;
+        if (packet.contents === InventoryItem.NONE) return;
         switch (packet.slot) {
             case 0:
                 inventory.bottle_1 = packet.contents;
