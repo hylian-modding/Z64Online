@@ -48,3 +48,4 @@ cache/
 *.bps
 src/DoubleDynamite.pak
 patch_day.bin
+*.pak
