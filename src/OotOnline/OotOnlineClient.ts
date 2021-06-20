@@ -479,29 +479,41 @@ export default class OotOnlineClient {
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
         switch (evt.key) {
             case "bombchus":
-                this.core.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                if (this.core.save.inventory.bombchuCount === 0) {
+                    this.core.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                }
                 break;
             case "bombBag":
-                this.core.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
+                if (this.core.save.inventory.bombsCount === 0) {
+                    this.core.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
+                }
                 break;
             case "quiver":
-                this.core.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
+                if (this.core.save.inventory.arrows === 0) {
+                    this.core.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
+                }
                 break;
             case "bulletBag":
-                this.core.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
+                if (this.core.save.inventory.dekuSeeds) {
+                    this.core.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
+                }
                 break;
             case "dekuSticksCapacity":
-                if ((evt.value as number) === 1) {
-                    this.core.save.inventory.dekuSticksCount = 1;
-                } else {
-                    this.core.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
+                if (this.core.save.inventory.dekuSticksCount === 0) {
+                    if ((evt.value as number) === 1) {
+                        this.core.save.inventory.dekuSticksCount = 1;
+                    } else {
+                        this.core.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
+                    }
                 }
                 break;
             case "dekuNutsCapacity":
-                if ((evt.value as number) === 1) {
-                    this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, 1);
-                } else {
-                    this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
+                if (this.core.save.inventory.dekuNutsCount === 0) {
+                    if ((evt.value as number) === 1) {
+                        this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, 1);
+                    } else {
+                        this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
+                    }
                 }
                 break;
             case "heartPieces":
