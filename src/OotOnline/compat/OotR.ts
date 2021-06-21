@@ -2,8 +2,8 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { zeldaString } from 'modloader64_api/OOT/ZeldaString';
 import { AmmoUpgrade, Hookshot, InventoryItem, IOOTCore, Magic, MagicQuantities, Ocarina, Strength, UpgradeCountLookup, VANILLA_DUNGEON_ITEM_INDEXES, VANILLA_KEY_INDEXES, Wallet, ZoraScale } from "modloader64_api/OOT/OOTAPI";
 import { IOOTSaveContext } from "@OotOnline/common/types/OotAliases";
-import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
-import { bus } from "modloader64_api/EventHandler";
+import { Z64OnlineEvents, Z64_PlayerScene } from "@OotOnline/Z64API/OotoAPI";
+import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
@@ -36,6 +36,12 @@ export class Multiworld {
             this.setPlayerName(packet.player.nickname, packet.player.data.world);
             this.processIncomingItem(packet.item, this.core.save);
         }
+    }
+
+    @EventHandler(Z64OnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES)
+    onPlayerChangedScenes(change: Z64_PlayerScene) {
+        if (!TriforceHuntHelper.isRandomizer) return;
+        this.setPlayerName(change.player.nickname, change.player.data.world);
     }
 
     isRomMultiworld() {
@@ -751,26 +757,26 @@ export class MultiworldItem {
     }
 }
 
-export class TriforceHuntHelper{
+export class TriforceHuntHelper {
 
     static isRandomizer: boolean = false;
 
-    static getTriforcePieces(ModLoader: IModLoaderAPI){
-        if (this.isRandomizer){
+    static getTriforcePieces(ModLoader: IModLoaderAPI) {
+        if (this.isRandomizer) {
             return ModLoader.emulator.rdramRead16(0x8011AE96);
-        }else{
+        } else {
             return 0;
         }
     }
 
-    static setTriforcePieces(ModLoader: IModLoaderAPI, pieces: number){
-        if (this.isRandomizer){
+    static setTriforcePieces(ModLoader: IModLoaderAPI, pieces: number) {
+        if (this.isRandomizer) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, pieces);
         }
     }
 
-    static incrementTriforcePieces(ModLoader: IModLoaderAPI){
-        if (this.isRandomizer){
+    static incrementTriforcePieces(ModLoader: IModLoaderAPI) {
+        if (this.isRandomizer) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, ModLoader.emulator.rdramRead16(0x8011AE96) + 1);
         }
     }
