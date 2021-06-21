@@ -232,6 +232,10 @@ export class ImGuiHandler {
                             this.settings.syncMasks = !this.settings.syncMasks;
                             this.ModLoader.config.save();
                         }
+                        if (this.ModLoader.ImGui.menuItem("Sync Bottle Contents", undefined, this.settings.syncBottleContents)) {
+                            this.settings.syncBottleContents = !this.settings.syncBottleContents;
+                            this.ModLoader.config.save();
+                        }
                         this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD

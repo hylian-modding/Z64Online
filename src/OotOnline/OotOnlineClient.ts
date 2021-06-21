@@ -91,6 +91,7 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "muteNetworkedSounds", false);
         this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
         this.ModLoader.config.setData("OotOnline", "syncMasks", true);
+        this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
         this.gui.settings = this.config;
     }
 
@@ -347,6 +348,7 @@ export default class OotOnlineClient {
             return;
         }
         if (packet.player.data.world !== this.clientStorage.world) return;
+        if (!this.config.syncBottleContents) return;
         let inventory = this.core.save.inventory;
         if (packet.contents === InventoryItem.NONE) return;
         this.clientStorage.bottleCache[packet.slot] = packet.contents;
