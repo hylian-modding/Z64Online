@@ -586,6 +586,7 @@ export class ModelManagerClient {
   private dealWithEquipmentPaks(age: Age) {
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_START, {});
     this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference) => {
+      value.loadModel();
       let data = this.getEquipmentManifest(value);
       let table: any = {};
       let player = new ModelPlayer("TEMP");
