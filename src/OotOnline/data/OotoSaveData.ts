@@ -11,6 +11,7 @@ import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
+const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 
 export class OotOSaveData implements ISaveSyncData {
 
@@ -200,7 +201,11 @@ export class OotOSaveData implements ISaveSyncData {
     }
   }
 
-  mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
+  isMask(item: InventoryItem){
+    
+  }
+
+  mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true) {
     try{
       let obj: IOOTSyncSave = JSON.parse(save.toString());
 
@@ -258,7 +263,16 @@ export class OotOSaveData implements ISaveSyncData {
       }
   
       if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-        if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) === -1) {
+        let shouldSync = true;
+        if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1){
+          if (!syncMasks){
+            shouldSync = false;
+          }
+          if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1){
+            shouldSync = false;
+          }
+        }
+        if (shouldSync){
           if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
             storage.inventory.childTradeItem = obj.inventory.childTradeItem;
           }
@@ -430,8 +444,8 @@ export class OotOSaveData implements ISaveSyncData {
 
   }
 
-  applySave(save: Buffer) {
-    this.mergeSave(save, this.core.save as any, ProxySide.CLIENT);
+  applySave(save: Buffer, syncMasks: boolean = true) {
+    this.mergeSave(save, this.core.save as any, ProxySide.CLIENT, syncMasks);
   }
 
 }

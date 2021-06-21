@@ -204,7 +204,7 @@ export class ImGuiHandler {
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("OotO")) {
-                    if (this.ModLoader.ImGui.beginMenu("Settings")) {
+                    if (this.ModLoader.ImGui.beginMenu("General Settings")) {
                         if (this.ModLoader.ImGui.menuItem("Mute custom sounds (local)", undefined, this.settings.muteLocalSounds)) {
                             this.settings.muteLocalSounds = !this.settings.muteLocalSounds;
                             this.ModLoader.config.save();
@@ -223,6 +223,13 @@ export class ImGuiHandler {
                         }
                         if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)){
                             this.settings.notificationSound = !this.settings.notificationSound;
+                            this.ModLoader.config.save();
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
+                    if (this.ModLoader.ImGui.beginMenu("Sync Settings")){
+                        if (this.ModLoader.ImGui.menuItem("Sync Masks", undefined, this.settings.syncMasks)) {
+                            this.settings.syncMasks = !this.settings.syncMasks;
                             this.ModLoader.config.save();
                         }
                         this.ModLoader.ImGui.endMenu();

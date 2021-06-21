@@ -90,6 +90,7 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "nameplates", true);
         this.ModLoader.config.setData("OotOnline", "muteNetworkedSounds", false);
         this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
+        this.ModLoader.config.setData("OotOnline", "syncMasks", true);
         this.gui.settings = this.config;
     }
 
@@ -398,7 +399,7 @@ export default class OotOnlineClient {
             return;
         }
         if (packet.world !== this.clientStorage.world) return;
-        this.clientStorage.saveManager.applySave(packet.save);
+        this.clientStorage.saveManager.applySave(packet.save, this.config.syncMasks);
     }
 
     @NetworkHandler('OotO_UpdateKeyringPacket')
