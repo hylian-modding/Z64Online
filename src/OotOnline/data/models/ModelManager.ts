@@ -625,6 +625,7 @@ export class ModelManagerClient {
     if (this.core.save.age === Age.ADULT) {
       let link = this.doesLinkObjExist(Age.ADULT);
       if (link.exists) {
+        this.allocationManager.SetLocalPlayerModel(Age.ADULT, this.allocationManager.getLocalPlayerData().adult);
         this.ModLoader.emulator.rdramWriteBuffer(link.pointer, this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().adult.pointer, 0x5380));
         let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().adult.pointer + 0x5380) - 0x150;
         let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x150);
@@ -643,6 +644,7 @@ export class ModelManagerClient {
     } else {
       let link = this.doesLinkObjExist(Age.CHILD);
       if (link.exists) {
+        this.allocationManager.SetLocalPlayerModel(Age.CHILD, this.allocationManager.getLocalPlayerData().child);
         this.ModLoader.emulator.rdramWriteBuffer(link.pointer, this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().child.pointer, 0x53A8));
         let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().child.pointer + 0x53A8) - 0x150;
         let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x1B0);
@@ -689,7 +691,6 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().adult.hash === evt.ref.hash) return;
-      if (this.allocationManager.getLocalPlayerData().adult.script !== undefined) this.allocationManager.getLocalPlayerData().adult.script!.onModelRemoved();
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, evt.ref);
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(evt.ref)!.zobj;
@@ -708,10 +709,6 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.adultCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
-      if (evt.script !== undefined) {
-        model.script = evt.script;
-        model.script.onModelEquipped();
-      }
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, model);
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(model)!.zobj;
@@ -725,7 +722,6 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().child.hash === evt.ref.hash) return;
-      if (this.allocationManager.getLocalPlayerData().child.script !== undefined) this.allocationManager.getLocalPlayerData().child.script!.onModelRemoved();
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, evt.ref);
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(evt.ref)!.zobj;
@@ -744,10 +740,6 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.childCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
-      if (evt.script !== undefined) {
-        model.script = evt.script;
-        model.script.onModelEquipped();
-      }
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, model);
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(model)!.zobj;
