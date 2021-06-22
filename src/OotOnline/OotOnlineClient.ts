@@ -21,7 +21,7 @@ import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './common/cosmetics/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
-import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_RomFlagsPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
@@ -31,6 +31,9 @@ import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
 import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
 import { OOT_PuppetOverlordClient } from '@OotOnline/data/linkPuppet/OOT_PuppetOverlord';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import RomFlags from '@OotOnline/data/RomFlags';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -70,7 +73,7 @@ export default class OotOnlineClient {
     @SidedProxy(ProxySide.CLIENT, Multiworld)
     multiworld!: Multiworld;
     opa!: ThiccOpa;
-    synxContext: number = -1;
+    syncContext: number = -1;
 
     @EventHandler(Z64OnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -120,13 +123,12 @@ export default class OotOnlineClient {
 
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
-        this.synxContext = this.ModLoader.heap!.malloc(0xFF);
-        global.ModLoader["OotO_SyncContext"] = this.synxContext;
+        this.syncContext = this.ModLoader.heap!.malloc(0x100);
+        global.ModLoader["OotO_SyncContext"] = this.syncContext;
 
-        if (this.clientStorage.isOotR) {
-            TriforceHuntHelper.isRandomizer = this.clientStorage.isOotR;
+        if (RomFlags.isOotR) {
             if (this.multiworld.isRomMultiworld()) {
-                this.clientStorage.isMultiworld = true;
+                RomFlags.isMultiworld = true;
                 this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.multiworld.contextPointer, 0x0) + 0x4);
                 this.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
             }
@@ -282,6 +284,7 @@ export default class OotOnlineClient {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
                     this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
+                    this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.isMultiworld, RomFlags.isVanilla));
                 }
             }, 50);
         }
@@ -607,7 +610,20 @@ export default class OotOnlineClient {
         prog++;
         if (rom.readUInt8(start + prog) > 0) {
             this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${rom.readUInt8(start + prog)}.0`);
-            this.clientStorage.isOotR = true;
+            RomFlags.isOotR = true;
+        } else {
+            let intended: string = "dc7100d5f3a020f962ae1b3cdd99049f";
+            let h: string = "";
+            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
+            for (let i = 0; i < 1509; i++) {
+                let buf = tools.decompressDMAFileFromRom(rom, i);
+                h += this.ModLoader.utils.hashBuffer(buf);
+            }
+            h = this.ModLoader.utils.hashBuffer(Buffer.from(h));
+            if (h === intended) {
+                RomFlags.isVanilla = true;
+                this.ModLoader.logger.info("Vanilla rom detected.");
+            }
         }
     }
 
@@ -647,16 +663,16 @@ export default class OotOnlineClient {
     }
 
     private updateSyncContext() {
-        this.ModLoader.emulator.rdramWrite8(this.synxContext, this.core.save.inventory.strength);
-        this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x1, this.ModLoader.emulator.rdramReadBuffer(0x800F7AD8 + (this.core.link.tunic * 0x3), 0x3));
+        this.ModLoader.emulator.rdramWrite8(this.syncContext, this.core.save.inventory.strength);
+        this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x1, this.ModLoader.emulator.rdramReadBuffer(0x800F7AD8 + (this.core.link.tunic * 0x3), 0x3));
         if (this.core.save.inventory.strength > Strength.GORON_BRACELET) {
             if (this.core.save.inventory.strength === Strength.SILVER_GAUNTLETS) {
-                this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4, 0x3));
+                this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4, 0x3));
             } else {
-                this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
+                this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
             }
         }
-        this.ModLoader.emulator.rdramWrite16(this.synxContext + 0x10, this.core.link.current_sound_id);
+        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.link.current_sound_id);
     }
 
     private updateMultiworld() {
@@ -691,7 +707,7 @@ export default class OotOnlineClient {
                     this.updateBottles();
                     this.updateSkulltulas();
                     this.updateSyncContext();
-                    if (this.clientStorage.isMultiworld) {
+                    if (RomFlags.isMultiworld) {
                         this.updateMultiworld();
                     }
                 }

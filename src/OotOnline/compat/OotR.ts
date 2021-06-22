@@ -10,6 +10,7 @@ import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
+import RomFlags from "@OotOnline/data/RomFlags";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -40,7 +41,7 @@ export class Multiworld {
 
     @EventHandler(Z64OnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES)
     onPlayerChangedScenes(change: Z64_PlayerScene) {
-        if (!TriforceHuntHelper.isRandomizer) return;
+        if (!RomFlags.isMultiworld) return;
         this.setPlayerName(change.player.nickname, change.player.data.world);
     }
 
@@ -759,10 +760,8 @@ export class MultiworldItem {
 
 export class TriforceHuntHelper {
 
-    static isRandomizer: boolean = false;
-
     static getTriforcePieces(ModLoader: IModLoaderAPI) {
-        if (this.isRandomizer) {
+        if (RomFlags.isOotR) {
             return ModLoader.emulator.rdramRead16(0x8011AE96);
         } else {
             return 0;
@@ -770,13 +769,13 @@ export class TriforceHuntHelper {
     }
 
     static setTriforcePieces(ModLoader: IModLoaderAPI, pieces: number) {
-        if (this.isRandomizer) {
+        if (RomFlags.isOotR) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, pieces);
         }
     }
 
     static incrementTriforcePieces(ModLoader: IModLoaderAPI) {
-        if (this.isRandomizer) {
+        if (RomFlags.isOotR) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, ModLoader.emulator.rdramRead16(0x8011AE96) + 1);
         }
     }

@@ -9,6 +9,8 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
+import { IOOTSyncSaveServer } from "@OotOnline/OotOnlineStorage";
+import bitwise from 'bitwise';
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -165,25 +167,25 @@ export class OotOSaveData implements ISaveSyncData {
   }
 
   forceOverrideSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
-    try{
+    try {
       this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
       let obj: IOOTSyncSave = JSON.parse(save.toString());
-  
+
       storage.death_counter = obj.death_counter;
       storage.heart_containers = obj.heart_containers;
       storage.magic_meter_size = obj.magic_meter_size;
       storage.magic_beans_purchased = obj.magic_beans_purchased;
       storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
-  
+
       this.processBoolLoop_OVERWRITE(obj.swords, storage.swords);
       this.processBoolLoop_OVERWRITE(obj.shields, storage.shields);
       this.processBoolLoop_OVERWRITE(obj.tunics, storage.tunics);
       this.processBoolLoop_OVERWRITE(obj.boots, storage.boots);
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
-  
+
       storage.poe_collector_score = obj.poe_collector_score;
-  
+
       storage.permSceneData = obj.permSceneData;
       storage.eventFlags = obj.eventFlags;
       storage.itemFlags = obj.itemFlags;
@@ -191,26 +193,26 @@ export class OotOSaveData implements ISaveSyncData {
       storage.skulltulaFlags = obj.skulltulaFlags;
       storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
       storage.scarecrowsSong = obj.scarecrowsSong;
-  
+
       if (side === ProxySide.CLIENT) {
         this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
         TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
       }
-    }catch(err){
+    } catch (err) {
       console.log(err.stack);
     }
   }
 
-  isMask(item: InventoryItem){
-    
+  isMask(item: InventoryItem) {
+
   }
 
   mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true) {
-    try{
+    try {
       let obj: IOOTSyncSave = JSON.parse(save.toString());
 
       // Another title screen safety check.
-      if (obj.checksum === 0){
+      if (obj.checksum === 0) {
         return;
       }
 
@@ -239,65 +241,65 @@ export class OotOSaveData implements ISaveSyncData {
       this.processBoolLoop(obj.tunics, storage.tunics);
       this.processBoolLoop(obj.boots, storage.boots);
       this.processMixedLoop(obj.questStatus, storage.questStatus, []);
-  
+
       if (obj.inventory.bottle_1 === InventoryItem.NONE && storage.inventory.bottle_1 !== InventoryItem.NONE) {
         obj.inventory.bottle_1 = storage.inventory.bottle_1;
       }
-  
+
       if (obj.inventory.bottle_2 === InventoryItem.NONE && storage.inventory.bottle_2 !== InventoryItem.NONE) {
         obj.inventory.bottle_2 = storage.inventory.bottle_2;
       }
-  
+
       if (obj.inventory.bottle_3 === InventoryItem.NONE && storage.inventory.bottle_3 !== InventoryItem.NONE) {
         obj.inventory.bottle_3 = storage.inventory.bottle_3;
       }
-  
+
       if (obj.inventory.bottle_4 === InventoryItem.NONE && storage.inventory.bottle_4 !== InventoryItem.NONE) {
         obj.inventory.bottle_4 = storage.inventory.bottle_4;
       }
-  
+
       this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
-  
+
       if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
         storage.questStatus.heartPieces = 0;
       }
-  
+
       if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
         let shouldSync = true;
-        if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1){
-          if (!syncMasks){
+        if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1) {
+          if (!syncMasks) {
             shouldSync = false;
           }
-          if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1){
+          if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1) {
             shouldSync = false;
           }
         }
-        if (shouldSync){
+        if (shouldSync) {
           if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
             storage.inventory.childTradeItem = obj.inventory.childTradeItem;
           }
         }
       }
-  
+
       if (obj.inventory.adultTradeItem !== InventoryItem.SOLD_OUT) {
         if (this.isGreaterThan(obj.inventory.adultTradeItem, storage.inventory.adultTradeItem)) {
           storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
         }
       }
-  
+
       let permSceneData = storage.permSceneData;
       let eventFlags = storage.eventFlags;
       let itemFlags = storage.itemFlags;
       let infTable = storage.infTable;
       let skulltulaFlags = storage.skulltulaFlags;
       let scarecrowsSong = storage.scarecrowsSong;
-  
+
       let backupTriforcePieces: number | undefined;
-  
+
       if (side === ProxySide.CLIENT) {
         backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
       }
-  
+
       for (let i = 0; i < obj.permSceneData.byteLength; i += 0x1C) {
         let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
         let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
@@ -415,14 +417,25 @@ export class OotOSaveData implements ISaveSyncData {
           }
         }
       }
-  
+
+      if (side === ProxySide.SERVER) {
+        let _save = (storage as IOOTSyncSaveServer);
+        if (_save.isVanilla || _save.isOotR) {
+          // Correct water temple flags.
+          let struct = new SceneStruct(obj.permSceneData.slice(5 * 0x1C, (5 * 0x1C) + 0x1C));
+          let byte = struct.switches.readUInt8(3);
+          let struct2 = new SceneStruct(storage.permSceneData.slice(5 * 0x1C, (5 * 0x1C) + 0x1C));
+          struct2.switches.writeUInt8(byte, 3);
+        }
+      }
+
       storage.permSceneData = permSceneData;
       storage.eventFlags = eventFlags;
       storage.itemFlags = itemFlags;
       storage.infTable = infTable;
       storage.skulltulaFlags = skulltulaFlags;
       storage.scarecrowsSong = scarecrowsSong;
-  
+
       if (side === ProxySide.CLIENT) {
         let cur = this.core.save.dungeonItemManager.getRawBuffer();
         parseFlagChanges(obj.dungeon_items, cur);
@@ -438,7 +451,7 @@ export class OotOSaveData implements ISaveSyncData {
           storage.triforcePieces = obj.triforcePieces;
         }
       }
-    }catch(err){
+    } catch (err) {
       console.log(err.stack);
     }
 
