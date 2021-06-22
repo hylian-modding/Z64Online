@@ -303,18 +303,23 @@ export class Multiworld {
                 break;
             case GetItemIDs.GI_QUIVER_40:
                 save.inventory.quiver = AmmoUpgrade.UPGRADED;
+                save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, save.inventory.quiver);
                 break;
             case GetItemIDs.GI_QUIVER_50:
                 save.inventory.quiver = AmmoUpgrade.MAX;
+                save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, save.inventory.quiver);
                 break;
             case GetItemIDs.GI_BOMB_BAG_20:
                 save.inventory.bombBag = AmmoUpgrade.BASE;
+                save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, save.inventory.bombBag);
                 break;
             case GetItemIDs.GI_BOMB_BAG_30:
                 save.inventory.bombBag = AmmoUpgrade.UPGRADED;
+                save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, save.inventory.bombBag);
                 break;
             case GetItemIDs.GI_BOMB_BAG_40:
                 save.inventory.bombBag = AmmoUpgrade.MAX;
+                save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, save.inventory.bombBag);
                 break;
             case GetItemIDs.GI_GAUNTLETS_SILVER:
                 save.inventory.strength = Strength.SILVER_GAUNTLETS;
@@ -466,9 +471,11 @@ export class Multiworld {
                 break;
             case GetItemIDs.GI_BULLET_BAG_30:
                 save.inventory.bulletBag = AmmoUpgrade.BASE;
+                save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, save.inventory.bulletBag);
                 break;
             case GetItemIDs.GI_BULLET_BAG_40:
                 save.inventory.bulletBag = AmmoUpgrade.UPGRADED;
+                save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, save.inventory.bulletBag);
                 break;
             case GetItemIDs.GI_STICKS_5:
                 save.inventory.dekuSticksCount = this.addAmmo(save.inventory.dekuSticksCount, 5, maxSticks);
@@ -525,18 +532,23 @@ export class Multiworld {
                 break;
             case GetItemIDs.GI_STICK_UPGRADE_20:
                 save.inventory.dekuSticksCapacity = AmmoUpgrade.UPGRADED;
+                save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, save.inventory.dekuSticksCapacity);
                 break;
             case GetItemIDs.GI_STICK_UPGRADE_30:
                 save.inventory.dekuSticksCapacity = AmmoUpgrade.MAX;
+                save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, save.inventory.dekuSticksCapacity);
                 break;
             case GetItemIDs.GI_NUT_UPGRADE_30:
                 save.inventory.dekuNutsCapacity = AmmoUpgrade.UPGRADED;
+                save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, save.inventory.dekuNutsCapacity);
                 break;
             case GetItemIDs.GI_NUT_UPGRADE_40:
                 save.inventory.dekuNutsCapacity = AmmoUpgrade.MAX;
+                save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, save.inventory.dekuNutsCapacity);
                 break;
             case GetItemIDs.GI_BULLET_BAG_50:
                 save.inventory.bulletBag = AmmoUpgrade.MAX;
+                save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, save.inventory.bulletBag);
                 break;
             case GetItemIDs.GI_ICE_TRAP:
                 // Can't mimic this yet.
@@ -559,10 +571,12 @@ export class Multiworld {
             case GetItemIDs.GI_PROGRESSIVE_BOW:
                 save.inventory.fairyBow = true;
                 save.inventory.quiver = this.progressiveUpgrade(save.inventory.fairyBow, save.inventory.quiver);
+                save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, save.inventory.quiver);
                 break;
             case GetItemIDs.GI_PROGRESSIVE_SLINGSHOT:
                 save.inventory.fairySlingshot = true;
                 save.inventory.bulletBag = this.progressiveUpgrade(save.inventory.fairySlingshot, save.inventory.bulletBag);
+                save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, save.inventory.bulletBag);
                 break;
             case GetItemIDs.GI_PROGRESSIVE_WALLET:
                 save.inventory.wallet = this.progressiveUpgrade2(save.inventory.wallet, 1, Wallet.TYCOON);
@@ -572,9 +586,11 @@ export class Multiworld {
                 break;
             case GetItemIDs.GI_PROGRESSIVE_NUTS:
                 save.inventory.dekuNutsCapacity = this.progressiveUpgrade(save.inventory.dekuNuts, save.inventory.dekuNutsCapacity);
+                save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, save.inventory.dekuNutsCapacity);
                 break;
             case GetItemIDs.GI_PROGRESSIVE_STICKS:
                 save.inventory.dekuSticksCapacity = this.progressiveUpgrade(save.inventory.dekuSticks, save.inventory.dekuSticksCapacity);
+                save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, save.inventory.dekuSticksCapacity);
                 break;
             case GetItemIDs.GI_PROGRESSIVE_BOMBCHUS:
                 // ??? progressive bombchus?
