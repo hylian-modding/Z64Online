@@ -2,14 +2,14 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { zeldaString } from 'modloader64_api/OOT/ZeldaString';
 import { AmmoUpgrade, Hookshot, InventoryItem, IOOTCore, Magic, MagicQuantities, Ocarina, Strength, UpgradeCountLookup, VANILLA_DUNGEON_ITEM_INDEXES, VANILLA_KEY_INDEXES, Wallet, ZoraScale } from "modloader64_api/OOT/OOTAPI";
 import { IOOTSaveContext } from "@OotOnline/common/types/OotAliases";
-import { Z64OnlineEvents, Z64_PlayerScene } from "@OotOnline/Z64API/OotoAPI";
+import { Z64OnlineEvents, Z64_PlayerScene } from "@OotOnline/common/api/Z64API";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
-import { IZ64OnlineHelpers } from "@OotOnline/data/InternalAPI";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { InjectCore } from "modloader64_api/CoreInjection";
+import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -25,7 +25,7 @@ export class Multiworld {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI
     @ParentReference()
-    parent!: IZ64OnlineHelpers;
+    parent!: IZ64Clientside;
     @InjectCore()
     core!: IOOTCore;
     contextPointer: number = 0x801C8464;

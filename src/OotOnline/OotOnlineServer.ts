@@ -5,9 +5,8 @@ import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedPro
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
-import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
+import { Z64_PlayerScene, Z64OnlineEvents } from './common/api/Z64API';
 import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket } from './data/OotOPackets';
-import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
 import { InjectCore } from 'modloader64_api/CoreInjection';
@@ -15,6 +14,7 @@ import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { PvPServer } from './data/pvp/PvPModule';
+import { OOT_PuppetOverlordServer } from '@OotOnline/data/linkPuppet/OOT_PuppetOverlord';
 
 export default class OotOnlineServer {
 
@@ -26,8 +26,8 @@ export default class OotOnlineServer {
     parent!: IPlugin;
     @SidedProxy(ProxySide.SERVER, ActorHookingManagerServer)
     actorHooks!: ActorHookingManagerServer;
-    @SidedProxy(ProxySide.SERVER, PuppetOverlordServer)
-    puppets!: PuppetOverlordServer;
+    @SidedProxy(ProxySide.SERVER, OOT_PuppetOverlordServer)
+    puppets!: OOT_PuppetOverlordServer;
     @SidedProxy(ProxySide.SERVER, WorldEvents)
     worldEvents!: WorldEvents;
     // #ifdef IS_DEV_BUILD
@@ -157,7 +157,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }
@@ -190,7 +190,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
             storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
@@ -201,7 +201,7 @@ export default class OotOnlineServer {
     }
 
     @ServerNetworkHandler('OotO_UpdateKeyringPacket')
-    onKeySync_Server(packet: OotO_UpdateKeyringPacket){
+    onKeySync_Server(packet: OotO_UpdateKeyringPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -209,7 +209,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }

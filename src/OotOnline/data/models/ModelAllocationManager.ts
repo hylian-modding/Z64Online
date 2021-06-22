@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
-import { IModelReference } from '@OotOnline/Z64API/OotoAPI';
+import { IModelReference } from '@OotOnline/common/api/Z64API';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;

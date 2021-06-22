@@ -1,4 +1,4 @@
-import { Z64OnlineEvents, Z64_AnimationBank } from "@OotOnline/Z64API/OotoAPI";
+import { Z64OnlineEvents, Z64_AnimationBank } from "@OotOnline/common/api/Z64API";
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { Init } from "modloader64_api/PluginLifecycle";

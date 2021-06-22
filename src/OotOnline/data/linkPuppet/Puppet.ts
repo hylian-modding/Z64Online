@@ -2,14 +2,13 @@ import { IOOTCore, IOvlPayloadResult, Scene } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
-import { Z64OnlineEvents, RemoteSoundPlayRequest } from '../../Z64API/OotoAPI';
+import { Z64OnlineEvents } from '../../common/api/Z64API';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import Vector3 from 'modloader64_api/math/Vector3';
 import { HorseData } from './HorseData';
-import { IZ64OnlineHelpers } from '../InternalAPI';
-import { IPuppet } from '@OotOnline/Z64API/IPuppet';
 import { AgeorForm } from '@OotOnline/common/types/Types';
-import { ALL_PUPPETS_INVISIBLE } from './PuppetOverlord';
+import { IPuppet } from '@OotOnline/common/puppet/IPuppet';
+import { IZ64Clientside } from '@OotOnline/common/lib/IZ64Clientside';
 
 export class Puppet implements IPuppet{
   player: INetworkPlayer;
@@ -24,15 +23,14 @@ export class Puppet implements IPuppet{
   ModLoader: IModLoaderAPI;
   horse: HorseData | undefined;
   horseSpawning: boolean = false;
-  parent: IZ64OnlineHelpers;
-  renderFn: number = -1;
+  parent: IZ64Clientside;
 
   constructor(
     player: INetworkPlayer,
     core: IOOTCore,
     pointer: number,
     ModLoader: IModLoaderAPI,
-    parent: IZ64OnlineHelpers
+    parent: IZ64Clientside
   ) {
     this.player = player;
     this.data = new PuppetData(this, pointer, ModLoader);
@@ -77,21 +75,8 @@ export class Puppet implements IPuppet{
           this.isSpawned = true;
           this.isSpawning = false;
           bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
-          this.renderFn = this.ModLoader.emulator.rdramRead32(this.data.pointer + 0x134);
-          if (ALL_PUPPETS_INVISIBLE){
-            this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0);
-          }
         }
       });
-    }
-  }
-
-  toggleVisibility(t: boolean) {
-    if (!this.isSpawned) return;
-    if (t) {
-      this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, this.renderFn);
-    } else {
-      this.ModLoader.emulator.rdramWrite32(this.data.pointer + 0x134, 0);
     }
   }
 

@@ -1,4 +1,4 @@
-import { IModelReference, IModelScript } from '@OotOnline/Z64API/OotoAPI';
+import { IModelReference, IModelScript } from '@OotOnline/common/api/Z64API';
 
 export class ModelPlayer {
   uuid: string = "";

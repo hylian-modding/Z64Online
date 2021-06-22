@@ -1,7 +1,7 @@
 import { IOOTSyncSave } from "@OotOnline/common/types/OotAliases";
 import { IKeyRing } from "@OotOnline/common/save/IKeyRing";
 import { parseFlagChanges } from "@OotOnline/common/lib/parseFlagChanges";
-import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
+import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { InventoryItem, IOOTCore, SceneStruct, ScarecrowSongNoteStruct } from "modloader64_api/OOT/OOTAPI";

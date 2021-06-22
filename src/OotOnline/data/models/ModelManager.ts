@@ -15,7 +15,6 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64Online_LocalModelChangeProcessEvt } from '../../Z64API/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -36,6 +35,7 @@ import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGe
 import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
 import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
+import { IModelReference, Z64OnlineEvents, Z64Online_ModelAllocation, Z64Online_EquipmentPak, Z64Online_LocalModelChangeProcessEvt } from '@OotOnline/common/api/Z64API';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -94,61 +94,6 @@ export class ModelManagerClient {
     }
     evt.ref = ref;
     this.customModelFilesChild.set(evt.name + " (Child)", evt.ref);
-  }
-
-  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT -> Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT')
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ADULT)
-  onCustomModel(file: string) {
-    if (this.managerDisabled) return;
-    let evt = new Z64Online_ModelAllocation(fs.readFileSync(file), Age.ADULT);
-    let figureOutName: string = path.parse(path.parse(file).dir).name;
-    evt.name = figureOutName;
-    bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT, evt);
-  }
-
-  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT is deprecated.')
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT)
-  onCustomModelBufferAdult(buf: Buffer) {
-    if (this.managerDisabled) return;
-    this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_ADULT is deprecated. Please stop using this event.");
-  }
-
-  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_APPLIED_CHILD -> Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD')
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_CHILD)
-  onCustomModel2(file: string) {
-    if (this.managerDisabled) return;
-    let evt = new Z64Online_ModelAllocation(fs.readFileSync(file), Age.CHILD);
-    let figureOutName: string = path.parse(path.parse(file).dir).name;
-    evt.name = figureOutName;
-    bus.emit(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD, evt);
-  }
-
-  @Deprecated('Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD is deprecated.')
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD)
-  onCustomModelBufferChild(buf: Buffer) {
-    if (this.managerDisabled) return;
-    this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_LOAD_BUFFER_CHILD is deprecated. Please stop using this event.");
-  }
-
-  @Deprecated('CUSTOM_MODEL_APPLIED_ANIMATIONS is deprecated')
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS)
-  onCustomModel3(file: string) {
-    if (this.managerDisabled) return;
-    this.ModLoader.logger.warn("Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ANIMATIONS is deprecated. Please stop using this event.");
-  }
-
-  @Deprecated()
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ICON_ADULT)
-  onCustomModel4(file: string) {
-    if (this.managerDisabled) return;
-    this.customModelFileAdultIcon = file;
-  }
-
-  @Deprecated()
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_APPLIED_ICON_CHILD)
-  onCustomModel5(file: string) {
-    if (this.managerDisabled) return;
-    this.customModelFileChildIcon = file;
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)

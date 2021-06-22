@@ -1,4 +1,4 @@
-import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/Z64API/OotoAPI";
+import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/common/api/Z64API";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
@@ -12,7 +12,8 @@ import fs from 'fs';
 import path from 'path';
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
-import { IZ64OnlineHelpers, OOTO_PRIVATE_EVENTS } from "@OotOnline/data/InternalAPI";
+import { OOTO_PRIVATE_EVENTS } from "@OotOnline/data/InternalAPI";
+import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 
@@ -47,7 +48,7 @@ export class Notifications {
     @InjectCore()
     core!: IOOTCore;
     @ParentReference()
-    parent!: IZ64OnlineHelpers;
+    parent!: IZ64Clientside;
     //---
     font!: Font;
     messages: Array<Notif> = [];

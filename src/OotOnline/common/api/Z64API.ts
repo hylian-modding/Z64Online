@@ -1,12 +1,12 @@
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
-import { Age, Tunic } from 'modloader64_api/OOT/OOTAPI';
 import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import path from 'path';
-import { IPuppet } from './IPuppet';
+import { IPuppet } from '@OotOnline/common/puppet/IPuppet';
+import { AgeorForm, Scene, Z64Tunic } from '@OotOnline/common/types/Types';
 
-@ExternalAPIProvider("OotOAPI", "3.0.0", path.resolve(__dirname))
-export class OotOAPIProvider {
+@ExternalAPIProvider("Z64API", "3.1.0", path.resolve(__dirname))
+export class Z64OnlineAPIProvider {
 }
 
 export enum Z64OnlineEvents {
@@ -20,11 +20,6 @@ export enum Z64OnlineEvents {
   GAINED_HEART_CONTAINER = 'OotOnline:GainedHeartContainer',
   GAINED_PIECE_OF_HEART = 'OotOnline:GainedPieceOfHeart',
   MAGIC_METER_INCREASED = 'OotOnline:GainedMagicMeter',
-  CUSTOM_MODEL_APPLIED_ADULT = 'OotOnline:ApplyCustomModelAdult', // deprecated - use CUSTOM_MODEL_LOAD_ADULT
-  CUSTOM_MODEL_APPLIED_CHILD = 'OotOnline:ApplyCustomModelChild', // deprecated - use CUSTOM_MODEL_LOAD_CHILD
-  CUSTOM_MODEL_APPLIED_ANIMATIONS = 'OotOnline:ApplyCustomAnims', // deprecated - use CUSTOM_ANIMATION_BANK_REGISTER
-  CUSTOM_MODEL_APPLIED_ICON_ADULT = 'OotOnline:ApplyCustomIconAdult', // deprecated
-  CUSTOM_MODEL_APPLIED_ICON_CHILD = 'OotOnline:ApplyCustomIconChild', // deprecated
   ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
   ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
   ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
@@ -33,8 +28,6 @@ export enum Z64OnlineEvents {
   ON_SELECT_SOUND_PACK = "OotOnline:OnSelectSoundPack",
   ON_REMOTE_SOUND_PACK = "OotOnline:OnRemoteSoundPack",
   ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound",
-  CUSTOM_MODEL_LOAD_BUFFER_ADULT = "OotOnline:ApplyCustomModelAdultBuffer",
-  CUSTOM_MODEL_LOAD_BUFFER_CHILD = "OotOnline:ApplyCustomModelChildBuffer",
   ALLOCATE_MODEL_BLOCK = "OotOnline:AllocateModelBlock",
   FORCE_LOAD_MODEL_BLOCK = "OotOnline:ForceLoadModelBlock",
   CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY = "OotOnline:ChangeCustomModelAdultGamePlay",
@@ -84,7 +77,7 @@ export interface IModelScript {
   onSceneChange(scene: number, ref: IModelReference): IModelReference;
   onDay(ref: IModelReference): IModelReference;
   onNight(ref: IModelReference): IModelReference;
-  onTunicChanged(ref: IModelReference, tunic: Tunic): IModelReference;
+  onTunicChanged(ref: IModelReference, tunic: Z64Tunic): IModelReference;
   onHealthChanged(max: number, health: number, ref: IModelReference): IModelReference;
   onTick(): void;
 }
@@ -111,16 +104,15 @@ export interface Z64Emote_Emote {
   name: string;
   buf: Buffer;
   sound?: Buffer;
-  builtIn?: boolean;
   loops: boolean;
 }
 
 export class Z64_PlayerScene {
   player: INetworkPlayer;
   lobby: string;
-  scene: number;
+  scene: Scene;
 
-  constructor(player: INetworkPlayer, lobby: string, scene: number) {
+  constructor(player: INetworkPlayer, lobby: string, scene: Scene) {
     this.player = player;
     this.scene = scene;
     this.lobby = lobby;
@@ -145,11 +137,11 @@ export interface IModelReference {
 export class Z64Online_ModelAllocation {
   name: string = "";
   model: Buffer;
-  age: Age;
+  age: AgeorForm;
   ref!: IModelReference;
   script: IModelScript | undefined;
 
-  constructor(model: Buffer, age: Age) {
+  constructor(model: Buffer, age: AgeorForm) {
     this.model = model;
     this.age = age;
   }

@@ -1,16 +1,15 @@
 import { IActor } from "modloader64_api/OOT/IActor"
-import { Puppet } from "./Puppet";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
-import { IHorseData } from "@OotOnline/Z64API/IHorseData";
+import { IPuppet } from "@OotOnline/common/puppet/IPuppet";
 
-export class HorseData implements IHorseData{
+export class HorseData{
 
     pointer: number;
-    parent: Puppet;
+    parent: IPuppet;
     puppet!: IActor;
     private readonly copyFields: string[] = ["pos", "rot", "anim_id", "speed"];
 
-    constructor(pointer: number, parent: Puppet, core: IOOTCore){
+    constructor(pointer: number, parent: IPuppet, core: IOOTCore){
         this.puppet = core.actorManager.createIActorFromPointer(pointer);
         this.pointer = pointer;
         this.parent = parent;

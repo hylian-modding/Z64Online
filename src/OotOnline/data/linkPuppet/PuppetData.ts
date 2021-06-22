@@ -2,11 +2,11 @@ import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { SmartBuffer } from 'smart-buffer';
 import path from 'path';
 import { Age } from 'modloader64_api/OOT/OOTAPI';
-import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoAPI';
+import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/common/api/Z64API';
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
-import { IPuppetData } from '@OotOnline/Z64API/IPuppetData';
 import { AgeorForm } from '@OotOnline/common/types/Types';
+import { IPuppetData } from '@OotOnline/common/puppet/IPuppetData';
 
 interface SyncData {
 	lengths: any;

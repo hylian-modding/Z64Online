@@ -5,7 +5,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
 import { bus, EventHandler, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/Z64API/OotoAPI';
+import { IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/common/api/Z64API';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
 import { CostumeHelper } from '../common/events/CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';

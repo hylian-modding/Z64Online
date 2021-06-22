@@ -1,7 +1,6 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { IOOTCore, LinkState, Scene } from "modloader64_api/OOT/OOTAPI";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
-import { Z64OnlineEvents, Z64Emote_Emote } from '@OotOnline/Z64API/OotoAPI';
+import { Z64OnlineEvents, Z64Emote_Emote } from '@OotOnline/common/api/Z64API';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { onTick, onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
@@ -11,6 +10,8 @@ import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { bool_ref, WindowFlags } from "modloader64_api/Sylvain/ImGui";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
+import { Core, LinkStandingState, Scene } from "@OotOnline/common/types/Types";
+import { IMGUI_LABELS } from "@OotOnline/common/lib/Labels";
 
 export class EmoteManager {
     isCurrentlyPlayingEmote: boolean = false;
@@ -20,7 +21,7 @@ export class EmoteManager {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @InjectCore()
-    core!: IOOTCore;
+    core!: Core;
     displayingEmoteWindow: bool_ref = [false];
     currentEmoteSoundID: number = 0xFF00;
     config!: OotOnlineConfigCategory;
@@ -36,9 +37,6 @@ export class EmoteManager {
             id = this.currentEmoteSoundID++;
             e.soundid = id;
         }
-        if (emote.builtIn !== undefined) {
-            e.isBuiltInEmote = emote.builtIn;
-        }
         e.loops = emote.loops;
         this.masterEmoteList.push(e);
     }
@@ -47,7 +45,7 @@ export class EmoteManager {
     onViUpdate() {
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                if (this.ModLoader.ImGui.beginMenu(IMGUI_LABELS.MOD_NAME)) {
                     if (this.ModLoader.ImGui.menuItem("Emotes")) {
                         this.displayingEmoteWindow[0] = !this.displayingEmoteWindow[0];
                     }
@@ -76,7 +74,7 @@ export class EmoteManager {
                             this.ModLoader.ImGui.text(this.masterEmoteList[i].name);
                             this.ModLoader.ImGui.sameLine();
                             if (this.ModLoader.ImGui.button("Play###OotO:Emotes:" + this.masterEmoteList[i].name)) {
-                                if (this.core.link.state === LinkState.STANDING) {
+                                if (this.core.link.state === LinkStandingState) {
                                     this.currentEmoteID = i;
                                     this.isCurrentlyPlayingEmote = true;
                                 }
@@ -93,7 +91,7 @@ export class EmoteManager {
     onPost() {
         let rawSound: any = {};
         for (let i = 0; i < this.masterEmoteList.length; i++) {
-            if (this.masterEmoteList[i].soundid !== undefined && !this.masterEmoteList[i].isBuiltInEmote) {
+            if (this.masterEmoteList[i].soundid !== undefined) {
                 let arr: Array<Buffer> = [];
                 arr.push(zlib.deflateSync(this.masterEmoteList[i].soundBuffer!));
                 rawSound[this.masterEmoteList[i].soundid!] = arr;
@@ -107,14 +105,10 @@ export class EmoteManager {
     onTick(frame: number) {
         if (this.isCurrentlyPlayingEmote) {
             if (this.currentEmoteFrame === 5 && this.masterEmoteList[this.currentEmoteID].sound !== undefined) {
-                if (!this.config.muteLocalSounds){
+                if (!this.config.muteLocalSounds) {
                     if (this.masterEmoteList[this.currentEmoteID].sound!.status !== SoundSourceStatus.Playing) {
                         this.masterEmoteList[this.currentEmoteID].sound!.play();
-                        if (!this.masterEmoteList[this.currentEmoteID].isBuiltInEmote) {
-                            this.core.link.current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
-                        } else {
-                            this.ModLoader.clientSide.sendPacket(new OotO_PlayBuiltInEmotePacket(this.masterEmoteList[this.currentEmoteID].name, this.core.global.scene, this.ModLoader.clientLobby));
-                        }
+                        this.core.link.current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
                     }
                 }
             }
@@ -122,44 +116,15 @@ export class EmoteManager {
             this.core.link.anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
             this.currentEmoteFrame++;
             if (this.currentEmoteFrame > this.masterEmoteList[this.currentEmoteID].getTotalFrames()) {
-                if (this.masterEmoteList[this.currentEmoteID].loops){
+                if (this.masterEmoteList[this.currentEmoteID].loops) {
                     this.currentEmoteFrame = 0;
-                }else{
+                } else {
                     this.isCurrentlyPlayingEmote = false;
                     this.core.link.redeadFreeze = 0x0;
                     this.currentEmoteFrame = -1;
                 }
             }
         }
-    }
-
-    @NetworkHandler("OotO_PlayBuiltInEmotePacket")
-    onEmotePacket(packet: OotO_PlayBuiltInEmotePacket) {
-        for (let i = 0; i < this.masterEmoteList.length; i++) {
-            if (this.masterEmoteList[i].name === packet.emote) {
-                if (this.masterEmoteList[i].sound !== undefined) {
-                    if (!this.config.muteLocalSounds){
-                        if (this.masterEmoteList[i].sound!.status !== SoundSourceStatus.Playing) {
-                            if (this.core.global.scene === packet.scene) {
-                                this.masterEmoteList[i].sound!.play();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-export class OotO_PlayBuiltInEmotePacket extends Packet {
-
-    emote: string;
-    scene: Scene;
-
-    constructor(emote: string, scene: Scene, lobby: string) {
-        super("OotO_PlayBuiltInEmotePacket", "OotOnline", lobby, true);
-        this.emote = emote;
-        this.scene = scene;
     }
 }
 
@@ -170,7 +135,6 @@ export class anim_binary_container {
     sound?: Sound;
     soundBuffer?: Buffer;
     soundid?: number;
-    isBuiltInEmote: boolean = false;
     loops: boolean;
 
     constructor(name: string, buf: Buffer, sound: Sound | undefined = undefined, soundBuffer: Buffer | undefined = undefined, id: number | undefined = undefined, loops: boolean = false) {

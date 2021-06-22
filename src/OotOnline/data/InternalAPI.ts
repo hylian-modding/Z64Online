@@ -1,5 +1,5 @@
-import { OotOnlineStorageClient } from "@OotOnline/OotOnlineStorageClient";
-import { IPacketHeader } from "modloader64_api/NetworkHandler";
+import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
+import { IZ64OnlineHelpers } from "@OotOnline/common/lib/IZ64OnlineHelpers";
 
 export const enum OOTO_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
@@ -13,8 +13,6 @@ export const enum OOTO_PRIVATE_EVENTS {
     UPDATE_KEY_HASH = "UPDATE_KEY_HASH",
     SERVER_ASSET_DATA_GET = "SERVER_ASSET_DATA_GET",
     CLIENT_ASSET_DATA_GET = "CLIENT_ASSET_DATA_GET",
-    TOGGLE_PUPPET_VISIBILITY = "TOGGLE_PUPPET_VISIBILITY",
-    FORBID_PUPPETS = "FORBID_PUPPETS",
     REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER = "REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER",
     DOING_SYNC_CHECK = "DOING_SYNC_CHECK",
     LOCK_ITEM_NOTIFICATIONS = "LOCK_ITEM_NOTIFICATIONS",
@@ -64,11 +62,6 @@ export class OOTO_PRIVATE_COIN_LOOKUP_OBJ {
     }
 }
 
-export interface IZ64OnlineHelpers {
-    sendPacketToPlayersInScene(packet: IPacketHeader): void;
-    getClientStorage(): OotOnlineStorageClient | null;
-}
-
 export class ExternalEventData{
     tag: string;
     data: any;
@@ -78,3 +71,5 @@ export class ExternalEventData{
         this.data = data;
     }
 }
+
+export interface IOotUtility extends IZ64OnlineHelpers, IZ64Clientside{}

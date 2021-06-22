@@ -6,7 +6,7 @@ import { NetworkHandler, INetworkPlayer } from "modloader64_api/NetworkHandler";
 import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
 import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
-import { Z64OnlineEvents, RemoteSoundPlayRequest } from "@OotOnline/Z64API/OotoAPI";
+import { Z64OnlineEvents, RemoteSoundPlayRequest } from "@OotOnline/common/api/Z64API";
 import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";

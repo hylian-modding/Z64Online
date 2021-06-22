@@ -2,7 +2,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
-import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
+import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './common/api/Z64API';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
 import fs from 'fs';
@@ -15,12 +15,11 @@ import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
 import { IActor } from 'modloader64_api/OOT/IActor';
-import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 import { WorldEvents } from './WorldEvents/WorldEvents';
-import { EmoteManager } from './data/emotes/emoteManager';
+import { EmoteManager } from './common/cosmetics/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
 import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
@@ -31,6 +30,7 @@ import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
 import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
+import { OOT_PuppetOverlordClient } from '@OotOnline/data/linkPuppet/OOT_PuppetOverlord';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -53,8 +53,8 @@ export default class OotOnlineClient {
     animManager!: AnimationManager;
     @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
-    @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
-    puppets!: PuppetOverlordClient;
+    @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
+    puppets!: OOT_PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)

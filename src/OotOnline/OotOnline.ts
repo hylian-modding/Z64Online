@@ -6,7 +6,7 @@ import { IPacketHeader } from "modloader64_api/NetworkHandler";
 import { OotOnlineStorageClient } from "./OotOnlineStorageClient";
 import path from 'path';
 import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
-import { IZ64OnlineHelpers } from "./data/InternalAPI";
+import { IOotUtility } from "@OotOnline/data/InternalAPI";
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -41,7 +41,7 @@ export class OotOnlineConfigCategory {
 }
 
 @ExternalAPIProvider("Z64Lib", require(path.resolve(__dirname, "libs", "Z64Lib", "package.json")).version, path.resolve(__dirname, "libs", "Z64Lib"))
-export default class OotOnline implements IPlugin, IZ64OnlineHelpers, IPluginServerConfig {
+export default class OotOnline implements IPlugin, IPluginServerConfig, IOotUtility {
 
   ModLoader!: IModLoaderAPI;
   @InjectCore()
