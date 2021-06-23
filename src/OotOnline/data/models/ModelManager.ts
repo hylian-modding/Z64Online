@@ -709,6 +709,7 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.adultCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
+      model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(Age.ADULT, model);
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(model)!.zobj;
@@ -740,6 +741,7 @@ export class ModelManagerClient {
         copy.writeUInt32BE(this.childCodePointer, 0x500C)
       }
       let model = this.allocationManager.registerModel(copy)!;
+      model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(Age.CHILD, model);
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(model)!.zobj;
