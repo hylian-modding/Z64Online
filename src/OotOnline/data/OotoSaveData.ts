@@ -348,7 +348,7 @@ export class OotOSaveData implements ISaveSyncData {
         }
         for (let j = 0; j < struct.unused.byteLength; j++) {
           if (struct.unused[j] !== cur.unused[j]) {
-            cur.unused[j] = struct.unused[j];
+            cur.unused[j] |= struct.unused[j];
           }
         }
       }
