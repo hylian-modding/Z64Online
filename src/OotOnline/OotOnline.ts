@@ -13,6 +13,7 @@ export const EVENT_ARR_SIZE = 0x1c;
 export const ITEM_FLAG_ARR_SIZE = 0x8;
 export const INF_ARR_SIZE = 0x3c;
 export const SKULLTULA_ARR_SIZE = 0x18;
+export const SCARECROW_ARR_SIZE = 0x80;
 
 export let IS_DEV_BUILD: boolean = false;
 // #ifdef IS_DEV_BUILD
