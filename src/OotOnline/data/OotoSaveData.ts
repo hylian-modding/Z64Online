@@ -10,7 +10,6 @@ import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
 import { IOOTSyncSaveServer } from "@OotOnline/OotOnlineStorage";
-import bitwise from 'bitwise';
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -242,6 +241,15 @@ export class OotOSaveData implements ISaveSyncData {
       this.processBoolLoop(obj.boots, storage.boots);
       this.processMixedLoop(obj.questStatus, storage.questStatus, []);
 
+      let permSceneData = storage.permSceneData;
+      let eventFlags = storage.eventFlags;
+      let itemFlags = storage.itemFlags;
+      let infTable = storage.infTable;
+      let skulltulaFlags = storage.skulltulaFlags;
+      let scarecrowsSong = storage.scarecrowsSong;
+
+      let backupTriforcePieces: number | undefined;
+
       if (obj.inventory.bottle_1 === InventoryItem.NONE && storage.inventory.bottle_1 !== InventoryItem.NONE) {
         obj.inventory.bottle_1 = storage.inventory.bottle_1;
       }
@@ -276,6 +284,13 @@ export class OotOSaveData implements ISaveSyncData {
         }
         if (shouldSync) {
           if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
+            if (side === ProxySide.SERVER) { // Deku Scrub Theater rewards' flag check
+              if (obj.itemFlags.readUInt8(2) < 64 && obj.inventory.childTradeItem > InventoryItem.SKULL_MASK) {
+                obj.inventory.childTradeItem = InventoryItem.SKULL_MASK;
+              } else if (obj.itemFlags.readUInt8(2) < 128 && obj.inventory.childTradeItem > InventoryItem.MASK_OF_TRUTH) {
+                obj.inventory.childTradeItem = InventoryItem.MASK_OF_TRUTH;
+              } // Is there a way to detect when a game's had its Bunny Hood speed modified? A common area in the ROM to read for modified code?
+            }
             storage.inventory.childTradeItem = obj.inventory.childTradeItem;
           }
         }
@@ -286,15 +301,6 @@ export class OotOSaveData implements ISaveSyncData {
           storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
         }
       }
-
-      let permSceneData = storage.permSceneData;
-      let eventFlags = storage.eventFlags;
-      let itemFlags = storage.itemFlags;
-      let infTable = storage.infTable;
-      let skulltulaFlags = storage.skulltulaFlags;
-      let scarecrowsSong = storage.scarecrowsSong;
-
-      let backupTriforcePieces: number | undefined;
 
       if (side === ProxySide.CLIENT) {
         backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
@@ -320,7 +326,14 @@ export class OotOSaveData implements ISaveSyncData {
         }
         for (let j = 0; j < struct.switches.byteLength; j++) {
           if (struct.switches[j] !== cur.switches[j]) {
-            cur.switches[j] |= struct.switches[j];
+            if (side === ProxySide.SERVER && i == 5 && j == 3) {
+              let _save = (storage as IOOTSyncSaveServer);
+              if (_save.isVanilla || _save.isOotR) {
+                cur.switches[j] = struct.switches[j]; // Correct water temple flags.
+              }
+            } else {
+              cur.switches[j] |= struct.switches[j];
+            }
           }
         }
         for (let j = 0; j < struct.visited_floors.byteLength; j++) {
@@ -415,17 +428,6 @@ export class OotOSaveData implements ISaveSyncData {
               cur.special[j] = struct.special[j];
             }
           }
-        }
-      }
-
-      if (side === ProxySide.SERVER) {
-        let _save = (storage as IOOTSyncSaveServer);
-        if (_save.isVanilla || _save.isOotR) {
-          // Correct water temple flags.
-          let struct = new SceneStruct(obj.permSceneData.slice(5 * 0x1C, (5 * 0x1C) + 0x1C));
-          let byte = struct.switches.readUInt8(3);
-          let struct2 = new SceneStruct(storage.permSceneData.slice(5 * 0x1C, (5 * 0x1C) + 0x1C));
-          struct2.switches.writeUInt8(byte, 3);
         }
       }
 
