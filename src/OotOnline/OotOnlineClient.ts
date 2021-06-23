@@ -367,6 +367,9 @@ export default class OotOnlineClient {
                 break;
         }
         bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     // The server is giving me data.
@@ -382,6 +385,9 @@ export default class OotOnlineClient {
             if (packet.save) {
                 this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
                 this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+                // Update hash.
+                this.clientStorage.saveManager.createSave();
+                this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
@@ -402,6 +408,9 @@ export default class OotOnlineClient {
         }
         if (packet.world !== this.clientStorage.world) return;
         this.clientStorage.saveManager.applySave(packet.save, this.config.syncMasks);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     @NetworkHandler('OotO_UpdateKeyringPacket')
@@ -414,6 +423,9 @@ export default class OotOnlineClient {
         }
         if (packet.world !== this.clientStorage.world) return;
         this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     @NetworkHandler('Ooto_ClientSceneContextUpdate')
@@ -453,6 +465,9 @@ export default class OotOnlineClient {
         if (Object.keys(parseFlagChanges(packet.temp, buf5) > 0)) {
             this.core.global.liveSceneData_temp = buf5;
         }
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     healPlayer() {
