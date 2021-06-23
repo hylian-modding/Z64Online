@@ -9,6 +9,7 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
+import { IOOTSyncSaveServer } from "@OotOnline/OotOnlineStorage";
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -318,6 +319,12 @@ export class OotOSaveData implements ISaveSyncData {
         }
         for (let j = 0; j < struct.switches.byteLength; j++) {
           if (struct.switches[j] !== cur.switches[j]) {
+            if (side === ProxySide.SERVER && i == 5 && j == 3) {
+              let _save = (storage as IOOTSyncSaveServer);
+              if (_save.isVanilla || _save.isOotR) {
+                cur.switches[j] = struct.switches[j]; // Correct water temple flags.
+              }
+            }
             cur.switches[j] |= struct.switches[j];
           }
         }
@@ -415,7 +422,6 @@ export class OotOSaveData implements ISaveSyncData {
           }
         }
       }
-  
       storage.permSceneData = permSceneData;
       storage.eventFlags = eventFlags;
       storage.itemFlags = itemFlags;
