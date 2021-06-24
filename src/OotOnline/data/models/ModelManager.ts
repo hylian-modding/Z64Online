@@ -637,7 +637,7 @@ export class ModelManagerClient {
         }
 
         this.dealWithEquipmentPaks(Age.ADULT);
-        this.hat_hook();
+        //this.hat_hook();
         this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("adult_rom")!, this.ModLoader.emulator.rdramReadBuffer(link.pointer, 0x37800));
         curRef = this.allocationManager.getLocalPlayerData().adult;
       }
