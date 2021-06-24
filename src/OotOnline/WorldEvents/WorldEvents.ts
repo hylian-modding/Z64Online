@@ -15,6 +15,7 @@ import { StorageContainer } from 'modloader64_api/Storage';
 import { EventController } from '../common/events/EventController';
 import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
 import { AssetContainer } from '../common/events/AssetContainer';
+import zlib from 'zlib';
 
 export interface Z64_EventReward {
     name: string;
@@ -165,9 +166,8 @@ export class WorldEventRewards {
             if (!this.compressedTicketCache.has(ticket.uuid)) {
                 if (ticket.scripted) {
                     let rs = require('require-from-string');
-                    let b = Buffer.from(this.assets.bundle.files.get(ticket.name)!.toString(), 'base64');
-                    let lzma: any = require("lzma");
-                    let c = Buffer.from(lzma.decompress(b)).toString();
+                    let b = this.assets.bundle.files.get(ticket.name)!;
+                    let c = zlib.inflateSync(b).toString();
                     let r = rs(c);
                     this.compressedTicketCache.set(ticket.uuid, r);
                 }
