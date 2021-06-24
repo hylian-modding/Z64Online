@@ -12,8 +12,6 @@ import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 import { ParentReference, ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { IZ64OnlineHelpers, OOTO_PRIVATE_EVENTS } from '../InternalAPI';
-import path from 'path';
-import AntiGanonCrash from './AntiGanonCrash';
 
 export let ACTOR_T_PADDING: number = 0;
 export let ALL_PUPPETS_INVISIBLE: boolean = false;
@@ -47,10 +45,6 @@ export class PuppetOverlordClient {
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
-
-  // Ganon crash fix
-  @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, 'AntiGanonCrash.js'), 'OcarinaofTime')
-  private ganonFix!: AntiGanonCrash;
 
   @Postinit()
   postinit(
