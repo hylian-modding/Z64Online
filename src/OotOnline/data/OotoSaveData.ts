@@ -241,21 +241,21 @@ export class OotOSaveData implements ISaveSyncData {
       this.processBoolLoop(obj.tunics, storage.tunics);
       this.processBoolLoop(obj.boots, storage.boots);
       this.processMixedLoop(obj.questStatus, storage.questStatus, []);
-
-      if (obj.inventory.bottle_1 === InventoryItem.NONE && storage.inventory.bottle_1 !== InventoryItem.NONE) {
-        obj.inventory.bottle_1 = storage.inventory.bottle_1;
+  
+      if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
+        storage.inventory.bottle_1 = obj.inventory.bottle_1;
       }
-
-      if (obj.inventory.bottle_2 === InventoryItem.NONE && storage.inventory.bottle_2 !== InventoryItem.NONE) {
-        obj.inventory.bottle_2 = storage.inventory.bottle_2;
+  
+      if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
+        storage.inventory.bottle_2 = obj.inventory.bottle_2;
       }
-
-      if (obj.inventory.bottle_3 === InventoryItem.NONE && storage.inventory.bottle_3 !== InventoryItem.NONE) {
-        obj.inventory.bottle_3 = storage.inventory.bottle_3;
+  
+      if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
+        storage.inventory.bottle_3 = obj.inventory.bottle_3;
       }
-
-      if (obj.inventory.bottle_4 === InventoryItem.NONE && storage.inventory.bottle_4 !== InventoryItem.NONE) {
-        obj.inventory.bottle_4 = storage.inventory.bottle_4;
+  
+      if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
+        storage.inventory.bottle_4 = obj.inventory.bottle_4;
       }
 
       this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
