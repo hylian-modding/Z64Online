@@ -256,8 +256,8 @@ export default class OotOnlineClient {
         if (lobby.data.hasOwnProperty("Z64OAssetsURL")) {
             if (lobby.data.Z64OAssetsURL.length > 0) {
                 this.ModLoader.logger.info("Server sent asset data.");
-                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
             }
+            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
         }
         if (lobby.data.hasOwnProperty("Z64OEventsActive")) {
             if (lobby.data.Z64OEventsActive.length > 0) {

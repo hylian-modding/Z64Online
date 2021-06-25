@@ -213,12 +213,26 @@ export class WorldEventRewards {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
     onAssetData(assetURLS: Array<string>) {
-        this.assets = new AssetContainer(this.ModLoader, this.core, () => {
-            this.migrateRewards();
-            this.loadTickets();
-        });
-        this.assets.url = assetURLS[0];
-        this.assets.preinit();
+        if (assetURLS.length === 0){
+            if (this.config.assetcache !== ""){
+                this.ModLoader.logger.debug("Loading locally saved assets...");
+                this.assets = new AssetContainer(this.ModLoader, this.core, () => {
+                    this.loadTickets();
+                });
+                // Generate a junk url to trick the system into loading this anyway.
+                this.assets.url = "https://" + this.ModLoader.utils.getUUID() + ".fake/" + this.config.assetcache;
+                this.assets.preinit();
+            }
+        }else{
+            this.assets = new AssetContainer(this.ModLoader, this.core, () => {
+                this.migrateRewards();
+                this.loadTickets();
+            });
+            this.assets.url = assetURLS[0];
+            this.assets.preinit();
+            this.config.assetcache = path.parse(this.assets.url).base;
+            this.ModLoader.config.save();
+        }
     }
 
     @Preinit()
@@ -229,6 +243,7 @@ export class WorldEventRewards {
         this.ModLoader.config.setData("OotO_WorldEvents", "equipmentLoadout", {});
         this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "anim_bank", "");
+        this.ModLoader.config.setData("OotO_WorldEvents", "assetcache", "");
     }
 
     private _getAllAssetByUUID(uuid: string): Buffer | undefined {
