@@ -6,4 +6,5 @@ export interface Z64_EventConfig {
     voice: string;
     anim_bank: string;
     disableCostumeManager: boolean;
+    assetcache: string;
 }
