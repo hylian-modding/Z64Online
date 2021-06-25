@@ -250,19 +250,18 @@ export class OotOSaveData implements ISaveSyncData {
 
       let backupTriforcePieces: number | undefined;
 
-  
       if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
         storage.inventory.bottle_1 = obj.inventory.bottle_1;
       }
-  
+
       if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
         storage.inventory.bottle_2 = obj.inventory.bottle_2;
       }
-  
+
       if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
         storage.inventory.bottle_3 = obj.inventory.bottle_3;
       }
-  
+
       if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
         storage.inventory.bottle_4 = obj.inventory.bottle_4;
       }
