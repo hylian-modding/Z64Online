@@ -31,6 +31,7 @@ import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
 import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
+import zlib from 'zlib';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -92,6 +93,7 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
         this.ModLoader.config.setData("OotOnline", "syncMasks", true);
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
+        this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
         this.gui.settings = this.config;
     }
 
@@ -120,7 +122,7 @@ export default class OotOnlineClient {
 
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
-        this.synxContext = this.ModLoader.heap!.malloc(0xFF);
+        this.synxContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["OotO_SyncContext"] = this.synxContext;
 
         if (this.clientStorage.isOotR) {
@@ -658,7 +660,7 @@ export default class OotOnlineClient {
 
     @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
     onDump(evt: any) {
-        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024));
+        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", zlib.deflateSync(this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024)));
     }
 
     private updateSyncContext() {
