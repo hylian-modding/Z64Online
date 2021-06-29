@@ -429,6 +429,10 @@ export class OotOSaveData implements ISaveSyncData {
         }
       }
 
+      if (storage.heart_containers > 20){
+        storage.heart_containers = 20;
+      }
+  
       storage.permSceneData = permSceneData;
       storage.eventFlags = eventFlags;
       storage.itemFlags = itemFlags;

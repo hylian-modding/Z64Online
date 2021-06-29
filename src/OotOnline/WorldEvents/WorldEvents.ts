@@ -92,9 +92,7 @@ export class WorldEventRewards {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER)
     onAnimReg(evt: Map<string, Buffer>) {
-        evt.forEach((value: Buffer, key: string) => {
-            this.anims.set(key, value);
-        });
+        this.anims = evt;
     }
 
     private migrateRewards() {
