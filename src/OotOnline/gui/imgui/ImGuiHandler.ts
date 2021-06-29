@@ -225,6 +225,10 @@ export class ImGuiHandler {
                             this.settings.notificationSound = !this.settings.notificationSound;
                             this.ModLoader.config.save();
                         }
+                        if (this.ModLoader.ImGui.menuItem("Diagnostic Mode", undefined, this.settings.diagnosticMode)){
+                            this.settings.diagnosticMode = !this.settings.diagnosticMode;
+                            this.ModLoader.config.save();
+                        }
                         this.ModLoader.ImGui.endMenu();
                     }
                     if (this.ModLoader.ImGui.beginMenu("Sync Settings")){
