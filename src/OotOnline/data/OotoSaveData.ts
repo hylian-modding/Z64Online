@@ -218,7 +218,7 @@ export class OotOSaveData implements ISaveSyncData {
       if (obj.death_counter > storage.death_counter) {
         storage.death_counter = obj.death_counter;
       }
-      if (obj.heart_containers > storage.heart_containers) {
+      if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
         storage.heart_containers = obj.heart_containers;
         bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
       }
