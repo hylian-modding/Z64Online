@@ -15,7 +15,7 @@ import {
   INetworkPlayer,
   NetworkHandler,
 } from 'modloader64_api/NetworkHandler';
-import { Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64Online_LocalModelChangeProcessEvt } from '../../Z64API/OotoAPI';
+import { Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, IModelReference, Z64Online_LocalModelChangeProcessEvt, DumpRam } from '../../Z64API/OotoAPI';
 import { ModelPlayer } from './ModelPlayer';
 import { ModelAllocationManager } from './ModelAllocationManager';
 import { Puppet } from '../linkPuppet/Puppet';
@@ -36,6 +36,7 @@ import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGe
 import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
 import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
+import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -64,6 +65,7 @@ export class ModelManagerClient {
   titleScreenFix: any;
   lockManager: boolean = false;
   managerDisabled: boolean = false;
+  mainConfig!: OotOnlineConfigCategory;
   //
   adult_proxy_refs: Array<Buffer> = [];
   child_proxy_refs: Array<Buffer> = [];
@@ -311,6 +313,7 @@ export class ModelManagerClient {
     this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
     this.ModLoader.config.setData("OotO_WorldEvents", "disableCostumeManager", false);
     this.managerDisabled = this.config.disableCostumeManager;
+    this.mainConfig = (this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory);
   }
 
   @PrivateEventHandler('LOAD_MODEL')
@@ -523,6 +526,9 @@ export class ModelManagerClient {
 
     fn(player.adult, adult_generator_table, this.ModLoader);
     fn(player.child, child_generator_table, this.ModLoader);
+    if (this.mainConfig.diagnosticMode){
+      DumpRam();
+    }
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -537,6 +543,9 @@ export class ModelManagerClient {
       this.setPuppetModel(player, this.puppetChild, Age.CHILD, Age.CHILD);
     } else if (puppet.age === Age.ADULT) {
       this.setPuppetModel(player, this.puppetAdult, Age.ADULT, Age.ADULT);
+    }
+    if (this.mainConfig.diagnosticMode){
+      DumpRam();
     }
   }
 
@@ -684,6 +693,10 @@ export class ModelManagerClient {
       }, 1);
     }
     bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.allocationManager.getLocalPlayerData().adult, this.allocationManager.getLocalPlayerData().child));
+    
+    if (this.mainConfig.diagnosticMode){
+      DumpRam();
+    }
   }
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY)

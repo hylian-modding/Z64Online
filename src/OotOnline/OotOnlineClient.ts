@@ -34,6 +34,7 @@ import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import RomFlags from '@OotOnline/data/RomFlags';
+import zlib from 'zlib';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -95,6 +96,7 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
         this.ModLoader.config.setData("OotOnline", "syncMasks", true);
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
+        this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
         this.gui.settings = this.config;
     }
 
@@ -137,7 +139,7 @@ export default class OotOnlineClient {
 
     updateInventory() {
         if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
-        if (this.core.helper.Player_InBlockingCsMode()) return;
+        if (this.core.helper.Player_InBlockingCsMode() || this.LobbyConfig.data_syncing) return;
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
@@ -674,7 +676,7 @@ export default class OotOnlineClient {
 
     @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
     onDump(evt: any) {
-        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024));
+        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", zlib.deflateSync(this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024)));
     }
 
     private updateSyncContext() {
