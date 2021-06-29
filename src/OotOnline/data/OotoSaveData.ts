@@ -415,6 +415,10 @@ export class OotOSaveData implements ISaveSyncData {
           }
         }
       }
+
+      if (storage.heart_containers > 20){
+        storage.heart_containers = 20;
+      }
   
       storage.permSceneData = permSceneData;
       storage.eventFlags = eventFlags;
@@ -422,7 +426,7 @@ export class OotOSaveData implements ISaveSyncData {
       storage.infTable = infTable;
       storage.skulltulaFlags = skulltulaFlags;
       storage.scarecrowsSong = scarecrowsSong;
-  
+
       if (side === ProxySide.CLIENT) {
         let cur = this.core.save.dungeonItemManager.getRawBuffer();
         parseFlagChanges(obj.dungeon_items, cur);
