@@ -259,8 +259,8 @@ export class ModelManagerClient {
     let child_path: string = path.join(this.cacheDir, "child.zobj");
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
     this.ModLoader.logger.info("Setting up puppet models...");
-    puppet_child = this.ModLoader.utils.clearBuffer(tools.decompressDMAFileFromRom(evt.rom, 503));
-    puppet_adult = this.ModLoader.utils.clearBuffer(tools.decompressDMAFileFromRom(evt.rom, 502));
+    puppet_child = tools.decompressDMAFileFromRom(evt.rom, 503);
+    puppet_adult = tools.decompressDMAFileFromRom(evt.rom, 502);
     fs.readFileSync(path.resolve(__dirname, "zobjs", "adult.zobj")).copy(puppet_adult);
     fs.readFileSync(path.resolve(__dirname, "zobjs", "child.zobj")).copy(puppet_child);
     fs.writeFileSync(adult_path, puppet_adult);
