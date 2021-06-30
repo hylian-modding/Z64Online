@@ -23,7 +23,7 @@ import fs from 'fs';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import path from 'path';
 import { ModelReference } from '../../common/cosmetics/ModelContainer';
-import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { trimBuffer, Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { OOTAdultManifest } from 'Z64Lib/API/OOT/OOTAdultManfest';
 import { OOTChildManifest } from 'Z64Lib/API/OOT/OOTChildManifest';
@@ -199,7 +199,7 @@ export class ModelManagerClient {
     let manifest: OOTAdultManifest = new OOTAdultManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       this.ModLoader.logger.info("(Adult) Setting up zobj proxy.");
-      let proxy = fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Adult_Proxy.zobj"));
+      let proxy = trimBuffer(fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Adult_Proxy.zobj")));
       let internals: Array<number> = require('./zobjs/adult_internal_refs.json');
       for (let i = 0; i < internals.length; i++) {
         let buf = Buffer.alloc(0x8);
@@ -228,7 +228,7 @@ export class ModelManagerClient {
     let manifest: OOTChildManifest = new OOTChildManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       this.ModLoader.logger.info("(Child) Setting up zobj proxy.");
-      let proxy = fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Child_Proxy_v2.zobj"));
+      let proxy = trimBuffer(fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Child_Proxy_v2.zobj")));
       let internals: Array<number> = require('./zobjs/child_internal_refs.json');
       for (let i = 0; i < internals.length; i++) {
         let buf = Buffer.alloc(0x8);
