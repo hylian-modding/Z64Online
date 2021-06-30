@@ -393,6 +393,7 @@ export class ModelManagerClient {
         let model = this.allocationManager.registerModel(def)!;
         model.loadModel();
         let man = this.getEquipmentManifest(model);
+        if (man === undefined) return;
         player.equipment.set(man.cat, model);
         if (this.allocationManager.isPlayerAllocated(player)) {
           this.setPuppetModel(player, packet.age === Age.ADULT ? player.adult : player.child, packet.age, packet.age);
@@ -504,7 +505,10 @@ export class ModelManagerClient {
 
     player.equipment.forEach((value: IModelReference) => {
       let man = this.getEquipmentManifest(value);
+      if (man === undefined) return;
       Object.keys(man.manifest.OOT.child).forEach((key: string) => {
+        // This check isn't really needed but TSC says its a compile error.
+        if (man === undefined) return;
         let i = man.lut + (parseInt(key) * 0x8);
         if (PuppetProxyGen_Matrix_Keys.indexOf(key) > -1) {
           /** @TODO Do this better. */
@@ -519,6 +523,8 @@ export class ModelManagerClient {
       });
 
       Object.keys(man.manifest.OOT.adult).forEach((key: string) => {
+        // Same with this one.
+        if (man === undefined) return;
         let i = man.lut + (parseInt(key) * 0x8);
         adult_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.adult[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
       });
@@ -574,22 +580,27 @@ export class ModelManagerClient {
   }
 
   private getEquipmentManifest(ref: IModelReference) {
-    let rp = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, this.allocationManager.getModelSize(ref));
-    let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
-    let index = rp.indexOf(eq);
-    let str = "";
-    let curByte: number = 0;
-    let curIndex: number = index + 0x10;
-    while (curByte !== 0xFF) {
-      str += rp.slice(curIndex, curIndex + 1).toString();
-      curByte = rp.slice(curIndex, curIndex + 1).readUInt8(0);
-      curIndex++;
+    try{
+      let rp = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, this.allocationManager.getModelSize(ref));
+      let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
+      let index = rp.indexOf(eq);
+      let str = "";
+      let curByte: number = 0;
+      let curIndex: number = index + 0x10;
+      while (curByte !== 0xFF) {
+        str += rp.slice(curIndex, curIndex + 1).toString();
+        curByte = rp.slice(curIndex, curIndex + 1).readUInt8(0);
+        curIndex++;
+      }
+      str = str.substr(0, str.length - 1);
+      let data: EquipmentManifest = JSON.parse(str);
+      let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
+      let cat = CostumeHelper.getEquipmentCategory(rp);
+      return { manifest: data, model: rp, lut: start, cat };
+    }catch(err){
+      this.ModLoader.logger.error(err.stack);
+      return undefined;
     }
-    str = str.substr(0, str.length - 1);
-    let data: EquipmentManifest = JSON.parse(str);
-    let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
-    let cat = CostumeHelper.getEquipmentCategory(rp);
-    return { manifest: data, model: rp, lut: start, cat };
   }
 
   private dealWithEquipmentPaks(age: Age) {
@@ -597,6 +608,7 @@ export class ModelManagerClient {
     this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference) => {
       value.loadModel();
       let data = this.getEquipmentManifest(value);
+      if (data === undefined) return;
       let table: any = {};
       let player = new ModelPlayer("TEMP");
       if (age === Age.ADULT) {
@@ -609,6 +621,7 @@ export class ModelManagerClient {
         player.proxyPointer = link.pointer;
       }
       Object.keys(table).forEach((key: string) => {
+        if (data === undefined) return;
         let i = data.lut + (parseInt(key) * 0x8) + 0x4;
         let offset = parseInt(EqManifestToOffsetMap_Link[table[key]]) + 0x4;
         this.ModLoader.emulator.rdramWrite32(player.proxyPointer + offset, data.model.readUInt32BE(i));
