@@ -304,6 +304,15 @@ export class PuppetOverlordClient {
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
   onReset(evt: any) {
     this.localPlayerLoadingZone();
+    this.queuedSpawn = true;
+  }
+
+  @EventHandler(ModLoaderEvents.ON_SOFT_RESET_POST)
+  onReset2(evt: any){
+    this.localPlayerLoadingZone();
+    this.ModLoader.utils.setTimeoutFrames(()=>{
+      this.queuedSpawn = false;
+    }, 50);
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
