@@ -326,13 +326,12 @@ export class OotOSaveData implements ISaveSyncData {
         }
         for (let j = 0; j < struct.switches.byteLength; j++) {
           if (struct.switches[j] !== cur.switches[j]) {
+            cur.switches[j] |= struct.switches[j];
             if (side === ProxySide.SERVER && i == 5 && j == 3) {
               let _save = (storage as IOOTSyncSaveServer);
               if (_save.isVanilla || _save.isOotR) {
                 cur.switches[j] = struct.switches[j]; // Correct water temple flags.
               }
-            } else {
-              cur.switches[j] |= struct.switches[j];
             }
           }
         }
