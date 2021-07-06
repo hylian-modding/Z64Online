@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength, LinkState } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
@@ -699,6 +699,11 @@ export default class OotOnlineClient {
                 this.multiworld.setPlayerName(`World ${item.dest}`, item.dest);
             }
             this.ModLoader.clientSide.sendPacket(new MultiWorld_ItemPacket(this.ModLoader.clientLobby, item));
+        }
+        if (this.multiworld.itemsInQueue.length === 0) return;
+        if (this.core.link.state === LinkState.STANDING && !this.core.helper.isLinkEnteringLoadingZone() && !this.core.helper.Player_InBlockingCsMode()) {
+            let item = this.multiworld.itemsInQueue.shift()!;
+            this.multiworld.processIncomingItem(item.item, this.core.save);
         }
     }
 
