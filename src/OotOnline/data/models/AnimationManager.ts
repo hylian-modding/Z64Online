@@ -6,6 +6,7 @@ import { Z64LibSupportedGames } from "Z64Lib/API/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Z64RomTools";
 import { OOTO_PRIVATE_EVENTS } from "../InternalAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
+import { OotRDetector } from "@OotOnline/compat/OotR";
 
 export default class AnimationManager{
 
@@ -14,6 +15,7 @@ export default class AnimationManager{
     banks: Map<string, Buffer> = new Map<string, Buffer>();
     animationBankAddress: number = -1;
     vanillaBank!: Buffer;
+    disabled: boolean = false;
 
     @EventHandler(Z64OnlineEvents.CUSTOM_ANIMATION_BANK_REGISTER)
     onRegister(evt: Z64_AnimationBank){
@@ -29,6 +31,12 @@ export default class AnimationManager{
     onRom(evt: any){
         let rom: Buffer = evt.rom;
         let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+        if (!OotRDetector.isOotR(evt.rom)){
+            if (tools.decompressDMAFileFromRom(rom, 7).byteLength !== 0x265c30){
+                this.disabled = true;
+            }
+        }
+        if (this.disabled) return;
         let bank: Buffer = tools.decompressDMAFileFromRom(rom, 7);
         this.vanillaBank = bank;
         this.animationBankAddress = tools.relocateFileToExtendedRom(rom, 7, bank, bank.byteLength, true);
@@ -37,6 +45,7 @@ export default class AnimationManager{
 
     @EventHandler(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK)
     onApply(evt: Z64_AnimationBank){
+        if (this.disabled) return;
         if (evt.bank.byteLength === 1){
             this.ModLoader.rom.romWriteBuffer(this.animationBankAddress, this.vanillaBank);
         }else{

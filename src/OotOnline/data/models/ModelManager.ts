@@ -37,6 +37,7 @@ import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
 import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
 import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
+import { OotRDetector } from '@OotOnline/compat/OotR';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -342,8 +343,13 @@ export class ModelManagerClient {
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    let code_file: Buffer = tools.getCodeFile(evt.rom);
+    if (!OotRDetector.isOotR(evt.rom)){
+      if (tools.decompressDMAFileFromRom(evt.rom, 502).byteLength !== 0x37800 || tools.decompressDMAFileFromRom(evt.rom, 503).byteLength !== 0x2CF80){
+        this.managerDisabled = true;
+      }
+    }
     if (this.managerDisabled) return;
+    let code_file: Buffer = tools.getCodeFile(evt.rom);
     bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
     this.loadAdultModel(evt);
