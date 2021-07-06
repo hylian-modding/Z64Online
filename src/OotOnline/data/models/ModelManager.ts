@@ -37,6 +37,7 @@ import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
 import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
 import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
+import RomFlags from '@OotOnline/data/RomFlags';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -342,8 +343,13 @@ export class ModelManagerClient {
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    let code_file: Buffer = tools.getCodeFile(evt.rom);
+    if (RomFlags.isOotR) {
+      if (tools.decompressDMAFileFromRom(evt.rom, 502).byteLength !== 0x37800 || tools.decompressDMAFileFromRom(evt.rom, 503).byteLength !== 0x2CF80) {
+        this.managerDisabled = true;
+      }
+    }
     if (this.managerDisabled) return;
+    let code_file: Buffer = tools.getCodeFile(evt.rom);
     bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
     this.loadAdultModel(evt);
@@ -532,7 +538,7 @@ export class ModelManagerClient {
 
     fn(player.adult, adult_generator_table, this.ModLoader);
     fn(player.child, child_generator_table, this.ModLoader);
-    if (this.mainConfig.diagnosticMode){
+    if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
   }
@@ -550,7 +556,7 @@ export class ModelManagerClient {
     } else if (puppet.age === Age.ADULT) {
       this.setPuppetModel(player, this.puppetAdult, Age.ADULT, Age.ADULT);
     }
-    if (this.mainConfig.diagnosticMode){
+    if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
   }
@@ -580,7 +586,7 @@ export class ModelManagerClient {
   }
 
   private getEquipmentManifest(ref: IModelReference) {
-    try{
+    try {
       let rp = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, this.allocationManager.getModelSize(ref));
       let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
       let index = rp.indexOf(eq);
@@ -597,7 +603,7 @@ export class ModelManagerClient {
       let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
       let cat = CostumeHelper.getEquipmentCategory(rp);
       return { manifest: data, model: rp, lut: start, cat };
-    }catch(err){
+    } catch (err) {
       this.ModLoader.logger.error(err.stack);
       return undefined;
     }
@@ -706,8 +712,8 @@ export class ModelManagerClient {
       }, 1);
     }
     bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.allocationManager.getLocalPlayerData().adult, this.allocationManager.getLocalPlayerData().child));
-    
-    if (this.mainConfig.diagnosticMode){
+
+    if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
   }
@@ -790,7 +796,7 @@ export class ModelManagerClient {
     this.allocationManager.deallocateAllModels();
     this.allocationManager.deallocateAllPlayers();
     this.allocationManager.doGC();
-    if (!this.managerDisabled){
+    if (!this.managerDisabled) {
       this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("adult_rom")!, fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Adult_Proxy.zobj")));
       this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("child_rom")!, fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Child_Proxy_v2.zobj")));
     }
