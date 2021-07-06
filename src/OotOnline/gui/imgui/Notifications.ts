@@ -214,12 +214,10 @@ export class Notifications {
         } else {
             if (this.messages.length > 0) {
                 this.curMessage = this.messages.shift()!;
-                if (!this.curMessage.noSound){
-                    if (!this.config.notificationSound){
-                        this.ModLoader.utils.setTimeoutFrames(() => {
-                            this.core.commandBuffer.runCommand(Command.PLAY_SOUND, this.boop);
-                        }, 1);
-                    }
+                if (!this.curMessage.noSound && this.config.notificationSound) {
+                    this.ModLoader.utils.setTimeoutFrames(() => {
+                        this.core.commandBuffer.runCommand(Command.PLAY_SOUND, this.boop);
+                    }, 1);
                 }
             }
         }
