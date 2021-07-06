@@ -222,6 +222,9 @@ export class OotOSaveData implements ISaveSyncData {
         storage.heart_containers = obj.heart_containers;
         bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
       }
+      if (storage.heart_containers > 20) {
+        storage.heart_containers = 20;
+      }
       if (obj.magic_meter_size > storage.magic_meter_size) {
         storage.magic_meter_size = obj.magic_meter_size;
         bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, storage.magic_meter_size);
