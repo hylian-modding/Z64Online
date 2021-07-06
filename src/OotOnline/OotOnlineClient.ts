@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength, LinkState } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
@@ -30,7 +30,7 @@ import { Deprecated } from 'modloader64_api/Deprecated';
 import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
-import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
+import { Multiworld, MultiWorld_ItemPacket, OotRDetector, TriforceHuntHelper } from './compat/OotR';
 import zlib from 'zlib';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
@@ -613,17 +613,8 @@ export default class OotOnlineClient {
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
         let rom: Buffer = evt.rom;
-        let start = 0x20;
-        let terminator = 0;
-        let byte = rom.readUInt8(start);
-        let prog = 0;
-        while (byte !== terminator) {
-            prog++;
-            byte = rom.readUInt8(start + prog);
-        }
-        prog++;
-        if (rom.readUInt8(start + prog) > 0) {
-            this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${rom.readUInt8(start + prog)}.0`);
+        if (OotRDetector.isOotR(rom)){
+            this.ModLoader.logger.info(`Oot Randomizer detected.`);
             this.clientStorage.isOotR = true;
         }
     }
@@ -683,6 +674,11 @@ export default class OotOnlineClient {
                 this.multiworld.setPlayerName(`World ${item.dest}`, item.dest);
             }
             this.ModLoader.clientSide.sendPacket(new MultiWorld_ItemPacket(this.ModLoader.clientLobby, item));
+        }
+        if (this.multiworld.itemsInQueue.length === 0) return;
+        if (this.core.link.state === LinkState.STANDING && !this.core.helper.isLinkEnteringLoadingZone() && !this.core.helper.Player_InBlockingCsMode()){
+            let item = this.multiworld.itemsInQueue.shift()!;
+            this.multiworld.processIncomingItem(item.item, this.core.save);
         }
     }
 
