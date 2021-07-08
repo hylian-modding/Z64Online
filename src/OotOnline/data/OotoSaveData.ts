@@ -10,6 +10,7 @@ import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
 import { IOOTSyncSaveServer } from "@OotOnline/OotOnlineStorage";
+import RomFlags from "@OotOnline/data/RomFlags";
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -292,7 +293,9 @@ export class OotOSaveData implements ISaveSyncData {
                 obj.inventory.childTradeItem = InventoryItem.SKULL_MASK;
               } else if (obj.itemFlags.readUInt8(2) < 128 && obj.inventory.childTradeItem > InventoryItem.MASK_OF_TRUTH) {
                 obj.inventory.childTradeItem = InventoryItem.MASK_OF_TRUTH;
-              } // Is there a way to detect when a game's had its Bunny Hood speed modified? A common area in the ROM to read for modified code?
+              } else if (RomFlags.hasFastBunHood) {
+                obj.inventory.childTradeItem = InventoryItem.BUNNY_HOOD;
+              }
             }
             storage.inventory.childTradeItem = obj.inventory.childTradeItem;
           }

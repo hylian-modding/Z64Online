@@ -157,7 +157,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }
@@ -197,6 +197,7 @@ export default class OotOnlineServer {
         let world = storage.worlds[packet.player.data.world];
         world.save.isVanilla = packet.isVanilla;
         world.save.isOotR = packet.isOotR;
+        world.save.hasFastBunHood = packet.hasFastBunHood;
         world.save.isMultiworld = packet.isMultiworld;
     }
 
@@ -213,7 +214,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
             storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
@@ -224,7 +225,7 @@ export default class OotOnlineServer {
     }
 
     @ServerNetworkHandler('OotO_UpdateKeyringPacket')
-    onKeySync_Server(packet: OotO_UpdateKeyringPacket){
+    onKeySync_Server(packet: OotO_UpdateKeyringPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -232,7 +233,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }
