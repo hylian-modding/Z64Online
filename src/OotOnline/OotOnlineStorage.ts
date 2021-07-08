@@ -12,12 +12,14 @@ export class OotOnlineStorage extends OotOnlineStorageBase {
 
 export interface IOOTSyncSaveServer extends IOOTSyncSave {
   isOotR: boolean;
+  hasFastBunHood: boolean;
   isMultiworld: boolean;
   isVanilla: boolean;
 }
 
 class OOTSyncSaveServer implements IOOTSyncSaveServer {
   isOotR: boolean = false;
+  hasFastBunHood: boolean = false;
   isMultiworld: boolean = false;
   isVanilla: boolean = false;
   inventory!: IOOTInventorySync;

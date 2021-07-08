@@ -286,7 +286,7 @@ export default class OotOnlineClient {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
                     this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
-                    this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.isMultiworld, RomFlags.isVanilla));
+                    this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.hasFastBunHood, RomFlags.isMultiworld, RomFlags.isVanilla));
                 }
             }, 50);
         }
@@ -626,8 +626,24 @@ export default class OotOnlineClient {
         }
         prog++;
         if (rom.readUInt8(start + prog) > 0) {
-            this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${rom.readUInt8(start + prog)}.0`);
+            let ver = rom.slice(start + prog - 1, start + prog - 1 + 0x4);
+            this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
             RomFlags.isOotR = true;
+            if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OotR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
+                RomFlags.hasFastBunHood = true;
+            } else if (ver.readUInt32BE(0) >= 0x50253) {
+                let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
+                let buf = tools.decompressDMAFileFromRom(rom, 1496); //Decompressing OotR Payload, specifically
+                let cosmetic_ctxt = buf.readUInt32BE(4);
+                let cosmetic_frmt_ver = buf.readUInt32BE(cosmetic_ctxt - 0x80400000);
+                if (cosmetic_frmt_ver === 0x1F073FD8) {
+                    if (buf.readInt8((cosmetic_ctxt + 0x49C) - 0x80400000) === 0x01) {
+                        RomFlags.hasFastBunHood = true;
+                    }
+                } else {
+                    this.ModLoader.logger.info('Unexpected Cosmetic Format Version. Ask a developer to check if the latest version of the randomizer has changed things.');
+                }
+            }
         } else {
             let intended: string = "dc7100d5f3a020f962ae1b3cdd99049f";
             let h: string = "";

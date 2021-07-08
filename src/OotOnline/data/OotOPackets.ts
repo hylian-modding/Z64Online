@@ -236,12 +236,14 @@ export class Z64_EquipmentPakPacket extends Packet {
 
 export class OotO_RomFlagsPacket extends Packet {
   isOotR: boolean;
+  hasFastBunHood: boolean;
   isMultiworld: boolean;
   isVanilla: boolean;
 
-  constructor(lobby: string, isOotR: boolean, isMultiworld: boolean, isVanilla: boolean) {
+  constructor(lobby: string, isOotR: boolean, hasFastBunHood: boolean, isMultiworld: boolean, isVanilla: boolean) {
     super('OotO_RomFlagsPacket', 'OotO', lobby, false);
     this.isOotR = isOotR;
+    this.hasFastBunHood = hasFastBunHood;
     this.isMultiworld = isMultiworld;
     this.isVanilla = isVanilla;
   }
