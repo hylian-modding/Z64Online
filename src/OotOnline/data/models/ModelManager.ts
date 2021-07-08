@@ -727,6 +727,12 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
+      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined){
+        let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.link.tunic);
+        if (r2.hash !== evt.ref.hash){
+          this.allocationManager.SetLocalPlayerModel(Age.ADULT, r2);
+        }
+      }
       return;
     }
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
@@ -759,6 +765,12 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
+      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined){
+        let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.link.tunic);
+        if (r2.hash !== evt.ref.hash){
+          this.allocationManager.SetLocalPlayerModel(Age.CHILD, r2);
+        }
+      }
       return;
     }
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
