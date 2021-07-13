@@ -9,8 +9,8 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
-import { IOOTSyncSaveServer } from "@OotOnline/OotOnlineStorage";
 import RomFlags from "@OotOnline/data/RomFlags";
+import bitwise from 'bitwise';
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -333,11 +333,9 @@ export class OotOSaveData implements ISaveSyncData {
         for (let j = 0; j < struct.switches.byteLength; j++) {
           if (struct.switches[j] !== cur.switches[j]) {
             cur.switches[j] |= struct.switches[j];
-            if (side === ProxySide.SERVER && i == 5 && j == 3) {
-              let _save = (storage as IOOTSyncSaveServer);
-              if (_save.isVanilla || _save.isOotR) {
-                cur.switches[j] = struct.switches[j]; // Correct water temple flags.
-              }
+            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+              if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 4, bitwise.integer.getBit(struct.switches[j], 4)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
+              if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
             }
           }
         }
@@ -361,6 +359,10 @@ export class OotOSaveData implements ISaveSyncData {
         let value = obj.eventFlags.readUInt8(i);
         if (eventFlags[i] !== value) {
           eventFlags[i] |= value;
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (i == 2) bitwise.integer.setBit(eventFlags[i], 4, bitwise.integer.getBit(value, 4)); // Rented Horse from Ingo Flag?
+            if (i == 13) bitwise.integer.setBit(eventFlags[i], 2, bitwise.integer.getBit(value, 2)); // Played Song of Storms in Kakariko Windmill Flag?
+          }
         }
       }
       if (obj.eventFlags[18] > storage.eventFlags[18]) {
@@ -376,6 +378,9 @@ export class OotOSaveData implements ISaveSyncData {
         let value = obj.infTable.readUInt8(i);
         if (infTable[i] !== value) {
           infTable[i] |= value;
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (i == 15) bitwise.integer.setBit(infTable[i], 6, bitwise.integer.getBit(value, 6)); // Hyrule Castle Gate Flag?
+          }
         }
       }
       for (let i = 0; i < obj.skulltulaFlags.byteLength; i++) {
