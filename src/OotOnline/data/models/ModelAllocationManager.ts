@@ -1,7 +1,7 @@
 import { ModelPlayer } from './ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { ModelObject, ModelReference } from './ModelContainer';
+import { ModelObject, ModelReference } from '../../common/cosmetics/ModelContainer';
 import { zzstatic } from 'Z64Lib/API/zzstatic';
 import fs from 'fs';
 import path from 'path';
@@ -17,10 +17,12 @@ export class ModelAllocationManager {
   private models: Map<string, ModelObject> = new Map<string, ModelObject>();
   private references: Map<string, IModelReference> = new Map<string, IModelReference>();
   private cleanupRoutine: any;
+  private zz: zzstatic;
 
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
     this.cleanupRoutine = this.ModLoader.utils.setIntervalFrames(() => { this.doGC() }, 1200);
+    this.zz = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME);
   }
 
   onVi() {
@@ -97,6 +99,9 @@ export class ModelAllocationManager {
   }
 
   SetLocalPlayerModel(age: Age, model: IModelReference) {
+    if (this.localPlayer.currentScript !== undefined) {
+      this.localPlayer.currentScript.onModelRemoved();
+    }
     switch (age) {
       case Age.ADULT:
         this.localPlayer.adult = model;
@@ -106,7 +111,8 @@ export class ModelAllocationManager {
         break;
     }
     this.localPlayer.currentScript = model.script;
-    if (this.localPlayer.currentScript !== undefined){
+    if (this.localPlayer.currentScript !== undefined) {
+      this.localPlayer.currentScript.onModelEquipped();
     }
   }
 
@@ -161,7 +167,7 @@ export class ModelAllocationManager {
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
-      b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(b, 0, false, ref.pointer)
+      b = this.zz.doRepoint(b, 0, false, ref.pointer)
     } catch (err) {
     }
     this.ModLoader.emulator.rdramWriteBuffer(ref.pointer, b);
@@ -201,10 +207,7 @@ export class ModelAllocationManager {
 
   allocatePlayer(player: INetworkPlayer, defaultAdult: IModelReference, defaultChild: IModelReference): ModelPlayer | undefined {
     let mp = this.createPlayer(player, defaultAdult, defaultChild)!;
-    if (mp.isDead){
-      console.log("FUCKING COLLECT THE TRASH");
-      this.doGC();
-    }
+    if (mp.isLoaded) mp.isDead = false;
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
@@ -216,10 +219,11 @@ export class ModelAllocationManager {
     mp.proxyPointer = pointer;
     mp.proxyData = proxy;
     this.players.set(player.uuid, mp);
-    let b = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME).doRepoint(proxy, 0, true, pointer);
+    let b = this.zz.doRepoint(proxy, 0, false, pointer);
     this.ModLoader.emulator.rdramWriteBuffer(pointer, b);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;
+    mp.isLoaded = true;
     return mp;
   }
 
@@ -234,6 +238,7 @@ export class ModelAllocationManager {
 
     this.ModLoader.heap!.free(alloc.proxyPointer);
     alloc.proxyPointer = -1;
+    alloc.isLoaded = false;
     this.ModLoader.logger.debug("[Model Manager]: Freed 0x" + alloc.proxyData.byteLength.toString(16) + " bytes from player " + player.nickname + ".");
   }
 

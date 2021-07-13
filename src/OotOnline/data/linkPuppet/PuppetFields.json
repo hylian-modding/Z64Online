@@ -23,6 +23,7 @@
     "tunic": 3,
     "strength": 1,
     "gauntlet": 3,
+    "sound": 2,
     "ocarina": 1
   },
   "sources": {
@@ -49,6 +50,7 @@
     "tunic": 3735928559,
     "strength": 3735928559,
     "gauntlet": 3735928559,
+    "sound": 3735928559,
     "ocarina": 2148640331
   },
   "destinations": {
@@ -75,6 +77,7 @@
     "tunic": 904,
     "strength": 916,
     "gauntlet": 896,
+    "sound": 914,
     "ocarina": 921
   }
 }

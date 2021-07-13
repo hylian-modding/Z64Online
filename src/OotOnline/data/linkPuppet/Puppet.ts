@@ -1,4 +1,4 @@
-import { Age, IOOTCore, IOvlPayloadResult } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, IOvlPayloadResult, Scene } from 'modloader64_api/OOT/OOTAPI';
 import { PuppetData } from './PuppetData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
@@ -9,6 +9,8 @@ import { HorseData } from './HorseData';
 import { IZ64OnlineHelpers } from '../InternalAPI';
 import { IPuppet } from '@OotOnline/Z64API/IPuppet';
 import { IActor } from 'modloader64_api/OOT/IActor';
+import { AgeorForm } from '@OotOnline/common/types/Types';
+import { ALL_PUPPETS_INVISIBLE } from './PuppetOverlord';
 
 export class Puppet implements IPuppet {
   player: INetworkPlayer;
@@ -17,7 +19,7 @@ export class Puppet implements IPuppet {
   isSpawned = false;
   isSpawning = false;
   isShoveled = false;
-  scene: number;
+  scene: Scene;
   core: IOOTCore;
   void!: Vector3;
   ModLoader: IModLoaderAPI;
@@ -43,7 +45,7 @@ export class Puppet implements IPuppet {
     this.parent = parent;
   }
 
-  get age(): Age {
+  get age(): AgeorForm {
     return this.data.age;
   }
 

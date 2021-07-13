@@ -2,7 +2,7 @@ import { onViUpdate, onTick } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, OotEvents, Scene } from "modloader64_api/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
@@ -39,7 +39,7 @@ export class ImGuiHandler {
     @ParentReference()
     parent!: IZ64OnlineHelpers;
     puppets: Array<Puppet> = [];
-    scene: number = -1;
+    scene: Scene = -1;
     settings!: OotOnlineConfigCategory
     // View
     eye: Vector3 = new Vector3()
@@ -88,7 +88,7 @@ export class ImGuiHandler {
     }
 
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
-    onSceneChanged(scene: number) {
+    onSceneChanged(scene: Scene) {
         this.scene = scene;
     }
 
@@ -192,10 +192,19 @@ export class ImGuiHandler {
         }
         // #endif
 
+        if (this.ModLoader.isModLoaded("Multiworld64")){
+            if (this.ModLoader.ImGui.begin("MULTIWORLD64 WARNING")){
+                this.ModLoader.ImGui.text("You appear to be running Multiworld64.");
+                this.ModLoader.ImGui.text("This mod is unnecessary as OotO 3.X natively supports multiworld.");
+                this.ModLoader.ImGui.text("You should delete Multiworld64 to avoid conflicts.");
+            }
+            this.ModLoader.ImGui.end();
+        }
+
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("OotO")) {
-                    if (this.ModLoader.ImGui.beginMenu("Settings")) {
+                    if (this.ModLoader.ImGui.beginMenu("General Settings")) {
                         if (this.ModLoader.ImGui.menuItem("Mute custom sounds (local)", undefined, this.settings.muteLocalSounds)) {
                             this.settings.muteLocalSounds = !this.settings.muteLocalSounds;
                             this.ModLoader.config.save();
@@ -214,6 +223,21 @@ export class ImGuiHandler {
                         }
                         if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)) {
                             this.settings.notificationSound = !this.settings.notificationSound;
+                            this.ModLoader.config.save();
+                        }
+                        if (this.ModLoader.ImGui.menuItem("Diagnostic Mode", undefined, this.settings.diagnosticMode)){
+                            this.settings.diagnosticMode = !this.settings.diagnosticMode;
+                            this.ModLoader.config.save();
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
+                    if (this.ModLoader.ImGui.beginMenu("Sync Settings")){
+                        if (this.ModLoader.ImGui.menuItem("Sync Masks", undefined, this.settings.syncMasks)) {
+                            this.settings.syncMasks = !this.settings.syncMasks;
+                            this.ModLoader.config.save();
+                        }
+                        if (this.ModLoader.ImGui.menuItem("Sync Bottle Contents", undefined, this.settings.syncBottleContents)) {
+                            this.settings.syncBottleContents = !this.settings.syncBottleContents;
                             this.ModLoader.config.save();
                         }
                         this.ModLoader.ImGui.endMenu();

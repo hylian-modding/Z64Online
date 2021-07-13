@@ -1,5 +1,5 @@
 import { OOTO_PRIVATE_EVENTS } from "@OotOnline/data/InternalAPI";
-import { DecodeImmediate, DecodeOpcode, EncodeImmediate, EncodeInstruction, OPCODE_DEFAULT } from "@OotOnline/data/opa/OpcodeBullshit";
+import { DecodeImmediate, DecodeOpcode, EncodeImmediate, OPCODE_DEFAULT } from "@OotOnline/common/lib/OpcodeBullshit";
 import IMemory from "modloader64_api/IMemory";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";

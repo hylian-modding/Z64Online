@@ -1,8 +1,5 @@
 import { OotOnlineStorageClient } from "@OotOnline/OotOnlineStorageClient";
-import { Z64OnlineEvents } from "@OotOnline/Z64API/OotoAPI";
-import { bus } from "modloader64_api/EventHandler";
-import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
-import { Puppet } from "./linkPuppet/Puppet";
+import { IPacketHeader } from "modloader64_api/NetworkHandler";
 
 export const enum OOTO_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
@@ -17,9 +14,12 @@ export const enum OOTO_PRIVATE_EVENTS {
     SERVER_ASSET_DATA_GET = "SERVER_ASSET_DATA_GET",
     CLIENT_ASSET_DATA_GET = "CLIENT_ASSET_DATA_GET",
     TOGGLE_PUPPET_VISIBILITY = "TOGGLE_PUPPET_VISIBILITY",
+    FORBID_PUPPETS = "FORBID_PUPPETS",
     REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER = "REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER",
     DOING_SYNC_CHECK = "DOING_SYNC_CHECK",
-    LOCK_ITEM_NOTIFICATIONS = "LOCK_ITEM_NOTIFICATIONS"
+    LOCK_ITEM_NOTIFICATIONS = "LOCK_ITEM_NOTIFICATIONS",
+    SAVE_EXTERNAL_EVENT_DATA = "SAVE_EXTERNAL_EVENT_DATA",
+    GET_EXTERNAL_EVENT_DATA = "GET_EXTERNAL_EVENT_DATA"
 }
 
 export interface RewardTicket {
@@ -67,4 +67,14 @@ export class OOTO_PRIVATE_COIN_LOOKUP_OBJ {
 export interface IZ64OnlineHelpers {
     sendPacketToPlayersInScene(packet: IPacketHeader): void;
     getClientStorage(): OotOnlineStorageClient | null;
+}
+
+export class ExternalEventData{
+    tag: string;
+    data: any;
+
+    constructor(tag: string, data: any){
+        this.tag = tag;
+        this.data = data;
+    }
 }

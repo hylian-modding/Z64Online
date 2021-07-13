@@ -5,6 +5,7 @@ export class ModelPlayer {
   proxyPointer: number = -1;
   proxyData!: Buffer;
   isDead: boolean = true;
+  isLoaded: boolean = false;
   hasLeftGame: boolean = false;
   adult!: IModelReference;
   child!: IModelReference;

@@ -168,9 +168,9 @@ export class Z64Online_EquipmentPak {
 
 export class Z64_SaveDataItemSet {
   key: string;
-  value: boolean | number;
+  value: boolean | number | Buffer;
 
-  constructor(key: string, value: boolean | number) {
+  constructor(key: string, value: boolean | number | Buffer) {
     this.key = key;
     this.value = value;
   }

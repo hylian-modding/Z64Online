@@ -1,5 +1,5 @@
 import { Puppet } from './Puppet';
-import { IOOTCore, Age, OotEvents } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, Age, OotEvents, Scene } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer, NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_PuppetWrapperPacket } from '../OotOPackets';
@@ -12,10 +12,10 @@ import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
 import { ParentReference, ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { IZ64OnlineHelpers, OOTO_PRIVATE_EVENTS } from '../InternalAPI';
-import path from 'path';
-import AntiGanonCrash from './AntiGanonCrash';
 
 export let ACTOR_T_PADDING: number = 0;
+export let ALL_PUPPETS_INVISIBLE: boolean = false;
+export let FORBID_PUPPETS: boolean = false;
 
 export class PuppetOverlordServer {
 
@@ -45,10 +45,6 @@ export class PuppetOverlordClient {
   private ModLoader!: IModLoaderAPI;
   @InjectCore()
   private core!: IOOTCore;
-
-  // Ganon crash fix
-  @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, 'AntiGanonCrash.js'), 'OcarinaofTime')
-  private ganonFix!: AntiGanonCrash;
 
   @Postinit()
   postinit(
@@ -81,7 +77,7 @@ export class PuppetOverlordClient {
     bus.emit(Z64OnlineEvents.PUPPETS_CLEAR, {});
   }
 
-  localPlayerChangingScenes(entering_scene: number, age: Age) {
+  localPlayerChangingScenes(entering_scene: Scene, age: Age) {
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
     this.fakeClientPuppet.scene = entering_scene;
   }
@@ -113,7 +109,7 @@ export class PuppetOverlordClient {
     }
   }
 
-  changePuppetScene(player: INetworkPlayer, entering_scene: number, age: Age) {
+  changePuppetScene(player: INetworkPlayer, entering_scene: Scene) {
     if (this.puppets.has(player.uuid)) {
       let puppet = this.puppets.get(player.uuid)!;
       puppet.scene = entering_scene;
@@ -216,6 +212,7 @@ export class PuppetOverlordClient {
 
   @onTick()
   onTick() {
+    if (FORBID_PUPPETS) return;
     if (
       this.core.helper.isTitleScreen() ||
       !this.core.helper.isSceneNumberValid() ||
@@ -252,14 +249,14 @@ export class PuppetOverlordClient {
   }
 
   @EventHandler(OotEvents.ON_SCENE_CHANGE)
-  onSceneChange(scene: number) {
+  onSceneChange(scene: Scene) {
     this.localPlayerLoadingZone();
     this.localPlayerChangingScenes(scene, this.core.save.age);
   }
 
   @NetworkHandler('Ooto_ScenePacket')
   onSceneChange_client(packet: Ooto_ScenePacket) {
-    this.changePuppetScene(packet.player, packet.scene, packet.age);
+    this.changePuppetScene(packet.player, packet.scene);
   }
 
   @NetworkHandler('Ooto_PuppetPacket')
@@ -307,6 +304,15 @@ export class PuppetOverlordClient {
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
   onReset(evt: any) {
     this.localPlayerLoadingZone();
+    this.queuedSpawn = true;
+  }
+
+  @EventHandler(ModLoaderEvents.ON_SOFT_RESET_POST)
+  onReset2(evt: any){
+    this.localPlayerLoadingZone();
+    this.ModLoader.utils.setTimeoutFrames(()=>{
+      this.queuedSpawn = false;
+    }, 50);
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
@@ -348,6 +354,18 @@ export class PuppetOverlordClient {
     this.puppets.forEach((puppet: Puppet) => {
       puppet.toggleVisibility(t);
     });
+    ALL_PUPPETS_INVISIBLE = t;
+  }
+
+  @PrivateEventHandler(OOTO_PRIVATE_EVENTS.FORBID_PUPPETS)
+  toggleForbiddance(t: boolean){
+    FORBID_PUPPETS = t;
+    if (FORBID_PUPPETS){
+      this.ModLoader.logger.debug("Puppet forbiddance true.");
+      this.localPlayerLoadingZone();
+    }else{
+      this.ModLoader.logger.debug("Puppet forbiddance false.");
+    }
   }
 
 }

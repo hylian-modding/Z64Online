@@ -6,6 +6,7 @@ import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoA
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
 import { IPuppetData } from '@OotOnline/Z64API/IPuppetData';
+import { AgeorForm } from '@OotOnline/common/types/Types';
 
 interface SyncData {
 	lengths: any;
@@ -22,8 +23,8 @@ export class PuppetData implements IPuppetData{
 	ModLoader: IModLoaderAPI;
 	header: SmartBuffer;
 	buf: SmartBuffer;
-	ageLastFrame: Age = Age.ADULT;
-	age: Age = Age.ADULT;
+	ageLastFrame: AgeorForm = Age.ADULT;
+	age: AgeorForm = Age.ADULT;
 	localCache: Map<string, Buffer> = new Map<string, Buffer>();
 	remoteCache: Map<string, Buffer> = new Map<string, Buffer>();
 	tickRate: number = 20;
@@ -52,6 +53,8 @@ export class PuppetData implements IPuppetData{
 			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 0, 0x1);
 		} else if (key === "gauntlet") {
 			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 5, 0x3);
+		}else if (key === "sound"){
+			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 0x10, 0x2);
 		} else {
 			return this.ModLoader.emulator.rdramReadBuffer(parseInt(SYNC_DATA.sources[key]), SYNC_DATA.lengths[key]);
 		}

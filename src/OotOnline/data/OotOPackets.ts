@@ -7,11 +7,12 @@ import { PuppetData } from './linkPuppet/PuppetData';
 import {
   Age,
   InventoryItem,
+  Scene,
 } from 'modloader64_api/OOT/OOTAPI';
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
-import { KeyRing } from './OotoSaveData';
+import { IKeyRing } from '@OotOnline/common/save/IKeyRing';
 
 export class Ooto_PuppetPacket {
   data: PuppetData;
@@ -37,10 +38,10 @@ export class Ooto_PuppetWrapperPacket extends UDPPacket {
 }
 
 export class Ooto_ScenePacket extends Packet {
-  scene: number;
+  scene: Scene;
   age: Age;
 
-  constructor(lobby: string, scene: number, age: Age) {
+  constructor(lobby: string, scene: Scene, age: Age) {
     super('Ooto_ScenePacket', 'OotOnline', lobby, true);
     this.scene = scene;
     this.age = age;
@@ -65,6 +66,7 @@ export class Ooto_BankSyncPacket extends Packet {
 export class Ooto_DownloadResponsePacket extends Packet {
 
   save?: Buffer;
+  keys?: IKeyRing;
   host: boolean;
 
   constructor(lobby: string, host: boolean) {
@@ -86,20 +88,24 @@ export class Ooto_DownloadRequestPacket extends Packet {
 export class OotO_UpdateSaveDataPacket extends Packet {
 
   save: Buffer;
+  world: number;
 
-  constructor(lobby: string, save: Buffer) {
+  constructor(lobby: string, save: Buffer, world: number) {
     super('OotO_UpdateSaveDataPacket', 'OotOnline', lobby, false);
     this.save = save;
+    this.world = world;
   }
 }
 
 export class OotO_UpdateKeyringPacket extends Packet {
 
-  keys: KeyRing;
+  keys: IKeyRing;
+  world: number;
 
-  constructor(keys: KeyRing, lobby: string) {
+  constructor(keys: IKeyRing, lobby: string, world: number) {
     super('OotO_UpdateKeyringPacket', 'OotOnline', lobby, false);
     this.keys = keys;
+    this.world = world;
   }
 
 }
@@ -110,7 +116,8 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
   collect: Buffer;
   clear: Buffer;
   temp: Buffer;
-  scene: number;
+  scene: Scene;
+  world: number;
 
   constructor(
     chests: Buffer,
@@ -119,7 +126,8 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     clear: Buffer,
     temp: Buffer,
     lobby: string,
-    scene: number
+    scene: Scene,
+    world: number
   ) {
     super('Ooto_ClientSceneContextUpdate', 'OotOnline', lobby, false);
     this.chests = chests;
@@ -128,17 +136,18 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     this.clear = clear;
     this.temp = temp;
     this.scene = scene;
+    this.world = world;
   }
 }
 
 export class Ooto_ActorPacket extends Packet {
   actorData: ActorPacketData;
-  scene: number;
+  scene: Scene;
   room: number;
 
   constructor(
     data: ActorPacketData,
-    scene: number,
+    scene: Scene,
     room: number,
     lobby: string
   ) {
@@ -151,7 +160,7 @@ export class Ooto_ActorPacket extends Packet {
 
 export class Ooto_ActorDeadPacket extends Packet {
   actorUUID: string;
-  scene: number;
+  scene: Scene;
   room: number;
 
   constructor(aid: string, scene: number, room: number, lobby: string) {
@@ -165,10 +174,10 @@ export class Ooto_ActorDeadPacket extends Packet {
 export class Ooto_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
   room: number;
-  scene: number;
+  scene: Scene;
   constructor(
     data: ActorPacketData,
-    scene: number,
+    scene: Scene,
     room: number,
     lobby: string
   ) {
@@ -187,15 +196,6 @@ export class Ooto_BottleUpdatePacket extends Packet {
     super('Ooto_BottleUpdatePacket', 'OotOnline', lobby, true);
     this.slot = slot;
     this.contents = contents;
-  }
-}
-
-export class OotO_isRandoPacket extends Packet {
-
-  isRando: boolean = true;
-
-  constructor(lobby: string) {
-    super("OotO_isRandoPacket", "OotOnline", lobby, false);
   }
 }
 

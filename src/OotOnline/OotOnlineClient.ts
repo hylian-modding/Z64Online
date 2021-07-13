@@ -1,7 +1,7 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Magic, Age, IInventory, IOvlPayloadResult, LinkState, SceneStruct, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
@@ -10,22 +10,19 @@ import { OotOnlineStorageClient } from './OotOnlineStorageClient';
 import { DiscordStatus } from 'modloader64_api/Discord';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle';
-import { parseFlagChanges } from './parseFlagChanges';
+import { parseFlagChanges } from './common/lib/parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
 import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { PuppetOverlordClient } from './data/linkPuppet/PuppetOverlord';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
-import { RPCClient } from './data/RPCHandler';
 import { SoundManagerClient } from './data/sounds/SoundManager';
-import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
-import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_isRandoPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
@@ -33,7 +30,8 @@ import { Deprecated } from 'modloader64_api/Deprecated';
 import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
-import { PuppetStressTest } from './data/linkPuppet/PuppetStressTest';
+import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
+import zlib from 'zlib';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -58,8 +56,6 @@ export default class OotOnlineClient {
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
     puppets!: PuppetOverlordClient;
-    @SidedProxy(ProxySide.CLIENT, RPCClient)
-    rcp!: RPCClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
@@ -71,9 +67,9 @@ export default class OotOnlineClient {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.CLIENT, PvPModule)
     pvp!: PvPModule;
-    @SidedProxy(ProxySide.CLIENT, PuppetStressTest)
-    testing!: PuppetStressTest;
     // #endif
+    @SidedProxy(ProxySide.CLIENT, Multiworld)
+    multiworld!: Multiworld;
     opa!: ThiccOpa;
     synxContext: number = -1;
 
@@ -95,6 +91,9 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "nameplates", true);
         this.ModLoader.config.setData("OotOnline", "muteNetworkedSounds", false);
         this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
+        this.ModLoader.config.setData("OotOnline", "syncMasks", true);
+        this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
+        this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
         this.gui.settings = this.config;
     }
 
@@ -115,28 +114,36 @@ export default class OotOnlineClient {
         status.partyMax = 30;
         status.partySize = 1;
         this.ModLoader.gui.setDiscordStatus(status);
+        this.clientStorage.saveManager = new OotOSaveData(this.core, this.ModLoader);
+        this.ModLoader.utils.setIntervalFrames(() => {
+            this.inventoryUpdateTick();
+        }, 20);
     }
 
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
-        this.synxContext = this.ModLoader.heap!.malloc(0xFF);
+        this.synxContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["OotO_SyncContext"] = this.synxContext;
-/*         this.opa = new ThiccOpa();
-        this.opa.toggleSuperPoly(this.ModLoader.heap!, this.ModLoader); */
+
+        if (this.clientStorage.isOotR) {
+            TriforceHuntHelper.isRandomizer = this.clientStorage.isOotR;
+            if (this.multiworld.isRomMultiworld()) {
+                this.clientStorage.isMultiworld = true;
+                this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.multiworld.contextPointer, 0x0) + 0x4);
+                this.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
+            }
+        }
     }
 
     updateInventory() {
-        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
-        this.clientStorage.needs_update = false;
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        let save = data.createSave();
-        if (this.clientStorage.lastPushHash !== data.hash) {
+        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        if (this.core.helper.Player_InBlockingCsMode() || !this.LobbyConfig.data_syncing) return;
+        let save = this.clientStorage.saveManager.createSave();
+        if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
+            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-            this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save));
-            this.clientStorage.lastPushHash = data.hash;
-            this.ModLoader.utils.setTimeoutFrames(() => {
-                this.clientStorage.lastPushHash = "!";
-            }, (20 * 60));
+            this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
+            this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
         }
     }
 
@@ -152,8 +159,7 @@ export default class OotOnlineClient {
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
                 this.clientStorage.keySaveHash = keyHash;
-                let data = new OotOSaveData(this.core, this.ModLoader);
-                this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(data.createKeyRing(), this.ModLoader.clientLobby));
+                this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
             // and beans too why not.
             if (this.clientStorage.lastbeans !== this.core.save.inventory.magicBeansCount) {
@@ -191,7 +197,7 @@ export default class OotOnlineClient {
                 return;
             }
             this.core.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.global.scene));
+            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.global.scene, this.clientStorage.world));
         }
     }
 
@@ -220,24 +226,16 @@ export default class OotOnlineClient {
         }
     }
 
-    @EventHandler(OotEvents.ON_SAVE_LOADED)
-    onSaveLoaded(evt: any) {
-        // #ifdef IS_DEV_BUILD
-        let test = false;
-        if (test) {
-            this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
-        }
-        // #endif
-        this.ModLoader.utils.setTimeoutFrames(() => {
-            if (this.LobbyConfig.data_syncing) {
-                this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
-            }
-        }, 50);
-    }
-
     //------------------------------
     // Lobby Setup
     //------------------------------
+
+    @EventHandler(EventsClient.ON_SERVER_CONNECTION)
+    onConnect() {
+        this.ModLoader.logger.debug("Connected to server.");
+        this.clientStorage.first_time_sync = false;
+    }
+
     @EventHandler(EventsClient.CONFIGURE_LOBBY)
     onLobbySetup(lobby: LobbyData): void {
         lobby.data['OotOnline:data_syncing'] = true;
@@ -247,6 +245,7 @@ export default class OotOnlineClient {
 
     @EventHandler(EventsClient.ON_LOBBY_JOIN)
     onJoinedLobby(lobby: LobbyData): void {
+        this.clientStorage.first_time_sync = false;
         this.LobbyConfig.actor_syncing = lobby.data['OotOnline:actor_syncing'];
         this.LobbyConfig.data_syncing = lobby.data['OotOnline:data_syncing'];
         this.LobbyConfig.key_syncing = lobby.data['OotOnline:key_syncing'];
@@ -257,8 +256,8 @@ export default class OotOnlineClient {
         if (lobby.data.hasOwnProperty("Z64OAssetsURL")) {
             if (lobby.data.Z64OAssetsURL.length > 0) {
                 this.ModLoader.logger.info("Server sent asset data.");
-                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
             }
+            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
         }
         if (lobby.data.hasOwnProperty("Z64OEventsActive")) {
             if (lobby.data.Z64OEventsActive.length > 0) {
@@ -274,6 +273,20 @@ export default class OotOnlineClient {
 
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
+        if (!this.clientStorage.first_time_sync) {
+            // #ifdef IS_DEV_BUILD
+            let test = false;
+            if (test) {
+                this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
+            }
+            // #endif
+            this.ModLoader.utils.setTimeoutFrames(() => {
+                if (this.LobbyConfig.data_syncing) {
+                    this.ModLoader.me.data["world"] = this.clientStorage.world;
+                    this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
+                }
+            }, 50);
+        }
         this.ModLoader.clientSide.sendPacket(
             new Ooto_ScenePacket(
                 this.ModLoader.clientLobby,
@@ -293,6 +306,7 @@ export default class OotOnlineClient {
                 )
             );
         }
+        this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
     }
 
     @NetworkHandler('Ooto_ScenePacket')
@@ -335,8 +349,11 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        this.clientStorage.bottleCache[packet.slot] = packet.contents;
+        if (packet.player.data.world !== this.clientStorage.world) return;
+        if (!this.config.syncBottleContents) return;
         let inventory = this.core.save.inventory;
+        if (packet.contents === InventoryItem.NONE) return;
+        this.clientStorage.bottleCache[packet.slot] = packet.contents;
         switch (packet.slot) {
             case 0:
                 inventory.bottle_1 = packet.contents;
@@ -352,6 +369,9 @@ export default class OotOnlineClient {
                 break;
         }
         bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     // The server is giving me data.
@@ -365,8 +385,11 @@ export default class OotOnlineClient {
         }
         if (!packet.host) {
             if (packet.save) {
-                let s = new OotOSaveData(this.core, this.ModLoader);
-                s.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
+                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
+                this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+                // Update hash.
+                this.clientStorage.saveManager.createSave();
+                this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
@@ -385,8 +408,11 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        data.applySave(packet.save);
+        if (packet.world !== this.clientStorage.world) return;
+        this.clientStorage.saveManager.applySave(packet.save, this.config.syncMasks);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     @NetworkHandler('OotO_UpdateKeyringPacket')
@@ -397,8 +423,11 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-        let data = new OotOSaveData(this.core, this.ModLoader);
-        data.processKeyRing(packet.keys, data.createKeyRing(), ProxySide.CLIENT);
+        if (packet.world !== this.clientStorage.world) return;
+        this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     @NetworkHandler('Ooto_ClientSceneContextUpdate')
@@ -413,6 +442,7 @@ export default class OotOnlineClient {
         if (this.core.global.scene !== packet.scene) {
             return;
         }
+        if (packet.world !== this.clientStorage.world) return;
         let buf1: Buffer = this.core.global.liveSceneData_chests;
         if (Object.keys(parseFlagChanges(packet.chests, buf1) > 0)) {
             this.core.global.liveSceneData_chests = buf1;
@@ -437,6 +467,9 @@ export default class OotOnlineClient {
         if (Object.keys(parseFlagChanges(packet.temp, buf5) > 0)) {
             this.core.global.liveSceneData_temp = buf5;
         }
+        // Update hash.
+        this.clientStorage.saveManager.createSave();
+        this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
     healPlayer() {
@@ -466,22 +499,42 @@ export default class OotOnlineClient {
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
         switch (evt.key) {
             case "bombchus":
-                this.core.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                if (this.core.save.inventory.bombchuCount === 0) {
+                    this.core.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                }
                 break;
             case "bombBag":
-                this.core.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
+                if (this.core.save.inventory.bombsCount === 0) {
+                    this.core.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
+                }
                 break;
             case "quiver":
-                this.core.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
+                if (this.core.save.inventory.arrows === 0) {
+                    this.core.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
+                }
                 break;
             case "bulletBag":
-                this.core.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
+                if (this.core.save.inventory.dekuSeeds) {
+                    this.core.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
+                }
                 break;
             case "dekuSticksCapacity":
-                this.core.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
+                if (this.core.save.inventory.dekuSticksCount === 0) {
+                    if ((evt.value as number) === 1) {
+                        this.core.save.inventory.dekuSticksCount = 1;
+                    } else {
+                        this.core.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
+                    }
+                }
                 break;
             case "dekuNutsCapacity":
-                this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
+                if (this.core.save.inventory.dekuNutsCount === 0) {
+                    if ((evt.value as number) === 1) {
+                        this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, 1);
+                    } else {
+                        this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
+                    }
+                }
                 break;
             case "heartPieces":
             case "double_defense":
@@ -513,7 +566,6 @@ export default class OotOnlineClient {
         ) {
             return;
         }
-
         let addr: number = global.ModLoader.save_context + 0x0068;
         let buf: Buffer = this.ModLoader.emulator.rdramReadBuffer(addr, 0x7);
         let addr2: number = global.ModLoader.save_context + 0x0074;
@@ -560,16 +612,20 @@ export default class OotOnlineClient {
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
-        try {
-            let expected_hash: string = "34c6b74de175cb3d5d08d8428e7ab21d";
-            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-            let file_select_ovl: Buffer = tools.decompressDMAFileFromRom(evt.rom, 0x0032);
-            let hash: string = this.ModLoader.utils.hashBuffer(file_select_ovl);
-            if (expected_hash !== hash) {
-                this.ModLoader.logger.info("File select overlay is modified. Is this rando?");
-                this.ModLoader.clientSide.sendPacket(new OotO_isRandoPacket(this.ModLoader.clientLobby));
-            }
-        } catch (err) { }
+        let rom: Buffer = evt.rom;
+        let start = 0x20;
+        let terminator = 0;
+        let byte = rom.readUInt8(start);
+        let prog = 0;
+        while (byte !== terminator) {
+            prog++;
+            byte = rom.readUInt8(start + prog);
+        }
+        prog++;
+        if (rom.readUInt8(start + prog) > 0) {
+            this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${rom.readUInt8(start + prog)}.0`);
+            this.clientStorage.isOotR = true;
+        }
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
@@ -604,7 +660,7 @@ export default class OotOnlineClient {
 
     @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
     onDump(evt: any) {
-        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024));
+        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", zlib.deflateSync(this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024)));
     }
 
     private updateSyncContext() {
@@ -616,6 +672,17 @@ export default class OotOnlineClient {
             } else {
                 this.ModLoader.emulator.rdramWriteBuffer(this.synxContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
             }
+        }
+        this.ModLoader.emulator.rdramWrite16(this.synxContext + 0x10, this.core.link.current_sound_id);
+    }
+
+    private updateMultiworld() {
+        let item = this.multiworld!.getOutgoingItem();
+        if (item !== undefined) {
+            if (!this.multiworld.doesPlayerNameExist(item.dest)) {
+                this.multiworld.setPlayerName(`World ${item.dest}`, item.dest);
+            }
+            this.ModLoader.clientSide.sendPacket(new MultiWorld_ItemPacket(this.ModLoader.clientLobby, item));
         }
     }
 
@@ -629,6 +696,7 @@ export default class OotOnlineClient {
             this.core.helper.isSceneNumberValid()
         ) {
             if (!this.core.helper.isPaused()) {
+                this.ModLoader.me.data["world"] = this.clientStorage.world;
                 if (!this.clientStorage.first_time_sync) {
                     return;
                 }
@@ -642,19 +710,15 @@ export default class OotOnlineClient {
                     this.updateBottles();
                     this.updateSkulltulas();
                     this.updateSyncContext();
-                    let state = this.core.link.state;
-                    if (state === LinkState.BUSY || state === LinkState.GETTING_ITEM || state === LinkState.TALKING) {
-                        this.clientStorage.needs_update = true;
-                    } else if (
-                        state === LinkState.STANDING &&
-                        this.clientStorage.needs_update &&
-                        this.LobbyConfig.data_syncing
-                    ) {
-                        this.updateInventory();
-                        this.clientStorage.needs_update = false;
+                    if (this.clientStorage.isMultiworld) {
+                        this.updateMultiworld();
                     }
                 }
             }
         }
+    }
+
+    inventoryUpdateTick() {
+        this.updateInventory();
     }
 }

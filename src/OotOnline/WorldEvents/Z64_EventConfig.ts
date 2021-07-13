@@ -5,4 +5,6 @@ export interface Z64_EventConfig {
     equipmentLoadout: any;
     voice: string;
     anim_bank: string;
+    disableCostumeManager: boolean;
+    assetcache: string;
 }

@@ -36,6 +36,9 @@ export class OotOnlineConfigCategory {
   muteNetworkedSounds: boolean = false;
   muteLocalSounds: boolean = false;
   notificationSound: boolean = true;
+  syncMasks: boolean = true;
+  syncBottleContents: boolean = true;
+  diagnosticMode: boolean = false;
 }
 
 @ExternalAPIProvider("Z64Lib", require(path.resolve(__dirname, "libs", "Z64Lib", "package.json")).version, path.resolve(__dirname, "libs", "Z64Lib"))

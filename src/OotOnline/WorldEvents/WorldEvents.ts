@@ -5,20 +5,17 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
 import { bus, EventHandler, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/Z64API/OotoAPI';
+import { IModelReference, IModelScript, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/Z64API/OotoAPI';
 import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
-import { CostumeHelper } from './CostumeHelper';
+import { CostumeHelper } from '../common/events/CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
 import fs from 'fs';
 import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
-import { EventController } from './EventController';
-import { OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
-import { WorldEvents_TransactionPacket } from './WorldEventPackets';
-import { NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
-import crypto from 'crypto';
-import { AssetContainer } from './AssetContainer';
-import { publicKey } from './publicKey';
+import { EventController } from '../common/events/EventController';
+import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
+import { AssetContainer } from '../common/events/AssetContainer';
+import zlib from 'zlib';
 
 export interface Z64_EventReward {
     name: string;
@@ -33,6 +30,12 @@ export interface RewardContainer {
     tickets: RewardTicket[];
     coins: number;
     sig: Buffer;
+    externalData: any;
+}
+
+export interface ScriptedReward {
+    DEFAULT_MODEL: Buffer;
+    DEFAULT_SCRIPT: IModelScript;
 }
 
 export class WorldEventRewards {
@@ -57,8 +60,9 @@ export class WorldEventRewards {
     rewardTicketsByEvent: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
     rewardTicketsForEquipment: Map<string, Map<string, Array<RewardTicket>>> = new Map<string, Map<string, Array<RewardTicket>>>();
     rewardTicketsByUUID: Map<string, RewardTicket> = new Map<string, RewardTicket>();
-    rewardContainer: RewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1) };
+    rewardContainer: RewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1), externalData: {} };
     assets!: AssetContainer;
+    compressedTicketCache: Map<string, ScriptedReward> = new Map<string, ScriptedReward>();
 
     constructor() {
     }
@@ -88,9 +92,7 @@ export class WorldEventRewards {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER)
     onAnimReg(evt: Map<string, Buffer>) {
-        evt.forEach((value: Buffer, key: string) => {
-            this.anims.set(key, value);
-        });
+        this.anims = evt;
     }
 
     private migrateRewards() {
@@ -158,27 +160,29 @@ export class WorldEventRewards {
                 this.allRewardTickets.set(ticket.uuid, ticket);
             }
         });
+        this.allRewardTickets.forEach((ticket: RewardTicket) => {
+            if (!this.compressedTicketCache.has(ticket.uuid)) {
+                if (ticket.scripted) {
+                    let rs = require('require-from-string');
+                    let b = this.assets.bundle.files.get(ticket.name)!;
+                    let c = zlib.inflateSync(b).toString();
+                    let r = rs(c);
+                    this.compressedTicketCache.set(ticket.uuid, r);
+                }
+            }
+        });
         if (!fs.existsSync("./storage/Z64O_Reward_Tickets.pak")) {
             return;
         }
         let storage = new StorageContainer("Z64O_Reward_Tickets");
         this.rewardContainer = storage.loadObject() as RewardContainer;
-        if (this.rewardContainer.coins > 0) {
-            if (this.rewardContainer.sig.byteLength > 1) {
-                let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
-                let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
-                const public_key = publicKey;
-                const verifier = crypto.createVerify('sha256');
-                verifier.update(Buffer.from(hash));
-                verifier.end();
-                const verified = verifier.verify(public_key, this.rewardContainer.sig);
-                if (verified) {
-                    this.ModLoader.logger.debug("Rewards file OK.");
-                } else {
-                    this.rewardContainer = { tickets: [], coins: 0, sig: Buffer.alloc(1) };
-                    this.ModLoader.logger.error("This rewards file has been tampered with.");
-                }
-            }
+        let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
+        let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
+        const verified = hash === this.rewardContainer.sig.toString();
+        if (verified) {
+            this.ModLoader.logger.debug("Rewards file OK.");
+        } else {
+            this.ModLoader.logger.error("This rewards file has an invalid signature.");
         }
         for (let i = 0; i < this.rewardContainer.tickets.length; i++) {
             this.rewardContainer.tickets[i] = this.allRewardTickets.get(this.rewardContainer.tickets[i].uuid)!;
@@ -207,12 +211,26 @@ export class WorldEventRewards {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
     onAssetData(assetURLS: Array<string>) {
-        this.assets = new AssetContainer(this.ModLoader, this.core, () => {
-            this.migrateRewards();
-            this.loadTickets();
-        });
-        this.assets.url = assetURLS[0];
-        this.assets.preinit();
+        if (assetURLS.length === 0){
+            if (this.config.assetcache !== ""){
+                this.ModLoader.logger.debug("Loading locally saved assets...");
+                this.assets = new AssetContainer(this.ModLoader, this.core, () => {
+                    this.loadTickets();
+                });
+                // Generate a junk url to trick the system into loading this anyway.
+                this.assets.url = "https://" + this.ModLoader.utils.getUUID() + ".fake/" + this.config.assetcache;
+                this.assets.preinit();
+            }
+        }else{
+            this.assets = new AssetContainer(this.ModLoader, this.core, () => {
+                this.migrateRewards();
+                this.loadTickets();
+            });
+            this.assets.url = assetURLS[0];
+            this.assets.preinit();
+            this.config.assetcache = path.parse(this.assets.url).base;
+            this.ModLoader.config.save();
+        }
     }
 
     @Preinit()
@@ -223,6 +241,7 @@ export class WorldEventRewards {
         this.ModLoader.config.setData("OotO_WorldEvents", "equipmentLoadout", {});
         this.ModLoader.config.setData("OotO_WorldEvents", "voice", "");
         this.ModLoader.config.setData("OotO_WorldEvents", "anim_bank", "");
+        this.ModLoader.config.setData("OotO_WorldEvents", "assetcache", "");
     }
 
     private _getAllAssetByUUID(uuid: string): Buffer | undefined {
@@ -237,9 +256,7 @@ export class WorldEventRewards {
             return undefined;
         }
         if (ticket.scripted) {
-            let rs = require('require-from-string');
-            let r = rs(this.assets.bundle.files.get(ticket.name)!.toString());
-            return r.DEFAULT_MODEL;
+            return this.compressedTicketCache.get(ticket.uuid)!.DEFAULT_MODEL;
         }
         return asset;
     }
@@ -247,18 +264,16 @@ export class WorldEventRewards {
     private getAssetByUUID(uuid: string): Buffer | undefined {
         let ticket = this.rewardTicketsByUUID.get(uuid)!;
         if (ticket === undefined) {
-            this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
+            //this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
             return undefined
         };
         let asset = this.assets.bundle.files.get(ticket.name)!;
         if (asset === undefined) {
-            this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
+            //this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
             return undefined;
         }
         if (ticket.scripted) {
-            let rs = require('require-from-string');
-            let r = rs(this.assets.bundle.files.get(ticket.name)!.toString());
-            return r.DEFAULT_MODEL;
+            return this.compressedTicketCache.get(ticket.uuid)!.DEFAULT_MODEL;
         }
         return asset;
     }
@@ -266,19 +281,17 @@ export class WorldEventRewards {
     private isAssetScripted(uuid: string) {
         let ticket = this.rewardTicketsByUUID.get(uuid)!;
         if (ticket === undefined) {
-            this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
+            //this.ModLoader.logger.warn("Couldn't find ticket for " + uuid + ".");
             return { is: false };
         };
         let asset = this.assets.bundle.files.get(ticket.name)!;
         if (asset === undefined) {
-            this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
+            //this.ModLoader.logger.warn("Couldn't find asset for " + ticket.name + ".");
             return { is: false };
         }
         if (ticket.scripted === undefined) return { is: false };
         if (ticket.scripted) {
-            let rs = require('require-from-string');
-            let r = rs(this.assets.bundle.files.get(ticket.name)!.toString());
-            return { is: ticket.scripted, script: r.DEFAULT_SCRIPT };
+            return { is: ticket.scripted, script: this.compressedTicketCache.get(ticket.uuid)!.DEFAULT_SCRIPT };
         }
         return { is: ticket.scripted };
     }
@@ -572,7 +585,7 @@ export class WorldEventRewards {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.ASSET_LOOKUP)
     assetLookup(evt: OOTO_PRIVATE_ASSET_LOOKUP_OBJ) {
-        let asset = this.assets.bundle.files.get(this.allRewardTickets.get(evt.uuid)!.name)!;
+        let asset = this._getAllAssetByUUID(evt.uuid)!;
         evt.asset = this.ModLoader.utils.cloneBuffer(asset);
         evt.ticket = this.allRewardTickets.get(evt.uuid)!;
     }
@@ -591,7 +604,6 @@ export class WorldEventRewards {
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_DOES_HAVE)
     onCheck(evt: OOTO_PRIVATE_ASSET_HAS_CHECK) {
         evt.has = this.rewardContainer.tickets.find(t => { return t.uuid === evt.ticket.uuid }) !== undefined;
-        console.log(evt);
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_TICKET)
@@ -605,53 +617,26 @@ export class WorldEventRewards {
     transactionProcess() {
         let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
         let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
-        this.ModLoader.clientSide.sendPacket(new WorldEvents_TransactionPacket(this.ModLoader.clientLobby, hash));
+        this.rewardContainer.sig = Buffer.from(hash);
+        new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
+        this.loadTickets();
     }
 
-    @NetworkHandler('WorldEvents_TransactionPacket')
-    onTransaction(packet: WorldEvents_TransactionPacket) {
-        let obj: any = { tickets: this.rewardContainer.tickets, coins: this.rewardContainer.coins };
-        let hash: string = this.ModLoader.utils.hashBuffer(Buffer.from(JSON.stringify(obj)));
-        const public_key = publicKey;
-        const verifier = crypto.createVerify('sha256');
-        verifier.update(Buffer.from(hash));
-        verifier.end();
-        const verified = verifier.verify(public_key, packet.sig);
-        if (verified) {
-            this.rewardContainer.sig = packet.sig;
-            new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
-            this.loadTickets();
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SAVE_EXTERNAL_EVENT_DATA)
+    onSaveEvent(evt: ExternalEventData) {
+        this.rewardContainer.externalData[evt.tag] = evt.data;
+        new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.GET_EXTERNAL_EVENT_DATA)
+    onLoadEvent(evt: ExternalEventData) {
+        if (this.rewardContainer.externalData.hasOwnProperty(evt.tag)) {
+            evt.data = this.rewardContainer.externalData[evt.tag];
         }
     }
 }
 
 export class WorldEventsServer {
-
-    @ModLoaderAPIInject()
-    ModLoader!: IModLoaderAPI;
-    private_key: string;
-
-    constructor() {
-        this.private_key = "";
-        if (fs.existsSync(path.resolve(global.ModLoader.startdir, 'privateKey.pem'))) {
-            this.private_key = fs.readFileSync(path.resolve(global.ModLoader.startdir, 'privateKey.pem'), 'utf-8');
-        }
-    }
-
-    @ServerNetworkHandler('WorldEvents_TransactionPacket')
-    onTransaction(packet: WorldEvents_TransactionPacket) {
-        let _reply: WorldEvents_TransactionPacket = new WorldEvents_TransactionPacket(packet.lobby, packet.hash);
-        if (this.private_key !== "") {
-            let _file = Buffer.from(packet.hash);
-            const signer = crypto.createSign('sha256');
-            signer.update(_file);
-            signer.end();
-            let signature = signer.sign(this.private_key);
-            _reply.sig = signature;
-        }
-        this.ModLoader.serverSide.sendPacketToSpecificPlayer(_reply, packet.player);
-    }
-
 }
 
 export class WorldEvents {

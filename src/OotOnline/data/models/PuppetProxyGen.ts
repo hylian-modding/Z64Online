@@ -71,7 +71,7 @@ export const EqManifestToOffsetMap_Puppet: any = {
     "sword2_blade": "0x5C8",
     "sword2_sheath": "0x5A0",
     "sword2_back": "0x660",
-    "shield0_held":"0x5E8",
+    "shield0_held": "0x5E8",
     "shield0_back": "0x680",
     "shield1_held": "0x5F0",
     "shield1_back": "0x690",
@@ -87,7 +87,10 @@ export const EqManifestToOffsetMap_Puppet: any = {
     "ocarina_0": "0x6C0",
     "ocarina_1_c": "0x6C8",
     "ocarina_1_a": "0x6D0",
-    "hammer": "0x6E0"
+    "hammer": "0x6E0",
+    // Matrix stuff
+    "swordback_mtx": "0x6F0",
+    "shieldback_mtx": "0x730"
 };
 
 export const EqManifestToOffsetMap_Link: any = {
@@ -119,10 +122,18 @@ export const EqManifestToOffsetMap_Link: any = {
     "ocarina_0": "0x5198",
     "ocarina_1_c": "0x51A0",
     "ocarina_1_a": "0x5188",
-    "hammer": "0x5170"
+    "hammer": "0x5170",
+    // Matrix stuff
+    "swordback_mtx": "0x5010",
+    "shieldback_mtx": "0x5050"
 };
 
 export const PuppetProxyGen_Matrix: any = {
     "0x6F0": "0x5010", // Hilt matrix
     "0x730": "0x5050" // Shield matrix
 };
+
+export const PuppetProxyGen_Matrix_Keys: Array<string> = [
+    "swordback_mtx",
+    "shieldback_mtx"
+];

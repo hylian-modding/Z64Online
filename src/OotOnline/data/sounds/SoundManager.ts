@@ -8,10 +8,11 @@ import Vector3 from "modloader64_api/math/Vector3";
 import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64OnlineEvents, RemoteSoundPlayRequest } from "@OotOnline/Z64API/OotoAPI";
 import * as sf from 'modloader64_api/Sound/sfml_audio';
-import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
+import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
+import { SoundCategory_Adult, SoundCategory_Child } from "@OotOnline/data/sounds/SoundCategory";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     totalSize: number;
@@ -46,6 +47,8 @@ export class SoundManagerClient {
     originalData!: Buffer;
     config!: Z64_EventConfig;
     client_config!: OotOnlineConfigCategory;
+    hasAdult: boolean = false;
+    hasChild: boolean = false;
 
     getRandomInt(min: number, max: number) {
         min = Math.ceil(min);
@@ -117,6 +120,8 @@ export class SoundManagerClient {
     @EventHandler(Z64OnlineEvents.ON_SELECT_SOUND_PACK)
     onSelect(id: string | undefined) {
         this.sounds.clear();
+        this.hasChild = false;
+        this.hasAdult = false;
         if (id === undefined || !this.localSoundPaks.has(id)) {
             this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket({}, 0, this.ModLoader.clientLobby));
             return;
@@ -124,7 +129,10 @@ export class SoundManagerClient {
         let evt = { id: id, data: this.localSoundPaks.get(id)! };
         let size: number = 0;
         Object.keys(evt.data).forEach((key: string) => {
-            this.sounds.set(parseInt(key), []);
+            let id = parseInt(key);
+            if (SoundCategory_Child.indexOf(id) > -1) this.hasChild = true;
+            if (SoundCategory_Adult.indexOf(id) > -1) this.hasAdult = true;
+            this.sounds.set(id, []);
             let arr: Array<Buffer> = evt.data[key];
             for (let i = 0; i < arr.length; i++) {
                 this.sounds.get(parseInt(key))!.push(this.ModLoader.sound.initSound(zlib.inflateSync(arr[i])));
@@ -152,6 +160,24 @@ export class SoundManagerClient {
         if (this.PlayerSounds.has(player.uuid)) {
             this.PlayerSounds.delete(player.uuid);
         }
+    }
+
+    @EventHandler(OotEvents.ON_AGE_CHANGE)
+    onAgeChange(age: Age) {
+        if (age === Age.ADULT) {
+            if (this.hasAdult){
+                this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.nop);
+            }else{
+                this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.originalData);
+            }
+        }else{
+            if (this.hasChild){
+                this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.nop);
+            }else{
+                this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.originalData);
+            }
+        }
+        this.ModLoader.emulator.invalidateCachedCode();
     }
 
     @onTick()

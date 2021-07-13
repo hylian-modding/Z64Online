@@ -1,5 +1,5 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { IOOTCore, LinkState } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, LinkState, Scene } from "modloader64_api/OOT/OOTAPI";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents, Z64Emote_Emote } from '@OotOnline/Z64API/OotoAPI';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
@@ -154,9 +154,9 @@ export class EmoteManager {
 export class OotO_PlayBuiltInEmotePacket extends Packet {
 
     emote: string;
-    scene: number;
+    scene: Scene;
 
-    constructor(emote: string, scene: number, lobby: string) {
+    constructor(emote: string, scene: Scene, lobby: string) {
         super("OotO_PlayBuiltInEmotePacket", "OotOnline", lobby, true);
         this.emote = emote;
         this.scene = scene;
