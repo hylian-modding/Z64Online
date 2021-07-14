@@ -3,7 +3,6 @@ import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader6
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength } from 'modloader64_api/OOT/OOTAPI';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './Z64API/OotoAPI';
-import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
 import fs from 'fs';
 import { OotOnlineStorageClient } from './OotOnlineStorageClient';
@@ -32,6 +31,11 @@ import AnimationManager from './data/models/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
 import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
 import zlib from 'zlib';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import { MLPatchLib } from '@OotOnline/common/lib/ML64PatchLib';
+import { SmartBuffer } from 'smart-buffer';
+import { WorldClient } from './data/worldserver/WorldClient';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -52,8 +56,6 @@ export default class OotOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
-    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
-    actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlordClient)
     puppets!: PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
@@ -67,6 +69,8 @@ export default class OotOnlineClient {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.CLIENT, PvPModule)
     pvp!: PvPModule;
+    @SidedProxy(ProxySide.CLIENT, WorldClient)
+    worldClient!: WorldClient;
     // #endif
     @SidedProxy(ProxySide.CLIENT, Multiworld)
     multiworld!: Multiworld;
@@ -283,7 +287,7 @@ export default class OotOnlineClient {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
-                    this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
+                    this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave(), this.core.global.scene, this.core.global.room));
                 }
             }, 50);
         }
@@ -291,6 +295,7 @@ export default class OotOnlineClient {
             new Ooto_ScenePacket(
                 this.ModLoader.clientLobby,
                 scene,
+                this.core.global.room,
                 this.core.save.age
             )
         );
@@ -334,6 +339,7 @@ export default class OotOnlineClient {
                 new Ooto_ScenePacket(
                     this.ModLoader.clientLobby,
                     this.core.global.scene,
+                    this.core.global.room,
                     this.core.save.age
                 ),
                 packet.player
@@ -549,6 +555,7 @@ export default class OotOnlineClient {
             new Ooto_ScenePacket(
                 this.ModLoader.clientLobby,
                 this.core.global.scene,
+                this.core.global.room,
                 age
             )
         );
@@ -626,6 +633,63 @@ export default class OotOnlineClient {
             this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${rom.readUInt8(start + prog)}.0`);
             this.clientStorage.isOotR = true;
         }
+
+        try {
+            let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
+            // Make Din's Fire not move to Link.
+            let dins: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x009F);
+            let dhash: string = this.ModLoader.utils.hashBuffer(dins);
+            if (dhash === "b08f7991b2beda5394e4a94cff15b50c") {
+                this.ModLoader.logger.info("Patching Din's Fire...");
+                dins.writeUInt32BE(0x0, 0x150);
+                dins.writeUInt32BE(0x0, 0x158);
+                dins.writeUInt32BE(0x0, 0x160);
+                dins.writeUInt32BE(0x0, 0x19C);
+                dins.writeUInt32BE(0x0, 0x1A4);
+                dins.writeUInt32BE(0x0, 0x1AC);
+            }
+            tools.recompressActorFileIntoRom(evt.rom, 0x009F, dins);
+
+            // Change Zelda's actor category from 'NPC' to 'Chest'.
+            // This fixes Ganon's Tower Collapse.
+            let buf: Buffer = tools.decompressActorFileFromRom(evt.rom, 0x0179);
+            if (buf.readUInt32BE(0x7234) === 0x01790400) {
+                this.ModLoader.logger.info("Patching Zelda...");
+                buf.writeUInt8(0x0B, 0x7236);
+            }
+            tools.recompressActorFileIntoRom(evt.rom, 0x0179, buf);
+
+            let patch_path: string = path.resolve(__dirname, "data", "actorPatches");
+            fs.readdirSync(patch_path).forEach((file: string) => {
+                let f: string = path.resolve(patch_path, file);
+                if (fs.existsSync(f)) {
+                    let patch: Buffer = fs.readFileSync(f);
+                    let target: number = parseInt(path.parse(f).name.split("-")[0].trim());
+                    let exp: string = path.resolve(__dirname, "payloads", "E0", path.parse(f).name + ".ovl");
+                    fs.writeFileSync(exp, new MLPatchLib().apply(tools.decompressActorFileFromRom(evt.rom, target), patch));
+                }
+            });
+
+            // Jabu test shit
+            let test = new SmartBuffer().writeBuffer(tools.decompressDMAFileFromRom(evt.rom, 1203));
+            let fuck = 0;
+            let temp = Buffer.alloc(4);
+            console.log("Looking for actor list in map...");
+            while (fuck !== 1) {
+                let f = test.readUInt32BE();
+                temp.writeUInt32BE(f);
+                test.readUInt32BE();
+                fuck = temp.readUInt8(0);
+            }
+            test.readOffset = test.readOffset - 8;
+            console.log(`Found: 0x${test.readOffset.toString(16)}`);
+            test.readUInt8();
+            test.writeUInt8(0, test.readOffset);
+            tools.recompressDMAFileIntoRom(evt.rom, 1203, test.toBuffer());
+
+        } catch (err) {
+            this.ModLoader.logger.error(err.stack);
+        }
     }
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
@@ -699,11 +763,6 @@ export default class OotOnlineClient {
                 this.ModLoader.me.data["world"] = this.clientStorage.world;
                 if (!this.clientStorage.first_time_sync) {
                     return;
-                }
-                if (this.LobbyConfig.actor_syncing) {
-                    if (this.actorHooks){
-                        this.actorHooks.tick();
-                    }
                 }
                 if (this.LobbyConfig.data_syncing) {
                     this.autosaveSceneData();

@@ -9,7 +9,6 @@ import {
   InventoryItem,
   Scene,
 } from 'modloader64_api/OOT/OOTAPI';
-import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@OotOnline/common/save/IKeyRing';
@@ -39,11 +38,13 @@ export class Ooto_PuppetWrapperPacket extends UDPPacket {
 
 export class Ooto_ScenePacket extends Packet {
   scene: Scene;
+  room: number;
   age: Age;
 
-  constructor(lobby: string, scene: Scene, age: Age) {
+  constructor(lobby: string, scene: Scene, room: number, age: Age) {
     super('Ooto_ScenePacket', 'OotOnline', lobby, true);
     this.scene = scene;
+    this.room = room;
     this.age = age;
   }
 }
@@ -77,11 +78,15 @@ export class Ooto_DownloadResponsePacket extends Packet {
 
 export class Ooto_DownloadRequestPacket extends Packet {
 
+  scene: number;
+  room: number;
   save: Buffer;
 
-  constructor(lobby: string, save: Buffer) {
+  constructor(lobby: string, save: Buffer, scene: number, room: number) {
     super('Ooto_DownloadRequestPacket', 'OotOnline', lobby, false);
     this.save = save;
+    this.scene = scene;
+    this.room = room;
   }
 }
 
@@ -140,24 +145,6 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
   }
 }
 
-export class Ooto_ActorPacket extends Packet {
-  actorData: ActorPacketData;
-  scene: Scene;
-  room: number;
-
-  constructor(
-    data: ActorPacketData,
-    scene: Scene,
-    room: number,
-    lobby: string
-  ) {
-    super('Ooto_ActorPacket', 'OotOnline', lobby, true);
-    this.actorData = data;
-    this.scene = scene;
-    this.room = room;
-  }
-}
-
 export class Ooto_ActorDeadPacket extends Packet {
   actorUUID: string;
   scene: Scene;
@@ -166,23 +153,6 @@ export class Ooto_ActorDeadPacket extends Packet {
   constructor(aid: string, scene: number, room: number, lobby: string) {
     super('Ooto_ActorDeadPacket', 'OotOnline', lobby, true);
     this.actorUUID = aid;
-    this.scene = scene;
-    this.room = room;
-  }
-}
-
-export class Ooto_SpawnActorPacket extends Packet {
-  actorData: ActorPacketData;
-  room: number;
-  scene: Scene;
-  constructor(
-    data: ActorPacketData,
-    scene: Scene,
-    room: number,
-    lobby: string
-  ) {
-    super('Ooto_SpawnActorPacket', 'OotOnline', lobby, true);
-    this.actorData = data;
     this.scene = scene;
     this.room = room;
   }
