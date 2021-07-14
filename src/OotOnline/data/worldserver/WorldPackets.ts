@@ -1,5 +1,4 @@
 import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
-import { ActorSim } from "./ActorSim";
 import { ActorSpawn } from "./ActorSpawn";
 
 export class Z64O_WorldActorSpawnPacket extends Packet{

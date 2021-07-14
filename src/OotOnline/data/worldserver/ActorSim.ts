@@ -7,14 +7,16 @@ import { Math3D } from "./transliteration/Math3D";
 import { Z64O_WorldActorSyncPacket } from "./WorldPackets";
 import { OOTO_PRIVATE_EVENTS, SendToScene } from "../InternalAPI";
 import { SmartBuffer } from 'smart-buffer';
-import { OotOnlineStorage } from "@OotOnline/OotOnlineStorage";
-import { MLRefHolder } from "./WorldServer";
+import { parentPort } from 'worker_threads';
 
-export interface IActorSimImpl {
+export interface IActorSimImplServer {
     generatePacket(): Z64O_WorldActorSyncPacket;
+    processPacketServer(actor: ActorSim, packet: Z64O_WorldActorSyncPacket): void;
+    onTickServer(playerList: Array<string>): void;
+}
+
+export interface IActorSimImplClient{
     processPacketClient(ModLoader: IModLoaderAPI, actor: ActorSim, packet: Z64O_WorldActorSyncPacket): void;
-    processPacketServer(ModLoader: IModLoaderAPI, actor: ActorSim, packet: Z64O_WorldActorSyncPacket): void;
-    onTickServer(ModLoader: IModLoaderAPI, playerList: Array<string>): void;
     onTickClient(ModLoader: IModLoaderAPI): void;
 }
 
@@ -40,7 +42,41 @@ const BUBBLE_PACK: any = {
     0x1F0: 0x4  // state (u32)
 }
 
-export class En_Bubble_Instance implements IActorSimImpl {
+export class En_Bubble_Client_Instance implements IActorSimImplClient{
+    buf: SmartBuffer = new SmartBuffer();
+    sim: ActorSim;
+
+    constructor(simu: ActorSim){
+        this.sim = simu;
+    }
+
+    processPacketClient(ModLoader: IModLoaderAPI, sim: ActorSim, packet: Z64O_WorldActorSyncPacket): void {
+        // Client side shit.
+        
+        if (packet.state !== undefined) sim.actor.rdramWrite32(0x1F0, packet.state)
+        this.buf.clear();
+        if (packet.struct === undefined) return;
+        this.buf.writeBuffer(packet.struct);
+        Object.keys(BUBBLE_PACK).forEach((key: string)=>{
+            let offset: number = parseInt(key);
+            let size: number = BUBBLE_PACK[key];
+            let data: Buffer = this.buf.readBuffer(size);
+            sim.actor.rdramWriteBuffer(offset, data);
+        });
+    }
+
+    onTickClient(ModLoader: IModLoaderAPI): void {
+        if (this.sim.actor.rdramRead32(0x1F8) == En_Bubble_ClientMessage.POP) {
+            this.sim.actor.rdramWrite32(0x1F8, 0)
+
+            // tell server that I popped
+            let packet: Z64O_WorldActorSyncPacket = new Z64O_WorldActorSyncPacket(this.sim.world, this.sim.scene, this.sim.room, this.sim.uuid, En_Bubble_State.STATE_POP, undefined, this.sim.lobby)
+            ModLoader.clientSide.sendPacket(packet);
+        }
+    }
+}
+
+export class En_Bubble_Instance implements IActorSimImplServer {
     actionFunc: Function
     explosionCountdown: number
     bounceCount: number
@@ -169,7 +205,7 @@ export class En_Bubble_Instance implements IActorSimImpl {
             this.state = En_Bubble_State.STATE_REALLYDEAD
             console.log("Bubble is _really_ dead")
             let packet = this.generatePacket();
-            MLRefHolder.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE, new SendToScene(packet, this.sim.scene));
+            parentPort!.postMessage({id: "TO_SCENE", data: {packet: JSON.stringify(packet), scene: this.sim.scene}});
         }
     }
 
@@ -210,22 +246,7 @@ export class En_Bubble_Instance implements IActorSimImpl {
         return p;
     }
 
-    processPacketClient(ModLoader: IModLoaderAPI, sim: ActorSim, packet: Z64O_WorldActorSyncPacket): void {
-        // Client side shit.
-        
-        if (packet.state !== undefined) sim.actor.rdramWrite32(0x1F0, packet.state)
-        this.buf.clear();
-        if (packet.struct === undefined) return;
-        this.buf.writeBuffer(packet.struct);
-        Object.keys(BUBBLE_PACK).forEach((key: string)=>{
-            let offset: number = parseInt(key);
-            let size: number = BUBBLE_PACK[key];
-            let data: Buffer = this.buf.readBuffer(size);
-            sim.actor.rdramWriteBuffer(offset, data);
-        });
-    }
-
-    processPacketServer(ModLoader: IModLoaderAPI, sim: ActorSim, packet: Z64O_WorldActorSyncPacket): void {
+    processPacketServer(sim: ActorSim, packet: Z64O_WorldActorSyncPacket): void {
         if (packet.state == En_Bubble_State.STATE_POP) {
             this.explosionCountdown = 6
             this.state = En_Bubble_State.STATE_POP
@@ -234,65 +255,16 @@ export class En_Bubble_Instance implements IActorSimImpl {
 
             // send packet with updated info
             packet = this.generatePacket();
-            ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE, new SendToScene(packet, this.sim.scene));
+            parentPort!.postMessage({id: "TO_SCENE", data: {packet: JSON.stringify(packet), scene: this.sim.scene}});
         }
     }
 
-    onTickServer(ModLoader: IModLoaderAPI, players: Array<string>): void {
-
-        let storage: OotOnlineStorage = ModLoader.lobbyManager.getLobbyStorage(this.sim.lobby, MLRefHolder.parent) as OotOnlineStorage;
-        if (storage === null) {
-           return;
-        }
-
+    onTickServer(players: Array<string>): void {
         this.func_8002D7EC();
         this.actionFunc();
-        //this.sim.pos = new Vector3(-28 + (Math.sin(this.tick * 0.05) * 60), -257 + (Math.cos(this.tick * 0.05) * 60), -900 + (Math.cos(this.tick * 0.05) * 60))
-
-        let playerPos: Vector3 = new Vector3()
-        let closestDir = new Vector3()
-        let closestDist = -1
-        let closestUUID = ""
-
-        for (let index = 0; index < players.length; index++) {
-            let dir: Vector3;
-            let dist = 0;
-            let uuid = players[index]
-            let puppet = storage.playerPuppets.get(uuid)!;
-
-            playerPos.x = puppet.pos.x
-            playerPos.y = puppet.pos.y
-            playerPos.z = puppet.pos.z
-
-            dir = playerPos.minus(this.sim.pos);
-            dist = Math.abs(dir.magnitude());
-
-            if (dist < closestDist || closestDist == -1) {
-                closestDist = dist;
-                closestUUID = uuid;
-                closestDir = dir.normalized();
-            }
-        }
-
-        if (closestDist !== -1) {
-            // move towards player with lissajous deviation, which itself has each axis randomly offset
-            this.sim.vel = closestDir.multiplyN(50 * 0.05).plus(new Vector3(Math.cos(this.tick * 0.05 + this.cycleOffsetX) * 5 * 0.05, Math.cos(this.tick * 0.05 + this.cycleOffsetY) * 5 * 0.05, Math.sin(this.tick * 0.05 + this.cycleOffsetZ) * 5 * 0.05));
-        }
-
         let packet = this.generatePacket();
-        ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE, new SendToScene(packet, this.sim.scene));
-
+        parentPort!.postMessage({id: "TO_SCENE", data: {packet: JSON.stringify(packet), scene: this.sim.scene}});
         this.tick++
-    }
-
-    onTickClient(ModLoader: IModLoaderAPI): void {
-        if (this.sim.actor.rdramRead32(0x1F8) == En_Bubble_ClientMessage.POP) {
-            this.sim.actor.rdramWrite32(0x1F8, 0)
-
-            // tell server that I popped
-            let packet: Z64O_WorldActorSyncPacket = new Z64O_WorldActorSyncPacket(this.sim.world, this.sim.scene, this.sim.room, this.sim.uuid, En_Bubble_State.STATE_POP, undefined, this.sim.lobby)
-            ModLoader.clientSide.sendPacket(packet);
-        }
     }
 }
 
@@ -313,7 +285,7 @@ export class ActorSim {
     parent: string | undefined;
     state: number = 0;
     //
-    sim!: IActorSimImpl;
+    sim!: IActorSimImplServer | IActorSimImplClient;
     actor!: IActor;
 
     constructor(world: number, scene: number, room: number, lobby:string, actorID: number, pos: Vector3, rot: Vector3, variable: number, uuid: string) {
