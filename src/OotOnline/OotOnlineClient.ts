@@ -286,6 +286,9 @@ export default class OotOnlineClient {
                     this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
                 }
             }, 50);
+            this.ModLoader.utils.setTimeoutFrames(()=>{
+                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK, {});
+            }, 1);
         }
         this.ModLoader.clientSide.sendPacket(
             new Ooto_ScenePacket(
