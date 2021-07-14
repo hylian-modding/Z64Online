@@ -149,6 +149,8 @@ export class WorldEventRewards {
     }
 
     loadTickets() {
+        const homedir = require('os').homedir();
+        let backup = path.resolve(homedir, "Z64O_Reward_Tickets.pak");
         this.ModLoader.logger.info("Loading reward tickets...");
         this.allRewardTickets.clear();
         this.rewardTicketsByEvent.clear();
@@ -172,7 +174,11 @@ export class WorldEventRewards {
             }
         });
         if (!fs.existsSync("./storage/Z64O_Reward_Tickets.pak")) {
-            return;
+            if (fs.existsSync(backup)){
+                fs.copyFileSync(backup, path.resolve("./storage/Z64O_Reward_Tickets.pak"));
+            }else{
+                return;
+            }
         }
         let storage = new StorageContainer("Z64O_Reward_Tickets");
         this.rewardContainer = storage.loadObject() as RewardContainer;
@@ -207,6 +213,7 @@ export class WorldEventRewards {
                 this.rewardTicketsForEquipment.get(ticket.event)!.get(category)!.push(ticket);
             }
         }
+        fs.copyFileSync(path.resolve("./storage/Z64O_Reward_Tickets.pak"), backup);
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
