@@ -1,9 +1,8 @@
 import { IActor } from "modloader64_api/OOT/IActor"
 import { Puppet } from "./Puppet";
 import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
-import { IHorseData } from "@OotOnline/Z64API/IHorseData";
 
-export class HorseData implements IHorseData{
+export class HorseData{
 
     pointer: number;
     parent: Puppet;

@@ -19,7 +19,18 @@ export const enum OOTO_PRIVATE_EVENTS {
     DOING_SYNC_CHECK = "DOING_SYNC_CHECK",
     LOCK_ITEM_NOTIFICATIONS = "LOCK_ITEM_NOTIFICATIONS",
     SAVE_EXTERNAL_EVENT_DATA = "SAVE_EXTERNAL_EVENT_DATA",
-    GET_EXTERNAL_EVENT_DATA = "GET_EXTERNAL_EVENT_DATA"
+    GET_EXTERNAL_EVENT_DATA = "GET_EXTERNAL_EVENT_DATA",
+    SEND_TO_SCENE = "SEND_TO_SCENE"
+}
+
+export class SendToScene{
+    packet: IPacketHeader;
+    scene: number;
+
+    constructor(packet: IPacketHeader, scene: number){
+        this.packet = packet;
+        this.scene = scene;
+    }
 }
 
 export interface RewardTicket {

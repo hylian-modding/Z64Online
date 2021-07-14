@@ -13,26 +13,17 @@ import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@OotOnline/common/save/IKeyRing';
 
-export class Ooto_PuppetPacket {
+export class Ooto_PuppetPacket extends Packet{
   data: PuppetData;
   horse_data!: HorseData;
 
   constructor(puppetData: PuppetData, lobby: string) {
+    super('Ooto_PuppetPacket', 'OotO', lobby, true);
     this.data = puppetData;
   }
 
   setHorseData(horse: HorseData) {
     this.horse_data = horse;
-  }
-}
-
-export class Ooto_PuppetWrapperPacket extends UDPPacket {
-
-  data: string;
-
-  constructor(packet: Ooto_PuppetPacket, lobby: string) {
-    super('Ooto_PuppetPacket', 'OotOnline', lobby, false);
-    this.data = JSON.stringify(packet);
   }
 }
 

@@ -11,11 +11,13 @@ import { IPuppet } from '@OotOnline/Z64API/IPuppet';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { AgeorForm } from '@OotOnline/common/types/Types';
 import { ALL_PUPPETS_INVISIBLE } from './PuppetOverlord';
+import { IPuppetData } from '@OotOnline/Z64API/IPuppetData';
+import { IHorseData } from '@OotOnline/Z64API/IHorseData';
 
 export class Puppet implements IPuppet {
   player: INetworkPlayer;
   id: string;
-  data: PuppetData;
+  data: IPuppetData;
   isSpawned = false;
   isSpawning = false;
   isShoveled = false;
@@ -23,7 +25,7 @@ export class Puppet implements IPuppet {
   core: IOOTCore;
   void!: Vector3;
   ModLoader: IModLoaderAPI;
-  horse: HorseData | undefined;
+  horse: IHorseData | undefined;
   horseSpawning: boolean = false;
   parent: IZ64OnlineHelpers;
   renderFn: number = -1;
@@ -43,6 +45,9 @@ export class Puppet implements IPuppet {
     this.core = core;
     this.id = this.ModLoader.utils.getUUID();
     this.parent = parent;
+  }
+
+  debug_movePuppetToPlayer(): void {
   }
 
   get age(): AgeorForm {
@@ -86,7 +91,7 @@ export class Puppet implements IPuppet {
     }
   }
 
-  processIncomingPuppetData(data: PuppetData) {
+  processIncomingPuppetData(data: IPuppetData) {
     if (this.isSpawned && !this.isShoveled) {
       this.data.ageLastFrame = this.age;
       let keys = Object.keys(data);
@@ -100,7 +105,7 @@ export class Puppet implements IPuppet {
     }
   }
 
-  processIncomingHorseData(data: HorseData) {
+  processIncomingHorseData(data: IHorseData) {
     if (this.horse === undefined && !this.horseSpawning) {
       this.horseSpawning = true;
       /*       (this.parent.getClientStorage()!.overlayCache["horse-3.ovl"] as IOvlPayloadResult).spawn(this.parent.getClientStorage()!.overlayCache["horse-3.ovl"], (success: boolean, result: number) => {

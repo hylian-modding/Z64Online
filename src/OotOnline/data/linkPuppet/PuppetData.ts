@@ -5,8 +5,8 @@ import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/Z64API/OotoAPI';
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
-import { IPuppetData } from '@OotOnline/Z64API/IPuppetData';
 import { AgeorForm } from '@OotOnline/common/types/Types';
+import Vector3 from 'modloader64_api/math/Vector3';
 
 interface SyncData {
 	lengths: any;
@@ -17,7 +17,7 @@ interface SyncData {
 const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetFields.json"));
 const dummy_buffer: Buffer = Buffer.alloc(0xFF);
 
-export class PuppetData implements IPuppetData{
+export class PuppetData{
 	parent: Puppet;
 	pointer: number;
 	ModLoader: IModLoaderAPI;
@@ -30,7 +30,7 @@ export class PuppetData implements IPuppetData{
 	tickRate: number = 20;
 	tickCount: number = 0;
 
-	private readonly copyFields: string[] = new Array<string>();
+	copyFields: string[] = new Array<string>();
 
 	constructor(parent: Puppet, pointer: number, ModLoader: IModLoaderAPI) {
 		this.parent = parent;
@@ -39,6 +39,7 @@ export class PuppetData implements IPuppetData{
 		this.buf = new SmartBuffer();
 		this.header = new SmartBuffer();
 		this.copyFields.push("bundle");
+		this.copyFields.push("pos");
 		let keys = Object.keys(SYNC_DATA.sources);
 		for (let i = 0; i < keys.length; i++) {
 			this.localCache.set(keys[i], dummy_buffer);
@@ -123,6 +124,14 @@ export class PuppetData implements IPuppetData{
 				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
 			}
 		}
+	}
+
+	get pos(){
+		return this.ModLoader.math.rdramReadV3(0x801DAA54);
+	}
+
+	set pos(vec: Vector3){
+		
 	}
 
 	toJSON() {

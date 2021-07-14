@@ -1,5 +1,6 @@
 import { IKeyRing } from './common/save/IKeyRing';
 import { IOOTSyncSave } from './common/types/OotAliases';
+import { PuppetServerInstance } from './data/linkPuppet/PuppetOverlord';
 import { WorldServer } from './data/worldserver/WorldServer';
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 
@@ -7,6 +8,7 @@ export class OotOnlineStorage extends OotOnlineStorageBase {
   networkPlayerInstances: any = {};
   players: any = {};
   players_rooms: any = {};
+  playerPuppets: Map<string, PuppetServerInstance> = new Map();
   worlds: Array<OotOnlineSave_Server> = [];
   worldServer: WorldServer = new WorldServer();
 }

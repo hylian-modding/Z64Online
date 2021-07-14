@@ -6,7 +6,7 @@ export class ActorSpawn {
     pos: Vector3;
     rot: Vector3;
     variable: number;
-    dummy: boolean = false;
+    uuid: string = "";
 
     constructor(actorID: number, pos: Vector3, rot: Vector3, variable: number) {
         this.actorID = actorID;

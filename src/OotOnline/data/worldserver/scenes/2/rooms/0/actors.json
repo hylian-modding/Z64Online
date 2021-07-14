@@ -1,6 +1,6 @@
 [
   {
-    "actorID": 14,
+    "actorID": 45,
     "pos": {
       "x": -133,
       "y": -330,
@@ -11,11 +11,10 @@
       "y": 0,
       "z": 0
     },
-    "variable": 65280,
-    "dummy": true
+    "variable": 65535
   },
   {
-    "actorID": 14,
+    "actorID": 45,
     "pos": {
       "x": 110,
       "y": -330,
@@ -26,8 +25,7 @@
       "y": 0,
       "z": 0
     },
-    "variable": 65280,
-    "dummy": true
+    "variable": 65535
   },
   {
     "actorID": 230,
@@ -55,8 +53,7 @@
       "y": 0,
       "z": 0
     },
-    "variable": 65535,
-    "dummy": true
+    "variable": 65535
   },
   {
     "actorID": 45,
@@ -70,7 +67,6 @@
       "y": 0,
       "z": 0
     },
-    "variable": 65535,
-    "dummy": true
+    "variable": 65535
   }
 ]

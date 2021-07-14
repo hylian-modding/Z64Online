@@ -1,4 +1,4 @@
-import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from 'modloader64_api/EventHandler';
+import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { OotOnlineSave_Server, OotOnlineStorage } from './OotOnlineStorage';
 import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
@@ -12,9 +12,9 @@ import { OotOSaveData } from './data/OotoSaveData';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { InventoryItem, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
-import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
+import { OOTO_PRIVATE_EVENTS, SendToScene } from './data/InternalAPI';
 import { PvPServer } from './data/pvp/PvPModule';
-import { WorldServer } from '@OotOnline/data/worldserver/WorldServer';
+import { MLRefHolder, WorldServer, WorldServerManager } from '@OotOnline/data/worldserver/WorldServer';
 
 export default class OotOnlineServer {
 
@@ -32,6 +32,8 @@ export default class OotOnlineServer {
     @SidedProxy(ProxySide.SERVER, PvPServer)
     pvp!: PvPServer;
     worldTick: any;
+    @SidedProxy(ProxySide.SERVER, WorldServerManager)
+    worldServer!: WorldServerManager;
     // #endif
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
@@ -54,6 +56,23 @@ export default class OotOnlineServer {
                 }
             });
         } catch (err) { }
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE)
+    onSendToScene(send: SendToScene){
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            send.packet.lobby,
+            this.parent
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        let players = Object.keys(storage.players);
+        for (let i = 0; i < players.length; i++){
+            if (storage.players[players[i]] === send.scene){
+                this.ModLoader.serverSide.sendPacketToSpecificPlayer(send.packet, storage.networkPlayerInstances[players[i]]);
+            }
+        }
     }
 
     @EventHandler(EventsServer.ON_LOBBY_CREATE)
@@ -88,6 +107,8 @@ export default class OotOnlineServer {
                 lobbies[names[i]]["ModLoader64"]["data"]["OotOnline"]["worldServer"].tick();
             }
         }, 50);
+        MLRefHolder.ModLoader = this.ModLoader;
+        MLRefHolder.parent = this.parent;
     }
 
     @EventHandler(EventsServer.ON_LOBBY_DATA)
@@ -133,7 +154,7 @@ export default class OotOnlineServer {
                 return;
             }
             storage.players[packet.player.uuid] = packet.scene;
-            storage.players[packet.player.uuid] = packet.room;
+            storage.players_rooms[packet.player.uuid] = packet.room;
             this.ModLoader.logger.info(
                 'Server: Player ' +
                 packet.player.nickname +
@@ -162,7 +183,7 @@ export default class OotOnlineServer {
             return;
         }
         let lastRoom = storage.players[packet.player.uuid];
-        storage.players[packet.player.uuid] = packet.room;
+        storage.players_rooms[packet.player.uuid] = packet.room;
         if (storage.worldServer.hasWorld(packet.player.data.world)){
             storage.worldServer.getWorld(packet.player.data.world).createScene(packet.scene);
             if (lastRoom !== undefined) storage.worldServer.getWorld(packet.player.data.world).getScene(packet.scene).getRoom(lastRoom).playerLeftRoom(packet.player);

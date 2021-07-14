@@ -2,29 +2,109 @@ import { Puppet } from './Puppet';
 import { IOOTCore, Age, OotEvents, Scene } from 'modloader64_api/OOT/OOTAPI';
 import { INetworkPlayer, NetworkHandler, ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
-import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, Ooto_PuppetWrapperPacket } from '../OotOPackets';
+import { Ooto_PuppetPacket, Ooto_SceneRequestPacket, Ooto_ScenePacket, OotO_RoomPacket } from '../OotOPackets';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit, onTick } from 'modloader64_api/PluginLifecycle';
-import { EventHandler, EventsClient, bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
+import { EventHandler, EventsClient, bus, PrivateEventHandler, EventsServer, EventServerJoined, EventServerLeft } from 'modloader64_api/EventHandler';
 import { Z64OnlineEvents, PuppetQuery } from '@OotOnline/Z64API/OotoAPI';
 import { IActor } from 'modloader64_api/OOT/IActor';
 import { HorseData } from './HorseData';
-import { ParentReference, ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
+import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { IZ64OnlineHelpers, OOTO_PRIVATE_EVENTS } from '../InternalAPI';
+import { OotOnlineStorage } from '@OotOnline/OotOnlineStorage';
+import Vector3 from 'modloader64_api/math/Vector3';
 
 export let ACTOR_T_PADDING: number = 0;
 export let ALL_PUPPETS_INVISIBLE: boolean = false;
 export let FORBID_PUPPETS: boolean = false;
 
+export class PuppetServerInstance {
+  player: INetworkPlayer;
+  scene: number = 0;
+  room: number = 0;
+  pos: Vector3 = new Vector3(0, 0, 0);
+
+  constructor(player: INetworkPlayer) {
+    this.player = player;
+  }
+}
+
 export class PuppetOverlordServer {
 
   @ParentReference()
   parent!: IZ64OnlineHelpers;
+  @ModLoaderAPIInject()
+  private ModLoader!: IModLoaderAPI;
 
   @ServerNetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_server(packet: Ooto_PuppetWrapperPacket) {
+  onPuppetData_server(packet: Ooto_PuppetPacket) {
     this.parent.sendPacketToPlayersInScene(packet);
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      this.parent as any
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    if (storage.playerPuppets.has(packet.player.uuid)){
+      storage.playerPuppets.get(packet.player.uuid)!.pos = packet.data.pos;
+    }
+  }
+
+  @ServerNetworkHandler('Ooto_ScenePacket')
+  onSceneChange_server(packet: Ooto_ScenePacket) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      this.parent as any
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    if (storage.playerPuppets.has(packet.player.uuid)){
+      storage.playerPuppets.get(packet.player.uuid)!.scene = packet.scene;
+      storage.playerPuppets.get(packet.player.uuid)!.room = packet.room;
+    }
+  }
+
+  @ServerNetworkHandler('OotO_RoomPacket')
+  onRoomChange_server(packet: OotO_RoomPacket) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      packet.lobby,
+      this.parent as any
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    if (storage.playerPuppets.has(packet.player.uuid)){
+      storage.playerPuppets.get(packet.player.uuid)!.room = packet.room;
+    }
+  }
+
+  @EventHandler(EventsServer.ON_LOBBY_JOIN)
+  onPlayerJoin_server(evt: EventServerJoined) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      evt.lobby,
+      this.parent as any
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    storage.playerPuppets.set(evt.player.uuid, new PuppetServerInstance(evt.player));
+  }
+
+  @EventHandler(EventsServer.ON_LOBBY_LEAVE)
+  onPlayerLeft_server(evt: EventServerLeft) {
+    let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+      evt.lobby,
+      this.parent as any
+    ) as OotOnlineStorage;
+    if (storage === null) {
+      return;
+    }
+    if (storage.playerPuppets.has(evt.player.uuid)){
+      storage.playerPuppets.delete(evt.player.uuid);
+    }
   }
 }
 
@@ -185,23 +265,23 @@ export class PuppetOverlordClient {
   }
 
   sendPuppetPacket() {
-    if (!this.amIAlone) {
-      this.fakeClientPuppet.data.onTick();
-      let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
-      if (this.Epona !== undefined) {
-        packet.setHorseData(this.Epona);
-      }
-      this.ModLoader.clientSide.sendPacket(new Ooto_PuppetWrapperPacket(packet, this.ModLoader.clientLobby));
+/*     if (!this.amIAlone) {
+      
+    } */
+    this.fakeClientPuppet.data.onTick();
+    let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
+    if (this.Epona !== undefined) {
+       packet.setHorseData(this.Epona);
     }
+    this.ModLoader.clientSide.sendPacket(packet);
   }
 
-  processPuppetPacket(packet: Ooto_PuppetWrapperPacket) {
+  processPuppetPacket(packet: Ooto_PuppetPacket) {
     if (this.puppets.has(packet.player.uuid)) {
       let puppet: Puppet = this.puppets.get(packet.player.uuid)!;
-      let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
-      puppet.processIncomingPuppetData(actualPacket.data);
-      if (actualPacket.horse_data !== undefined) {
-        puppet.processIncomingHorseData(actualPacket.horse_data);
+      puppet.processIncomingPuppetData(packet.data);
+      if (packet.horse_data !== undefined) {
+        puppet.processIncomingHorseData(packet.horse_data);
       }
     }
   }
@@ -260,7 +340,7 @@ export class PuppetOverlordClient {
   }
 
   @NetworkHandler('Ooto_PuppetPacket')
-  onPuppetData_client(packet: Ooto_PuppetWrapperPacket) {
+  onPuppetData_client(packet: Ooto_PuppetPacket) {
     if (
       this.core.helper.isTitleScreen() ||
       this.core.helper.isPaused() ||
@@ -308,9 +388,9 @@ export class PuppetOverlordClient {
   }
 
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_POST)
-  onReset2(evt: any){
+  onReset2(evt: any) {
     this.localPlayerLoadingZone();
-    this.ModLoader.utils.setTimeoutFrames(()=>{
+    this.ModLoader.utils.setTimeoutFrames(() => {
       this.queuedSpawn = false;
     }, 50);
   }
@@ -358,12 +438,12 @@ export class PuppetOverlordClient {
   }
 
   @PrivateEventHandler(OOTO_PRIVATE_EVENTS.FORBID_PUPPETS)
-  toggleForbiddance(t: boolean){
+  toggleForbiddance(t: boolean) {
     FORBID_PUPPETS = t;
-    if (FORBID_PUPPETS){
+    if (FORBID_PUPPETS) {
       this.ModLoader.logger.debug("Puppet forbiddance true.");
       this.localPlayerLoadingZone();
-    }else{
+    } else {
       this.ModLoader.logger.debug("Puppet forbiddance false.");
     }
   }
