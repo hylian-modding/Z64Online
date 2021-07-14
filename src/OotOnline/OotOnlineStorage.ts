@@ -1,11 +1,13 @@
 import { IKeyRing } from './common/save/IKeyRing';
 import { IOOTSyncSave } from './common/types/OotAliases';
+import { WorldServer } from './data/worldserver/WorldServer';
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 
 export class OotOnlineStorage extends OotOnlineStorageBase {
   networkPlayerInstances: any = {};
   players: any = {};
   worlds: Array<OotOnlineSave_Server> = [];
+  worldServer: WorldServer = new WorldServer();
 }
 
 export class OotOnlineSave_Server {
