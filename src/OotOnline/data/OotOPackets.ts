@@ -49,6 +49,19 @@ export class Ooto_ScenePacket extends Packet {
   }
 }
 
+export class OotO_RoomPacket extends Packet{
+  scene: Scene;
+  room: number;
+  age: Age;
+
+  constructor(lobby: string, scene: Scene, room: number, age: Age) {
+    super('OotO_RoomPacket', 'OotOnline', lobby, false);
+    this.scene = scene;
+    this.room = room;
+    this.age = age;
+  }
+}
+
 export class Ooto_SceneRequestPacket extends Packet {
   constructor(lobby: string) {
     super('Ooto_SceneRequestPacket', 'OotOnline', lobby, true);

@@ -6,6 +6,7 @@ import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 export class OotOnlineStorage extends OotOnlineStorageBase {
   networkPlayerInstances: any = {};
   players: any = {};
+  players_rooms: any = {};
   worlds: Array<OotOnlineSave_Server> = [];
   worldServer: WorldServer = new WorldServer();
 }

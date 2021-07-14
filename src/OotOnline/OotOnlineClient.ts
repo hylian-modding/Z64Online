@@ -21,7 +21,7 @@ import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { EmoteManager } from './data/emotes/emoteManager';
 import { OotOSaveData } from './data/OotoSaveData';
-import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
+import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_RoomPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
@@ -312,6 +312,18 @@ export default class OotOnlineClient {
             );
         }
         this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
+    }
+
+    @EventHandler(OotEvents.ON_ROOM_CHANGE)
+    onRoomChange(room: number){
+        this.ModLoader.clientSide.sendPacket(
+            new OotO_RoomPacket(
+                this.ModLoader.clientLobby,
+                this.core.global.scene,
+                this.core.global.room,
+                this.core.save.age
+            )
+        );
     }
 
     @NetworkHandler('Ooto_ScenePacket')
