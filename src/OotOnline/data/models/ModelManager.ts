@@ -38,6 +38,7 @@ import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
 import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
 import RomFlags from '@OotOnline/data/RomFlags';
+import { OOTO_PRIVATE_EVENTS } from '../InternalAPI';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -327,6 +328,15 @@ export class ModelManagerClient {
     this.allocationManager.unregisterModel(ref);
   }
 
+  @PrivateEventHandler(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK)
+  onToggleLock() {
+    this.lockManager = !this.lockManager;
+    this.ModLoader.logger.debug(`Costume Manager lock state ${this.lockManager}`);
+    if (!this.lockManager) {
+      this.onSceneChange(-1);
+    }
+  }
+
   private startTitleScreenCheck() {
     if (this.managerDisabled) return;
     if (this.titleScreenFix) return;
@@ -336,6 +346,7 @@ export class ModelManagerClient {
         this.ModLoader.utils.clearIntervalFrames(this.titleScreenFix);
         this.titleScreenFix = undefined;
         bus.emit(Z64OnlineEvents.ON_MODEL_MANAGER_READY, {});
+        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK, {});
       }
     }, 1);
   }
@@ -727,9 +738,9 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
-      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined){
+      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
         let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.link.tunic);
-        if (r2.hash !== evt.ref.hash){
+        if (r2.hash !== evt.ref.hash) {
           this.allocationManager.SetLocalPlayerModel(Age.ADULT, r2);
         }
       }
@@ -765,9 +776,9 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
-      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined){
+      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
         let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.link.tunic);
-        if (r2.hash !== evt.ref.hash){
+        if (r2.hash !== evt.ref.hash) {
           this.allocationManager.SetLocalPlayerModel(Age.CHILD, r2);
         }
       }
@@ -852,6 +863,7 @@ export class ModelManagerClient {
   @onTick()
   onTick() {
     if (this.managerDisabled) return;
+    if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       this.allocationManager.getLocalPlayerData().currentScript!.onTick();
     }
@@ -860,6 +872,7 @@ export class ModelManagerClient {
   @EventHandler(OotEvents.ON_DAY_TRANSITION)
   onDay() {
     if (this.managerDisabled) return;
+    if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onDay(ref);
@@ -878,6 +891,7 @@ export class ModelManagerClient {
   @EventHandler(OotEvents.ON_NIGHT_TRANSITION)
   onNight() {
     if (this.managerDisabled) return;
+    if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onNight(ref);
@@ -896,6 +910,7 @@ export class ModelManagerClient {
   @EventHandler(OotEvents.ON_HEALTH_CHANGE)
   onHealth(health: number) {
     if (this.managerDisabled) return;
+    if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onHealthChanged(this.core.save.heart_containers * 0x10, health, ref);
@@ -914,6 +929,7 @@ export class ModelManagerClient {
   @EventHandler(OotEvents.ON_TUNIC_CHANGE)
   onTunic(tunic: Tunic) {
     if (this.managerDisabled) return;
+    if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.core.save.age === 0 ? this.allocationManager.getLocalPlayerData().adult : this.allocationManager.getLocalPlayerData().child;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(ref, tunic);

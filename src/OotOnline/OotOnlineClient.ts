@@ -289,6 +289,9 @@ export default class OotOnlineClient {
                     this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.isMultiworld, RomFlags.isVanilla));
                 }
             }, 50);
+            this.ModLoader.utils.setTimeoutFrames(()=>{
+                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK, {});
+            }, 1);
         }
         this.ModLoader.clientSide.sendPacket(
             new Ooto_ScenePacket(
