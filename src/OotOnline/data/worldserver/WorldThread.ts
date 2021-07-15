@@ -2,13 +2,15 @@ import { parentPort } from 'worker_threads';
 import path from 'path';
 import fs from 'fs';
 import { ActorSpawn } from './ActorSpawn';
-import { ActorSim, En_Bubble_Instance, IActorSimImplServer } from './ActorSim';
-import { INetworkPlayer, IToPlayer } from 'modloader64_api/NetworkHandler';
+import { ActorSim, IActorSim, IActorSimImplServer } from './ActorSim';
+import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import crypto from 'crypto';
 import { EventsServer } from 'modloader64_api/EventHandler';
 import { OotO_RoomPacket, Ooto_ScenePacket } from '../OotOPackets';
 import { Z64O_WorldActorSpawnPacket, Z64O_WorldActorSyncPacket } from './WorldPackets';
 import { ThreadData } from './ThreadData';
+import { En_Bubble_Server } from './actors/En_Bubble';
+import Vector3 from 'modloader64_api/math/Vector3';
 
 const byteToHex: Array<string> = [];
 for (var i = 0; i < 256; ++i) {
@@ -52,10 +54,10 @@ export class UUID {
 }
 
 export class ActorSimReg {
-    static map: Map<number, new (simu: ActorSim) => IActorSimImplServer> = new Map();
+    static map: Map<number, new (sim: IActorSim) => IActorSimImplServer> = new Map();
 }
 
-ActorSimReg.map.set(0x2D, En_Bubble_Instance);
+ActorSimReg.map.set(0x2D, En_Bubble_Server);
 
 export class ActorList {
     actorSpawnParams: Array<ActorSpawn> = [];
@@ -84,28 +86,31 @@ export class RoomInstance {
         if (this.players.length === 0) {
             this.actorList.actors.splice(0, this.actorList.actors.length - 1);
             for (let i = 0; i < this.actorList.actorSpawnParams.length; i++) {
-                let sim = new ActorSim(this.world, this.scene, this.room, lobby, this.actorList.actorSpawnParams[i].actorID, this.actorList.actorSpawnParams[i].pos, this.actorList.actorSpawnParams[i].rot, this.actorList.actorSpawnParams[i].variable, UUID.v4());
+                let sim = new ActorSim(this.world, this.scene, this.room, lobby, this.actorList.actorSpawnParams[i].actorID, UUID.v4());
                 this.actorList.actorSpawnParams[i].uuid = sim.uuid;
                 if (ActorSimReg.map.has(this.actorList.actorSpawnParams[i].actorID)) {
                     let n = ActorSimReg.map.get(this.actorList.actorSpawnParams[i].actorID)!;
                     sim.sim = new n(sim);
+                    sim.sim.pos = this.actorList.actorSpawnParams[i].pos
+                    sim.sim.rot = this.actorList.actorSpawnParams[i].rot
                 }
                 this.actorList.actors.push(sim);
             }
         }
         this.players.push(player.uuid);
-        parentPort!.postMessage({ id: "TO_PLAYER", data: { packet: JSON.stringify(new Z64O_WorldActorSpawnPacket(this.world, this.scene, this.room, this.actorList.actorSpawnParams, "")), player }});
+        parentPort!.postMessage({ id: "TO_PLAYER", data: { packet: JSON.stringify(new Z64O_WorldActorSpawnPacket(this.world, this.scene, this.room, "", this.actorList.actorSpawnParams)), player }});
     }
+
     playerLeftRoom(player: INetworkPlayer) {
         let i = this.players.indexOf(player.uuid);
         if (i > -1) this.players.splice(i, 1);
     }
 
-    tick() {
+    tick(tickTime: number) {
         if (this.actorList.actors.length === 0) return;
         for (let i = 0; i < this.actorList.actors.length; i++) {
             if (this.actorList.actors[i].sim !== undefined) {
-                (this.actorList.actors[i].sim as IActorSimImplServer)!.onTickServer(this.players);
+                (this.actorList.actors[i].sim as IActorSimImplServer)!.onTickServer(tickTime, this.players);
             }
         }
     }
@@ -144,10 +149,10 @@ export class SceneInstance {
         }
     }
 
-    tick() {
+    tick(tickTime: number) {
         for (let i = 0; i < this.rooms.length; i++) {
             if (this.rooms[i] !== undefined && this.rooms[i].players.length > 0) {
-                this.rooms[i].tick();
+                this.rooms[i].tick(tickTime);
             }
         }
     }
@@ -165,10 +170,10 @@ export class WorldInstance {
         return this.scenes[scene];
     }
 
-    tick() {
+    tick(tickTime: number) {
         for (let i = 0; i < this.scenes.length; i++) {
             if (this.scenes[i] !== undefined && this.scenes[i].players.length > 0) {
-                this.scenes[i].tick();
+                this.scenes[i].tick(tickTime);
             }
         }
     }
@@ -191,9 +196,9 @@ export class WorldServer {
         return this.worlds.get(world);
     }
 
-    tick() {
+    tick(tickTime: number) {
         for (const [key, value] of this.worlds.entries()) {
-            value.tick();
+            value.tick(tickTime);
         }
     }
 }
@@ -258,12 +263,14 @@ let mp2: MonkeyPatch_Parse = new MonkeyPatch_Parse();
 mp2.patch();
 
 let servers: Map<string, WorldServer> = new Map();
+let tickrate: number = 20
+let tickTime = 1 / tickrate
 
 let tick = setInterval(() => {
     for (const [key, value] of servers.entries()) {
-        value.tick();
+        value.tick(tickTime);
     }
-}, 50);
+}, tickTime * 1000);
 
 parentPort!.on('message', (data: ThreadData) => {
     switch (data.id) {
@@ -287,7 +294,7 @@ parentPort!.on('message', (data: ThreadData) => {
             let sync_packet: Z64O_WorldActorSyncPacket = data.data;
             let sim = (servers.get(sync_packet.lobby)!.getWorld(sync_packet.player.data.world)!.getScene(sync_packet.scene).getRoom(sync_packet.room).actorLookup(sync_packet.uuid));
             if (sim === undefined) break;
-            (sim!.sim as IActorSimImplServer).processPacketServer(sim!, sync_packet);
+            (sim!.sim as IActorSimImplServer).processPacketServer(sync_packet);
             break;
     }
 });
