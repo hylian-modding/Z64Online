@@ -213,7 +213,11 @@ export class WorldEventRewards {
                 this.rewardTicketsForEquipment.get(ticket.event)!.get(category)!.push(ticket);
             }
         }
-        fs.copyFileSync(path.resolve("./storage/Z64O_Reward_Tickets.pak"), backup);
+        let r = path.resolve("./storage/Z64O_Reward_Tickets.pak");
+        if (fs.existsSync(r)){
+            this.ModLoader.logger.debug(`Backed up event rewards to ${backup}`);
+            fs.copyFileSync(r, backup);
+        }
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
