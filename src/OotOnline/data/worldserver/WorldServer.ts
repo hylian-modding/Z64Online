@@ -1,6 +1,6 @@
 import { ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
-import { Z64O_WorldActorSyncPacket } from './WorldPackets';
+import { Z64O_WorldActorPossessedPacket, Z64O_WorldActorPossessedUpdatePacket, Z64O_WorldActorSyncPacket } from './WorldPackets';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
@@ -60,6 +60,16 @@ export class WorldServerManager {
     @ServerNetworkHandler('Z64O_WorldActorSyncPacket')
     onPacket(packet: Z64O_WorldActorSyncPacket) {
         this.thread.postMessage({id: 'Z64O_WorldActorSyncPacket', data: packet});
+    }
+
+    @ServerNetworkHandler('Z64O_WorldActorPossessedPacket')
+    onZ64O_WorldActorPossessedPacket(packet: Z64O_WorldActorPossessedPacket) {
+        this.thread.postMessage({id: 'Z64O_WorldActorPossessedPacket', data: packet});
+    }
+
+    @ServerNetworkHandler('Z64O_WorldActorPossessedUpdatePacket')
+    onZ64O_WorldActorPossessedUpdatePacket(packet: Z64O_WorldActorPossessedUpdatePacket) {
+        this.thread.postMessage({id: 'Z64O_WorldActorPossessedUpdatePacket', data: packet});
     }
 
 }

@@ -7,7 +7,7 @@ import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import crypto from 'crypto';
 import { EventsServer } from 'modloader64_api/EventHandler';
 import { OotO_RoomPacket, Ooto_ScenePacket } from '../OotOPackets';
-import { Z64O_WorldActorSpawnPacket, Z64O_WorldActorSyncPacket } from './WorldPackets';
+import { Z64O_WorldActorPossessedPacket, Z64O_WorldActorPossessedUpdatePacket, Z64O_WorldActorSpawnPacket, Z64O_WorldActorSyncPacket } from './WorldPackets';
 import { ThreadData } from './ThreadData';
 import { En_Bubble_Server } from './actors/En_Bubble';
 import Vector3 from 'modloader64_api/math/Vector3';
@@ -273,6 +273,8 @@ let tick = setInterval(() => {
 }, tickTime * 1000);
 
 parentPort!.on('message', (data: ThreadData) => {
+    let sim;
+
     switch (data.id) {
         case EventsServer.ON_LOBBY_CREATE:
             console.log("Creating world server for lobby " + data.data + ".");
@@ -291,10 +293,26 @@ parentPort!.on('message', (data: ThreadData) => {
             servers.get(scene_packet.lobby)!.getWorld(scene_packet.player.data.world)!.getScene(scene_packet.scene).getRoom(scene_packet.room).playerEnteredRoom(scene_packet.player, scene_packet.lobby);
             break;
         case "Z64O_WorldActorSyncPacket":
+            if (data.data.world == undefined) data.data.world = 0
             let sync_packet: Z64O_WorldActorSyncPacket = data.data;
-            let sim = (servers.get(sync_packet.lobby)!.getWorld(sync_packet.player.data.world)!.getScene(sync_packet.scene).getRoom(sync_packet.room).actorLookup(sync_packet.uuid));
+            sim = (servers.get(sync_packet.lobby)!.getWorld(sync_packet.player.data.world)!.getScene(sync_packet.scene).getRoom(sync_packet.room).actorLookup(sync_packet.uuid));
             if (sim === undefined) break;
-            (sim!.sim as IActorSimImplServer).processPacketServer(sync_packet);
+            (sim!.sim as IActorSimImplServer).processZ64O_WorldActorSyncPacket(sync_packet);
             break;
+        case "Z64O_WorldActorPossessedPacket":
+            if (data.data.world == undefined) data.data.world = 0
+            let possessed_packet: Z64O_WorldActorPossessedPacket = data.data;
+            sim = (servers.get(possessed_packet.lobby)!.getWorld(possessed_packet.player.data.world)!.getScene(possessed_packet.scene).getRoom(possessed_packet.room).actorLookup(possessed_packet.uuid));
+            if (sim === undefined) break;
+            (sim!.sim as IActorSimImplServer).processZ64O_WorldActorPossessedPacket(possessed_packet);
+            break;
+        case "Z64O_WorldActorPossessedUpdatePacket":
+            if (data.data.world == undefined) data.data.world = 0
+            let possess_update_packet: Z64O_WorldActorPossessedUpdatePacket = data.data;
+            sim = (servers.get(possess_update_packet.lobby)!.getWorld(possess_update_packet.player.data.world)!.getScene(possess_update_packet.scene).getRoom(possess_update_packet.room).actorLookup(possess_update_packet.uuid));
+            if (sim === undefined) break;
+            (sim!.sim as IActorSimImplServer).processZ64O_WorldActorPossessedUpdatePacket(possess_update_packet);
+            break;
+
     }
 });

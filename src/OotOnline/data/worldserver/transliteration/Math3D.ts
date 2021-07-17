@@ -1,6 +1,5 @@
 import Vector3 from "modloader64_api/math/Vector3";
 import { number_ref } from "modloader64_api/Sylvain/ImGui";
-import { IS_ZERO } from "./Macros";
 
 export class Math3D {
     /**
@@ -20,7 +19,7 @@ export class Math3D {
         let magProduct: number = 0
 
         magProduct = a.magnitude() * b.magnitude()
-        if (IS_ZERO(magProduct)) {
+        if (/*IS_ZERO(magProduct)*/ magProduct < 0.008) {
             dst[0] = 0.0;
             return true;
         }

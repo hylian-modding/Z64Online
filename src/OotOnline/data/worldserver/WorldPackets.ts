@@ -39,5 +39,44 @@ export class Z64O_WorldActorSyncPacket extends Packet {
         this.rot = rot;
         this.vel = vel;
     }
+}
 
+export class Z64O_WorldActorPossessedPacket extends Packet {
+    world: number;
+    scene: number;
+    room: number;
+    uuid: string;
+    possessed: number;
+
+    constructor(world: number, scene: number, room: number, uuid: string, lobby: string, possessed: number) {
+        super('Z64O_WorldActorPossessedPacket', 'Z64O', lobby, false);
+        this.world = world;
+        this.scene = scene;
+        this.room = room;
+        this.uuid = uuid;
+        this.possessed = possessed;
+    }
+}
+
+export class Z64O_WorldActorPossessedUpdatePacket extends Packet {
+    world: number;
+    scene: number;
+    room: number;
+    uuid: string;
+    pos: Vector3;
+    rot: Vector3;
+    vel: Vector3;
+    struct: any;
+
+    constructor(world: number, scene: number, room: number, uuid: string, lobby: string, pos: Vector3, rot: Vector3, vel: Vector3, struct: any) {
+        super('Z64O_WorldActorPossessedUpdatePacket', 'Z64O', lobby, false);
+        this.world = world;
+        this.scene = scene;
+        this.room = room;
+        this.uuid = uuid;
+        this.struct = struct;
+        this.pos = pos;
+        this.rot = rot;
+        this.vel = vel;
+    }
 }
