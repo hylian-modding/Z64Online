@@ -6,9 +6,9 @@ import { Z64LibSupportedGames } from "Z64Lib/API/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Z64RomTools";
 import { OOTO_PRIVATE_EVENTS } from "../InternalAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { OotRDetector } from "@OotOnline/compat/OotR";
+import RomFlags from '@OotOnline/data/RomFlags';
 
-export default class AnimationManager{
+export default class AnimationManager {
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
@@ -18,21 +18,21 @@ export default class AnimationManager{
     disabled: boolean = false;
 
     @EventHandler(Z64OnlineEvents.CUSTOM_ANIMATION_BANK_REGISTER)
-    onRegister(evt: Z64_AnimationBank){
+    onRegister(evt: Z64_AnimationBank) {
         this.banks.set(evt.name, evt.bank);
     }
 
     @Init()
-    onInit(){
+    onInit() {
         this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER, this.banks);
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
-    onRom(evt: any){
+    onRom(evt: any) {
         let rom: Buffer = evt.rom;
         let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-        if (!OotRDetector.isOotR(evt.rom)){
-            if (tools.decompressDMAFileFromRom(rom, 7).byteLength !== 0x265c30){
+        if (RomFlags.isOotR) {
+            if (tools.decompressDMAFileFromRom(rom, 7).byteLength !== 0x265c30) {
                 this.disabled = true;
             }
         }
@@ -44,11 +44,11 @@ export default class AnimationManager{
     }
 
     @EventHandler(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK)
-    onApply(evt: Z64_AnimationBank){
+    onApply(evt: Z64_AnimationBank) {
         if (this.disabled) return;
-        if (evt.bank.byteLength === 1){
+        if (evt.bank.byteLength === 1) {
             this.ModLoader.rom.romWriteBuffer(this.animationBankAddress, this.vanillaBank);
-        }else{
+        } else {
             this.ModLoader.rom.romWriteBuffer(this.animationBankAddress, evt.bank);
         }
         this.ModLoader.publicBus.emit(Z64OnlineEvents.CUSTOM_ANIMATION_BANK_EQUIPPED, this.animationBankAddress);

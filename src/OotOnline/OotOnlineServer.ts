@@ -6,7 +6,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
 import { Z64_PlayerScene, Z64OnlineEvents } from './Z64API/OotoAPI';
-import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket } from './data/OotOPackets';
+import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket, OotO_RomFlagsPacket } from './data/OotOPackets';
 import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
@@ -180,7 +180,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }
@@ -193,11 +193,35 @@ export default class OotOnlineServer {
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         } else {
             // Game is not running, give me your data.
-            world.save = JSON.parse(packet.save.toString());
+            let data = JSON.parse(packet.save.toString());
+            Object.keys(data).forEach((key: string) => {
+                let obj = data[key];
+                world.save[key] = obj;
+            });
             world.saveGameSetup = true;
             let resp = new Ooto_DownloadResponsePacket(packet.lobby, true);
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
+    }
+
+    @ServerNetworkHandler('OotO_RomFlagsPacket')
+    onRomFlags_server(packet: OotO_RomFlagsPacket) {
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
+            this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
+            storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
+        }
+        let world = storage.worlds[packet.player.data.world];
+        world.save.isVanilla = packet.isVanilla;
+        world.save.isOotR = packet.isOotR;
+        world.save.hasFastBunHood = packet.hasFastBunHood;
+        world.save.isMultiworld = packet.isMultiworld;
     }
 
     //------------------------------
@@ -213,7 +237,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
             storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
@@ -224,7 +248,7 @@ export default class OotOnlineServer {
     }
 
     @ServerNetworkHandler('OotO_UpdateKeyringPacket')
-    onKeySync_Server(packet: OotO_UpdateKeyringPacket){
+    onKeySync_Server(packet: OotO_UpdateKeyringPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -232,7 +256,7 @@ export default class OotOnlineServer {
         if (storage === null) {
             return;
         }
-        if (typeof storage.worlds[packet.player.data.world] === 'undefined'){
+        if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
             this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }

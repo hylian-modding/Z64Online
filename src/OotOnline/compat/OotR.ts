@@ -1,6 +1,6 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { zeldaString } from 'modloader64_api/OOT/ZeldaString';
-import {  IOOTCore } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
 import { IOOTSaveContext } from "@OotOnline/common/types/OotAliases";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@OotOnline/Z64API/OotoAPI";
 import { EventHandler } from "modloader64_api/EventHandler";
@@ -10,6 +10,7 @@ import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { IZ64OnlineHelpers } from "@OotOnline/data/InternalAPI";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { InjectCore } from "modloader64_api/CoreInjection";
+import RomFlags from "@OotOnline/data/RomFlags";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -41,7 +42,7 @@ export class Multiworld {
 
     @EventHandler(Z64OnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES)
     onPlayerChangedScenes(change: Z64_PlayerScene) {
-        if (!TriforceHuntHelper.isRandomizer) return;
+        if (!RomFlags.isMultiworld) return;
         this.setPlayerName(change.player.nickname, change.player.data.world);
     }
 
@@ -78,7 +79,7 @@ export class Multiworld {
     processIncomingItem(item: MultiworldItem, save: IOOTSaveContext) {
         let incoming_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 8;
         let incoming_player_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 6;
-        if (item.item > 0){
+        if (item.item > 0) {
             this.ModLoader.emulator.rdramWrite16(incoming_addr, item.item);
             this.ModLoader.emulator.rdramWrite16(incoming_player_addr, item.dest);
         }
@@ -95,30 +96,10 @@ export class MultiworldItem {
     }
 }
 
-export class OotRDetector{
-    static isOotR(rom: Buffer){
-        let start = 0x20;
-        let terminator = 0;
-        let byte = rom.readUInt8(start);
-        let prog = 0;
-        while (byte !== terminator) {
-            prog++;
-            byte = rom.readUInt8(start + prog);
-        }
-        prog++;
-        if (rom.readUInt8(start + prog) > 0) {
-            return true;
-        }
-        return false;
-    }
-}
-
 export class TriforceHuntHelper {
 
-    static isRandomizer: boolean = false;
-
     static getTriforcePieces(ModLoader: IModLoaderAPI) {
-        if (this.isRandomizer) {
+        if (RomFlags.isOotR) {
             return ModLoader.emulator.rdramRead16(0x8011AE96);
         } else {
             return 0;
@@ -126,13 +107,13 @@ export class TriforceHuntHelper {
     }
 
     static setTriforcePieces(ModLoader: IModLoaderAPI, pieces: number) {
-        if (this.isRandomizer) {
+        if (RomFlags.isOotR) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, pieces);
         }
     }
 
     static incrementTriforcePieces(ModLoader: IModLoaderAPI) {
-        if (this.isRandomizer) {
+        if (RomFlags.isOotR) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, ModLoader.emulator.rdramRead16(0x8011AE96) + 1);
         }
     }

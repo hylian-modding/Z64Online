@@ -9,6 +9,8 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
+import RomFlags from "@OotOnline/data/RomFlags";
+import bitwise from 'bitwise';
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -165,25 +167,25 @@ export class OotOSaveData implements ISaveSyncData {
   }
 
   forceOverrideSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
-    try{
+    try {
       this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
       let obj: IOOTSyncSave = JSON.parse(save.toString());
-  
+
       storage.death_counter = obj.death_counter;
       storage.heart_containers = obj.heart_containers;
       storage.magic_meter_size = obj.magic_meter_size;
       storage.magic_beans_purchased = obj.magic_beans_purchased;
       storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
-  
+
       this.processBoolLoop_OVERWRITE(obj.swords, storage.swords);
       this.processBoolLoop_OVERWRITE(obj.shields, storage.shields);
       this.processBoolLoop_OVERWRITE(obj.tunics, storage.tunics);
       this.processBoolLoop_OVERWRITE(obj.boots, storage.boots);
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
-  
+
       storage.poe_collector_score = obj.poe_collector_score;
-  
+
       storage.permSceneData = obj.permSceneData;
       storage.eventFlags = obj.eventFlags;
       storage.itemFlags = obj.itemFlags;
@@ -191,35 +193,38 @@ export class OotOSaveData implements ISaveSyncData {
       storage.skulltulaFlags = obj.skulltulaFlags;
       storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
       storage.scarecrowsSong = obj.scarecrowsSong;
-  
+
       if (side === ProxySide.CLIENT) {
         this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
         TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
       }
-    }catch(err){
+    } catch (err) {
       console.log(err.stack);
     }
   }
 
-  isMask(item: InventoryItem){
-    
+  isMask(item: InventoryItem) {
+
   }
 
   mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true) {
-    try{
+    try {
       let obj: IOOTSyncSave = JSON.parse(save.toString());
 
       // Another title screen safety check.
-      if (obj.checksum === 0){
+      if (obj.checksum === 0) {
         return;
       }
 
       if (obj.death_counter > storage.death_counter) {
         storage.death_counter = obj.death_counter;
       }
-      if (obj.heart_containers > storage.heart_containers) {
+      if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
         storage.heart_containers = obj.heart_containers;
         bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+      }
+      if (storage.heart_containers > 20) {
+        storage.heart_containers = 20;
       }
       if (obj.magic_meter_size > storage.magic_meter_size) {
         storage.magic_meter_size = obj.magic_meter_size;
@@ -239,65 +244,74 @@ export class OotOSaveData implements ISaveSyncData {
       this.processBoolLoop(obj.tunics, storage.tunics);
       this.processBoolLoop(obj.boots, storage.boots);
       this.processMixedLoop(obj.questStatus, storage.questStatus, []);
-  
-      if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
-        storage.inventory.bottle_1 = obj.inventory.bottle_1;
-      }
-  
-      if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
-        storage.inventory.bottle_2 = obj.inventory.bottle_2;
-      }
-  
-      if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
-        storage.inventory.bottle_3 = obj.inventory.bottle_3;
-      }
-  
-      if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
-        storage.inventory.bottle_4 = obj.inventory.bottle_4;
-      }
-  
-      this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
-  
-      if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
-        storage.questStatus.heartPieces = 0;
-      }
-  
-      if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-        let shouldSync = true;
-        if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1){
-          if (!syncMasks){
-            shouldSync = false;
-          }
-          if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1){
-            shouldSync = false;
-          }
-        }
-        if (shouldSync){
-          if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
-            storage.inventory.childTradeItem = obj.inventory.childTradeItem;
-          }
-        }
-      }
-  
-      if (obj.inventory.adultTradeItem !== InventoryItem.SOLD_OUT) {
-        if (this.isGreaterThan(obj.inventory.adultTradeItem, storage.inventory.adultTradeItem)) {
-          storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
-        }
-      }
-  
+
       let permSceneData = storage.permSceneData;
       let eventFlags = storage.eventFlags;
       let itemFlags = storage.itemFlags;
       let infTable = storage.infTable;
       let skulltulaFlags = storage.skulltulaFlags;
       let scarecrowsSong = storage.scarecrowsSong;
-  
+
       let backupTriforcePieces: number | undefined;
-  
+
+      if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
+        storage.inventory.bottle_1 = obj.inventory.bottle_1;
+      }
+
+      if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
+        storage.inventory.bottle_2 = obj.inventory.bottle_2;
+      }
+
+      if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
+        storage.inventory.bottle_3 = obj.inventory.bottle_3;
+      }
+
+      if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
+        storage.inventory.bottle_4 = obj.inventory.bottle_4;
+      }
+
+      this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
+
+      if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
+        storage.questStatus.heartPieces = 0;
+      }
+
+      if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
+        let shouldSync = true;
+        if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1) {
+          if (!syncMasks) {
+            shouldSync = false;
+          }
+          if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1) {
+            shouldSync = false;
+          }
+        }
+        if (shouldSync) {
+          if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
+            if (side === ProxySide.SERVER) { // Deku Scrub Theater rewards' flag check
+              if (obj.itemFlags.readUInt8(2) < 64 && obj.inventory.childTradeItem > InventoryItem.SKULL_MASK) {
+                obj.inventory.childTradeItem = InventoryItem.SKULL_MASK;
+              } else if (obj.itemFlags.readUInt8(2) < 128 && obj.inventory.childTradeItem > InventoryItem.MASK_OF_TRUTH) {
+                obj.inventory.childTradeItem = InventoryItem.MASK_OF_TRUTH;
+              } else if (RomFlags.hasFastBunHood) {
+                obj.inventory.childTradeItem = InventoryItem.BUNNY_HOOD;
+              }
+            }
+            storage.inventory.childTradeItem = obj.inventory.childTradeItem;
+          }
+        }
+      }
+
+      if (obj.inventory.adultTradeItem !== InventoryItem.SOLD_OUT) {
+        if (this.isGreaterThan(obj.inventory.adultTradeItem, storage.inventory.adultTradeItem)) {
+          storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
+        }
+      }
+
       if (side === ProxySide.CLIENT) {
         backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
       }
-  
+
       for (let i = 0; i < obj.permSceneData.byteLength; i += 0x1C) {
         let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
         let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
@@ -319,6 +333,10 @@ export class OotOSaveData implements ISaveSyncData {
         for (let j = 0; j < struct.switches.byteLength; j++) {
           if (struct.switches[j] !== cur.switches[j]) {
             cur.switches[j] |= struct.switches[j];
+            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+              if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 4, bitwise.integer.getBit(struct.switches[j], 4)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
+              if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
+            }
           }
         }
         for (let j = 0; j < struct.visited_floors.byteLength; j++) {
@@ -341,6 +359,10 @@ export class OotOSaveData implements ISaveSyncData {
         let value = obj.eventFlags.readUInt8(i);
         if (eventFlags[i] !== value) {
           eventFlags[i] |= value;
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (i == 2) bitwise.integer.setBit(eventFlags[i], 4, bitwise.integer.getBit(value, 4)); // Rented Horse from Ingo Flag?
+            if (i == 13) bitwise.integer.setBit(eventFlags[i], 2, bitwise.integer.getBit(value, 2)); // Played Song of Storms in Kakariko Windmill Flag?
+          }
         }
       }
       if (obj.eventFlags[18] > storage.eventFlags[18]) {
@@ -356,6 +378,9 @@ export class OotOSaveData implements ISaveSyncData {
         let value = obj.infTable.readUInt8(i);
         if (infTable[i] !== value) {
           infTable[i] |= value;
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (i == 15) bitwise.integer.setBit(infTable[i], 6, bitwise.integer.getBit(value, 6)); // Hyrule Castle Gate Flag?
+          }
         }
       }
       for (let i = 0; i < obj.skulltulaFlags.byteLength; i++) {
@@ -416,10 +441,6 @@ export class OotOSaveData implements ISaveSyncData {
         }
       }
 
-      if (storage.heart_containers > 20){
-        storage.heart_containers = 20;
-      }
-  
       storage.permSceneData = permSceneData;
       storage.eventFlags = eventFlags;
       storage.itemFlags = itemFlags;
@@ -442,7 +463,7 @@ export class OotOSaveData implements ISaveSyncData {
           storage.triforcePieces = obj.triforcePieces;
         }
       }
-    }catch(err){
+    } catch (err) {
       console.log(err.stack);
     }
 

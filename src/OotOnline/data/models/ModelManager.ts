@@ -37,7 +37,7 @@ import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
 import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
 import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
-import { OotRDetector } from '@OotOnline/compat/OotR';
+import RomFlags from '@OotOnline/data/RomFlags';
 import { OOTO_PRIVATE_EVENTS } from '../InternalAPI';
 
 export class ModelManagerClient {
@@ -329,10 +329,10 @@ export class ModelManagerClient {
   }
 
   @PrivateEventHandler(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK)
-  onToggleLock(){
+  onToggleLock() {
     this.lockManager = !this.lockManager;
     this.ModLoader.logger.debug(`Costume Manager lock state ${this.lockManager}`);
-    if (!this.lockManager){
+    if (!this.lockManager) {
       this.onSceneChange(-1);
     }
   }
@@ -354,8 +354,8 @@ export class ModelManagerClient {
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-    if (!OotRDetector.isOotR(evt.rom)){
-      if (tools.decompressDMAFileFromRom(evt.rom, 502).byteLength !== 0x37800 || tools.decompressDMAFileFromRom(evt.rom, 503).byteLength !== 0x2CF80){
+    if (RomFlags.isOotR) {
+      if (tools.decompressDMAFileFromRom(evt.rom, 502).byteLength !== 0x37800 || tools.decompressDMAFileFromRom(evt.rom, 503).byteLength !== 0x2CF80) {
         this.managerDisabled = true;
       }
     }
@@ -549,7 +549,7 @@ export class ModelManagerClient {
 
     fn(player.adult, adult_generator_table, this.ModLoader);
     fn(player.child, child_generator_table, this.ModLoader);
-    if (this.mainConfig.diagnosticMode){
+    if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
   }
@@ -567,7 +567,7 @@ export class ModelManagerClient {
     } else if (puppet.age === Age.ADULT) {
       this.setPuppetModel(player, this.puppetAdult, Age.ADULT, Age.ADULT);
     }
-    if (this.mainConfig.diagnosticMode){
+    if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
   }
@@ -597,7 +597,7 @@ export class ModelManagerClient {
   }
 
   private getEquipmentManifest(ref: IModelReference) {
-    try{
+    try {
       let rp = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, this.allocationManager.getModelSize(ref));
       let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
       let index = rp.indexOf(eq);
@@ -614,7 +614,7 @@ export class ModelManagerClient {
       let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
       let cat = CostumeHelper.getEquipmentCategory(rp);
       return { manifest: data, model: rp, lut: start, cat };
-    }catch(err){
+    } catch (err) {
       this.ModLoader.logger.error(err.stack);
       return undefined;
     }
@@ -723,8 +723,8 @@ export class ModelManagerClient {
       }, 1);
     }
     bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.allocationManager.getLocalPlayerData().adult, this.allocationManager.getLocalPlayerData().child));
-    
-    if (this.mainConfig.diagnosticMode){
+
+    if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
   }
@@ -738,9 +738,9 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.clientStorage.adultModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
-      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined){
+      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
         let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.link.tunic);
-        if (r2.hash !== evt.ref.hash){
+        if (r2.hash !== evt.ref.hash) {
           this.allocationManager.SetLocalPlayerModel(Age.ADULT, r2);
         }
       }
@@ -776,9 +776,9 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.clientStorage.childModel = this.allocationManager.getModel(evt.ref)!.zobj;
       this.proxyNeedsSync = true;
-      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined){
+      if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
         let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.link.tunic);
-        if (r2.hash !== evt.ref.hash){
+        if (r2.hash !== evt.ref.hash) {
           this.allocationManager.SetLocalPlayerModel(Age.CHILD, r2);
         }
       }
@@ -819,7 +819,7 @@ export class ModelManagerClient {
     this.allocationManager.deallocateAllModels();
     this.allocationManager.deallocateAllPlayers();
     this.allocationManager.doGC();
-    if (!this.managerDisabled){
+    if (!this.managerDisabled) {
       this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("adult_rom")!, fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Adult_Proxy.zobj")));
       this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get("child_rom")!, fs.readFileSync(path.resolve(__dirname, "zobjs", "OotO_Child_Proxy_v2.zobj")));
     }
