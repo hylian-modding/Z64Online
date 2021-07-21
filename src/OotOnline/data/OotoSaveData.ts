@@ -9,7 +9,7 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@OotOnline/compat/OotR";
-import { IOOTSyncSaveServer } from "@OotOnline/OotOnlineStorage";
+import RomFlags from "@OotOnline/data/RomFlags";
 import bitwise from 'bitwise';
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -219,9 +219,12 @@ export class OotOSaveData implements ISaveSyncData {
       if (obj.death_counter > storage.death_counter) {
         storage.death_counter = obj.death_counter;
       }
-      if (obj.heart_containers > storage.heart_containers) {
+      if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
         storage.heart_containers = obj.heart_containers;
         bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+      }
+      if (storage.heart_containers > 20) {
+        storage.heart_containers = 20;
       }
       if (obj.magic_meter_size > storage.magic_meter_size) {
         storage.magic_meter_size = obj.magic_meter_size;
@@ -241,19 +244,28 @@ export class OotOSaveData implements ISaveSyncData {
       this.processBoolLoop(obj.tunics, storage.tunics);
       this.processBoolLoop(obj.boots, storage.boots);
       this.processMixedLoop(obj.questStatus, storage.questStatus, []);
-  
+
+      let permSceneData = storage.permSceneData;
+      let eventFlags = storage.eventFlags;
+      let itemFlags = storage.itemFlags;
+      let infTable = storage.infTable;
+      let skulltulaFlags = storage.skulltulaFlags;
+      let scarecrowsSong = storage.scarecrowsSong;
+
+      let backupTriforcePieces: number | undefined;
+
       if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
         storage.inventory.bottle_1 = obj.inventory.bottle_1;
       }
-  
+
       if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
         storage.inventory.bottle_2 = obj.inventory.bottle_2;
       }
-  
+
       if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
         storage.inventory.bottle_3 = obj.inventory.bottle_3;
       }
-  
+
       if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
         storage.inventory.bottle_4 = obj.inventory.bottle_4;
       }
@@ -276,6 +288,15 @@ export class OotOSaveData implements ISaveSyncData {
         }
         if (shouldSync) {
           if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
+            if (side === ProxySide.SERVER) { // Deku Scrub Theater rewards' flag check
+              if (obj.itemFlags.readUInt8(2) < 64 && obj.inventory.childTradeItem > InventoryItem.SKULL_MASK) {
+                obj.inventory.childTradeItem = InventoryItem.SKULL_MASK;
+              } else if (obj.itemFlags.readUInt8(2) < 128 && obj.inventory.childTradeItem > InventoryItem.MASK_OF_TRUTH) {
+                obj.inventory.childTradeItem = InventoryItem.MASK_OF_TRUTH;
+              } else if (RomFlags.hasFastBunHood) {
+                obj.inventory.childTradeItem = InventoryItem.BUNNY_HOOD;
+              }
+            }
             storage.inventory.childTradeItem = obj.inventory.childTradeItem;
           }
         }
@@ -286,15 +307,6 @@ export class OotOSaveData implements ISaveSyncData {
           storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
         }
       }
-
-      let permSceneData = storage.permSceneData;
-      let eventFlags = storage.eventFlags;
-      let itemFlags = storage.itemFlags;
-      let infTable = storage.infTable;
-      let skulltulaFlags = storage.skulltulaFlags;
-      let scarecrowsSong = storage.scarecrowsSong;
-
-      let backupTriforcePieces: number | undefined;
 
       if (side === ProxySide.CLIENT) {
         backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
@@ -321,6 +333,10 @@ export class OotOSaveData implements ISaveSyncData {
         for (let j = 0; j < struct.switches.byteLength; j++) {
           if (struct.switches[j] !== cur.switches[j]) {
             cur.switches[j] |= struct.switches[j];
+            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+              if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 4, bitwise.integer.getBit(struct.switches[j], 4)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
+              if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
+            }
           }
         }
         for (let j = 0; j < struct.visited_floors.byteLength; j++) {
@@ -343,6 +359,10 @@ export class OotOSaveData implements ISaveSyncData {
         let value = obj.eventFlags.readUInt8(i);
         if (eventFlags[i] !== value) {
           eventFlags[i] |= value;
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (i == 2) bitwise.integer.setBit(eventFlags[i], 4, bitwise.integer.getBit(value, 4)); // Rented Horse from Ingo Flag?
+            if (i == 13) bitwise.integer.setBit(eventFlags[i], 2, bitwise.integer.getBit(value, 2)); // Played Song of Storms in Kakariko Windmill Flag?
+          }
         }
       }
       if (obj.eventFlags[18] > storage.eventFlags[18]) {
@@ -358,6 +378,9 @@ export class OotOSaveData implements ISaveSyncData {
         let value = obj.infTable.readUInt8(i);
         if (infTable[i] !== value) {
           infTable[i] |= value;
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (i == 15) bitwise.integer.setBit(infTable[i], 6, bitwise.integer.getBit(value, 6)); // Hyrule Castle Gate Flag?
+          }
         }
       }
       for (let i = 0; i < obj.skulltulaFlags.byteLength; i++) {
@@ -418,21 +441,6 @@ export class OotOSaveData implements ISaveSyncData {
         }
       }
 
-      if (side === ProxySide.SERVER) {
-        let _save = (storage as IOOTSyncSaveServer);
-        if (_save.isVanilla || _save.isOotR) {
-          // Correct water temple flags.
-          let struct = new SceneStruct(obj.permSceneData.slice(5 * 0x1C, (5 * 0x1C) + 0x1C));
-          let byte = struct.switches.readUInt8(3);
-          let struct2 = new SceneStruct(storage.permSceneData.slice(5 * 0x1C, (5 * 0x1C) + 0x1C));
-          struct2.switches.writeUInt8(byte, 3);
-        }
-      }
-
-      if (storage.heart_containers > 20){
-        storage.heart_containers = 20;
-      }
-  
       storage.permSceneData = permSceneData;
       storage.eventFlags = eventFlags;
       storage.itemFlags = itemFlags;
