@@ -334,7 +334,7 @@ export class OotOSaveData implements ISaveSyncData {
           if (struct.switches[j] !== cur.switches[j]) {
             cur.switches[j] |= struct.switches[j];
             if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
-              if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 4, bitwise.integer.getBit(struct.switches[j], 4)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
+              if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 3, bitwise.integer.getBit(struct.switches[j], 3)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
               if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
             }
           }
@@ -360,8 +360,8 @@ export class OotOSaveData implements ISaveSyncData {
         if (eventFlags[i] !== value) {
           eventFlags[i] |= value;
           if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
-            if (i == 2) bitwise.integer.setBit(eventFlags[i], 4, bitwise.integer.getBit(value, 4)); // Rented Horse from Ingo Flag?
-            if (i == 13) bitwise.integer.setBit(eventFlags[i], 2, bitwise.integer.getBit(value, 2)); // Played Song of Storms in Kakariko Windmill Flag?
+            if (i == 2) bitwise.integer.setBit(eventFlags[i], 3, bitwise.integer.getBit(value, 3)); // Rented Horse from Ingo Flag?
+            if (i == 13) bitwise.integer.setBit(eventFlags[i], 5, bitwise.integer.getBit(value, 5)); // Played Song of Storms in Kakariko Windmill Flag?
           }
         }
       }
@@ -379,7 +379,7 @@ export class OotOSaveData implements ISaveSyncData {
         if (infTable[i] !== value) {
           infTable[i] |= value;
           if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
-            if (i == 15) bitwise.integer.setBit(infTable[i], 6, bitwise.integer.getBit(value, 6)); // Hyrule Castle Gate Flag?
+            if (i == 15) bitwise.integer.setBit(infTable[i], 1, bitwise.integer.getBit(value, 1)); // Hyrule Castle Gate Flag?
           }
         }
       }
