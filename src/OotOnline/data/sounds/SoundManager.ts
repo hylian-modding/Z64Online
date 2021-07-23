@@ -5,7 +5,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { NetworkHandler, INetworkPlayer } from "modloader64_api/NetworkHandler";
 import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
-import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
+import { onTick, onViUpdate, Postinit } from 'modloader64_api/PluginLifecycle';
 import { Z64OnlineEvents, RemoteSoundPlayRequest } from "@OotOnline/Z64API/OotoAPI";
 import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
@@ -13,6 +13,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 import { SoundCategory_Adult, SoundCategory_Child } from "@OotOnline/data/sounds/SoundCategory";
+import { number_ref } from "modloader64_api/Sylvain/ImGui";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     totalSize: number;
@@ -49,6 +50,8 @@ export class SoundManagerClient {
     client_config!: OotOnlineConfigCategory;
     hasAdult: boolean = false;
     hasChild: boolean = false;
+    volume_local: number_ref = [1.0];
+    volume_remote: number_ref = [1.0];
 
     getRandomInt(min: number, max: number) {
         min = Math.ceil(min);
@@ -112,6 +115,7 @@ export class SoundManagerClient {
                 // Buffer 0xC
                 s.position = v;
                 s.minDistance = 250.0
+                s.volume = (Math.floor((this.volume_remote[0] * 100)));
                 s.play();
             }
         }
@@ -213,7 +217,9 @@ export class SoundManagerClient {
             if (this.sounds.has(this.core.link.current_sound_id)) {
                 let random = this.getRandomInt(0, this.sounds.get(this.core.link.current_sound_id)!.length - 1);
                 let sound: sf.Sound = this.sounds.get(this.core.link.current_sound_id)![random];
-                sound.position = this.core.link.position;
+                let raw = this.core.link.position.getRawPos();
+                let pos = new Vector3(raw.readFloatBE(0), raw.readFloatBE(4), raw.readFloatBE(8));
+                sound.position = pos;
                 sound.minDistance = 250.0
                 sound.play();
             }
@@ -221,9 +227,27 @@ export class SoundManagerClient {
 
         this.sounds.forEach((sound: sf.Sound[], key: number) => {
             for (let i = 0; i < sound.length; i++) {
-                sound[i].position = this.core.link.position;
+                sound[i].volume = (Math.floor(this.volume_local[0] * 100));
             }
         });
+    }
+
+    @onViUpdate()
+    onVi() {
+        if (this.ModLoader.ImGui.beginMainMenuBar()) {
+            if (this.ModLoader.ImGui.beginMenu("Mods")) {
+                if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                    if (this.ModLoader.ImGui.beginMenu("General Settings")) {
+                        this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", this.volume_local, 0.1, 1.0);
+                        this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", this.volume_remote, 0.1, 1.0);
+                        this.ModLoader.ImGui.endMenu();
+                    }
+                    this.ModLoader.ImGui.endMenu();
+                }
+                this.ModLoader.ImGui.endMenu();
+            }
+            this.ModLoader.ImGui.endMainMenuBar();
+        }
     }
 
 }
