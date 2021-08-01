@@ -35,6 +35,7 @@ import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import RomFlags from '@OotOnline/data/RomFlags';
 import zlib from 'zlib';
+import { CDNClient } from './common/cdn/CDNClient';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -70,6 +71,8 @@ export default class OotOnlineClient {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.CLIENT, PvPModule)
     pvp!: PvPModule;
+    @SidedProxy(ProxySide.CLIENT, CDNClient)
+    cdn!: CDNClient;
     // #endif
     @SidedProxy(ProxySide.CLIENT, Multiworld)
     multiworld!: Multiworld;

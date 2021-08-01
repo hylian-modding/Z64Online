@@ -39,6 +39,7 @@ import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } 
 import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
 import RomFlags from '@OotOnline/data/RomFlags';
 import { OOTO_PRIVATE_EVENTS } from '../InternalAPI';
+import { CDNClient } from '@OotOnline/common/cdn/CDNClient';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -198,6 +199,7 @@ export class ModelManagerClient {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
     let adult_path: string = path.join(this.cacheDir, "adult.zobj");
     let model: Buffer = fs.readFileSync(adult_path);
+    CDNClient.singleton.registerWithCache(model);
     let manifest: OOTAdultManifest = new OOTAdultManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       this.ModLoader.logger.info("(Adult) Setting up zobj proxy.");
@@ -227,6 +229,7 @@ export class ModelManagerClient {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
     let child_path: string = path.join(this.cacheDir, "child.zobj");
     let model: Buffer = fs.readFileSync(child_path);
+    CDNClient.singleton.registerWithCache(model);
     let manifest: OOTChildManifest = new OOTChildManifest();
     if (manifest.repoint(this.ModLoader, evt.rom, model)) {
       this.ModLoader.logger.info("(Child) Setting up zobj proxy.");
@@ -291,18 +294,58 @@ export class ModelManagerClient {
 
   // This function fires every 100 frames if we're using a zobj proxy.
   syncProxiedObject() {
-    if (this.managerDisabled) return;
     if (this.proxyNeedsSync) {
-      let def = zlib.deflateSync(this.clientStorage.adultModel);
-      this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(def, Age.ADULT, this.ModLoader.clientLobby, this.ModLoader.utils.hashBuffer(def), this.core.save.age));
-      let def2 = zlib.deflateSync(this.clientStorage.childModel);
-      this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(def2, Age.CHILD, this.ModLoader.clientLobby, this.ModLoader.utils.hashBuffer(def2), this.core.save.age));
-      let p = new Z64_EquipmentPakPacket(this.core.save.age, this.ModLoader.clientLobby);
-      this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference, key: string) => {
-        let model = this.allocationManager.getModel(value);
-        p.zobjs.push(zlib.deflateSync(model.zobj));
-      });
-      this.ModLoader.clientSide.sendPacket(p);
+      if (this.clientStorage.adultModel.byteLength > 1) {
+        let id = this.ModLoader.utils.hashBuffer(this.clientStorage.adultModel);
+        CDNClient.singleton.askCDN(this.clientStorage.adultModel).then((has: boolean) => {
+          if (!has) {
+            CDNClient.singleton.uploadFile(id, this.clientStorage.adultModel).then((done: boolean) => {
+              if (done) {
+                this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(Age.ADULT, this.ModLoader.clientLobby, id, this.core.save.age));
+              }
+            });
+          } else {
+            this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(Age.ADULT, this.ModLoader.clientLobby, id, this.core.save.age));
+          }
+        });
+      }
+      if (this.clientStorage.childModel.byteLength > 1) {
+        let id = this.ModLoader.utils.hashBuffer(this.clientStorage.childModel);
+        CDNClient.singleton.askCDN(this.clientStorage.childModel).then((has: boolean) => {
+          if (!has) {
+            CDNClient.singleton.uploadFile(id, this.clientStorage.childModel).then((done: boolean) => {
+              if (done) {
+                this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(Age.CHILD, this.ModLoader.clientLobby, id, this.core.save.age));
+              }
+            });
+          } else {
+            this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(Age.CHILD, this.ModLoader.clientLobby, id, this.core.save.age));
+          }
+        });
+      }
+      if (this.allocationManager.getLocalPlayerData().equipment.size > 0) {
+        this.clientStorage.equipmentHashes.length = 0;
+        this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference, key: string) => {
+          let model = this.allocationManager.getModel(value);
+          let id = this.ModLoader.utils.hashBuffer(model.zobj);
+          CDNClient.singleton.askCDN(model.zobj).then((has: boolean) => {
+            this.clientStorage.equipmentHashes.push(id);
+            if (!has) {
+              CDNClient.singleton.uploadFile(id, model.zobj).then((done: boolean) => {
+                if (done) {
+                  let p = new Z64_EquipmentPakPacket(this.core.save.age, this.ModLoader.clientLobby);
+                  p.ids = this.clientStorage.equipmentHashes;
+                  this.ModLoader.clientSide.sendPacket(p);
+                }
+              });
+            } else {
+              let p = new Z64_EquipmentPakPacket(this.core.save.age, this.ModLoader.clientLobby);
+              p.ids = this.clientStorage.equipmentHashes;
+              this.ModLoader.clientSide.sendPacket(p);
+            }
+          });
+        });
+      }
       this.proxyNeedsSync = false;
     }
   }
@@ -380,24 +423,24 @@ export class ModelManagerClient {
   @NetworkHandler('Z64OnlineLib_AllocateModelPacket')
   onModelAllocate_client(packet: Z64_AllocateModelPacket) {
     this.ModLoader.utils.setTimeoutFrames(() => {
-      let z = zlib.inflateSync(packet.model);
-      if (z.byteLength <= 1) return;
-      let player: ModelPlayer;
-      if (this.allocationManager.doesPlayerExist(packet.player)) {
-        player = this.allocationManager.getPlayer(packet.player)!;
-      } else {
-        player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
-      }
-      let model = this.allocationManager.registerModel(z)!;
-      if (packet.age === Age.CHILD) {
-        player.child = model;
-      } else if (packet.age === Age.ADULT) {
-        player.adult = model;
-      }
-      if (this.allocationManager.isPlayerAllocated(player)) {
-        this.setPuppetModel(player, model, packet.age, packet.ageThePlayerActuallyIs);
-      }
-    }, 20);
+      CDNClient.singleton.requestFile(packet.hash).then((buf: Buffer) => {
+        let player: ModelPlayer;
+        if (this.allocationManager.doesPlayerExist(packet.player)) {
+          player = this.allocationManager.getPlayer(packet.player)!;
+        } else {
+          player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
+        }
+        let model = this.allocationManager.registerModel(buf)!;
+        if (packet.age === Age.CHILD) {
+          player.child = model;
+        } else if (packet.age === Age.ADULT) {
+          player.adult = model;
+        }
+        if (this.allocationManager.isPlayerAllocated(player)) {
+          this.setPuppetModel(player, model, packet.age, packet.ageThePlayerActuallyIs);
+        }
+      });
+    }, 1);
   }
 
   @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
@@ -405,18 +448,19 @@ export class ModelManagerClient {
     this.ModLoader.utils.setTimeoutFrames(() => {
       let player = this.allocationManager.createPlayer(packet.player, this.puppetAdult, this.puppetChild)!;
       player.equipment.clear();
-      packet.zobjs.forEach((value: Buffer, index: number) => {
-        let def = zlib.inflateSync(value);
-        let model = this.allocationManager.registerModel(def)!;
-        model.loadModel();
-        let man = this.getEquipmentManifest(model);
-        if (man === undefined) return;
-        player.equipment.set(man.cat, model);
-        if (this.allocationManager.isPlayerAllocated(player)) {
-          this.setPuppetModel(player, packet.age === Age.ADULT ? player.adult : player.child, packet.age, packet.age);
-        }
+      packet.ids.forEach((id: string) => {
+        CDNClient.singleton.requestFile(id).then((buf: Buffer) => {
+          let model = this.allocationManager.registerModel(buf)!;
+          model.loadModel();
+          let man = this.getEquipmentManifest(model);
+          if (man === undefined) return;
+          player.equipment.set(man.cat, model);
+          if (this.allocationManager.isPlayerAllocated(player)) {
+            this.setPuppetModel(player, packet.age === Age.ADULT ? player.adult : player.child, packet.age, packet.age);
+          }
+        });
       });
-    }, 20);
+    }, 1);
   }
 
   @EventHandler(EventsClient.ON_PLAYER_LEAVE)
@@ -426,44 +470,7 @@ export class ModelManagerClient {
 
   @NetworkHandler("Z64OnlineLib_GiveModelPacket")
   onPlayerJoin_client(packet: Z64_GiveModelPacket) {
-    if (packet.target.uuid !== this.ModLoader.me.uuid) {
-      if (this.clientStorage.adultModel.byteLength > 1) {
-        let def = zlib.deflateSync(this.clientStorage.adultModel);
-        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
-          new Z64_AllocateModelPacket(
-            def,
-            Age.ADULT,
-            this.ModLoader.clientLobby,
-            this.ModLoader.utils.hashBuffer(def),
-            this.core.save.age
-          ), packet.target
-        );
-      }
-
-      if (this.clientStorage.childModel.byteLength > 1) {
-        let def = zlib.deflateSync(this.clientStorage.childModel);
-        this.ModLoader.clientSide.sendPacketToSpecificPlayer(
-          new Z64_AllocateModelPacket(
-            def,
-            Age.CHILD,
-            this.ModLoader.clientLobby,
-            this.ModLoader.utils.hashBuffer(def),
-            this.core.save.age
-          ),
-          packet.target
-        );
-      }
-    }
-    try {
-      let p = new Z64_EquipmentPakPacket(0x69, this.ModLoader.clientLobby);
-      this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference, key: string) => {
-        let model = this.allocationManager.getModel(value);
-        p.zobjs.push(zlib.deflateSync(model.zobj));
-      });
-      this.ModLoader.clientSide.sendPacketToSpecificPlayer(p, packet.target);
-    } catch (err) {
-      console.log(err.stack);
-    }
+    this.proxyNeedsSync = true;
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN)

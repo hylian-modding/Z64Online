@@ -16,6 +16,7 @@ import { EventController } from '../common/events/EventController';
 import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@OotOnline/data/InternalAPI';
 import { AssetContainer } from '../common/events/AssetContainer';
 import zlib from 'zlib';
+import { CDNClient } from '@OotOnline/common/cdn/CDNClient';
 
 export interface Z64_EventReward {
     name: string;
@@ -227,6 +228,16 @@ export class WorldEventRewards {
                 this.ModLoader.logger.debug("Loading locally saved assets...");
                 this.assets = new AssetContainer(this.ModLoader, this.core, () => {
                     this.loadTickets();
+                    this.assets.bundle.files.forEach((buf: Buffer, key: string) => {
+                        CDNClient.singleton.registerWithCache(buf);
+                    });
+                    this.compressedTicketCache.forEach((r: ScriptedReward)=>{
+                        Object.keys(r).forEach((key: string)=>{
+                            if (Buffer.isBuffer(r[key])){
+                                CDNClient.singleton.registerWithCache(r[key]);
+                            }
+                        });
+                    });
                 });
                 // Generate a junk url to trick the system into loading this anyway.
                 this.assets.url = "https://" + this.ModLoader.utils.getUUID() + ".fake/" + this.config.assetcache;

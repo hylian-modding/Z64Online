@@ -15,6 +15,7 @@ import { InventoryItem, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { PvPServer } from './data/pvp/PvPModule';
+import { CDNServer } from './common/cdn/CDNServer';
 
 export default class OotOnlineServer {
 
@@ -33,6 +34,8 @@ export default class OotOnlineServer {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.SERVER, PvPServer)
     pvp!: PvPServer;
+    @SidedProxy(ProxySide.SERVER, CDNServer)
+    cdn!: CDNServer;
     // #endif
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
