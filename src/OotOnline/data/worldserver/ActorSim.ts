@@ -2,6 +2,7 @@ import Vector3 from "modloader64_api/math/Vector3";
 import { IActor } from "modloader64_api/OOT/IActor";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { Z64O_WorldActorPossessedPacket, Z64O_WorldActorPossessedUpdatePacket, Z64O_WorldActorSyncPacket } from "./WorldPackets";
+import { ActorList } from "./WorldThread";
 
 export interface IGenericActor {
     actorID: number;
@@ -85,11 +86,12 @@ export interface IActorSimImplClient extends IGenericActorSim {
 }
 
 export interface IActorSimImplServer extends IGenericActorSim {
+    serverActorName: string;
     generatePacket(sim: IActorSim): Z64O_WorldActorSyncPacket;
     processZ64O_WorldActorSyncPacket(packet: Z64O_WorldActorSyncPacket): void;
     processZ64O_WorldActorPossessedPacket(packet: Z64O_WorldActorPossessedPacket): void;
     processZ64O_WorldActorPossessedUpdatePacket(packet: Z64O_WorldActorPossessedUpdatePacket): void;
-    onTickServer(tickTime: number, playerList: Array<string>): void;
+    onTickServer(tickTime: number, playerList: Array<string>, actorList: ActorList): void;
 }
 
 export interface IActorSim {

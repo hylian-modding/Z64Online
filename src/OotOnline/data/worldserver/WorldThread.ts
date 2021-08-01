@@ -110,7 +110,7 @@ export class RoomInstance {
         if (this.actorList.actors.length === 0) return;
         for (let i = 0; i < this.actorList.actors.length; i++) {
             if (this.actorList.actors[i].sim !== undefined) {
-                (this.actorList.actors[i].sim as IActorSimImplServer)!.onTickServer(tickTime, this.players);
+                (this.actorList.actors[i].sim as IActorSimImplServer)!.onTickServer(tickTime, this.players, this.actorList);
             }
         }
     }

@@ -7,6 +7,7 @@ import { Rand_S16Offset, Math_ApproachF } from "../transliteration/Math";
 import { Math3D } from "../transliteration/Math3D";
 import { Z64O_WorldActorPossessedPacket, Z64O_WorldActorPossessedUpdatePacket, Z64O_WorldActorSyncPacket } from "../WorldPackets";
 import { IActor } from "modloader64_api/OOT/IActor";
+import { ActorList } from "../WorldThread";
 
 enum En_Bubble_ClientMessage {
     NONE,
@@ -154,6 +155,7 @@ export class En_Bubble_Server implements IActorSimImplServer {
     vel_unscaled: Vector3 = new Vector3()
     possesed: number = 0;
     possesedBy: string = "";
+    serverActorName: string = "En_Bubble"
     rescaleVel: boolean = false;
 
     // server only data
@@ -335,7 +337,7 @@ export class En_Bubble_Server implements IActorSimImplServer {
         }
     }
 
-    onTickServer(tickTime: number, players: Array<string>): void {
+    onTickServer(tickTime: number, players: Array<string>, actorList: ActorList): void {
         this.func_8002D7EC();
 
         if (this.data.state >= En_Bubble_State.STATE_POP) {
