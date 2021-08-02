@@ -5,24 +5,23 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { NetworkHandler, INetworkPlayer } from "modloader64_api/NetworkHandler";
 import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
-import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
-import { Z64OnlineEvents, RemoteSoundPlayRequest } from "@OotOnline/common/api/Z64API";
+import { onTick, onViUpdate, Postinit } from 'modloader64_api/PluginLifecycle';
 import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
 import { SoundCategory_Adult, SoundCategory_Child } from "@OotOnline/data/sounds/SoundCategory";
+import { number_ref } from "modloader64_api/Sylvain/ImGui";
+import { CDNClient } from "@OotOnline/common/cdn/CDNClient";
+import { RemoteSoundPlayRequest, Z64OnlineEvents } from "@OotOnline/common/api/Z64API";
 
 export class OotO_SoundPackLoadPacket extends Packet {
-    totalSize: number;
-    // Key: number, Value: Array<Buffer>
-    sounds: any;
+    id: string;
 
-    constructor(sounds: any, totalSize: number, lobby: string) {
+    constructor(id: string, lobby: string) {
         super('OotO_SoundPackLoadPacket', 'OotOnline', lobby, true);
-        this.sounds = sounds;
-        this.totalSize = totalSize;
+        this.id = id;
     }
 }
 
@@ -49,6 +48,9 @@ export class SoundManagerClient {
     client_config!: OotOnlineConfigCategory;
     hasAdult: boolean = false;
     hasChild: boolean = false;
+    volume_local: number_ref = [1.0];
+    volume_remote: number_ref = [1.0];
+    currentID: string = "KILL";
 
     getRandomInt(min: number, max: number) {
         min = Math.ceil(min);
@@ -58,35 +60,38 @@ export class SoundManagerClient {
 
     @EventHandler(Z64OnlineEvents.ON_LOAD_SOUND_PACK)
     onSoundPackLoaded(evt: any) {
-        this.localSoundPaks.set(evt.id, evt.data);
+        try{
+            Object.keys(evt.data).forEach((key: string) => {
+                let arr: Array<Buffer> = evt.data[key];
+                for (let i = 0; i < arr.length; i++) {
+                    arr[i] = zlib.inflateSync(arr[i]);
+                }
+            });
+            this.localSoundPaks.set(evt.id, evt.data);
+        }catch(err){}
     }
 
     @NetworkHandler('OotO_SoundPackRequestPacket')
     onRequest(packet: OotO_SoundPackRequestPacket) {
-        try {
-            let size: number = 0;
-            Object.keys(this.rawSounds).forEach((key: string) => {
-                let arr: Array<Buffer> = this.rawSounds[key];
-                for (let i = 0; i < arr.length; i++) {
-                    size += arr[i].byteLength;
-                }
-            });
-            this.ModLoader.clientSide.sendPacketToSpecificPlayer(new OotO_SoundPackLoadPacket(this.rawSounds, size, this.ModLoader.clientLobby), packet.player);
-        } catch (err) { }
+        this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket(this.currentID, this.ModLoader.clientLobby));
     }
 
     @NetworkHandler("OotO_SoundPackLoadPacket")
     onSoundLoadPacket(packet: OotO_SoundPackLoadPacket) {
         this.PlayerSounds.set(packet.player.uuid, new Map<number, sf.Sound[]>());
-        Object.keys(packet.sounds).forEach((key: string) => {
-            this.PlayerSounds.get(packet.player.uuid)!.set(parseInt(key), []);
-            let arr: Array<Buffer> = packet.sounds[key];
-            this.ModLoader.logger.info("Loading " + arr.length + " sounds");
-            for (let i = 0; i < arr.length; i++) {
-                let raw: Buffer = zlib.inflateSync(arr[i]);
-                let s = this.ModLoader.sound.initSound(raw);
-                this.PlayerSounds.get(packet.player.uuid)!.get(parseInt(key))!.push(s);
-            }
+        if (packet.id === "KILL") return;
+        CDNClient.singleton.requestFile(packet.id).then((buf: Buffer) => {
+            let sounds = JSON.parse(buf.toString());
+            Object.keys(sounds).forEach((key: string) => {
+                this.PlayerSounds.get(packet.player.uuid)!.set(parseInt(key), []);
+                let arr: Array<Buffer> = sounds[key];
+                this.ModLoader.logger.info("Loading " + arr.length + " sounds");
+                for (let i = 0; i < arr.length; i++) {
+                    let raw: Buffer = zlib.inflateSync(arr[i]);
+                    let s = this.ModLoader.sound.initSound(raw);
+                    this.PlayerSounds.get(packet.player.uuid)!.get(parseInt(key))!.push(s);
+                }
+            });
         });
     }
 
@@ -112,6 +117,7 @@ export class SoundManagerClient {
                 // Buffer 0xC
                 s.position = v;
                 s.minDistance = 250.0
+                s.volume = (Math.floor((this.volume_remote[0] * 100)));
                 s.play();
             }
         }
@@ -123,11 +129,10 @@ export class SoundManagerClient {
         this.hasChild = false;
         this.hasAdult = false;
         if (id === undefined || !this.localSoundPaks.has(id)) {
-            this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket({}, 0, this.ModLoader.clientLobby));
+            this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket("KILL", this.ModLoader.clientLobby));
             return;
         }
         let evt = { id: id, data: this.localSoundPaks.get(id)! };
-        let size: number = 0;
         Object.keys(evt.data).forEach((key: string) => {
             let id = parseInt(key);
             if (SoundCategory_Child.indexOf(id) > -1) this.hasChild = true;
@@ -135,17 +140,25 @@ export class SoundManagerClient {
             this.sounds.set(id, []);
             let arr: Array<Buffer> = evt.data[key];
             for (let i = 0; i < arr.length; i++) {
-                this.sounds.get(parseInt(key))!.push(this.ModLoader.sound.initSound(zlib.inflateSync(arr[i])));
-                size += arr[i].byteLength;
+                this.sounds.get(parseInt(key))!.push(this.ModLoader.sound.initSound(arr[i]));
             }
         });
         this.rawSounds = evt.data;
-        // TODO: ADD SOME SANITY HERE
-        if (size > (this.SIZE_LIMIT * 1024 * 1024)) {
-            this.ModLoader.logger.error("Your sound pak is too large to reasonably network. Please tone it down.");
-            return;
-        }
-        this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket(evt.data, size, this.ModLoader.clientLobby));
+        let buf = Buffer.from(JSON.stringify(this.rawSounds));
+        let _id = this.ModLoader.utils.hashBuffer(buf);
+        CDNClient.singleton.askCDN(buf).then((has: boolean) => {
+            if (has) {
+                this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket(_id, this.ModLoader.clientLobby));
+                this.currentID = _id;
+            } else {
+                CDNClient.singleton.uploadFile(_id, buf).then((done: boolean) => {
+                    if (done) {
+                        this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket(_id, this.ModLoader.clientLobby));
+                        this.currentID = _id;
+                    }
+                });
+            }
+        });
     }
 
     @Postinit()
@@ -165,15 +178,15 @@ export class SoundManagerClient {
     @EventHandler(OotEvents.ON_AGE_CHANGE)
     onAgeChange(age: Age) {
         if (age === Age.ADULT) {
-            if (this.hasAdult){
+            if (this.hasAdult) {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.nop);
-            }else{
+            } else {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.originalData);
             }
-        }else{
-            if (this.hasChild){
+        } else {
+            if (this.hasChild) {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.nop);
-            }else{
+            } else {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.originalData);
             }
         }
@@ -213,7 +226,9 @@ export class SoundManagerClient {
             if (this.sounds.has(this.core.link.current_sound_id)) {
                 let random = this.getRandomInt(0, this.sounds.get(this.core.link.current_sound_id)!.length - 1);
                 let sound: sf.Sound = this.sounds.get(this.core.link.current_sound_id)![random];
-                sound.position = this.core.link.position;
+                let raw = this.core.link.position.getRawPos();
+                let pos = new Vector3(raw.readFloatBE(0), raw.readFloatBE(4), raw.readFloatBE(8));
+                sound.position = pos;
                 sound.minDistance = 250.0
                 sound.play();
             }
@@ -221,9 +236,27 @@ export class SoundManagerClient {
 
         this.sounds.forEach((sound: sf.Sound[], key: number) => {
             for (let i = 0; i < sound.length; i++) {
-                sound[i].position = this.core.link.position;
+                sound[i].volume = (Math.floor(this.volume_local[0] * 100));
             }
         });
+    }
+
+    @onViUpdate()
+    onVi() {
+        if (this.ModLoader.ImGui.beginMainMenuBar()) {
+            if (this.ModLoader.ImGui.beginMenu("Mods")) {
+                if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                    if (this.ModLoader.ImGui.beginMenu("General Settings")) {
+                        this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", this.volume_local, 0.1, 1.0);
+                        this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", this.volume_remote, 0.1, 1.0);
+                        this.ModLoader.ImGui.endMenu();
+                    }
+                    this.ModLoader.ImGui.endMenu();
+                }
+                this.ModLoader.ImGui.endMenu();
+            }
+            this.ModLoader.ImGui.endMainMenuBar();
+        }
     }
 
 }

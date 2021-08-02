@@ -16,6 +16,7 @@ import { OOTO_PRIVATE_EVENTS } from "@OotOnline/data/InternalAPI";
 import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
+import RomFlags from "@OotOnline/data/RomFlags";
 
 class Notif {
     msg: string;
@@ -100,7 +101,7 @@ export class Notifications {
                     for (let i = 0; i <= 7; i++) {
                         str += ' ';
                         switch (btnNotes[i]) {
-                            case "note_a": 
+                            case "note_a":
                                 str += 'A';
                                 break;
                             case "note_c_down":
@@ -127,7 +128,7 @@ export class Notifications {
                     }
                     this.ModLoader.logger.info('Visit Bonooru as a child if you\'d like to change it to something else.');
                 }
-                else {
+                else if (!RomFlags.isMultiworld) {
                     this.messages.push(new Notif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get(evt.key)!)!, this.MAX_TIMER));
                 }
             }
@@ -214,7 +215,7 @@ export class Notifications {
         } else {
             if (this.messages.length > 0) {
                 this.curMessage = this.messages.shift()!;
-                if (!this.curMessage.noSound || !this.config.notificationSound) {
+                if (!this.curMessage.noSound && this.config.notificationSound) {
                     this.ModLoader.utils.setTimeoutFrames(() => {
                         this.core.commandBuffer.runCommand(Command.PLAY_SOUND, this.boop);
                     }, 1);

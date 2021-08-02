@@ -200,14 +200,12 @@ export class Ooto_BottleUpdatePacket extends Packet {
 }
 
 export class Z64_AllocateModelPacket extends Packet {
-  model: Buffer;
   age: Age;
   hash: string;
   ageThePlayerActuallyIs: Age;
 
-  constructor(model: Buffer, age: Age, lobby: string, hash: string, actualAge: Age) {
+  constructor(age: Age, lobby: string, hash: string, actualAge: Age) {
     super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
-    this.model = model;
     this.age = age;
     this.hash = hash;
     this.ageThePlayerActuallyIs = actualAge;
@@ -225,7 +223,7 @@ export class Z64_GiveModelPacket extends Packet {
 }
 
 export class Z64_EquipmentPakPacket extends Packet {
-  zobjs: Array<Buffer> = [];
+  ids: Array<string> = [];
   age: Age;
 
   constructor(age: Age, lobby: string) {
@@ -236,12 +234,14 @@ export class Z64_EquipmentPakPacket extends Packet {
 
 export class OotO_RomFlagsPacket extends Packet {
   isOotR: boolean;
+  hasFastBunHood: boolean;
   isMultiworld: boolean;
   isVanilla: boolean;
 
-  constructor(lobby: string, isOotR: boolean, isMultiworld: boolean, isVanilla: boolean) {
+  constructor(lobby: string, isOotR: boolean, hasFastBunHood: boolean, isMultiworld: boolean, isVanilla: boolean) {
     super('OotO_RomFlagsPacket', 'OotO', lobby, false);
     this.isOotR = isOotR;
+    this.hasFastBunHood = hasFastBunHood;
     this.isMultiworld = isMultiworld;
     this.isVanilla = isVanilla;
   }

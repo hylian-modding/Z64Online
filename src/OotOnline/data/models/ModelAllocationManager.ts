@@ -169,6 +169,8 @@ export class ModelAllocationManager {
     try {
       b = this.zz.doRepoint(b, 0, false, ref.pointer)
     } catch (err) {
+      this.ModLoader.logger.error(err.stack);
+      return undefined;
     }
     this.ModLoader.emulator.rdramWriteBuffer(ref.pointer, b);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + modelObject.size.toString(16) + " bytes for model with hash " + ref.hash + " at " + pointer.toString(16) + ".");

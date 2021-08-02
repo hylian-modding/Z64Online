@@ -5,16 +5,18 @@ import { ParentReference, SidedProxy, ProxySide } from 'modloader64_api/SidedPro
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { IModLoaderAPI, IPlugin } from 'modloader64_api/IModLoaderAPI';
 import { ServerNetworkHandler, IPacketHeader, LobbyData } from 'modloader64_api/NetworkHandler';
-import { Z64_PlayerScene, Z64OnlineEvents } from './common/api/Z64API';
 import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadResponsePacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket, OotO_RomFlagsPacket } from './data/OotOPackets';
+import { PuppetOverlordServer } from './data/linkPuppet/PuppetOverlord';
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
 import { InjectCore } from 'modloader64_api/CoreInjection';
-import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { InventoryItem, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { PvPServer } from './data/pvp/PvPModule';
-import { OOT_PuppetOverlordServer } from '@OotOnline/data/linkPuppet/OOT_PuppetOverlord';
+import { CDNServer } from './common/cdn/CDNServer';
+import { OOT_PuppetOverlordServer } from './data/linkPuppet/OOT_PuppetOverlord';
+import { Z64OnlineEvents, Z64_PlayerScene } from './common/api/Z64API';
 
 export default class OotOnlineServer {
 
@@ -33,6 +35,8 @@ export default class OotOnlineServer {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.SERVER, PvPServer)
     pvp!: PvPServer;
+    @SidedProxy(ProxySide.SERVER, CDNServer)
+    cdn!: CDNServer;
     // #endif
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
@@ -145,6 +149,29 @@ export default class OotOnlineServer {
 
     @ServerNetworkHandler('Ooto_BottleUpdatePacket')
     onBottle_server(packet: Ooto_BottleUpdatePacket) {
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        let world = storage.worlds[packet.player.data.world];
+        if (packet.contents === InventoryItem.NONE) return;
+        switch (packet.slot) {
+            case 0:
+                world.save.inventory.bottle_1 = packet.contents;
+                break;
+            case 1:
+                world.save.inventory.bottle_2 = packet.contents;
+                break;
+            case 2:
+                world.save.inventory.bottle_3 = packet.contents;
+                break;
+            case 3:
+                world.save.inventory.bottle_4 = packet.contents;
+                break;
+        }
     }
 
     // Client is logging in and wants to know how to proceed.
@@ -197,6 +224,7 @@ export default class OotOnlineServer {
         let world = storage.worlds[packet.player.data.world];
         world.save.isVanilla = packet.isVanilla;
         world.save.isOotR = packet.isOotR;
+        world.save.hasFastBunHood = packet.hasFastBunHood;
         world.save.isMultiworld = packet.isMultiworld;
     }
 
