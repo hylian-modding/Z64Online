@@ -4,6 +4,7 @@ import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import path from 'path';
 import { IPuppet } from '@OotOnline/common/puppet/IPuppet';
 import { AgeorForm, Scene, Z64Tunic } from '@OotOnline/common/types/Types';
+import { PuppetServerStub } from '@OotOnline/data/linkPuppet/PuppetServerStub';
 
 @ExternalAPIProvider("Z64API", "3.1.0", path.resolve(__dirname))
 export class Z64OnlineAPIProvider {
@@ -14,6 +15,8 @@ export enum Z64OnlineEvents {
   PLAYER_PUPPET_SPAWNED = 'OotOnline:onPlayerPuppetSpawned',
   PLAYER_PUPPET_DESPAWNED = 'OotOnline:onPlayerPuppetDespawned',
   PLAYER_PUPPET_QUERY = "OotOnline:PlayerPuppetQuery",
+  PLAYER_PUPPET_STUB_CREATE = "Z64Online:PlayerPuppetStubCreate",
+  PLAYER_PUPPET_STUB_DESTROY = "Z64Online:PlayerPuppetStubDestroy",
   SERVER_PLAYER_CHANGED_SCENES = 'OotOnline:onServerPlayerChangedScenes',
   CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'OotOnline:onRemotePlayerChangedScenes',
   GHOST_MODE = 'OotOnline:EnableGhostMode',
@@ -187,4 +190,22 @@ export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
   let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
   bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
   return evt;
+}
+
+export class Z64OnlineAPI_PuppetStubCreated {
+  player: INetworkPlayer;
+  stub: PuppetServerStub;
+
+  constructor(player: INetworkPlayer, stub: PuppetServerStub) {
+    this.player = player;
+    this.stub = stub;
+  }
+}
+
+export class Z64OnlineAPI_PuppetStubDestroyed{
+  player: INetworkPlayer;
+
+  constructor(player: INetworkPlayer){
+    this.player = player;
+  }
 }

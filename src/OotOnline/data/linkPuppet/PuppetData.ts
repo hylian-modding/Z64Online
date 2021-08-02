@@ -14,21 +14,17 @@ interface SyncData {
 	destinations: any;
 }
 
-const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetFields.json"));
-const dummy_buffer: Buffer = Buffer.alloc(0xFF);
+export const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetFields.json"));
 
-export class PuppetData implements IPuppetData{
+export class PuppetData implements IPuppetData {
 	parent: Puppet;
 	pointer: number;
 	ModLoader: IModLoaderAPI;
-	header: SmartBuffer;
 	buf: SmartBuffer;
 	ageLastFrame: AgeorForm = Age.ADULT;
 	age: AgeorForm = Age.ADULT;
-	localCache: Map<string, Buffer> = new Map<string, Buffer>();
-	remoteCache: Map<string, Buffer> = new Map<string, Buffer>();
-	tickRate: number = 20;
-	tickCount: number = 0;
+	backingShared: SharedArrayBuffer = new SharedArrayBuffer(0x400);
+	backingBuffer: Buffer = Buffer.from(this.backingShared);
 
 	private readonly copyFields: string[] = new Array<string>();
 
@@ -37,13 +33,7 @@ export class PuppetData implements IPuppetData{
 		this.pointer = pointer;
 		this.ModLoader = ModLoader;
 		this.buf = new SmartBuffer();
-		this.header = new SmartBuffer();
 		this.copyFields.push("bundle");
-		let keys = Object.keys(SYNC_DATA.sources);
-		for (let i = 0; i < keys.length; i++) {
-			this.localCache.set(keys[i], dummy_buffer);
-			this.remoteCache.set(keys[i], dummy_buffer);
-		}
 	}
 
 	getEntry(key: string) {
@@ -53,7 +43,7 @@ export class PuppetData implements IPuppetData{
 			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 0, 0x1);
 		} else if (key === "gauntlet") {
 			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 5, 0x3);
-		}else if (key === "sound"){
+		} else if (key === "sound") {
 			return this.ModLoader.emulator.rdramReadBuffer(global.ModLoader["OotO_SyncContext"] + 0x10, 0x2);
 		} else {
 			return this.ModLoader.emulator.rdramReadBuffer(parseInt(SYNC_DATA.sources[key]), SYNC_DATA.lengths[key]);
@@ -62,34 +52,9 @@ export class PuppetData implements IPuppetData{
 
 	onTick() {
 		this.buf.clear();
-		this.header.clear();
-		this.tickCount++;
 		let keys = Object.keys(SYNC_DATA.sources);
-		if (this.tickCount > this.tickRate) {
-			this.tickCount = 0;
-			this.localCache.clear();
-			for (let i = 0; i < keys.length; i++) {
-				this.localCache.set(keys[i], dummy_buffer);
-				this.remoteCache.set(keys[i], dummy_buffer);
-			}
-		}
 		for (let i = 0; i < keys.length; i++) {
-			let key = keys[i];
-			let entry = this.getEntry(key);
-			if (this.localCache.get(key)!.equals(entry)) {
-				this.header.writeUInt8(0);
-			} else {
-				this.header.writeUInt8(1);
-				this.localCache.set(key, entry);
-			}
-		}
-		let h = this.header.toBuffer();
-		this.buf.writeBuffer(h);
-		for (let i = 0; i < keys.length; i++) {
-			let key = keys[i];
-			if (h[i] === 1) {
-				this.buf.writeBuffer(this.localCache.get(key)!);
-			}
+			this.buf.writeBuffer(this.ModLoader.emulator.rdramReadBuffer(SYNC_DATA.sources[keys[i]], SYNC_DATA.lengths[keys[i]]));
 		}
 	}
 
@@ -102,25 +67,30 @@ export class PuppetData implements IPuppetData{
 		this.buf.writeBuffer(buf);
 		this.buf.readOffset = 0;
 		let keys = Object.keys(SYNC_DATA.destinations);
-		let header = this.buf.readBuffer(keys.length);
+		let pendingSound = 0;
 		for (let i = 0; i < keys.length; i++) {
-			if (header[i] === 0) continue;
 			let key = keys[i];
 			if (key === "age") {
 				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
 				this.age = data.readUInt32BE(0);
 				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
-			}else if (key === "sound"){
+			} else if (key === "sound") {
 				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
-				let e = new RemoteSoundPlayRequest(this.parent.player, this.remoteCache.get("pos")!, data.readUInt16BE(0));
-				bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
-				if (!e.isCanceled){
-					this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
-				}
+				pendingSound = data.readUInt16BE(0);
 			} else {
 				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
-				this.remoteCache.set(key, data);
 				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
+			}
+		}
+		let temp = this.ModLoader.emulator.rdramReadBuffer(this.pointer, 0x400);
+		for (let i = 0; i < this.backingBuffer.byteLength; i++){
+			Atomics.store(this.backingBuffer, i, temp[i]);
+		}
+		if (pendingSound > 0) {
+			let e = new RemoteSoundPlayRequest(this.parent.player, this.backingBuffer.slice(0x24, 0x24 + 0xC), pendingSound);
+			bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);
+			if (!e.isCanceled) {
+				this.ModLoader.emulator.rdramWrite16(this.pointer + parseInt(SYNC_DATA.destinations["sound"]), pendingSound);
 			}
 		}
 	}

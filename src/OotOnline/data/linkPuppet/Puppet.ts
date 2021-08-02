@@ -69,7 +69,7 @@ export class Puppet implements IPuppet {
       bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(0, 0, 0)).then((actor: IActor) => {
+      (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer + 0x800).then((actor: IActor) => {
         this.data.pointer = actor.pointer;
         this.doNotDespawnMe(this.data.pointer);
         this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x24);
@@ -97,7 +97,7 @@ export class Puppet implements IPuppet {
   processIncomingHorseData(data: HorseData) {
     if (this.horse === undefined && !this.horseSpawning) {
       this.horseSpawning = true;
-      (this.parent.getClientStorage()?.overlayCache["horse-3.ovl"] as IOvlPayloadResult).spawn(0x0, new Vector3(0, 0, 0), new Vector3(0, 0, 0)).then((actor: IActor) => {
+      (this.parent.getClientStorage()!.overlayCache["horse-3.ovl"] as IOvlPayloadResult).spawn(0x0, new Vector3(8192, -2048, 8192), new Vector3(0, 0, 0)).then((actor: IActor) => {
         this.horse = new HorseData(actor.pointer, this, this.core);
         this.horseSpawning = false;
       });

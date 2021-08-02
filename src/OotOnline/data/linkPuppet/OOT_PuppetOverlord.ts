@@ -3,10 +3,10 @@ import { PuppetOverlordClient, PuppetOverlordServer } from "@OotOnline/common/pu
 import { AgeorForm, Core, Scene } from "@OotOnline/common/types/Types";
 import { HorseData } from "@OotOnline/data/linkPuppet/HorseData";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
-import { Ooto_PuppetPacket, Ooto_PuppetWrapperPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket } from "@OotOnline/data/OotOPackets";
-import { PuppetQuery, Z64OnlineEvents } from "@OotOnline/common/api/Z64API";
+import { Ooto_PuppetPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket } from "@OotOnline/data/OotOPackets";
+import { PuppetQuery, Z64OnlineAPI_PuppetStubCreated, Z64OnlineAPI_PuppetStubDestroyed, Z64OnlineEvents } from "@OotOnline/common/api/Z64API";
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
-import { EventsClient, EventHandler } from "modloader64_api/EventHandler";
+import { EventsClient, EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { IActor } from "modloader64_api/OOT/IActor";
 import { OotEvents } from "modloader64_api/OOT/OOTAPI";
@@ -16,13 +16,56 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IOotUtility } from "@OotOnline/data/InternalAPI";
 import { IZ64OnlineHelpers } from "@OotOnline/common/lib/IZ64OnlineHelpers";
+import { PuppetServerStub } from "./PuppetServerStub";
+import { OotOnlineStorage } from "@OotOnline/OotOnlineStorage";
 
 export class OOT_PuppetOverlordServer extends PuppetOverlordServer {
     @ParentReference()
     parent!: IZ64OnlineHelpers;
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+
+    @EventHandler(EventsServer.ON_LOBBY_JOIN)
+    onJoin(join: EventServerJoined) {
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            join.lobby,
+            this.parent as any
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        storage.puppetStubs.set(join.player.uuid, new PuppetServerStub(join.lobby));
+        bus.emit(Z64OnlineEvents.PLAYER_PUPPET_STUB_CREATE, new Z64OnlineAPI_PuppetStubCreated(join.player, storage.puppetStubs.get(join.player.uuid)!));
+    }
+
+    @EventHandler(EventsServer.ON_LOBBY_LEAVE)
+    onLeave(left: EventServerLeft) {
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            left.lobby,
+            this.parent as any
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        if (storage.puppetStubs.has(left.player.uuid)) {
+            storage.puppetStubs.delete(left.player.uuid);
+            bus.emit(Z64OnlineEvents.PLAYER_PUPPET_STUB_DESTROY, new Z64OnlineAPI_PuppetStubDestroyed(left.player));
+        }
+    }
 
     @ServerNetworkHandler('Ooto_PuppetPacket')
     onPuppetData_server(packet: IPacketHeader) {
+        let p: Ooto_PuppetPacket = packet as unknown as Ooto_PuppetPacket;
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent as any
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        if (storage.puppetStubs.has(packet.player.uuid)) {
+            storage.puppetStubs.get(packet.player.uuid)!.writeData(p.data.bundle);
+        }
         this.parent.sendPacketToPlayersInScene(packet);
     }
 }
@@ -56,23 +99,20 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     }
 
     sendPuppetPacket() {
-        if (!this.amIAlone) {
-            this.fakeClientPuppet.data.onTick();
-            let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
-            if (this.Epona !== undefined) {
-                packet.setHorseData(this.Epona);
-            }
-            this.ModLoader.clientSide.sendPacket(new Ooto_PuppetWrapperPacket(packet, this.ModLoader.clientLobby));
+        this.fakeClientPuppet.data.onTick();
+        let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
+        if (this.Epona !== undefined) {
+            packet.setHorseData(this.Epona);
         }
+        this.ModLoader.clientSide.sendPacket(packet);
     }
 
-    processPuppetPacket(packet: Ooto_PuppetWrapperPacket) {
+    processPuppetPacket(packet: Ooto_PuppetPacket) {
         if (this.puppets.has(packet.player.uuid)) {
             let puppet: Puppet = this.puppets.get(packet.player.uuid)! as Puppet;
-            let actualPacket = JSON.parse(packet.data) as Ooto_PuppetPacket;
-            puppet.processIncomingPuppetData(actualPacket.data);
-            if (actualPacket.horse_data !== undefined) {
-                puppet.processIncomingHorseData(actualPacket.horse_data);
+            puppet.processIncomingPuppetData(packet.data);
+            if (packet.horse_data !== undefined) {
+                puppet.processIncomingHorseData(packet.horse_data);
             }
         }
     }
@@ -121,7 +161,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     }
 
     @NetworkHandler('Ooto_PuppetPacket')
-    onPuppetData_client(packet: Ooto_PuppetWrapperPacket) {
+    onPuppetData_client(packet: Ooto_PuppetPacket) {
         if (
             this.core.helper.isTitleScreen() ||
             this.core.helper.isPaused() ||

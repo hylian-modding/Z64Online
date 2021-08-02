@@ -14,7 +14,6 @@ export abstract class PuppetOverlordClient implements IPuppetOverlordClient {
   puppets: Map<string, IPuppet> = new Map<string, IPuppet>();
   awaiting_spawn: IPuppet[] = new Array<IPuppet>();
   fakeClientPuppet!: IPuppet;
-  amIAlone = true;
   playersAwaitingPuppets: INetworkPlayer[] = new Array<
     INetworkPlayer
   >();
@@ -94,14 +93,12 @@ export abstract class PuppetOverlordClient implements IPuppetOverlordClient {
   }
 
   lookForMissingOrStrandedPuppets() {
-    let check = false;
     this.puppets.forEach(
       (value: IPuppet, key: string, map: Map<string, IPuppet>) => {
         if (value.scene === this.fakeClientPuppet.scene) {
           if (!value.isSpawned && this.awaiting_spawn.indexOf(value) === -1) {
             this.awaiting_spawn.push(value);
           }
-          check = true;
         }
         if (
           value.scene !== this.fakeClientPuppet.scene &&
@@ -112,11 +109,6 @@ export abstract class PuppetOverlordClient implements IPuppetOverlordClient {
         }
       }
     );
-    if (check) {
-      this.amIAlone = false;
-    } else {
-      this.amIAlone = true;
-    }
   }
 
   abstract sendPuppetPacket();

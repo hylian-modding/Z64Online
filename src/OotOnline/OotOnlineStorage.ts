@@ -2,12 +2,14 @@ import { EVENT_ARR_SIZE, INF_ARR_SIZE, ITEM_FLAG_ARR_SIZE, SCARECROW_ARR_SIZE, S
 import { Magic, ISwords, IShields, ITunics, IBoots, IQuestStatus } from 'modloader64_api/OOT/OOTAPI';
 import { IKeyRing } from './common/save/IKeyRing';
 import { IOOTInventorySync, IOOTSyncSave } from './common/types/OotAliases';
+import { PuppetServerStub } from './data/linkPuppet/PuppetServerStub';
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 
 export class OotOnlineStorage extends OotOnlineStorageBase {
   networkPlayerInstances: any = {};
   players: any = {};
   worlds: Array<OotOnlineSave_Server> = [];
+  puppetStubs: Map<string, PuppetServerStub> = new Map();
 }
 
 export interface IOOTSyncSaveServer extends IOOTSyncSave {
