@@ -26,9 +26,9 @@ import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { Deprecated } from 'modloader64_api/Deprecated';
 import { Notifications } from './gui/imgui/Notifications';
-import AnimationManager from './data/models/AnimationManager';
+import AnimationManager from './common/cosmetics/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
-import { Multiworld, MultiWorld_ItemPacket, TriforceHuntHelper } from './compat/OotR';
+import { Multiworld, MultiWorld_ItemPacket } from './compat/OotR';
 import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
 import RomFlags from '@OotOnline/data/RomFlags';
@@ -36,6 +36,7 @@ import zlib from 'zlib';
 import { CDNClient } from './common/cdn/CDNClient';
 import { OOT_PuppetOverlordClient } from './data/linkPuppet/OOT_PuppetOverlord';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './common/api/Z64API';
+import { markAsRandomizer } from './common/types/GameAliases';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -635,6 +636,7 @@ export default class OotOnlineClient {
             let ver = rom.slice(start + prog - 1, start + prog - 1 + 0x4);
             this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
             RomFlags.isOotR = true;
+            markAsRandomizer();
             if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OotR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
                 RomFlags.hasFastBunHood = true;
             } else if (ver.readUInt32BE(0) >= 0x50253) {

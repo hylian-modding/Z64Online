@@ -7,6 +7,7 @@ import { OotOnlineStorageClient } from "./OotOnlineStorageClient";
 import path from 'path';
 import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import { IOotUtility } from "@OotOnline/data/InternalAPI";
+import { setupOot } from "./common/types/GameAliases";
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -64,6 +65,7 @@ export default class OotOnline implements IPlugin, IPluginServerConfig, IOotUtil
   }
 
   preinit(): void {
+    setupOot();
   }
 
   init(): void {

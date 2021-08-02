@@ -2,11 +2,11 @@ import { Z64OnlineEvents, Z64_AnimationBank } from "@OotOnline/common/api/Z64API
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { Init } from "modloader64_api/PluginLifecycle";
-import { Z64LibSupportedGames } from "Z64Lib/API/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Z64RomTools";
-import { OOTO_PRIVATE_EVENTS } from "../InternalAPI";
+import { OOTO_PRIVATE_EVENTS } from "../../data/InternalAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import RomFlags from '@OotOnline/data/RomFlags';
+import { Z64_ANIM_BANK_DMA, Z64_ANIM_BANK_SIZE, Z64_GAME } from "@OotOnline/common/types/GameAliases";
 
 export default class AnimationManager {
 
@@ -30,16 +30,16 @@ export default class AnimationManager {
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
         let rom: Buffer = evt.rom;
-        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, global.ModLoader.isDebugRom ? Z64LibSupportedGames.DEBUG_OF_TIME : Z64LibSupportedGames.OCARINA_OF_TIME);
-        if (RomFlags.isOotR) {
-            if (tools.decompressDMAFileFromRom(rom, 7).byteLength !== 0x265c30) {
+        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64_GAME);
+        if (!RomFlags.isOotR) {
+            if (tools.decompressDMAFileFromRom(rom, Z64_ANIM_BANK_DMA).byteLength !== Z64_ANIM_BANK_SIZE) {
                 this.disabled = true;
             }
         }
         if (this.disabled) return;
-        let bank: Buffer = tools.decompressDMAFileFromRom(rom, 7);
+        let bank: Buffer = tools.decompressDMAFileFromRom(rom, Z64_ANIM_BANK_DMA);
         this.vanillaBank = bank;
-        this.animationBankAddress = tools.relocateFileToExtendedRom(rom, 7, bank, bank.byteLength, true);
+        this.animationBankAddress = tools.relocateFileToExtendedRom(rom, Z64_ANIM_BANK_DMA, bank, bank.byteLength, true);
         tools.noCRC(rom);
     }
 

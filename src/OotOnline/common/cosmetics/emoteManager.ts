@@ -6,11 +6,9 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { onTick, onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
 import { Sound, SoundSourceStatus } from "modloader64_api/Sound/sfml_audio";
 import zlib from 'zlib';
-import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
-import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { bool_ref, WindowFlags } from "modloader64_api/Sylvain/ImGui";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
-import { Core, LinkStandingState, Scene } from "@OotOnline/common/types/Types";
+import { Core, LinkStandingState } from "@OotOnline/common/types/Types";
 import { IMGUI_LABELS } from "@OotOnline/common/lib/Labels";
 
 export class EmoteManager {
