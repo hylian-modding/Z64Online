@@ -12,8 +12,6 @@ import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle
 import { parseFlagChanges } from './common/lib/parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
 import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
-import { Command } from 'modloader64_api/OOT/ICommandBuffer';
-import { IActor } from 'modloader64_api/OOT/IActor';
 import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
@@ -24,7 +22,6 @@ import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRe
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
-import { Deprecated } from 'modloader64_api/Deprecated';
 import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './common/cosmetics/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
@@ -57,8 +54,8 @@ export default class OotOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
-    @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
-    actorHooks!: ActorHookingManagerClient;
+    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
+    //actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
     puppets!: OOT_PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
@@ -586,29 +583,17 @@ export default class OotOnlineClient {
         if (buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))) {
             buf[0x1] = raw_inventory[buf[0x4]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
-            this.core.commandBuffer.runCommand(
-                Command.UPDATE_C_BUTTON_ICON,
-                0x00000001,
-                (success: boolean, result: number) => { }
-            );
+            this.core.commandBuffer.updateButton(0x1);
         }
         if (buf[0x5] !== InventoryItem.NONE && raw_inventory[buf[0x5]] !== InventoryItem.NONE && (raw_inventory[buf[0x5]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x5]]))) {
             buf[0x2] = raw_inventory[buf[0x5]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
-            this.core.commandBuffer.runCommand(
-                Command.UPDATE_C_BUTTON_ICON,
-                0x00000002,
-                (success: boolean, result: number) => { }
-            );
+            this.core.commandBuffer.updateButton(0x2);
         }
         if (buf[0x6] !== InventoryItem.NONE && raw_inventory[buf[0x6]] !== InventoryItem.NONE && (raw_inventory[buf[0x6]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x6]]))) {
             buf[0x3] = raw_inventory[buf[0x6]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
-            this.core.commandBuffer.runCommand(
-                Command.UPDATE_C_BUTTON_ICON,
-                0x00000003,
-                (success: boolean, result: number) => { }
-            );
+            this.core.commandBuffer.updateButton(0x3);
         }
     }
 
@@ -673,31 +658,6 @@ export default class OotOnlineClient {
         this.clientStorage.first_time_sync = false;
     }
 
-    @Deprecated('Bugfix actor should be removed and reimplemented better.')
-    @EventHandler(OotEvents.ON_ACTOR_SPAWN)
-    onActorSpawned(actor: IActor) {
-        // 0x87 = Forest Temple Elevator.
-        // 0x102 = Windmill Blades.
-        // 0xF8 = Hyrule Castle Gate.
-        // 0xCB = Ingo.
-        if (actor.actorID === 0x0087 || actor.actorID === 0x102 || actor.actorID === 0xF8 || (actor.actorID === 0xCB && actor.variable === 0x2)) {
-            (this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult).spawn((this.clientStorage.overlayCache["flag_fixer.ovl"] as IOvlPayloadResult), (success: boolean, result: number) => {
-                let ff: IActor = this.core.actorManager.createIActorFromPointer(result);
-                if (actor.actorID === 0x0087) {
-                    ff.rdramWriteBuffer(0x24, Buffer.from("433B788243690000C4BAC599", 'hex'));
-                } else if (actor.actorID === 0x102) {
-                    ff.rdramWriteBuffer(0x24, Buffer.from("43751CE2432000004436C483", 'hex'));
-                } else if (actor.actorID === 0xF8) {
-                    ff.rdramWriteBuffer(0x24, Buffer.from("44130FE344CA2000C39B683C", 'hex'));
-                } else if (actor.actorID === 0xCB && actor.variable === 0x2) {
-                    ff.rdramWriteBuffer(0x24, Buffer.from('C31E000000000000C4C78000', 'hex'));
-                }
-                this.ModLoader.logger.debug("Summoning the bugfix actor...");
-                return {};
-            });
-        }
-    }
-
     @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
     onDump(evt: any) {
         fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", zlib.deflateSync(this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024)));
@@ -746,7 +706,7 @@ export default class OotOnlineClient {
                     return;
                 }
                 if (this.LobbyConfig.actor_syncing) {
-                    this.actorHooks.tick();
+                    //this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
                     this.autosaveSceneData();

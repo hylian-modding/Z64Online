@@ -354,10 +354,8 @@ export class ModelManagerClient {
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: Puppet) {
     /**@todo rewrite this shit after we uncrust the core. */
-    let param_pointer = (this.clientStorage.overlayCache["puppet.ovl"] as IOvlPayloadResult).params;
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
-    this.ModLoader.emulator.rdramWrite32(param_pointer + 0x8, player.proxyPointer);
-    this.ModLoader.emulator.rdramWrite16(param_pointer + 0xE, puppet.age);
+    puppet.modelPointer = player.AgesOrForms.get(puppet.age)!.pointer;
     player.playerIsSpawned = true;
   }
 
