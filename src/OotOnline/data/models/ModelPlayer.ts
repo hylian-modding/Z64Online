@@ -1,4 +1,5 @@
 import { IModelReference, IModelScript } from '@OotOnline/common/api/Z64API';
+import { AgeorForm } from '@OotOnline/common/types/Types';
 
 export class ModelPlayer {
   uuid: string = "";
@@ -7,8 +8,7 @@ export class ModelPlayer {
   isDead: boolean = true;
   isLoaded: boolean = false;
   hasLeftGame: boolean = false;
-  adult!: IModelReference;
-  child!: IModelReference;
+  AgesOrForms: Map<AgeorForm, IModelReference> = new Map<AgeorForm, IModelReference>();
   playerIsSpawned: boolean = false;
   equipment: Map<string, IModelReference> = new Map<string, IModelReference>();
   currentScript: IModelScript | undefined;

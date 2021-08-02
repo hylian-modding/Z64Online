@@ -14,8 +14,6 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
     InventoryItem.NONE,
     InventoryItem.NONE,
   ];
-  childModel: Buffer = Buffer.alloc(1);
-  adultModel: Buffer = Buffer.alloc(1);
   equipmentHashes: Array<string> = [];
   overlayCache: any = {};
   localization: any = {};

@@ -13,6 +13,7 @@ import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@OotOnline/common/save/IKeyRing';
+import { AgeorForm } from '@OotOnline/common/types/Types';
 
 export class Ooto_PuppetPacket {
   data: PuppetData;
@@ -200,11 +201,11 @@ export class Ooto_BottleUpdatePacket extends Packet {
 }
 
 export class Z64_AllocateModelPacket extends Packet {
-  age: Age;
+  age: AgeorForm;
   hash: string;
   ageThePlayerActuallyIs: Age;
 
-  constructor(age: Age, lobby: string, hash: string, actualAge: Age) {
+  constructor(age: AgeorForm, lobby: string, hash: string, actualAge: Age) {
     super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
     this.age = age;
     this.hash = hash;

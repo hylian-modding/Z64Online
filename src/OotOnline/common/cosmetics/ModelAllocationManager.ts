@@ -1,13 +1,13 @@
-import { ModelPlayer } from './ModelPlayer';
+import { ModelPlayer } from '../../data/models/ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { ModelObject, ModelReference } from '../../common/cosmetics/ModelContainer';
+import { ModelObject, ModelReference } from './ModelContainer';
 import { zzstatic } from 'Z64Lib/API/zzstatic';
 import fs from 'fs';
 import path from 'path';
-import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
-import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { IModelReference } from '@OotOnline/common/api/Z64API';
+import { Z64_GAME } from '@OotOnline/common/types/GameAliases';
+import { AgeorForm } from '@OotOnline/common/types/Types';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -22,39 +22,7 @@ export class ModelAllocationManager {
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
     this.cleanupRoutine = this.ModLoader.utils.setIntervalFrames(() => { this.doGC() }, 1200);
-    this.zz = new zzstatic(Z64LibSupportedGames.OCARINA_OF_TIME);
-  }
-
-  onVi() {
-    // #ifdef IS_DEV_BUILD
-    if (this.ModLoader.ImGui.begin("Model Debug Menu")) {
-      this.ModLoader.ImGui.columns(2);
-      this.ModLoader.ImGui.text("Model reference data");
-      let totalRefs = 0;
-      this.references.forEach((ref: IModelReference) => {
-        totalRefs++;
-        this.ModLoader.ImGui.text(ref.hash.toUpperCase() + " -> " + ref.pointer.toString(16).toUpperCase());
-      });
-      this.ModLoader.ImGui.text("Total refs: " + totalRefs.toString());
-      this.ModLoader.ImGui.nextColumn();
-      this.ModLoader.ImGui.text("Player reference data");
-      this.players.forEach((player: ModelPlayer) => {
-        this.ModLoader.ImGui.text("-----");
-        this.ModLoader.ImGui.text(player.uuid + " -> " + player.proxyPointer.toString(16));
-        let a = "";
-        let c = "";
-        if (player.adult !== undefined) {
-          a = player.adult.hash;
-        }
-        if (player.child !== undefined) {
-          c = player.child.hash;
-        }
-        this.ModLoader.ImGui.text("Has Adult Model: " + (player.adult !== undefined).toString() + " | " + a);
-        this.ModLoader.ImGui.text("Has Child Model: " + (player.child !== undefined).toString() + " | " + c);
-      });
-      this.ModLoader.ImGui.end();
-    }
-    // #endif
+    this.zz = new zzstatic(Z64_GAME);
   }
 
   doGC() {
@@ -65,16 +33,18 @@ export class ModelAllocationManager {
       if (ref.isPlayerModel) ref.isDead = true;
       map.set(ref, ref.isDead);
     });
-    if (this.localPlayer.adult !== undefined) map.set(this.localPlayer.adult, false);
-    if (this.localPlayer.child !== undefined) map.set(this.localPlayer.child, false);
+    this.localPlayer.AgesOrForms.forEach((ref: IModelReference)=>{
+      map.set(ref, false);
+    });
     this.localPlayer.equipment.forEach((value: IModelReference) => {
       map.set(value, false);
     });
     this.players.forEach((value: ModelPlayer, key: string) => {
       proxies.set(value, value.isDead);
       if (value.playerIsSpawned) {
-        if (value.adult !== undefined) map.set(value.adult, false)
-        if (value.child !== undefined) map.set(value.child, false);
+        value.AgesOrForms.forEach((ref: IModelReference)=>{
+          map.set(ref, false);
+        });
         value.equipment.forEach((value: IModelReference) => {
           map.set(value, false);
         });
@@ -98,18 +68,11 @@ export class ModelAllocationManager {
     });
   }
 
-  SetLocalPlayerModel(age: Age, model: IModelReference) {
+  SetLocalPlayerModel(age: AgeorForm, model: IModelReference) {
     if (this.localPlayer.currentScript !== undefined) {
       this.localPlayer.currentScript.onModelRemoved();
     }
-    switch (age) {
-      case Age.ADULT:
-        this.localPlayer.adult = model;
-        break;
-      case Age.CHILD:
-        this.localPlayer.child = model;
-        break;
-    }
+    this.localPlayer.AgesOrForms.set(age, model);
     this.localPlayer.currentScript = model.script;
     if (this.localPlayer.currentScript !== undefined) {
       this.localPlayer.currentScript.onModelEquipped();
@@ -196,19 +159,20 @@ export class ModelAllocationManager {
     return this.players.get(player.uuid);
   }
 
-  createPlayer(player: INetworkPlayer, defaultAdult: IModelReference, defaultChild: IModelReference) {
+  createPlayer(player: INetworkPlayer, defaults: Map<AgeorForm, IModelReference>) {
     // Player is already allocated.
     if (this.doesPlayerExist(player)) return this.getPlayer(player);
     let mp = new ModelPlayer(player.uuid);
-    mp.adult = defaultAdult;
-    mp.child = defaultChild;
+    defaults.forEach((ref: IModelReference, key: AgeorForm)=>{
+      mp.AgesOrForms.set(key, ref);
+    });
     this.players.set(player.uuid, mp);
     this.playerMLObjects.set(player.uuid, player);
     return mp;
   }
 
-  allocatePlayer(player: INetworkPlayer, defaultAdult: IModelReference, defaultChild: IModelReference): ModelPlayer | undefined {
-    let mp = this.createPlayer(player, defaultAdult, defaultChild)!;
+  allocatePlayer(player: INetworkPlayer, defaults: Map<AgeorForm, IModelReference>): ModelPlayer | undefined {
+    let mp = this.createPlayer(player, defaults)!;
     if (mp.isLoaded) mp.isDead = false;
     if (!mp.isDead) return mp;
 
