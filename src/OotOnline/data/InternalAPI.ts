@@ -1,5 +1,6 @@
 import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
 import { IZ64OnlineHelpers } from "@OotOnline/common/lib/IZ64OnlineHelpers";
+import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
 
 export const enum OOTO_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
@@ -18,7 +19,28 @@ export const enum OOTO_PRIVATE_EVENTS {
     LOCK_ITEM_NOTIFICATIONS = "LOCK_ITEM_NOTIFICATIONS",
     SAVE_EXTERNAL_EVENT_DATA = "SAVE_EXTERNAL_EVENT_DATA",
     GET_EXTERNAL_EVENT_DATA = "GET_EXTERNAL_EVENT_DATA",
-    TOGGLE_COSTUME_LOCK = "TOGGLE_COSTUME_LOCK"
+    TOGGLE_COSTUME_LOCK = "TOGGLE_COSTUME_LOCK",
+    SEND_TO_SCENE = "SEND_TO_SCENE"
+}
+
+export class SendToPlayer{
+    packet: IPacketHeader;
+    player: INetworkPlayer;
+
+    constructor(player: INetworkPlayer, packet: IPacketHeader){
+        this.packet = packet;
+        this.player = player;
+    }
+}
+
+export class SendToScene{
+    packet: IPacketHeader;
+    scene: number;
+
+    constructor(packet: IPacketHeader, scene: number){
+        this.packet = packet;
+        this.scene = scene;
+    }
 }
 
 export interface RewardTicket {

@@ -11,8 +11,8 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { Init, Preinit, Postinit, onTick } from 'modloader64_api/PluginLifecycle';
 import { parseFlagChanges } from './common/lib/parseFlagChanges';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from './OotOnline';
-import { IModLoaderAPI, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
-import { SidedProxy, ProxySide } from 'modloader64_api/SidedProxy/SidedProxy';
+import { IModLoaderAPI, IPlugin, ModLoaderEvents } from 'modloader64_api/IModLoaderAPI';
+import { SidedProxy, ProxySide, ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 import { SoundManagerClient } from './data/sounds/SoundManager';
 import { ImGuiHandler } from './gui/imgui/ImGuiHandler';
 import { WorldEvents } from './WorldEvents/WorldEvents';
@@ -21,7 +21,7 @@ import { OotOSaveData } from './data/OotoSaveData';
 import { Ooto_BottleUpdatePacket, Ooto_ClientSceneContextUpdate, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_RomFlagsPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, OotO_UpdateKeyringPacket, OotO_UpdateSaveDataPacket } from './data/OotOPackets';
 import { ThiccOpa } from './data/opa/ThiccOpa';
 import { ModelManagerClient } from './data/models/ModelManager';
-import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
+import { OOTO_PRIVATE_EVENTS, SendToScene } from './data/InternalAPI';
 import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './common/cosmetics/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
@@ -34,6 +34,7 @@ import { CDNClient } from './common/cdn/CDNClient';
 import { OOT_PuppetOverlordClient } from './data/linkPuppet/OOT_PuppetOverlord';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './common/api/Z64API';
 import { markAsRandomizer } from './common/types/GameAliases';
+import { OotOnlineStorage } from './OotOnlineStorage';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -43,6 +44,9 @@ export default class OotOnlineClient {
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
+
+    @ParentReference()
+    parent!: IPlugin;
 
     LobbyConfig: IOotOnlineLobbyConfig = {} as IOotOnlineLobbyConfig;
     clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
@@ -122,6 +126,23 @@ export default class OotOnlineClient {
         this.ModLoader.utils.setIntervalFrames(() => {
             this.inventoryUpdateTick();
         }, 20);
+    }
+
+    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE)
+    onSendToScene(send: SendToScene){
+        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            send.packet.lobby,
+            this.parent
+        ) as OotOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        let players = Object.keys(storage.players);
+        for (let i = 0; i < players.length; i++){
+            if (storage.players[players[i]] === send.scene){
+                this.ModLoader.serverSide.sendPacketToSpecificPlayer(send.packet, storage.networkPlayerInstances[players[i]]);
+            }
+        }
     }
 
     @EventHandler(EventsClient.ON_HEAP_READY)

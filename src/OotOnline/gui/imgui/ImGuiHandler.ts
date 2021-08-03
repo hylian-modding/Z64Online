@@ -246,7 +246,7 @@ export class ImGuiHandler {
                     if (this.ModLoader.ImGui.beginMenu("Game Sounds")){
                         this.ModLoader.ImGui.inputText("sound id", this.sound_id);
                         if (this.ModLoader.ImGui.button("play")){
-                            this.core.commandBuffer.runCommand(Command.PLAY_SOUND, parseInt(this.sound_id[0]));
+                            this.core.commandBuffer.runCommand(Command.PLAYSOUND, parseInt(this.sound_id[0]));
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
@@ -263,6 +263,9 @@ export class ImGuiHandler {
                     }
                     if (this.ModLoader.ImGui.button("DUMP RAM")) {
                         bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
+                    }
+                    if (this.ModLoader.ImGui.button("PRINT LINK POS")){
+                        console.log(JSON.stringify(this.core.link.position.getVec3()));
                     }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
