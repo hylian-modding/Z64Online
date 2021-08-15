@@ -61,7 +61,7 @@ export class EmoteManager {
                             this.masterEmoteList[this.currentEmoteID].sound!.stop();
                         } catch (err) { }
                         this.isCurrentlyPlayingEmote = false;
-                        this.core.link.redeadFreeze = 0x0;
+                        this.core.OOT!.link.redeadFreeze = 0x0;
                         this.currentEmoteFrame = -1;
                         this.currentEmoteID = -1;
                     }
@@ -72,7 +72,7 @@ export class EmoteManager {
                             this.ModLoader.ImGui.text(this.masterEmoteList[i].name);
                             this.ModLoader.ImGui.sameLine();
                             if (this.ModLoader.ImGui.button("Play###OotO:Emotes:" + this.masterEmoteList[i].name)) {
-                                if (this.core.link.state === LinkStandingState) {
+                                if (this.core.OOT!.link.state === LinkStandingState) {
                                     this.currentEmoteID = i;
                                     this.isCurrentlyPlayingEmote = true;
                                 }
@@ -106,19 +106,19 @@ export class EmoteManager {
                 if (!this.config.muteLocalSounds) {
                     if (this.masterEmoteList[this.currentEmoteID].sound!.status !== SoundSourceStatus.Playing) {
                         this.masterEmoteList[this.currentEmoteID].sound!.play();
-                        this.core.link.current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
+                        this.core.OOT!.link.current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
                     }
                 }
             }
-            this.core.link.redeadFreeze = 0x3;
-            this.core.link.anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
+            this.core.OOT!.link.redeadFreeze = 0x3;
+            this.core.OOT!.link.anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
             this.currentEmoteFrame++;
             if (this.currentEmoteFrame > this.masterEmoteList[this.currentEmoteID].getTotalFrames()) {
                 if (this.masterEmoteList[this.currentEmoteID].loops) {
                     this.currentEmoteFrame = 0;
                 } else {
                     this.isCurrentlyPlayingEmote = false;
-                    this.core.link.redeadFreeze = 0x0;
+                    this.core.OOT!.link.redeadFreeze = 0x0;
                     this.currentEmoteFrame = -1;
                 }
             }

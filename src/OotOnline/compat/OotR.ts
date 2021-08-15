@@ -1,6 +1,6 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { zeldaString } from 'modloader64_api/OOT/ZeldaString';
-import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
+import { zeldaString } from 'Z64Lib/API/Common/ZeldaString';
+import { IOOTCore } from "Z64Lib/API/OOT/OOTAPI";
 import { IOOTSaveContext } from "@OotOnline/common/types/OotAliases";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@OotOnline/common/api/Z64API";
 import { EventHandler } from "modloader64_api/EventHandler";
@@ -11,6 +11,7 @@ import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
 import RomFlags from "@OotOnline/data/RomFlags";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -28,7 +29,7 @@ export class Multiworld {
     @ParentReference()
     parent!: IZ64Clientside;
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     contextPointer: number = 0x801C8464;
     itemsInQueue: Array<MultiWorld_ItemPacket> = [];
 

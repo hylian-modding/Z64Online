@@ -1,6 +1,6 @@
 import { IPuppet } from "@OotOnline/common/puppet/IPuppet";
 import { PuppetOverlordClient, PuppetOverlordServer } from "@OotOnline/common/puppet/PuppetOverlord";
-import { AgeorForm, Core, Scene } from "@OotOnline/common/types/Types";
+import { Core, Scene } from "@OotOnline/common/types/Types";
 import { HorseData } from "@OotOnline/data/linkPuppet/HorseData";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { Ooto_PuppetPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket } from "@OotOnline/data/OotOPackets";
@@ -8,8 +8,9 @@ import { PuppetQuery, Z64OnlineAPI_PuppetStubCreated, Z64OnlineAPI_PuppetStubDes
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { EventsClient, EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
-import { IActor } from "modloader64_api/OOT/IActor";
-import { OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { AgeOrForm} from "Z64Lib/API/Common/Z64API";
+import { IActor} from "Z64Lib/API/Common/IActor";
+import { OotEvents } from "Z64Lib/API/OOT/OOTAPI";
 import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
@@ -87,7 +88,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
                 player.uuid,
                 new Puppet(
                     player,
-                    this.core,
+                    this.core.OOT!,
                     0x0,
                     this.ModLoader,
                     this.parent
@@ -118,7 +119,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     }
 
     isCurrentlyWarping() {
-        return this.core.link.rdramRead32(0x69C) === 0x00030000;
+        return this.core.OOT!.link.rdramRead32(0x69C) === 0x00030000;
     }
 
     @Postinit()
@@ -126,7 +127,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     ) {
         this.fakeClientPuppet = new Puppet(
             this.ModLoader.me,
-            this.core,
+            this.core.OOT!,
             0x0,
             this.ModLoader,
             this.parent
@@ -152,7 +153,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     @EventHandler(OotEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: Scene) {
         this.localPlayerLoadingZone();
-        this.localPlayerChangingScenes(scene, this.core.save.age);
+        this.localPlayerChangingScenes(scene, this.core.OOT!.save.age);
     }
 
     @NetworkHandler('Ooto_ScenePacket')
@@ -163,9 +164,9 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     @NetworkHandler('Ooto_PuppetPacket')
     onPuppetData_client(packet: Ooto_PuppetPacket) {
         if (
-            this.core.helper.isTitleScreen() ||
-            this.core.helper.isPaused() ||
-            this.core.helper.isLinkEnteringLoadingZone()
+            this.core.OOT!.helper.isTitleScreen() ||
+            this.core.OOT!.helper.isPaused() ||
+            this.core.OOT!.helper.isLinkEnteringLoadingZone()
         ) {
             return;
         }
@@ -173,7 +174,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
-    onAgeChange(age: AgeorForm) {
+    onAgeChange(age: AgeOrForm) {
         this.localPlayerLoadingZone();
     }
 
@@ -182,7 +183,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
         if (actor.actorID === 0x0014) {
             // Epona spawned.
             this.ModLoader.logger.debug("Epona spawned");
-            this.Epona = new HorseData((actor as any)["instance"], this.fakeClientPuppet, this.core);
+            this.Epona = new HorseData((actor as any)["instance"], this.fakeClientPuppet, this.core.OOT!);
         }
     }
 
@@ -237,15 +238,15 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     @onTick()
     onTick() {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid() ||
-            this.core.helper.isPaused()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid() ||
+            this.core.OOT!.helper.isPaused()
         ) {
             return;
         }
         if (
-            !this.core.helper.isLinkEnteringLoadingZone() &&
-            this.core.helper.isInterfaceShown() &&
+            !this.core.OOT!.helper.isLinkEnteringLoadingZone() &&
+            this.core.OOT!.helper.isInterfaceShown() &&
             !this.isCurrentlyWarping()
         ) {
             this.processNewPlayers();

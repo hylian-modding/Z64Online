@@ -1,7 +1,8 @@
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { LobbyData, NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { IOOTCore, OotEvents, InventoryItem, Age, IInventory, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, Strength, LinkState } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, InventoryItem, IInventory, Strength} from 'Z64Lib/API/OOT/OOTAPI';
+import { AgeOrForm, IOvlPayloadResult, UpgradeCountLookup, AmmoUpgrade, LinkState } from 'Z64Lib/API/Common/Z64API';
 import { ActorHookingManagerClient } from './data/ActorHookingSystem';
 import path from 'path';
 import fs from 'fs';
@@ -26,8 +27,8 @@ import { Notifications } from './gui/imgui/Notifications';
 import AnimationManager from './common/cosmetics/AnimationManager';
 import { PvPModule } from './data/pvp/PvPModule';
 import { Multiworld, MultiWorld_ItemPacket } from './compat/OotR';
-import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
-import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import { Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import RomFlags from '@OotOnline/data/RomFlags';
 import zlib from 'zlib';
 import { CDNClient } from './common/cdn/CDNClient';
@@ -35,12 +36,13 @@ import { OOT_PuppetOverlordClient } from './data/linkPuppet/OOT_PuppetOverlord';
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './common/api/Z64API';
 import { markAsRandomizer } from './common/types/GameAliases';
 import { OotOnlineStorage } from './OotOnlineStorage';
+import {IZ64Main} from 'Z64Lib/API/Common/IZ64Main'
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
 export default class OotOnlineClient {
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
@@ -122,7 +124,7 @@ export default class OotOnlineClient {
         status.partyMax = 30;
         status.partySize = 1;
         this.ModLoader.gui.setDiscordStatus(status);
-        this.clientStorage.saveManager = new OotOSaveData(this.core, this.ModLoader);
+        this.clientStorage.saveManager = new OotOSaveData(this.core.OOT!, this.ModLoader);
         this.ModLoader.utils.setIntervalFrames(() => {
             this.inventoryUpdateTick();
         }, 20);
@@ -160,8 +162,8 @@ export default class OotOnlineClient {
     }
 
     updateInventory() {
-        if (this.core.helper.isTitleScreen() || !this.core.helper.isSceneNumberValid() || this.core.helper.isPaused() || !this.clientStorage.first_time_sync) return;
-        if (this.core.helper.Player_InBlockingCsMode() || !this.LobbyConfig.data_syncing) return;
+        if (this.core.OOT!.helper.isTitleScreen() || !this.core.OOT!.helper.isSceneNumberValid() || this.core.OOT!.helper.isPaused() || !this.clientStorage.first_time_sync) return;
+        if (this.core.OOT!.helper.Player_InBlockingCsMode() || !this.LobbyConfig.data_syncing) return;
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
@@ -173,33 +175,33 @@ export default class OotOnlineClient {
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH)
     updateKeyHash(evt: any) {
-        let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
+        let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.OOT!.save.keyManager.getRawKeyBuffer());
         this.clientStorage.keySaveHash = keyHash;
     }
 
     autosaveSceneData() {
-        if (!this.core.helper.isLinkEnteringLoadingZone() && this.core.global.scene_framecount > 20 && this.clientStorage.first_time_sync) {
+        if (!this.core.OOT!.helper.isLinkEnteringLoadingZone() && this.core.OOT!.global.scene_framecount > 20 && this.clientStorage.first_time_sync) {
             // Slap key checking in here too.
-            let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.save.keyManager.getRawKeyBuffer());
+            let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.OOT!.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
                 this.clientStorage.keySaveHash = keyHash;
                 this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
             // and beans too why not.
-            if (this.clientStorage.lastbeans !== this.core.save.inventory.magicBeansCount) {
-                this.clientStorage.lastbeans = this.core.save.inventory.magicBeansCount;
+            if (this.clientStorage.lastbeans !== this.core.OOT!.save.inventory.magicBeansCount) {
+                this.clientStorage.lastbeans = this.core.OOT!.save.inventory.magicBeansCount;
                 this.updateInventory();
             }
 
             if (this.ModLoader.emulator.rdramRead8(0x80600144) === 0x1) {
                 return;
             }
-            let live_scene_chests: Buffer = this.core.global.liveSceneData_chests;
-            let live_scene_switches: Buffer = this.core.global.liveSceneData_switch;
-            let live_scene_collect: Buffer = this.core.global.liveSceneData_collectable;
-            let live_scene_clear: Buffer = this.core.global.liveSceneData_clear;
-            let live_scene_temp: Buffer = this.core.global.liveSceneData_temp;
-            let save_scene_data: Buffer = this.core.global.getSaveDataForCurrentScene();
+            let live_scene_chests: Buffer = this.core.OOT!.global.liveSceneData_chests;
+            let live_scene_switches: Buffer = this.core.OOT!.global.liveSceneData_switch;
+            let live_scene_collect: Buffer = this.core.OOT!.global.liveSceneData_collectable;
+            let live_scene_clear: Buffer = this.core.OOT!.global.liveSceneData_clear;
+            let live_scene_temp: Buffer = this.core.OOT!.global.liveSceneData_temp;
+            let save_scene_data: Buffer = this.core.OOT!.global.getSaveDataForCurrentScene();
             let save: Buffer = Buffer.alloc(0x1c);
             live_scene_chests.copy(save, 0x0); // Chests
             live_scene_switches.copy(save, 0x4); // Switches
@@ -220,17 +222,17 @@ export default class OotOnlineClient {
             else {
                 return;
             }
-            this.core.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.global.scene, this.clientStorage.world));
+            this.core.OOT!.global.writeSaveDataForCurrentScene(save_scene_data);
+            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.OOT!.global.scene, this.clientStorage.world));
         }
     }
 
     updateBottles(onlyfillCache = false) {
         let bottles: InventoryItem[] = [
-            this.core.save.inventory.bottle_1,
-            this.core.save.inventory.bottle_2,
-            this.core.save.inventory.bottle_3,
-            this.core.save.inventory.bottle_4,
+            this.core.OOT!.save.inventory.bottle_1,
+            this.core.OOT!.save.inventory.bottle_2,
+            this.core.OOT!.save.inventory.bottle_3,
+            this.core.OOT!.save.inventory.bottle_4,
         ];
         for (let i = 0; i < bottles.length; i++) {
             if (bottles[i] !== this.clientStorage.bottleCache[i]) {
@@ -244,8 +246,8 @@ export default class OotOnlineClient {
     }
 
     updateSkulltulas() {
-        if (this.clientStorage.lastKnownSkullCount < this.core.save.questStatus.goldSkulltulas) {
-            this.clientStorage.lastKnownSkullCount = this.core.save.questStatus.goldSkulltulas;
+        if (this.clientStorage.lastKnownSkullCount < this.core.OOT!.save.questStatus.goldSkulltulas) {
+            this.clientStorage.lastKnownSkullCount = this.core.OOT!.save.questStatus.goldSkulltulas;
             this.updateInventory();
         }
     }
@@ -301,13 +303,13 @@ export default class OotOnlineClient {
             // #ifdef IS_DEV_BUILD
             let test = false;
             if (test) {
-                this.core.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.save.permSceneData);
+                this.core.OOT!.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.OOT!.save.permSceneData);
             }
             // #endif
             this.ModLoader.utils.setTimeoutFrames(() => {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
-                    this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core, this.ModLoader).createSave()));
+                    this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core.OOT!, this.ModLoader).createSave()));
                     this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.hasFastBunHood, RomFlags.isMultiworld, RomFlags.isVanilla));
                 }
             }, 50);
@@ -319,11 +321,11 @@ export default class OotOnlineClient {
             new Ooto_ScenePacket(
                 this.ModLoader.clientLobby,
                 scene,
-                this.core.save.age
+                this.core.OOT!.save.age
             )
         );
         this.ModLoader.logger.info('client: I moved to scene ' + scene + '.');
-        if (this.core.helper.isSceneNumberValid()) {
+        if (this.core.OOT!.helper.isSceneNumberValid()) {
             this.ModLoader.gui.setDiscordStatus(
                 new DiscordStatus(
                     'Playing OotOnline',
@@ -357,12 +359,12 @@ export default class OotOnlineClient {
     // This packet is basically 'where the hell are you?' if a player has a puppet on file but doesn't know what scene its suppose to be in.
     @NetworkHandler('Ooto_SceneRequestPacket')
     onSceneRequest_client(packet: Ooto_SceneRequestPacket) {
-        if (this.core.save !== undefined) {
+        if (this.core.OOT!.save !== undefined) {
             this.ModLoader.clientSide.sendPacketToSpecificPlayer(
                 new Ooto_ScenePacket(
                     this.ModLoader.clientLobby,
-                    this.core.global.scene,
-                    this.core.save.age
+                    this.core.OOT!.global.scene,
+                    this.core.OOT!.save.age
                 ),
                 packet.player
             );
@@ -372,14 +374,14 @@ export default class OotOnlineClient {
     @NetworkHandler('Ooto_BottleUpdatePacket')
     onBottle_client(packet: Ooto_BottleUpdatePacket) {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid()
         ) {
             return;
         }
         if (packet.player.data.world !== this.clientStorage.world) return;
         if (!this.config.syncBottleContents) return;
-        let inventory = this.core.save.inventory;
+        let inventory = this.core.OOT!.save.inventory;
         if (packet.contents === InventoryItem.NONE) return;
         this.clientStorage.bottleCache[packet.slot] = packet.contents;
         switch (packet.slot) {
@@ -396,7 +398,7 @@ export default class OotOnlineClient {
                 inventory.bottle_4 = packet.contents;
                 break;
         }
-        bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, this.core.save.inventory);
+        bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, this.core.OOT!.save.inventory);
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -406,14 +408,14 @@ export default class OotOnlineClient {
     @NetworkHandler('Ooto_DownloadResponsePacket')
     onDownloadPacket_client(packet: Ooto_DownloadResponsePacket) {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid()
         ) {
             return;
         }
         if (!packet.host) {
             if (packet.save) {
-                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.save as any, ProxySide.CLIENT);
+                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.OOT!.save as any, ProxySide.CLIENT);
                 this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
                 // Update hash.
                 this.clientStorage.saveManager.createSave();
@@ -431,8 +433,8 @@ export default class OotOnlineClient {
     @NetworkHandler('OotO_UpdateSaveDataPacket')
     onSaveUpdate(packet: OotO_UpdateSaveDataPacket) {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid()
         ) {
             return;
         }
@@ -446,8 +448,8 @@ export default class OotOnlineClient {
     @NetworkHandler('OotO_UpdateKeyringPacket')
     onKeyUpdate(packet: OotO_UpdateKeyringPacket) {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid()
         ) {
             return;
         }
@@ -461,39 +463,39 @@ export default class OotOnlineClient {
     @NetworkHandler('Ooto_ClientSceneContextUpdate')
     onSceneContextSync_client(packet: Ooto_ClientSceneContextUpdate) {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid() ||
-            this.core.helper.isLinkEnteringLoadingZone()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid() ||
+            this.core.OOT!.helper.isLinkEnteringLoadingZone()
         ) {
             return;
         }
-        if (this.core.global.scene !== packet.scene) {
+        if (this.core.OOT!.global.scene !== packet.scene) {
             return;
         }
         if (packet.world !== this.clientStorage.world) return;
-        let buf1: Buffer = this.core.global.liveSceneData_chests;
+        let buf1: Buffer = this.core.OOT!.global.liveSceneData_chests;
         if (Object.keys(parseFlagChanges(packet.chests, buf1) > 0)) {
-            this.core.global.liveSceneData_chests = buf1;
+            this.core.OOT!.global.liveSceneData_chests = buf1;
         }
 
-        let buf2: Buffer = this.core.global.liveSceneData_switch;
+        let buf2: Buffer = this.core.OOT!.global.liveSceneData_switch;
         if (Object.keys(parseFlagChanges(packet.switches, buf2) > 0)) {
-            this.core.global.liveSceneData_switch = buf2;
+            this.core.OOT!.global.liveSceneData_switch = buf2;
         }
 
-        let buf3: Buffer = this.core.global.liveSceneData_collectable;
+        let buf3: Buffer = this.core.OOT!.global.liveSceneData_collectable;
         if (Object.keys(parseFlagChanges(packet.collect, buf3) > 0)) {
-            this.core.global.liveSceneData_collectable = buf3;
+            this.core.OOT!.global.liveSceneData_collectable = buf3;
         }
 
-        let buf4: Buffer = this.core.global.liveSceneData_clear;
+        let buf4: Buffer = this.core.OOT!.global.liveSceneData_clear;
         if (Object.keys(parseFlagChanges(packet.clear, buf4) > 0)) {
-            this.core.global.liveSceneData_clear = buf4;
+            this.core.OOT!.global.liveSceneData_clear = buf4;
         }
 
-        let buf5: Buffer = this.core.global.liveSceneData_temp;
+        let buf5: Buffer = this.core.OOT!.global.liveSceneData_temp;
         if (Object.keys(parseFlagChanges(packet.temp, buf5) > 0)) {
-            this.core.global.liveSceneData_temp = buf5;
+            this.core.OOT!.global.liveSceneData_temp = buf5;
         }
         // Update hash.
         this.clientStorage.saveManager.createSave();
@@ -502,8 +504,8 @@ export default class OotOnlineClient {
 
     healPlayer() {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid()
         ) {
             return;
         }
@@ -527,40 +529,40 @@ export default class OotOnlineClient {
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
         switch (evt.key) {
             case "bombchus":
-                if (this.core.save.inventory.bombchuCount === 0) {
-                    this.core.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                if (this.core.OOT!.save.inventory.bombchuCount === 0) {
+                    this.core.OOT!.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
                 }
                 break;
             case "bombBag":
-                if (this.core.save.inventory.bombsCount === 0) {
-                    this.core.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
+                if (this.core.OOT!.save.inventory.bombsCount === 0) {
+                    this.core.OOT!.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
                 }
                 break;
             case "quiver":
-                if (this.core.save.inventory.arrows === 0) {
-                    this.core.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
+                if (this.core.OOT!.save.inventory.arrows === 0) {
+                    this.core.OOT!.save.inventory.arrows = UpgradeCountLookup(InventoryItem.FAIRY_BOW, evt.value as number);
                 }
                 break;
             case "bulletBag":
-                if (this.core.save.inventory.dekuSeeds) {
-                    this.core.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
+                if (this.core.OOT!.save.inventory.dekuSeeds) {
+                    this.core.OOT!.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
                 }
                 break;
             case "dekuSticksCapacity":
-                if (this.core.save.inventory.dekuSticksCount === 0) {
+                if (this.core.OOT!.save.inventory.dekuSticksCount === 0) {
                     if ((evt.value as number) === 1) {
-                        this.core.save.inventory.dekuSticksCount = 1;
+                        this.core.OOT!.save.inventory.dekuSticksCount = 1;
                     } else {
-                        this.core.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
+                        this.core.OOT!.save.inventory.dekuSticksCount = UpgradeCountLookup(InventoryItem.DEKU_STICK, evt.value as number);
                     }
                 }
                 break;
             case "dekuNutsCapacity":
-                if (this.core.save.inventory.dekuNutsCount === 0) {
+                if (this.core.OOT!.save.inventory.dekuNutsCount === 0) {
                     if ((evt.value as number) === 1) {
-                        this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, 1);
+                        this.core.OOT!.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, 1);
                     } else {
-                        this.core.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
+                        this.core.OOT!.save.inventory.dekuNutsCount = UpgradeCountLookup(InventoryItem.DEKU_NUT, evt.value as number);
                     }
                 }
                 break;
@@ -572,11 +574,11 @@ export default class OotOnlineClient {
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
-    onAgeChange(age: Age) {
+    onAgeChange(age: AgeOrForm) {
         this.ModLoader.clientSide.sendPacket(
             new Ooto_ScenePacket(
                 this.ModLoader.clientLobby,
-                this.core.global.scene,
+                this.core.OOT!.global.scene,
                 age
             )
         );
@@ -589,8 +591,8 @@ export default class OotOnlineClient {
     @EventHandler(Z64OnlineEvents.ON_INVENTORY_UPDATE)
     onInventoryUpdate(inventory: IInventory) {
         if (
-            this.core.helper.isTitleScreen() ||
-            !this.core.helper.isSceneNumberValid()
+            this.core.OOT!.helper.isTitleScreen() ||
+            !this.core.OOT!.helper.isSceneNumberValid()
         ) {
             return;
         }
@@ -604,17 +606,17 @@ export default class OotOnlineClient {
         if (buf[0x4] !== InventoryItem.NONE && raw_inventory[buf[0x4]] !== InventoryItem.NONE && (raw_inventory[buf[0x4]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x4]]))) {
             buf[0x1] = raw_inventory[buf[0x4]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
-            this.core.commandBuffer.updateButton(0x1);
+            this.core.OOT!.commandBuffer.updateButton(0x1);
         }
         if (buf[0x5] !== InventoryItem.NONE && raw_inventory[buf[0x5]] !== InventoryItem.NONE && (raw_inventory[buf[0x5]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x5]]))) {
             buf[0x2] = raw_inventory[buf[0x5]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
-            this.core.commandBuffer.updateButton(0x2);
+            this.core.OOT!.commandBuffer.updateButton(0x2);
         }
         if (buf[0x6] !== InventoryItem.NONE && raw_inventory[buf[0x6]] !== InventoryItem.NONE && (raw_inventory[buf[0x6]] === InventoryItem.HOOKSHOT || this.isBottle(raw_inventory[buf[0x6]]))) {
             buf[0x3] = raw_inventory[buf[0x6]];
             this.ModLoader.emulator.rdramWriteBuffer(addr, buf);
-            this.core.commandBuffer.updateButton(0x3);
+            this.core.OOT!.commandBuffer.updateButton(0x3);
         }
     }
 
@@ -685,16 +687,16 @@ export default class OotOnlineClient {
     }
 
     private updateSyncContext() {
-        this.ModLoader.emulator.rdramWrite8(this.syncContext, this.core.save.inventory.strength);
-        this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x1, this.ModLoader.emulator.rdramReadBuffer(0x800F7AD8 + (this.core.link.tunic * 0x3), 0x3));
-        if (this.core.save.inventory.strength > Strength.GORON_BRACELET) {
-            if (this.core.save.inventory.strength === Strength.SILVER_GAUNTLETS) {
+        this.ModLoader.emulator.rdramWrite8(this.syncContext, this.core.OOT!.save.inventory.strength);
+        this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x1, this.ModLoader.emulator.rdramReadBuffer(0x800F7AD8 + (this.core.OOT!.link.tunic * 0x3), 0x3));
+        if (this.core.OOT!.save.inventory.strength > Strength.GORON_BRACELET) {
+            if (this.core.OOT!.save.inventory.strength === Strength.SILVER_GAUNTLETS) {
                 this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4, 0x3));
             } else {
                 this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
             }
         }
-        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.link.current_sound_id);
+        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.OOT!.link.current_sound_id);
     }
 
     private updateMultiworld() {
@@ -706,22 +708,22 @@ export default class OotOnlineClient {
             this.ModLoader.clientSide.sendPacket(new MultiWorld_ItemPacket(this.ModLoader.clientLobby, item));
         }
         if (this.multiworld.itemsInQueue.length === 0) return;
-        if (this.core.link.state === LinkState.STANDING && !this.core.helper.isLinkEnteringLoadingZone() && !this.core.helper.Player_InBlockingCsMode()) {
+        if (this.core.OOT!.link.state === LinkState.STANDING && !this.core.OOT!.helper.isLinkEnteringLoadingZone() && !this.core.OOT!.helper.Player_InBlockingCsMode()) {
             let item = this.multiworld.itemsInQueue.shift()!;
-            this.multiworld.processIncomingItem(item.item, this.core.save);
+            this.multiworld.processIncomingItem(item.item, this.core.OOT!.save);
         }
     }
 
     @onTick()
     onTick() {
         if (this.opa !== undefined) {
-            this.opa.onTick(0, this.core, this.ModLoader);
+            this.opa.onTick(0, this.core.OOT!, this.ModLoader);
         }
         if (
-            !this.core.helper.isTitleScreen() &&
-            this.core.helper.isSceneNumberValid()
+            !this.core.OOT!.helper.isTitleScreen() &&
+            this.core.OOT!.helper.isSceneNumberValid()
         ) {
-            if (!this.core.helper.isPaused()) {
+            if (!this.core.OOT!.helper.isPaused()) {
                 this.ModLoader.me.data["world"] = this.clientStorage.world;
                 if (!this.clientStorage.first_time_sync) {
                     return;

@@ -1,5 +1,5 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
-import { InventoryItem } from 'modloader64_api/OOT/OOTAPI';
+import { InventoryItem } from 'Z64Lib/API/OOT/OOTAPI';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   world: number = 0;

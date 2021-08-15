@@ -1,7 +1,7 @@
-import { Scene } from "modloader64_api/OOT/OOTAPI";
+import { Scene } from "Z64Lib/API/OOT/OOTAPI";
 import { PuppetData } from "../../data/linkPuppet/PuppetData";
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
-import { AgeorForm } from "@OotOnline/common/types/Types";
+import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { IPuppetData } from "@OotOnline/common/puppet/IPuppetData";
 
 export interface IPuppet {
@@ -12,7 +12,7 @@ export interface IPuppet {
     isSpawning: boolean;
     isShoveled: boolean;
     scene: Scene;
-    readonly age: AgeorForm;
+    readonly age: AgeOrForm;
     spawn(): void;
     processIncomingPuppetData(data: IPuppetData): void;
     shovel(): void;

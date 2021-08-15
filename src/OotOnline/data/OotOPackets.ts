@@ -5,17 +5,20 @@ import {
 } from 'modloader64_api/ModLoaderDefaultImpls';
 import { PuppetData } from './linkPuppet/PuppetData';
 import {
-  Age,
+  AgeOrForm,
+} from 'Z64Lib/API/Common/Z64API';
+
+import {
   InventoryItem,
-  Scene,
-} from 'modloader64_api/OOT/OOTAPI';
+  Scene
+} from 'Z64Lib/API/OOT/OOTAPI';
+
 import { ActorPacketData } from './ActorHookBase';
 import { HorseData } from './linkPuppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@OotOnline/common/save/IKeyRing';
-import { AgeorForm } from '@OotOnline/common/types/Types';
 
-export class Ooto_PuppetPacket extends Packet{
+export class Ooto_PuppetPacket extends Packet {
   data: PuppetData;
   horse_data!: HorseData;
 
@@ -31,9 +34,9 @@ export class Ooto_PuppetPacket extends Packet{
 
 export class Ooto_ScenePacket extends Packet {
   scene: Scene;
-  age: Age;
+  age: AgeOrForm;
 
-  constructor(lobby: string, scene: Scene, age: Age) {
+  constructor(lobby: string, scene: Scene, age: AgeOrForm) {
     super('Ooto_ScenePacket', 'OotOnline', lobby, true);
     this.scene = scene;
     this.age = age;
@@ -192,11 +195,11 @@ export class Ooto_BottleUpdatePacket extends Packet {
 }
 
 export class Z64_AllocateModelPacket extends Packet {
-  age: AgeorForm;
+  age: AgeOrForm;
   hash: string;
-  ageThePlayerActuallyIs: Age;
+  ageThePlayerActuallyIs: AgeOrForm;
 
-  constructor(age: AgeorForm, lobby: string, hash: string, actualAge: Age) {
+  constructor(age: AgeOrForm, lobby: string, hash: string, actualAge: AgeOrForm) {
     super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
     this.age = age;
     this.hash = hash;
@@ -216,9 +219,9 @@ export class Z64_GiveModelPacket extends Packet {
 
 export class Z64_EquipmentPakPacket extends Packet {
   ids: Array<string> = [];
-  age: Age;
+  age: AgeOrForm;
 
-  constructor(age: Age, lobby: string) {
+  constructor(age: AgeOrForm, lobby: string) {
     super('Z64OnlineLib_EquipmentPakPacket', 'Z64OnlineLib', lobby, true);
     this.age = age;
   }

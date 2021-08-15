@@ -1,17 +1,18 @@
-import { Age, IOOTCore, LinkState, Tunic } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, Tunic } from "Z64Lib/API/OOT/OOTAPI";
+import { AgeOrForm, LinkState } from "Z64Lib/API/Common/Z64API";
 import { IOOTSaveContext, IOOTSyncSave } from "./OotAliases";
-import * as MMAPI from 'MajorasMask/API/Imports';
-import { Z64LibSupportedGames } from "Z64Lib/API/Z64LibSupportedGames";
-import { OOTAdultManifest } from "Z64Lib/API/OOT/OOTAdultManfest";
-import { MMChildManifest } from 'Z64Lib/API/MM/MMChildManifest';
-import { OOTChildManifest } from "Z64Lib/API/OOT/OOTChildManifest";
-import { IManifest } from "Z64Lib/API/Z64ManifestBuffer";
+import * as MMAPI from 'Z64Lib/API/Imports';
+import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
+import { OOTAdultManifest } from "Z64Lib/API/OoT/ModelData/OOTAdultManfest";
+import { MMChildManifest } from 'Z64Lib/API/MM/ModelData/MMChildManifest';
+import { OOTChildManifest } from "Z64Lib/API/OoT/ModelData/OOTChildManifest";
+import { IManifest } from "Z64Lib/API/Utilities/Z64ManifestBuffer";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 
-export type AgeorForm = Age | MMAPI.MMForms;
 export type IZ64SaveContext = IOOTSaveContext;
 export type IZ64SyncSave = IOOTSyncSave;
 export type Scene = number;
-export type Core = IOOTCore;
+export type Core = IZ64Main;
 export type Z64Tunic = Tunic;
 export type DMAIndex = number;
 export type Game = Z64LibSupportedGames;

@@ -7,7 +7,8 @@ import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
 import { onTick, onViUpdate, Postinit } from 'modloader64_api/PluginLifecycle';
 import * as sf from 'modloader64_api/Sound/sfml_audio';
-import { Age, IOOTCore, OotEvents } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, OotEvents } from "Z64Lib/API/OOT/OOTAPI";
+import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
 import { OotOnlineConfigCategory } from "@OotOnline/OotOnline";
@@ -15,6 +16,7 @@ import { SoundCategory_Adult, SoundCategory_Child } from "@OotOnline/data/sounds
 import { number_ref } from "modloader64_api/Sylvain/ImGui";
 import { CDNClient } from "@OotOnline/common/cdn/CDNClient";
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from "@OotOnline/common/api/Z64API";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     id: string;
@@ -36,7 +38,7 @@ export class SoundManagerClient {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     PlayerSounds: Map<string, Map<number, sf.Sound[]>> = new Map<string, Map<number, sf.Sound[]>>();
     rawSounds: any;
     SIZE_LIMIT: number = 10;
@@ -176,8 +178,8 @@ export class SoundManagerClient {
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
-    onAgeChange(age: Age) {
-        if (age === Age.ADULT) {
+    onAgeChange(age: AgeOrForm) {
+        if (age === AgeOrForm.ADULT) {
             if (this.hasAdult) {
                 this.ModLoader.emulator.rdramWriteBuffer(0x80389048, this.nop);
             } else {
@@ -195,13 +197,13 @@ export class SoundManagerClient {
 
     @onTick()
     onTick() {
-        let dir = this.core.global.viewStruct.position.minus(this.core.global.viewStruct.focus).normalized();
+        let dir = this.core.OOT!.global.viewStruct.position.minus(this.core.OOT!.global.viewStruct.focus).normalized();
 
-        this.ModLoader.sound.listener.position = this.core.global.viewStruct.position;
+        this.ModLoader.sound.listener.position = this.core.OOT!.global.viewStruct.position;
         this.ModLoader.sound.listener.direction = dir;
-        this.ModLoader.sound.listener.upVector = this.core.global.viewStruct.axis;
+        this.ModLoader.sound.listener.upVector = this.core.OOT!.global.viewStruct.axis;
 
-        if (!this.core.helper.isPaused()) {
+        if (!this.core.OOT!.helper.isPaused()) {
             if (this.originalData === undefined) {
                 this.originalData = this.ModLoader.emulator.rdramReadBuffer(0x80389048, this.nop.byteLength);
                 this.ModLoader.logger.debug("Backing up original voice code...");
@@ -222,11 +224,11 @@ export class SoundManagerClient {
 
         if (this.client_config.muteLocalSounds) return;
 
-        if (this.core.link.current_sound_id > 0) {
-            if (this.sounds.has(this.core.link.current_sound_id)) {
-                let random = this.getRandomInt(0, this.sounds.get(this.core.link.current_sound_id)!.length - 1);
-                let sound: sf.Sound = this.sounds.get(this.core.link.current_sound_id)![random];
-                let raw = this.core.link.position.getRawPos();
+        if (this.core.OOT!.link.current_sound_id > 0) {
+            if (this.sounds.has(this.core.OOT!.link.current_sound_id)) {
+                let random = this.getRandomInt(0, this.sounds.get(this.core.OOT!.link.current_sound_id)!.length - 1);
+                let sound: sf.Sound = this.sounds.get(this.core.OOT!.link.current_sound_id)![random];
+                let raw = this.core.OOT!.link.position.getRawPos();
                 let pos = new Vector3(raw.readFloatBE(0), raw.readFloatBE(4), raw.readFloatBE(8));
                 sound.position = pos;
                 sound.minDistance = 250.0

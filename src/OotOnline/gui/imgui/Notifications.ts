@@ -3,8 +3,9 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { Command } from "modloader64_api/OOT/ICommandBuffer";
-import { IOOTCore, SongNotes, SongFlags, ScarecrowSongNoteStruct } from "modloader64_api/OOT/OOTAPI";
+import { Command } from "Z64Lib/API/Common/ICommandBuffer";
+import { IOOTCore, ScarecrowSongNoteStruct } from "Z64Lib/API/OOT/OOTAPI";
+import { SongNotes, SongFlags } from "Z64Lib/API/Common/Z64API"
 import { onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
 import { FlipFlags, Font, Texture } from "modloader64_api/Sylvain/Gfx";
 import { rgba, xy, xywh } from "modloader64_api/Sylvain/vec";
@@ -17,6 +18,7 @@ import { IZ64Clientside } from "@OotOnline/common/lib/IZ64Clientside";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import RomFlags from "@OotOnline/data/RomFlags";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 
 class Notif {
     msg: string;
@@ -47,7 +49,7 @@ export class Notifications {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     @ParentReference()
     parent!: IZ64Clientside;
     //---
@@ -217,7 +219,7 @@ export class Notifications {
                 this.curMessage = this.messages.shift()!;
                 if (!this.curMessage.noSound && this.config.notificationSound) {
                     this.ModLoader.utils.setTimeoutFrames(() => {
-                        this.core.commandBuffer.runCommand(Command.PLAY_SOUND, this.boop);
+                        this.core.OOT!.commandBuffer.runCommand(Command.PLAYSOUND, this.boop);
                     }, 1);
                 }
             }

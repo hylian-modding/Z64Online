@@ -4,7 +4,8 @@ import { parseFlagChanges } from "@OotOnline/common/lib/parseFlagChanges";
 import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@OotOnline/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { InventoryItem, IOOTCore, SceneStruct, ScarecrowSongNoteStruct } from "modloader64_api/OOT/OOTAPI";
+import { InventoryItem, IOOTCore, ScarecrowSongNoteStruct } from "Z64Lib/API/OOT/OOTAPI";
+import { SceneStruct } from "Z64Lib/API/Common/Z64API"
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { OOTO_PRIVATE_EVENTS } from "./InternalAPI";
 import { ISaveSyncData } from "@OotOnline/common/save/ISaveSyncData";

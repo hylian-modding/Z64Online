@@ -2,7 +2,7 @@ import { onViUpdate, onTick } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOOTCore, OotEvents, Scene } from "modloader64_api/OOT/OOTAPI";
+import { IOOTCore, OotEvents, Scene } from "Z64Lib/API/OOT/OOTAPI";
 import { Puppet } from "@OotOnline/data/linkPuppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@OotOnline/common/api/Z64API";
@@ -15,12 +15,13 @@ import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { BUILD_DATE, OotOnlineConfigCategory, VERSION_NUMBER } from "@OotOnline/OotOnline";
 import { changeKillfeedFont } from "modloader64_api/Announcements";
 import IMemory from "modloader64_api/IMemory";
-import { IActor } from "modloader64_api/OOT/IActor";
+import { IActor } from "Z64Lib/API/Common/IActor";
 import fse from 'fs-extra';
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { OpaDebug } from "./OpaDebug";
-import { Command } from "modloader64_api/OOT/ICommandBuffer";
+import { Command } from "Z64Lib/API/Common/ICommandBuffer";
 import { IZ64OnlineHelpers } from "@OotOnline/common/lib/IZ64OnlineHelpers";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -35,7 +36,7 @@ export class ImGuiHandler {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     @ParentReference()
     parent!: IZ64OnlineHelpers;
     puppets: Array<Puppet> = [];
@@ -173,13 +174,13 @@ export class ImGuiHandler {
                 this.ModLoader.logger.error(err);
             }
             // #ifdef IS_DEV_BUILD
-            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator, this.core, this.ModLoader);
+            this.opa = new OpaDebug(this.ModLoader.ImGui, this.ModLoader.emulator, this.core.OOT!!, this.ModLoader);
             // #endif
             return;
         }
 
         // #ifdef IS_DEV_BUILD
-        if (this.core.helper.isTitleScreen()){
+        if (this.core.OOT!.helper.isTitleScreen()){
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "OotOnline", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Version: ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 68), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Build Date: ${BUILD_DATE}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 36), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
@@ -246,7 +247,7 @@ export class ImGuiHandler {
                     if (this.ModLoader.ImGui.beginMenu("Game Sounds")){
                         this.ModLoader.ImGui.inputText("sound id", this.sound_id);
                         if (this.ModLoader.ImGui.button("play")){
-                            this.core.commandBuffer.runCommand(Command.PLAYSOUND, parseInt(this.sound_id[0]));
+                            this.core.OOT!.commandBuffer.runCommand(Command.PLAYSOUND, parseInt(this.sound_id[0]));
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
@@ -254,7 +255,7 @@ export class ImGuiHandler {
                         this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
                         this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
                         if (this.ModLoader.ImGui.button("Warp")) {
-                            this.core.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
+                            this.core.OOT!.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
@@ -265,7 +266,7 @@ export class ImGuiHandler {
                         bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
                     }
                     if (this.ModLoader.ImGui.button("PRINT LINK POS")){
-                        console.log(JSON.stringify(this.core.link.position.getVec3()));
+                        console.log(JSON.stringify(this.core.OOT!.link.position.getVec3()));
                     }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
@@ -315,7 +316,7 @@ export class ImGuiHandler {
 
                 this.ModLoader.ImGui.nextColumn()
 
-                let actor = this.core.actorManager.createIActorFromPointer(this.curActor);
+                let actor = this.core.OOT!.actorManager.createIActorFromPointer(this.curActor);
                 let actor_size = this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramRead32(this.curActor + (0x13C - 4)) + 0x14) + 0xC)
 
                 if (actor_size === 0) actor_size = 0x13C
@@ -379,16 +380,16 @@ export class ImGuiHandler {
 
                 this.ModLoader.ImGui.sameLine()
                 if (this.ModLoader.ImGui.smallButton("Move to Link")) {
-                    let pos = this.core.link.position.getRawPos();
-                    let rot = this.core.link.rotation.getRawRot();
+                    let pos = this.core.OOT!.link.position.getRawPos();
+                    let rot = this.core.OOT!.link.rotation.getRawRot();
                     actor.position.setRawPos(pos);
                     actor.rotation.setRawRot(rot);
                 }
                 if (this.ModLoader.ImGui.smallButton("Move Link to Actor")) {
                     let pos = actor.position.getRawPos();
                     let rot = actor.rotation.getRawRot();
-                    this.core.link.position.setRawPos(pos);
-                    this.core.link.rotation.setRawRot(rot);
+                    this.core.OOT!.link.position.setRawPos(pos);
+                    this.core.OOT!.link.rotation.setRawRot(rot);
                 }
 
                 if (this.ModLoader.ImGui.smallButton("Kill Actor")) {

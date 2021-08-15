@@ -1,9 +1,9 @@
 import { JSONTemplate } from 'modloader64_api/JSONTemplate';
-import { IActor } from 'modloader64_api/OOT/IActor';
+import { IActor } from 'Z64Lib/API/Common/IActor';
 import IMemory from 'modloader64_api/IMemory';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { Ooto_ActorPacket } from './OotOPackets';
-import { IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
 
 export class HookInfo {
   offset = 0;

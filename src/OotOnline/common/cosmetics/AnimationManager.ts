@@ -2,7 +2,7 @@ import { Z64OnlineEvents, Z64_AnimationBank } from "@OotOnline/common/api/Z64API
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { Init } from "modloader64_api/PluginLifecycle";
-import { Z64RomTools } from "Z64Lib/API/Z64RomTools";
+import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { OOTO_PRIVATE_EVENTS } from "../../data/InternalAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import RomFlags from '@OotOnline/data/RomFlags';

@@ -1,6 +1,6 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { Age, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
@@ -17,10 +17,12 @@ import { AssetContainer } from '../common/events/AssetContainer';
 import zlib from 'zlib';
 import { CDNClient } from '@OotOnline/common/cdn/CDNClient';
 import { IModelReference, IModelScript, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@OotOnline/common/api/Z64API';
+import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
+import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 
 export interface Z64_EventReward {
     name: string;
-    age: Age;
+    age: AgeOrForm;
     equipmentCategory?: string;
     data: Buffer;
     event: string;
@@ -46,7 +48,7 @@ export class WorldEventRewards {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     rewardsWindowStatus: bool_ref = [false];
 
     customModelFilesAdult: Map<string, IModelReference> = new Map<string, IModelReference>();
@@ -342,8 +344,8 @@ export class WorldEventRewards {
                         this.config.voice = "";
                         this.ModLoader.utils.setTimeoutFrames(() => {
                             bus.emit(Z64OnlineEvents.CLEAR_EQUIPMENT, {});
-                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, new Z64Online_ModelAllocation(Buffer.alloc(1), Age.ADULT));
-                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD));
+                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT));
+                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD));
                             bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
                         }, 1);
                         this.ModLoader.config.save();
@@ -355,7 +357,7 @@ export class WorldEventRewards {
                                     event.get("Adult")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.adultCostume)) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.ADULT);
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, AgeOrForm.ADULT);
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -380,7 +382,7 @@ export class WorldEventRewards {
                                     event.get("Child")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.childCostume)) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, Age.CHILD);
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, AgeOrForm.CHILD);
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -435,7 +437,7 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Adult###OotOCustomModels_Adult")) {
                                 this.customModelFilesAdult.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.adultCostume)) {
-                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.ADULT);
+                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT);
                                         if (key === this.config.adultCostume) {
                                             this.config.adultCostume = "";
                                         } else {
@@ -453,7 +455,7 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Child###OotOCustomModels_Child")) {
                                 this.customModelFilesChild.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.childCostume)) {
-                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD);
+                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD);
                                         if (key === this.config.childCostume) {
                                             this.config.childCostume = "";
                                         } else {
@@ -539,7 +541,7 @@ export class WorldEventRewards {
             if (this.config.adultCostume !== "") {
                 let c = this.getAssetByUUID(this.config.adultCostume);
                 if (c !== undefined) {
-                    let evt = new Z64Online_ModelAllocation(c, Age.ADULT);
+                    let evt = new Z64Online_ModelAllocation(c, AgeOrForm.ADULT);
                     if (this.isAssetScripted(this.config.adultCostume).is) {
                         evt.script = this.isAssetScripted(this.config.adultCostume).script;
                     }
@@ -547,7 +549,7 @@ export class WorldEventRewards {
                 } else {
                     // Probably a custom costume.
                     if (this.customModelFilesAdult.has(this.config.adultCostume)) {
-                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.ADULT);
+                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT);
                         evt.ref = this.customModelFilesAdult.get(this.config.adultCostume)!
                         bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, evt);
                     }
@@ -556,7 +558,7 @@ export class WorldEventRewards {
             if (this.config.childCostume !== "") {
                 let c = this.getAssetByUUID(this.config.childCostume);
                 if (c !== undefined) {
-                    let evt = new Z64Online_ModelAllocation(c, Age.CHILD);
+                    let evt = new Z64Online_ModelAllocation(c, AgeOrForm.CHILD);
                     if (this.isAssetScripted(this.config.childCostume).is) {
                         evt.script = this.isAssetScripted(this.config.childCostume).script;
                     }
@@ -564,7 +566,7 @@ export class WorldEventRewards {
                 } else {
                     // Probably a custom costume.
                     if (this.customModelFilesChild.has(this.config.childCostume)) {
-                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), Age.CHILD);
+                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD);
                         evt.ref = this.customModelFilesChild.get(this.config.childCostume)!
                         bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, evt);
                     }
@@ -666,7 +668,7 @@ export class WorldEvents {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     @SidedProxy(ProxySide.CLIENT, WorldEventRewards)
     rewards!: WorldEventRewards;
     @SidedProxy(ProxySide.SERVER, WorldEventsServer)

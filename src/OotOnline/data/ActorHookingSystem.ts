@@ -1,6 +1,6 @@
-import { IActor } from 'modloader64_api/OOT/IActor';
+import { IActor } from 'Z64Lib/API/Common/IActor';
 import { EventHandler, bus } from 'modloader64_api/EventHandler';
-import { OotEvents, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { OotEvents, IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
 import {
   ActorHookBase,
   ActorHookProcessor,
@@ -22,16 +22,17 @@ import {
   ServerNetworkHandler,
 } from 'modloader64_api/NetworkHandler';
 import IMemory from 'modloader64_api/IMemory';
-import { Command } from 'modloader64_api/OOT/ICommandBuffer';
+import { Command } from 'Z64Lib/API/Common/ICommandBuffer';
 import { Z64OnlineEvents } from '../common/api/Z64API';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { Postinit } from 'modloader64_api/PluginLifecycle';
-import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
+import { Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
 import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
-import { Z64LibSupportedGames } from 'Z64Lib/API/Z64LibSupportedGames';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { MLPatchLib } from '@OotOnline/common/lib/ML64PatchLib';
 import { IZ64OnlineHelpers } from '@OotOnline/common/lib/IZ64OnlineHelpers';
+import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 // Actor Hooking Stuff
 
 const BOMB_ID = 0x0010;
@@ -82,7 +83,7 @@ export class ActorHookingManagerClient {
   @ModLoaderAPIInject()
   ModLoader!: IModLoaderAPI;
   @InjectCore()
-  core!: IOOTCore;
+  core!: IZ64Main;
   @ParentReference()
   parent!: IZ64OnlineHelpers;
   names: any;
@@ -125,10 +126,10 @@ export class ActorHookingManagerClient {
     bombs.hooks.push(new HookInfo(0x1e8, 0x4));
     bombs.hooks.push(new HookInfo(0x118, 0x4));
     this.bombProcessor = new ActorHookProcessor(
-      this.core.actorManager.createIActorFromPointer(0x0),
+      this.core.OOT!.actorManager.createIActorFromPointer(0x0),
       bombs,
       this.ModLoader,
-      this.core
+      this.core.OOT!
     );
 
     let chus = new ActorHookBase();
@@ -136,19 +137,19 @@ export class ActorHookingManagerClient {
     chus.hooks.push(new HookInfo(0x118, 0x4));
     chus.hooks.push(new HookInfo(0x140, 0x4));
     this.chuProcessor = new ActorHookProcessor(
-      this.core.actorManager.createIActorFromPointer(0x0),
+      this.core.OOT!.actorManager.createIActorFromPointer(0x0),
       chus,
       this.ModLoader,
-      this.core
+      this.core.OOT!
     );
 
     let nl = new ActorHookBase();
     nl.actorID = NL_ID;
     this.NLProcessor = new ActorHookProcessor(
-      this.core.actorManager.createIActorFromPointer(0x0),
+      this.core.OOT!.actorManager.createIActorFromPointer(0x0),
       nl,
       this.ModLoader,
-      this.core
+      this.core.OOT!
     );
     let a = new ActorHookBase();
     a.actorID = ARROW;
@@ -165,10 +166,10 @@ export class ActorHookingManagerClient {
     a.hooks.push(new HookInfo(0x1C, 0x2));
     a.hooks.push(new HookInfo(0x21C, 0x1C));
     this.arrowProcess = new ActorHookProcessor(
-      this.core.actorManager.createIActorFromPointer(0x0),
+      this.core.OOT!.actorManager.createIActorFromPointer(0x0),
       a,
       this.ModLoader,
-      this.core
+      this.core.OOT!
     );
   }
 
@@ -191,9 +192,9 @@ export class ActorHookingManagerClient {
         'Setting up hook for actor ' + this.names['0x' + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + ", " + actor.isTransitionActor + '.'
       );
       if (actor.isTransitionActor) {
-        this.transitionHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core));
+        this.transitionHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core.OOT!));
       } else {
-        this.actorHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core));
+        this.actorHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core.OOT!));
       }
     } else if (actor.actorID === BOMB_ID) {
       if (actor.rdramRead32(0x1e8) <= 10) {
@@ -205,8 +206,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_SpawnActorPacket(
           actorData,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -217,8 +218,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_SpawnActorPacket(
           actorData,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -228,8 +229,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_SpawnActorPacket(
           actorData,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -240,8 +241,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_SpawnActorPacket(
           actorData,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -260,8 +261,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -272,8 +273,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -283,8 +284,8 @@ export class ActorHookingManagerClient {
         this.ModLoader.clientSide.sendPacket(
           new Ooto_ActorDeadPacket(
             actor.actorUUID,
-            this.core.global.scene,
-            this.core.global.room,
+            this.core.OOT!.global.scene,
+            this.core.OOT!.global.room,
             this.ModLoader.clientLobby
           )
         );
@@ -294,8 +295,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -304,8 +305,8 @@ export class ActorHookingManagerClient {
       this.ModLoader.clientSide.sendPacket(
         new Ooto_ActorDeadPacket(
           actor.actorUUID,
-          this.core.global.scene,
-          this.core.global.room,
+          this.core.OOT!.global.scene,
+          this.core.OOT!.global.room,
           this.ModLoader.clientLobby
         )
       );
@@ -475,17 +476,17 @@ export class ActorHookingManagerClient {
   @NetworkHandler('Ooto_SpawnActorPacket')
   onActorSpawnRequest(packet: Ooto_SpawnActorPacket) {
     if (
-      packet.scene !== this.core.global.scene ||
-      packet.room !== this.core.global.room ||
-      this.core.helper.isLinkEnteringLoadingZone() ||
-      this.core.global.scene_framecount < 100 ||
-      this.core.helper.isPaused()
+      packet.scene !== this.core.OOT!.global.scene ||
+      packet.room !== this.core.OOT!.global.room ||
+      this.core.OOT!.helper.isLinkEnteringLoadingZone() ||
+      this.core.OOT!.global.scene_framecount < 100 ||
+      this.core.OOT!.helper.isPaused()
     ) {
       return;
     }
     if (packet.player.data.world !== this.ModLoader.me.data.world) return;
     let spawn_param = 0;
-    let pos = this.core.link.position.getRawPos();
+    let pos = this.core.OOT!.link.position.getRawPos();
     switch (packet.actorData.actor.actorID) {
       case BOMB_ID:
         spawn_param = 0x80600160;
@@ -537,14 +538,14 @@ export class ActorHookingManagerClient {
         spawn_param = 0x80600190;
         break;
     }
-    this.core.commandBuffer.runCommand(
-      Command.SPAWN_ACTOR,
+    this.core.OOT!.commandBuffer.runCommand(
+      Command.ACTORSPAWN,
       spawn_param,
       (success: boolean, result: number) => {
         if (success) {
           let dref: number = result & 0x00ffffff;
           this.ModLoader.logger.info(dref.toString(16));
-          let actor: IActor = this.core.actorManager.createIActorFromPointer(
+          let actor: IActor = this.core.OOT!.actorManager.createIActorFromPointer(
             dref
           );
           actor.actorUUID = packet.actorData.actor.actorUUID;
@@ -658,9 +659,9 @@ export class ActorHookingManagerClient {
     });
     this.NLLocal.forEach((value: IActor, key: string) => {
       this.NLProcessor.actor = value;
-      value.position.x = this.core.link.position.x;
-      value.position.y = this.core.link.position.y;
-      value.position.z = this.core.link.position.z;
+      value.position.x = this.core.OOT!.link.position.x;
+      value.position.y = this.core.OOT!.link.position.y;
+      value.position.z = this.core.OOT!.link.position.z;
       this.NLProcessor.onTick();
     });
     if (this.knockedArrow !== undefined) {
@@ -672,8 +673,8 @@ export class ActorHookingManagerClient {
         this.ModLoader.clientSide.sendPacket(
           new Ooto_SpawnActorPacket(
             actorData,
-            this.core.global.scene,
-            this.core.global.room,
+            this.core.OOT!.global.scene,
+            this.core.OOT!.global.room,
             this.ModLoader.clientLobby
           )
         );

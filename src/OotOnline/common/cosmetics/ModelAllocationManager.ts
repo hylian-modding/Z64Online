@@ -2,12 +2,12 @@ import { ModelPlayer } from '../../data/models/ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModelObject, ModelReference } from './ModelContainer';
-import { zzstatic } from 'Z64Lib/API/zzstatic';
+import { zzstatic } from 'Z64Lib/API/Utilities/zzstatic';
 import fs from 'fs';
 import path from 'path';
 import { IModelReference } from '@OotOnline/common/api/Z64API';
 import { Z64_GAME } from '@OotOnline/common/types/GameAliases';
-import { AgeorForm } from '@OotOnline/common/types/Types';
+import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -68,7 +68,7 @@ export class ModelAllocationManager {
     });
   }
 
-  SetLocalPlayerModel(age: AgeorForm, model: IModelReference) {
+  SetLocalPlayerModel(age: AgeOrForm, model: IModelReference) {
     if (this.localPlayer.currentScript !== undefined) {
       this.localPlayer.currentScript.onModelRemoved();
     }
@@ -159,11 +159,11 @@ export class ModelAllocationManager {
     return this.players.get(player.uuid);
   }
 
-  createPlayer(player: INetworkPlayer, defaults: Map<AgeorForm, IModelReference>) {
+  createPlayer(player: INetworkPlayer, defaults: Map<AgeOrForm, IModelReference>) {
     // Player is already allocated.
     if (this.doesPlayerExist(player)) return this.getPlayer(player);
     let mp = new ModelPlayer(player.uuid);
-    defaults.forEach((ref: IModelReference, key: AgeorForm)=>{
+    defaults.forEach((ref: IModelReference, key: AgeOrForm)=>{
       mp.AgesOrForms.set(key, ref);
     });
     this.players.set(player.uuid, mp);
@@ -171,7 +171,7 @@ export class ModelAllocationManager {
     return mp;
   }
 
-  allocatePlayer(player: INetworkPlayer, defaults: Map<AgeorForm, IModelReference>): ModelPlayer | undefined {
+  allocatePlayer(player: INetworkPlayer, defaults: Map<AgeOrForm, IModelReference>): ModelPlayer | undefined {
     let mp = this.createPlayer(player, defaults)!;
     if (mp.isLoaded) mp.isDead = false;
     if (!mp.isDead) return mp;

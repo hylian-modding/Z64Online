@@ -4,7 +4,8 @@ import { bus } from 'modloader64_api/EventHandler';
 import { Z64OnlineEvents, } from '@OotOnline/common/api/Z64API';
 import { IPuppetOverlordServer, IPuppetOverlordClient } from '@OotOnline/common/puppet/IPuppetOverlord';
 import { IPuppet } from '@OotOnline/common/puppet/IPuppet';
-import { AgeorForm, Core, Scene } from '@OotOnline/common/types/Types';
+import { Core, Scene } from '@OotOnline/common/types/Types';
+import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 
 export abstract class PuppetOverlordServer implements IPuppetOverlordServer {
   abstract onPuppetData_server(packet: IPacketHeader): void;
@@ -35,7 +36,7 @@ export abstract class PuppetOverlordClient implements IPuppetOverlordClient {
     bus.emit(Z64OnlineEvents.PUPPETS_CLEAR, {});
   }
 
-  localPlayerChangingScenes(entering_scene: Scene, age: AgeorForm) {
+  localPlayerChangingScenes(entering_scene: Scene, age: AgeOrForm) {
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
     this.fakeClientPuppet.scene = entering_scene;
   }

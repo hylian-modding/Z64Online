@@ -1,5 +1,6 @@
 import { EVENT_ARR_SIZE, INF_ARR_SIZE, ITEM_FLAG_ARR_SIZE, SCARECROW_ARR_SIZE, SCENE_ARR_SIZE, SKULLTULA_ARR_SIZE } from '@OotOnline/OotOnline';
-import { Magic, ISwords, IShields, ITunics, IBoots, IQuestStatus } from 'modloader64_api/OOT/OOTAPI';
+import {ITunics, IBoots, IQuestStatus } from 'Z64Lib/API/OOT/OOTAPI';
+import { Magic, ISwords, IShields} from 'Z64Lib/API/COMMON/Z64API';
 import { IKeyRing } from './common/save/IKeyRing';
 import { IOOTInventorySync, IOOTSyncSave } from './common/types/OotAliases';
 import { PuppetServerStub } from './data/linkPuppet/PuppetServerStub';

@@ -1,14 +1,14 @@
 {
   "name": "OotOnline",
   "version": "3.0.70",
-  "date": "Thu, 29 Jul 2021 15:37:36 GMT",
+  "date": "Sun, 15 Aug 2021 01:25:44 GMT",
   "description": "",
   "main": "OotOnline.js",
   "author": "denoflions",
   "credits": "\nASM: Ideka, glank.\nPuppet contributors: Drahsid, Fig, Psi-Hate CrookedPoe.\nHelpful advice: Noka, Skawo.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
   "license": "GPL-3.0",
   "core": [
-    "OcarinaofTime"
+    "Z64Lib"
   ],
   "updateUrl": "https://repo.modloader64.com/mods/Ooto/update/update.json",
   "devUrl": "https://repo.modloader64.com/mods/Ooto/dev/update.json",

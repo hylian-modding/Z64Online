@@ -3,7 +3,8 @@ import { bus } from 'modloader64_api/EventHandler';
 import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import path from 'path';
 import { IPuppet } from '@OotOnline/common/puppet/IPuppet';
-import { AgeorForm, Scene, Z64Tunic } from '@OotOnline/common/types/Types';
+import { Scene, Z64Tunic } from '@OotOnline/common/types/Types';
+import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 import { PuppetServerStub } from '@OotOnline/data/linkPuppet/PuppetServerStub';
 
 @ExternalAPIProvider("Z64API", "3.1.0", path.resolve(__dirname))
@@ -140,11 +141,11 @@ export interface IModelReference {
 export class Z64Online_ModelAllocation {
   name: string = "";
   model: Buffer;
-  age: AgeorForm;
+  age: AgeOrForm;
   ref!: IModelReference;
   script: IModelScript | undefined;
 
-  constructor(model: Buffer, age: AgeorForm) {
+  constructor(model: Buffer, age: AgeOrForm) {
     this.model = model;
     this.age = age;
   }

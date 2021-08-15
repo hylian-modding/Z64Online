@@ -9,18 +9,19 @@ import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, 
 import { WorldEvents } from './WorldEvents/WorldEvents';
 import { OotOSaveData } from './data/OotoSaveData';
 import { InjectCore } from 'modloader64_api/CoreInjection';
-import { InventoryItem, IOOTCore } from 'modloader64_api/OOT/OOTAPI';
+import { InventoryItem, IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
 import { Preinit } from 'modloader64_api/PluginLifecycle';
 import { OOTO_PRIVATE_EVENTS } from './data/InternalAPI';
 import { PvPServer } from './data/pvp/PvPModule';
 import { CDNServer } from './common/cdn/CDNServer';
 import { OOT_PuppetOverlordServer } from './data/linkPuppet/OOT_PuppetOverlord';
 import { Z64OnlineEvents, Z64_PlayerScene } from './common/api/Z64API';
+import {IZ64Main} from 'Z64Lib/API/Common/IZ64Main'
 
 export default class OotOnlineServer {
 
     @InjectCore()
-    core!: IOOTCore;
+    core!: IZ64Main;
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
     @ParentReference()
@@ -71,7 +72,7 @@ export default class OotOnlineServer {
             if (storage === null) {
                 return;
             }
-            storage.saveManager = new OotOSaveData(this.core, this.ModLoader);
+            storage.saveManager = new OotOSaveData(this.core.OOT!, this.ModLoader);
         }
         catch (err) {
             this.ModLoader.logger.error(err);

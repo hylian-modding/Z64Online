@@ -1,5 +1,5 @@
-import { IActor } from "modloader64_api/OOT/IActor"
-import { IOOTCore } from "modloader64_api/OOT/OOTAPI";
+import { IActor } from "Z64Lib/API/Common/IActor"
+import { IOOTCore } from "Z64Lib/API/OOT/OOTAPI";
 import { IPuppet } from "@OotOnline/common/puppet/IPuppet";
 
 export class HorseData{

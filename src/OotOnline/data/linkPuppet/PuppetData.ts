@@ -1,11 +1,10 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { SmartBuffer } from 'smart-buffer';
 import path from 'path';
-import { Age } from 'modloader64_api/OOT/OOTAPI';
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@OotOnline/common/api/Z64API';
 import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
-import { AgeorForm } from '@OotOnline/common/types/Types';
+import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 import { IPuppetData } from '@OotOnline/common/puppet/IPuppetData';
 
 interface SyncData {
@@ -21,8 +20,8 @@ export class PuppetData implements IPuppetData {
 	pointer: number;
 	ModLoader: IModLoaderAPI;
 	buf: SmartBuffer;
-	ageLastFrame: AgeorForm = Age.ADULT;
-	age: AgeorForm = Age.ADULT;
+	ageLastFrame: AgeOrForm = AgeOrForm.ADULT;
+	age: AgeOrForm = AgeOrForm.ADULT;
 	backingShared: SharedArrayBuffer = new SharedArrayBuffer(0x400);
 	backingBuffer: Buffer = Buffer.from(this.backingShared);
 

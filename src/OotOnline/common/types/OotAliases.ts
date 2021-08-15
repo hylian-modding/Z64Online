@@ -1,5 +1,5 @@
-import { IInventoryCounts, IInventoryFields, ISaveContext } from "modloader64_api/OOT/OOTAPI";
-import { Z64LibSupportedGames } from "Z64Lib/API/Z64LibSupportedGames";
+import { IInventoryCounts, IInventoryFields, ISaveContext } from "Z64Lib/API/OOT/OOTAPI";
+import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { DMAIndex } from "./Types";
 
 export type IOOTSaveContext = ISaveContext;
