@@ -65,10 +65,12 @@ export class Puppet implements IPuppet {
       this.ModLoader.logger.debug('Puppet resurrected.');
       return;
     }
+    console.log("FUCK1");
     if (!this.isSpawned && !this.isSpawning) {
       bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
+      console.log("FUCK2");
       (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer + 0x800).then((actor: IActor) => {
         this.data.pointer = actor.pointer;
         this.doNotDespawnMe(this.data.pointer);
@@ -76,8 +78,10 @@ export class Puppet implements IPuppet {
         this.isSpawned = true;
         this.isSpawning = false;
         bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
+        console.log("FUCK3");
       });
     }
+    console.log(this.player.uuid + " puppet pointer: " + this.data.pointer);
   }
 
   processIncomingPuppetData(data: PuppetData) {

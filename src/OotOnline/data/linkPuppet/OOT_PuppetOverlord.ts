@@ -253,6 +253,9 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
             this.processAwaitingSpawns();
             this.lookForMissingOrStrandedPuppets();
         }
+        else{
+        
+        }
         this.sendPuppetPacket();
     }
 

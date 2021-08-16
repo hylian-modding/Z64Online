@@ -8,6 +8,7 @@ import path from 'path';
 import { IModelReference } from '@OotOnline/common/api/Z64API';
 import { Z64_GAME } from '@OotOnline/common/types/GameAliases';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -18,6 +19,7 @@ export class ModelAllocationManager {
   private references: Map<string, IModelReference> = new Map<string, IModelReference>();
   private cleanupRoutine: any;
   private zz: zzstatic;
+  private modelDir!: string;
 
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
@@ -33,7 +35,7 @@ export class ModelAllocationManager {
       if (ref.isPlayerModel) ref.isDead = true;
       map.set(ref, ref.isDead);
     });
-    this.localPlayer.AgesOrForms.forEach((ref: IModelReference)=>{
+    this.localPlayer.AgesOrForms.forEach((ref: IModelReference) => {
       map.set(ref, false);
     });
     this.localPlayer.equipment.forEach((value: IModelReference) => {
@@ -42,7 +44,7 @@ export class ModelAllocationManager {
     this.players.forEach((value: ModelPlayer, key: string) => {
       proxies.set(value, value.isDead);
       if (value.playerIsSpawned) {
-        value.AgesOrForms.forEach((ref: IModelReference)=>{
+        value.AgesOrForms.forEach((ref: IModelReference) => {
           map.set(ref, false);
         });
         value.equipment.forEach((value: IModelReference) => {
@@ -163,7 +165,7 @@ export class ModelAllocationManager {
     // Player is already allocated.
     if (this.doesPlayerExist(player)) return this.getPlayer(player);
     let mp = new ModelPlayer(player.uuid);
-    defaults.forEach((ref: IModelReference, key: AgeOrForm)=>{
+    defaults.forEach((ref: IModelReference, key: AgeOrForm) => {
       mp.AgesOrForms.set(key, ref);
     });
     this.players.set(player.uuid, mp);
@@ -177,7 +179,16 @@ export class ModelAllocationManager {
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
-    let proxy: Buffer = fs.readFileSync(path.resolve(__dirname, "zobjs", "Puppet_Proxy.zobj"));
+    switch (Z64_GAME) {
+      case Z64LibSupportedGames.OCARINA_OF_TIME:
+        this.modelDir = "../../data/models/zobjs/OOT";
+        break;
+      case Z64LibSupportedGames.MAJORAS_MASK:
+        this.modelDir = "../../data/models/zobjs/MM";
+        break;
+    }
+
+    let proxy: Buffer = fs.readFileSync(path.resolve(__dirname, this.modelDir, "proxy_puppet.zobj"));
     let pointer: number = this.ModLoader.heap!.malloc(proxy.byteLength);
 
     if (pointer === 0) return undefined;
