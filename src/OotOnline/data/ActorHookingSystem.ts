@@ -538,8 +538,8 @@ export class ActorHookingManagerClient {
         spawn_param = 0x80600190;
         break;
     }
-    this.core.OOT!.commandBuffer.runCommand(
-      Command.ACTORSPAWN,
+    /* this.core.commandBuffer.runCommand(
+      Command.SPAWN_ACTOR,
       spawn_param,
       (success: boolean, result: number) => {
         if (success) {
@@ -591,7 +591,7 @@ export class ActorHookingManagerClient {
           }
         }
       }
-    );
+    ); */
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)

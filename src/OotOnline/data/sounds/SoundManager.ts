@@ -62,7 +62,7 @@ export class SoundManagerClient {
 
     @EventHandler(Z64OnlineEvents.ON_LOAD_SOUND_PACK)
     onSoundPackLoaded(evt: any) {
-        try{
+        try {
             Object.keys(evt.data).forEach((key: string) => {
                 let arr: Array<Buffer> = evt.data[key];
                 for (let i = 0; i < arr.length; i++) {
@@ -70,7 +70,7 @@ export class SoundManagerClient {
                 }
             });
             this.localSoundPaks.set(evt.id, evt.data);
-        }catch(err){}
+        } catch (err) { }
     }
 
     @NetworkHandler('OotO_SoundPackRequestPacket')
@@ -80,6 +80,13 @@ export class SoundManagerClient {
 
     @NetworkHandler("OotO_SoundPackLoadPacket")
     onSoundLoadPacket(packet: OotO_SoundPackLoadPacket) {
+        if (this.PlayerSounds.has(packet.player.uuid)) {
+            this.PlayerSounds.get(packet.player.uuid)!.forEach((sounds: Array<sf.Sound>) => {
+                for (let i = 0; i < sounds.length; i++) {
+                    sounds[i].unref();
+                }
+            });
+        }
         this.PlayerSounds.set(packet.player.uuid, new Map<number, sf.Sound[]>());
         if (packet.id === "KILL") return;
         CDNClient.singleton.requestFile(packet.id).then((buf: Buffer) => {
@@ -91,6 +98,7 @@ export class SoundManagerClient {
                 for (let i = 0; i < arr.length; i++) {
                     let raw: Buffer = zlib.inflateSync(arr[i]);
                     let s = this.ModLoader.sound.initSound(raw);
+                    s.ref();
                     this.PlayerSounds.get(packet.player.uuid)!.get(parseInt(key))!.push(s);
                 }
             });
@@ -127,6 +135,11 @@ export class SoundManagerClient {
 
     @EventHandler(Z64OnlineEvents.ON_SELECT_SOUND_PACK)
     onSelect(id: string | undefined) {
+        this.sounds.forEach((sounds: Array<sf.Sound>) => {
+            for (let i = 0; i < sounds.length; i++) {
+                sounds[i].unref();
+            }
+        });
         this.sounds.clear();
         this.hasChild = false;
         this.hasAdult = false;
@@ -142,7 +155,9 @@ export class SoundManagerClient {
             this.sounds.set(id, []);
             let arr: Array<Buffer> = evt.data[key];
             for (let i = 0; i < arr.length; i++) {
-                this.sounds.get(parseInt(key))!.push(this.ModLoader.sound.initSound(arr[i]));
+                let sound = this.ModLoader.sound.initSound(arr[i]);
+                sound.ref();
+                this.sounds.get(parseInt(key))!.push(sound);
             }
         });
         this.rawSounds = evt.data;
@@ -173,6 +188,11 @@ export class SoundManagerClient {
     @EventHandler(EventsClient.ON_PLAYER_LEAVE)
     onPlayerLeave(player: INetworkPlayer) {
         if (this.PlayerSounds.has(player.uuid)) {
+            this.PlayerSounds.get(player.uuid)!.forEach((sounds: Array<sf.Sound>) => {
+                for (let i = 0; i < sounds.length; i++) {
+                    sounds[i].unref();
+                }
+            });
             this.PlayerSounds.delete(player.uuid);
         }
     }

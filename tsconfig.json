@@ -28,14 +28,13 @@
     "mods/**/*.ts",
     "cores/**/*.ts",
     "bin/paker.ts",
-    "tools/**/*.ts",
-    "src/modloader/consoles/mupen/resources/test.js",
-    "API/src/IAnalyticsManager.ts"
+    "tools/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "API",
     "build.ts",
-    "build"
+    "build",
+    "cores"
   ]
 }

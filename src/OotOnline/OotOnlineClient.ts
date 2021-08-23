@@ -37,6 +37,7 @@ import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from './common/
 import { markAsRandomizer } from './common/types/GameAliases';
 import { OotOnlineStorage } from './OotOnlineStorage';
 import {IZ64Main} from 'Z64Lib/API/Common/IZ64Main'
+import { NPCReplacer } from './common/cosmetics/NPCReplacer';
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -77,6 +78,8 @@ export default class OotOnlineClient {
     pvp!: PvPModule;
     @SidedProxy(ProxySide.CLIENT, CDNClient)
     cdn!: CDNClient;
+    @SidedProxy(ProxySide.CLIENT, NPCReplacer)
+    npc!: NPCReplacer;
     // #endif
     @SidedProxy(ProxySide.CLIENT, Multiworld)
     multiworld!: Multiworld;
@@ -301,7 +304,7 @@ export default class OotOnlineClient {
     onSceneChange(scene: number) {
         if (!this.clientStorage.first_time_sync) {
             // #ifdef IS_DEV_BUILD
-            let test = false;
+            let test = true;
             if (test) {
                 this.core.OOT!.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.OOT!.save.permSceneData);
             }
@@ -313,9 +316,6 @@ export default class OotOnlineClient {
                     this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.hasFastBunHood, RomFlags.isMultiworld, RomFlags.isVanilla));
                 }
             }, 50);
-            this.ModLoader.utils.setTimeoutFrames(()=>{
-                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK, {});
-            }, 1);
         }
         this.ModLoader.clientSide.sendPacket(
             new Ooto_ScenePacket(
@@ -683,7 +683,7 @@ export default class OotOnlineClient {
 
     @EventHandler(Z64OnlineEvents.DEBUG_DUMP_RAM)
     onDump(evt: any) {
-        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", zlib.deflateSync(this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024)));
+        fs.writeFileSync(global.ModLoader.startdir + "/ram.bin", this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024));
     }
 
     private updateSyncContext() {

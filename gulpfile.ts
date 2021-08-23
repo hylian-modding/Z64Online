@@ -47,16 +47,6 @@ function pad(buf: Buffer) {
 }
 
 gulp.task('postinstall', function () {
-    try {
-        fs.mkdirSync('./build/src/OotOnline/libs')
-        fs.copySync(
-            './node_modules/Z64Lib',
-            './build/src/OotOnline/libs/Z64Lib',
-            {
-                dereference: true,
-            }
-        )
-    } catch (err) { }
     return gulp.src('./node_modules/Z64Lib')
 })
 

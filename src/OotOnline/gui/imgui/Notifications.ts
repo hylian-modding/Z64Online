@@ -219,7 +219,7 @@ export class Notifications {
                 this.curMessage = this.messages.shift()!;
                 if (!this.curMessage.noSound && this.config.notificationSound) {
                     this.ModLoader.utils.setTimeoutFrames(() => {
-                        this.core.OOT!.commandBuffer.runCommand(Command.PLAYSOUND, this.boop);
+                        //this.core.commandBuffer.runCommand(Command.PLAY_SOUND, this.boop);
                     }, 1);
                 }
             }

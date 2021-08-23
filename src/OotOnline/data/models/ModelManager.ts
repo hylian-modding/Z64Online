@@ -1,44 +1,41 @@
-import {
-  IModLoaderAPI,
-  ModLoaderEvents,
-} from 'modloader64_api/IModLoaderAPI';
+import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@OotOnline/common/api/Z64API';
+import { CDNClient } from '@OotOnline/common/cdn/CDNClient';
+import { getManifestForForm, UniversalAliasTable } from '@OotOnline/common/cosmetics/UniversalAliasTable';
+import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
+import { Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_GAME, Z64_IS_RANDOMIZER, Z64_MANIFEST } from '@OotOnline/common/types/GameAliases';
+import { OOT_GAME } from '@OotOnline/common/types/OotAliases';
+import { AgeOrForm, Manifest } from '@OotOnline/common/types/Types';
+import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
+import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
+import fs from 'fs';
+import { InjectCore } from 'modloader64_api/CoreInjection';
 import {
   bus,
   EventHandler,
   EventsClient,
   PrivateEventHandler
 } from 'modloader64_api/EventHandler';
-import { OotOnlineStorageClient } from '../../OotOnlineStorageClient';
-import { OotEvents, IOOTCore, Tunic, Scene } from 'Z64Lib/API/OOT/OOTAPI';
-import { AgeOrForm, IOvlPayloadResult } from 'Z64Lib/API/Common/Z64API';
+import {
+  IModLoaderAPI,
+  ModLoaderEvents
+} from 'modloader64_api/IModLoaderAPI';
+import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import {
   INetworkPlayer,
-  NetworkHandler,
+  NetworkHandler
 } from 'modloader64_api/NetworkHandler';
-import { ModelPlayer } from './ModelPlayer';
-import { ModelAllocationManager } from '../../common/cosmetics/ModelAllocationManager';
-import { Puppet } from '../linkPuppet/Puppet';
-import fs from 'fs';
-import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import path from 'path';
-import { ModelReference } from '../../common/cosmetics/ModelContainer';
-import { trimBuffer, Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
-import { InjectCore } from 'modloader64_api/CoreInjection';
+import { Age, IOOTCore, OotEvents, Scene, Tunic } from 'modloader64_api/OOT/OOTAPI';
 import { onTick, Preinit } from 'modloader64_api/PluginLifecycle';
-import { Z64_EventConfig } from "@OotOnline/WorldEvents/Z64_EventConfig";
-import * as f3djs from 'f3djs';
-import { EqManifestToOffsetMap_Link, EqManifestToOffsetMap_Puppet, PuppetProxyGen_Adult, PuppetProxyGen_Child, PuppetProxyGen_Matrix, PuppetProxyGen_Matrix_Keys } from './PuppetProxyGen';
-import { CostumeHelper } from '@OotOnline/common/events/CostumeHelper';
+import path from 'path';
+import { Z64RomTools } from 'Z64Lib/API/Z64RomTools';
 import { EquipmentManifest } from '../../common/cosmetics/EquipmentManifest';
-import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
-import { IModelReference, Z64OnlineEvents, Z64Online_ModelAllocation, Z64Online_EquipmentPak, Z64Online_LocalModelChangeProcessEvt, DumpRam } from '@OotOnline/common/api/Z64API';
-import { OotOnlineConfigCategory } from '@OotOnline/OotOnline';
+import { ModelAllocationManager } from '../../common/cosmetics/ModelAllocationManager';
+import { ModelReference } from '../../common/cosmetics/ModelContainer';
+import { OotOnlineStorageClient } from '../../OotOnlineStorageClient';
 import { OOTO_PRIVATE_EVENTS } from '../InternalAPI';
-import { CDNClient } from '@OotOnline/common/cdn/CDNClient';
-import { Z64_ADULT_MANIFEST, Z64_ADULT_ZOBJ_DMA, Z64_CHILD_MANIFEST, Z64_CHILD_ZOBJ_DMA, Z64_GAME, Z64_IS_RANDOMIZER, Z64_TITLE_SCREEN_FORM } from '@OotOnline/common/types/GameAliases';
-import { Manifest } from '@OotOnline/common/types/Types';
-import { OOT_GAME } from '@OotOnline/common/types/OotAliases';
-import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
+import { Puppet } from '../linkPuppet/Puppet';
+import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../OotOPackets';
+import { ModelPlayer } from './ModelPlayer';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -57,15 +54,24 @@ export class ModelManagerClient {
   config!: Z64_EventConfig;
   //
   puppetModels: Map<AgeOrForm, IModelReference> = new Map<AgeOrForm, IModelReference>();
-  titleScreenFix: any;
   lockManager: boolean = false;
   managerDisabled: boolean = false;
   mainConfig!: OotOnlineConfigCategory;
 
+  constructor() {
+    fs.copyFileSync(path.join(__dirname, "zobjs/OOT", "adult.zobj"), path.join(this.cacheDir, "adult.zobj"));
+    fs.copyFileSync(path.join(__dirname, "zobjs/OOT", "child.zobj"), path.join(this.cacheDir, "child.zobj"));
+  }
+
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
   onCustomModelAdult_new(evt: Z64Online_ModelAllocation) {
     if (this.managerDisabled) return;
-    let ref = this.allocationManager.registerModel(evt.model);
+    let ref: IModelReference;
+    if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
+      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age)));
+    } else {
+      ref = this.allocationManager.registerModel(evt.model);
+    }
     if (evt.script !== undefined) {
       ref.script = evt.script;
     }
@@ -77,6 +83,11 @@ export class ModelManagerClient {
   onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
     if (this.managerDisabled) return;
     let ref = this.allocationManager.registerModel(evt.model);
+    if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
+      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age)));
+    } else {
+      ref = this.allocationManager.registerModel(evt.model);
+    }
     if (evt.script !== undefined) {
       ref.script = evt.script;
     }
@@ -116,42 +127,39 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler(Z64OnlineEvents.FORCE_LOAD_MODEL_BLOCK)
-  onForceLoad(slot: number) {
-    if (this.managerDisabled) return;
-    this.ModLoader.logger.warn("Z64OnlineEvents.FORCE_LOAD_MODEL_BLOCK is deprecated. Please stop using this event.");
-  }
+  ALREADY_REPOINTED: boolean = false;
 
-  private loadFormProxy(rom: Buffer, form: AgeOrForm, defaultPath: string, proxyPath: string, manifest: Manifest) {
-    try{
+  private loadFormProxy(rom: Buffer, form: AgeOrForm, defaultPath: string, proxyPath: string, manifest: Manifest, obj_id: number) {
+    try {
       if (this.managerDisabled) return;
-      let model: Buffer = fs.readFileSync(defaultPath);
+      let model: Buffer = new UniversalAliasTable().createTable(fs.readFileSync(defaultPath), getManifestForForm(form), true);
       CDNClient.singleton.registerWithCache(model);
-      if (manifest.repoint(this.ModLoader, rom, model)) {
+      let proxy = new UniversalAliasTable().createTable(fs.readFileSync(proxyPath), getManifestForForm(form));
+      if (this.ALREADY_REPOINTED || manifest.repoint(this.ModLoader, rom, proxy)) {
+        this.ALREADY_REPOINTED = true;
         this.ModLoader.logger.info("Setting up zobj proxy.");
-        let proxy = trimBuffer(fs.readFileSync(proxyPath));
-        let alloc = new Z64Online_ModelAllocation(model, AgeOrForm.ADULT);
-        this.allocationManager.getLocalPlayerData().additionalData.set(form.toString(16), manifest.inject(this.ModLoader, rom, proxy, true));
+        let alloc = new Z64Online_ModelAllocation(model, Age.ADULT);
+        this.allocationManager.getLocalPlayerData().additionalData.set(form, manifest.inject(this.ModLoader, rom, proxy, true, obj_id));
         this.ModLoader.utils.setTimeoutFrames(() => {
           bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
           this.allocationManager.getLocalPlayerData().AgesOrForms.set(form, alloc.ref);
         }, 2);
       }
-    }catch(err){
+    } catch (err) {
       this.ModLoader.logger.error(err.stack);
     }
   }
 
   loadAdultModelOOT(evt: any) {
-    this.loadFormProxy(evt.rom, AgeOrForm.ADULT, path.join(this.cacheDir, "adult.zobj"), path.resolve(__dirname, "zobjs", "OOT", "proxy_adult.zobj"), Z64_ADULT_MANIFEST);
+    this.loadFormProxy(evt.rom, Age.ADULT, path.join(this.cacheDir, "adult.zobj"), path.resolve(__dirname, "zobjs", "OOT", "proxy_universal.zobj"), Z64_MANIFEST, 0x0015);
   }
 
   loadChildModelOOT(evt: any) {
-    this.loadFormProxy(evt.rom, AgeOrForm.CHILD, path.join(this.cacheDir, "child.zobj"), path.resolve(__dirname, "zobjs", "OOT", "proxy_child.zobj"), Z64_CHILD_MANIFEST);
+    this.loadFormProxy(evt.rom, Age.CHILD, path.join(this.cacheDir, "child.zobj"), path.resolve(__dirname, "zobjs", "OOT", "proxy_universal.zobj"), Z64_MANIFEST, 0x0014);
   }
 
   private registerDefaultModel(form: AgeOrForm, zobj: string) {
-    this.puppetModels.set(form, this.allocationManager.registerModel(fs.readFileSync(zobj)));
+    this.puppetModels.set(form, this.allocationManager.registerModel(new UniversalAliasTable().createTable(fs.readFileSync(zobj), getManifestForForm(form), true)));
     this.puppetModels.get(form)!.isPlayerModel = false;
   }
 
@@ -257,20 +265,6 @@ export class ModelManagerClient {
     }
   }
 
-  private startTitleScreenCheck() {
-    if (this.managerDisabled) return;
-    if (this.titleScreenFix) return;
-    this.titleScreenFix = this.ModLoader.utils.setIntervalFrames(() => {
-      if (this.doesLinkObjExist(Z64_TITLE_SCREEN_FORM).exists) {
-        this.onSceneChange(-1);
-        this.ModLoader.utils.clearIntervalFrames(this.titleScreenFix);
-        this.titleScreenFix = undefined;
-        bus.emit(Z64OnlineEvents.ON_MODEL_MANAGER_READY, {});
-        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.TOGGLE_COSTUME_LOCK, {});
-      }
-    }, 1);
-  }
-
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
   onRomPatched(evt: any) {
     let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64_GAME);
@@ -285,7 +279,6 @@ export class ModelManagerClient {
     // Leave this here. We do this so people fucking with code don't decompress and recompress it a bunch of times.
     let code_file: Buffer = tools.getCodeFile(evt.rom);
     /**@todo Rewrite this shit after the world events module is ported. */
-    console.log({ adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
     bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
     if (Z64_GAME === OOT_GAME) {
@@ -293,7 +286,6 @@ export class ModelManagerClient {
       this.loadChildModelOOT(evt);
     }
 
-    this.startTitleScreenCheck();
     this.proxySyncTick = this.ModLoader.utils.setIntervalFrames(() => {
       this.syncProxiedObject();
     }, 100);
@@ -369,74 +361,7 @@ export class ModelManagerClient {
     ref.loadModel();
 
     if (playerAge !== modelAge) return;
-
-    this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer, this.ModLoader.emulator.rdramReadBuffer(ref.pointer + 0x5000, 0x3C0));
-    let skeleton = this.ModLoader.emulator.rdramReadPtr32(ref.pointer + 0x500C, 0) - 0x150;
-    let buf = this.ModLoader.emulator.rdramReadBuffer(skeleton, 0x1B0);
-    this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + 0x3D0, buf);
-    this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x580, ref.pointer);
-    this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x584, ref.pointer + 0x4000);
-
-    // Support for mismatched age equips.
-    let fn = function (__ref: IModelReference, obj: any, ModLoader: IModLoaderAPI) {
-      Object.keys(obj).forEach((key: string) => {
-        let dest: number = parseInt(key);
-        if (typeof (obj[key]) === 'string') {
-          let src: number = parseInt(obj[key]);
-          ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(__ref.pointer + src)));
-        } else if (Buffer.isBuffer(obj[key])) {
-          ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, obj[key]);
-        } else if (Array.isArray(obj[key])) {
-          ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + dest, ModLoader.emulator.rdramReadBuffer(__ref.pointer + obj[key][0], obj[key][1]));
-        }
-      });
-    };
-    let fn2 = (__ref: IModelReference, obj: any) => {
-      Object.keys(obj).forEach((key: string) => {
-        let src: number = parseInt(obj[key]);
-        let data: Buffer = this.ModLoader.emulator.rdramReadBuffer(__ref.pointer + src, 0x40);
-        this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + parseInt(key), data);
-      });
-    };
-
-    let adult_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Adult));
-    let child_generator_table = JSON.parse(JSON.stringify(PuppetProxyGen_Child));
-
-    if (modelAge === AgeOrForm.ADULT) {
-      fn2(player.AgesOrForms.get(AgeOrForm.ADULT)!, PuppetProxyGen_Matrix);
-    } else if (modelAge === AgeOrForm.CHILD) {
-      fn2(player.AgesOrForms.get(AgeOrForm.CHILD)!, PuppetProxyGen_Matrix);
-    }
-
-    player.equipment.forEach((value: IModelReference) => {
-      let man = this.getEquipmentManifest(value);
-      if (man === undefined) return;
-      Object.keys(man.manifest.OOT.child).forEach((key: string) => {
-        // This check isn't really needed but TSC says its a compile error.
-        if (man === undefined) return;
-        let i = man.lut + (parseInt(key) * 0x8);
-        if (PuppetProxyGen_Matrix_Keys.indexOf(key) > -1) {
-          /** @TODO Do this better. */
-          if (key === PuppetProxyGen_Matrix_Keys[0]) {
-            fn2(value, { "0x6F0": `0x${this.ModLoader.emulator.rdramReadPtr32(value.pointer + i, 4).toString(16)}` });
-          } else if (key === PuppetProxyGen_Matrix_Keys[1]) {
-            fn2(value, { "0x730": `0x${this.ModLoader.emulator.rdramReadPtr32(value.pointer + i, 4).toString(16)}` });
-          }
-        } else {
-          child_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.child[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
-        }
-      });
-
-      Object.keys(man.manifest.OOT.adult).forEach((key: string) => {
-        // Same with this one.
-        if (man === undefined) return;
-        let i = man.lut + (parseInt(key) * 0x8);
-        adult_generator_table[EqManifestToOffsetMap_Puppet[man.manifest.OOT.adult[key]]] = this.ModLoader.utils.cloneBuffer(f3djs.gsSPBranchList(value.pointer + i));
-      });
-    });
-
-    fn(player.AgesOrForms.get(AgeOrForm.ADULT)!, adult_generator_table, this.ModLoader);
-    fn(player.AgesOrForms.get(AgeOrForm.CHILD)!, child_generator_table, this.ModLoader);
+    
     if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }
@@ -467,19 +392,6 @@ export class ModelManagerClient {
     this.onPuppetSpawned(puppet);
   }
 
-  private hat_hook() {
-    let proxy = this.doesLinkObjExist(this.core.OOT!.save.age);
-    if (proxy.exists) {
-      let find = this.ModLoader.emulator.rdramRead32(proxy.pointer + 0x5380);
-      find -= 0x06000000;
-      find += proxy.pointer;
-      find -= 0x150;
-      find += 0xA8;
-      this.ModLoader.emulator.rdramWrite32(find, 0x060053A0);
-      this.ModLoader.emulator.rdramWrite32(find + 0x4, 0x060053A0);
-    }
-  }
-
   private getEquipmentManifest(ref: IModelReference) {
     try {
       let rp = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, this.allocationManager.getModelSize(ref));
@@ -508,27 +420,7 @@ export class ModelManagerClient {
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_START, {});
     this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference) => {
       value.loadModel();
-      let data = this.getEquipmentManifest(value);
-      if (data === undefined) return;
-      let table: any = {};
-      let player = new ModelPlayer("TEMP");
-      if (Z64_GAME === OOT_GAME) {
-        if (age === AgeOrForm.ADULT) {
-          table = data.manifest.OOT.adult;
-          let link = this.doesLinkObjExist(AgeOrForm.ADULT);
-          player.proxyPointer = link.pointer;
-        } else if (age === AgeOrForm.CHILD) {
-          table = data.manifest.OOT.child;
-          let link = this.doesLinkObjExist(AgeOrForm.CHILD);
-          player.proxyPointer = link.pointer;
-        }
-      }
-      Object.keys(table).forEach((key: string) => {
-        if (data === undefined) return;
-        let i = data.lut + (parseInt(key) * 0x8) + 0x4;
-        let offset = parseInt(EqManifestToOffsetMap_Link[table[key]]) + 0x4;
-        this.ModLoader.emulator.rdramWrite32(player.proxyPointer + offset, data.model.readUInt32BE(i));
-      });
+      /** TODO: Rewrite this shit. */
     });
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_END, {});
   }
@@ -544,39 +436,18 @@ export class ModelManagerClient {
   onSceneChange(scene: Scene) {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
-    this.allocationManager.getLocalPlayerData().AgesOrForms.forEach((ref: IModelReference)=>{
+    this.allocationManager.getLocalPlayerData().AgesOrForms.forEach((ref: IModelReference) => {
       ref.loadModel();
     });
     let curRef: IModelReference | undefined;
-    if (this.core.OOT!.save.age === AgeOrForm.ADULT) {
-      let link = this.doesLinkObjExist(AgeOrForm.ADULT);
-      if (link.exists) {
-        this.allocationManager.SetLocalPlayerModel(AgeOrForm.ADULT, this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!);
-        this.ModLoader.emulator.rdramWriteBuffer(link.pointer, this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!.pointer, 0x5380));
-        let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!.pointer + 0x5380) - 0x150;
-        let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x150);
-        this.ModLoader.emulator.rdramWriteBuffer(link.pointer + 0xEC60 - 0x150, buf);
-        this.dealWithEquipmentPaks(AgeOrForm.ADULT);
-        //this.hat_hook();
-        this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get(AgeOrForm.ADULT.toString(16))!, this.ModLoader.emulator.rdramReadBuffer(link.pointer, 0x37800));
-        curRef = this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!;
-      }
-    } else {
-      let link = this.doesLinkObjExist(AgeOrForm.CHILD);
-      if (link.exists) {
-        this.allocationManager.SetLocalPlayerModel(AgeOrForm.CHILD, this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!);
-        this.ModLoader.emulator.rdramWriteBuffer(link.pointer, this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!.pointer, 0x53A8));
-        let p = this.ModLoader.emulator.rdramRead32(this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!.pointer + 0x53A8) - 0x150;
-        let buf = this.ModLoader.emulator.rdramReadBuffer(p, 0x1B0);
-        this.ModLoader.emulator.rdramWriteBuffer(link.pointer + 0xEC60 - 0x150, buf);
-        this.dealWithEquipmentPaks(AgeOrForm.CHILD);
-        this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get(AgeOrForm.CHILD.toString(16))!, this.ModLoader.emulator.rdramReadBuffer(link.pointer, 0x22380));
-        curRef = this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!;
-      }
-      this.ModLoader.emulator.rdramWrite32(link.pointer + 0x6000, this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!.pointer);
-      this.ModLoader.emulator.rdramWrite32(link.pointer + 0x6004, this.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!.pointer);
+    let link = this.doesLinkObjExist(this.core.save.age);
+    if (link.exists) {
+      this.allocationManager.SetLocalPlayerModel(this.core.save.age, this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.save.age)!);
+      let copy = this.ModLoader.emulator.rdramReadBuffer(this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.save.age)!.pointer, 0x6FB0);
+      this.ModLoader.emulator.rdramWriteBuffer(link.pointer, copy);
+      this.ModLoader.emulator.rdramWrite8(link.pointer + 0x5016, 0x1);
+      curRef = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.save.age)!;
     }
-
     if (scene > -1 && this.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
       this.ModLoader.utils.setTimeoutFrames(() => {
@@ -596,7 +467,7 @@ export class ModelManagerClient {
     }
   }
 
-  private handleModelChange(form: AgeOrForm, evt: Z64Online_ModelAllocation){
+  private handleModelChange(form: AgeOrForm, evt: Z64Online_ModelAllocation) {
     if (this.managerDisabled) return;
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().AgesOrForms.get(form)!.hash === evt.ref.hash) return;
@@ -618,7 +489,12 @@ export class ModelManagerClient {
       evt.ref = this.puppetModels.get(form)!;
       this.proxyNeedsSync = true;
     } else {
-      let model = this.allocationManager.registerModel(copy)!;
+      let model: IModelReference;
+      if (copy.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
+        model = this.allocationManager.registerModel(new UniversalAliasTable().createTable(copy, getManifestForForm(form)))!;
+      } else {
+        model = this.allocationManager.registerModel(copy)!;
+      }
       model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(form, model);
       this.onSceneChange(-1);
@@ -651,17 +527,12 @@ export class ModelManagerClient {
     this.allocationManager.deallocateAllModels();
     this.allocationManager.deallocateAllPlayers();
     this.allocationManager.doGC();
-    if (!this.managerDisabled) {
-      this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get(AgeOrForm.ADULT.toString(16))!, fs.readFileSync(path.resolve(__dirname, "zobjs", "proxy_adult.zobj")));
-      this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get(AgeOrForm.CHILD.toString(16))!, fs.readFileSync(path.resolve(__dirname, "zobjs", "proxy_child.zobj")));
-    }
     this.lockManager = true;
   }
 
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_POST)
   onReset2() {
     this.lockManager = false;
-    this.startTitleScreenCheck();
   }
 
   doesLinkObjExist(age: AgeOrForm) {
@@ -680,6 +551,17 @@ export class ModelManagerClient {
     return { exists: this.ModLoader.emulator.rdramReadBuffer(link_object_pointer + 0x5000, 0xB).toString() === "MODLOADER64", pointer: link_object_pointer };
   }
 
+  findLink() {
+    let index = this.ModLoader.emulator.rdramRead8(global.ModLoader['link_instance'] + 0x1E);
+    let obj_list: number = 0x801D9C44;
+    obj_list += 0xC;
+    let offset = index * 0x44;
+    obj_list += offset;
+    obj_list += 0x4;
+    let pointer = this.ModLoader.emulator.rdramRead32(obj_list);
+    return pointer;
+  }
+
   findGameplayKeep() {
     let obj_list: number = 0x801D9C44;
     let obj_id = 0x00010000;
@@ -696,6 +578,14 @@ export class ModelManagerClient {
   onTick() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
+    if (this.core.helper.isPaused()) return;
+    if (this.core.helper.Player_InBlockingCsMode() || this.core.helper.isLinkEnteringLoadingZone()) return;
+    let link = this.findLink();
+    let status = this.ModLoader.emulator.rdramRead8(link + 0x5016);
+    if (status === 0){
+      this.ModLoader.logger.debug("Found Link proxy with no data. Injecting...");
+      this.onSceneChange(-1);
+    }
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       this.allocationManager.getLocalPlayerData().currentScript!.onTick();
     }

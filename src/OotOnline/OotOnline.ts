@@ -4,7 +4,6 @@ import { SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { IPacketHeader } from "modloader64_api/NetworkHandler";
 import { OotOnlineStorageClient } from "./OotOnlineStorageClient";
 import path from 'path';
-import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import { IOotUtility } from "@OotOnline/data/InternalAPI";
 import { setupOot } from "./common/types/GameAliases";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
@@ -43,7 +42,6 @@ export class OotOnlineConfigCategory {
   diagnosticMode: boolean = false;
 }
 
-@ExternalAPIProvider("Z64Lib", require(path.resolve(__dirname, "libs", "Z64Lib", "package.json")).version, path.resolve(__dirname, "libs", "Z64Lib"))
 export default class OotOnline implements IPlugin, IPluginServerConfig, IOotUtility {
 
   ModLoader!: IModLoaderAPI;
@@ -51,7 +49,7 @@ export default class OotOnline implements IPlugin, IPluginServerConfig, IOotUtil
   core!: IZ64Main;
   @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, "OotOnlineClient.js"))
   client!: any;
-  @SidedProxy(ProxySide.SERVER, path.resolve(__dirname, "OotOnlineServer.js"))
+  @SidedProxy(ProxySide.SERVER, path.resolve(__dirname, "OotOnlineServer.js"), 'OcarinaofTime')
   server!: any;
 
   sendPacketToPlayersInScene(packet: IPacketHeader): void {

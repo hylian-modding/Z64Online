@@ -1,0 +1,66 @@
+{
+  "Limb 2": {
+    "object": 35336,
+    "proxy": 20512
+  },
+  "Limb 3": {
+    "object": 35424,
+    "proxy": 20520
+  },
+  "Limb 4": {
+    "object": 35664,
+    "proxy": 20528
+  },
+  "Limb 5": {
+    "object": 34720,
+    "proxy": 20536
+  },
+  "Limb 6": {
+    "object": 34808,
+    "proxy": 20544
+  },
+  "Limb 7": {
+    "object": 35048,
+    "proxy": 20552
+  },
+  "Limb 8": {
+    "object": 34096,
+    "proxy": 20560
+  },
+  "Limb 9": {
+    "object": 33536,
+    "proxy": 20568
+  },
+  "Limb 10": {
+    "object": 30056,
+    "proxy": 20576
+  },
+  "Limb 11": {
+    "object": 32320,
+    "proxy": 20584
+  },
+  "Limb 12": {
+    "object": 32880,
+    "proxy": 20592
+  },
+  "Limb 13": {
+    "object": 33128,
+    "proxy": 20600
+  },
+  "Limb 14": {
+    "object": 31104,
+    "proxy": 20608
+  },
+  "Limb 15": {
+    "object": 31664,
+    "proxy": 20616
+  },
+  "Limb 16": {
+    "object": 31912,
+    "proxy": 20624
+  },
+  "Limb 17": {
+    "object": 19424,
+    "proxy": 20632
+  }
+}

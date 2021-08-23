@@ -2,13 +2,11 @@ import { ModelPlayer } from '../../data/models/ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModelObject, ModelReference } from './ModelContainer';
-import { zzstatic } from 'Z64Lib/API/Utilities/zzstatic';
 import fs from 'fs';
 import path from 'path';
 import { IModelReference } from '@OotOnline/common/api/Z64API';
-import { Z64_GAME } from '@OotOnline/common/types/GameAliases';
-import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
-import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
+import { AgeOrForm } from '@OotOnline/common/types/Types';
+import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -18,13 +16,12 @@ export class ModelAllocationManager {
   private models: Map<string, ModelObject> = new Map<string, ModelObject>();
   private references: Map<string, IModelReference> = new Map<string, IModelReference>();
   private cleanupRoutine: any;
-  private zz: zzstatic;
-  private modelDir!: string;
+  private zz: zzstatic2;
 
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
     this.cleanupRoutine = this.ModLoader.utils.setIntervalFrames(() => { this.doGC() }, 1200);
-    this.zz = new zzstatic(Z64_GAME);
+    this.zz = new zzstatic2();
   }
 
   doGC() {
@@ -126,13 +123,13 @@ export class ModelAllocationManager {
   allocateModel(ref: IModelReference): IModelReference | undefined {
     if (this.isModelAllocated(ref)) return ref;
     let modelObject = this.getModel(ref);
-    let pointer: number = this.ModLoader.heap!.malloc(modelObject.size);
+    let pointer: number = this.ModLoader.gfx_heap!.malloc(modelObject.size);
     // We're out of heap space. Abort.
     if (pointer === 0) return undefined;
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
-      b = this.zz.doRepoint(b, 0, false, ref.pointer)
+      this.zz.repoint(b, pointer);
     } catch (err) {
       this.ModLoader.logger.error(err.stack);
       return undefined;
@@ -140,13 +137,14 @@ export class ModelAllocationManager {
     this.ModLoader.emulator.rdramWriteBuffer(ref.pointer, b);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + modelObject.size.toString(16) + " bytes for model with hash " + ref.hash + " at " + pointer.toString(16) + ".");
     ref.isLoaded = ref.pointer !== 0;
+
     return ref;
   }
 
   deallocateModel(ref: IModelReference) {
     if (ref.pointer === 0) return;
     if (!ref.isLoaded) return;
-    this.ModLoader.heap!.free(ref.pointer);
+    this.ModLoader.gfx_heap!.free(ref.pointer);
     this.ModLoader.logger.debug("[Model Manager]: Freed 0x" + this.getModelSize(ref).toString(16) + " bytes from model with hash " + ref.hash + ".");
     ref.isLoaded = false;
     ref.isDead = true;
@@ -179,25 +177,15 @@ export class ModelAllocationManager {
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
-    switch (Z64_GAME) {
-      case Z64LibSupportedGames.OCARINA_OF_TIME:
-        this.modelDir = "../../data/models/zobjs/OOT";
-        break;
-      case Z64LibSupportedGames.MAJORAS_MASK:
-        this.modelDir = "../../data/models/zobjs/MM";
-        break;
-    }
-
-    let proxy: Buffer = fs.readFileSync(path.resolve(__dirname, this.modelDir, "proxy_puppet.zobj"));
-    let pointer: number = this.ModLoader.heap!.malloc(proxy.byteLength);
-
+    let proxy: Buffer = fs.readFileSync(path.resolve(__dirname, "zobjs", "u", "proxy_universal.zobj"));
+    let pointer: number = this.ModLoader.gfx_heap!.malloc(proxy.byteLength);
     if (pointer === 0) return undefined;
 
     mp.proxyPointer = pointer;
     mp.proxyData = proxy;
     this.players.set(player.uuid, mp);
-    let b = this.zz.doRepoint(proxy, 0, false, pointer);
-    this.ModLoader.emulator.rdramWriteBuffer(pointer, b);
+    this.zz.repoint(proxy, mp.proxyPointer);
+    this.ModLoader.emulator.rdramWriteBuffer(pointer, proxy);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;
     mp.isLoaded = true;
@@ -213,7 +201,7 @@ export class ModelAllocationManager {
     let alloc = this.getPlayer(player)!;
     if (alloc.proxyPointer <= 0) return;
 
-    this.ModLoader.heap!.free(alloc.proxyPointer);
+    this.ModLoader.gfx_heap!.free(alloc.proxyPointer);
     alloc.proxyPointer = -1;
     alloc.isLoaded = false;
     this.ModLoader.logger.debug("[Model Manager]: Freed 0x" + alloc.proxyData.byteLength.toString(16) + " bytes from player " + player.nickname + ".");

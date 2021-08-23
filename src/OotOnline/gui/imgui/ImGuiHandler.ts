@@ -395,6 +395,10 @@ export class ImGuiHandler {
                 if (this.ModLoader.ImGui.smallButton("Kill Actor")) {
                     actor.destroy();
                 }
+
+                if (this.ModLoader.ImGui.smallButton("Clone Actor")){
+                    this.core.commandBuffer.spawnActor(actor.actorID, actor.variable, this.core.link.position.getVec3(), this.core.link.rotation.getVec3());
+                }
             }
             this.ModLoader.ImGui.end();
         }
