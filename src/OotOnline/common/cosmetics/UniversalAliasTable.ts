@@ -141,6 +141,7 @@ const MM_HUMAN_LINK: any = {
     "Ocarina": 0x00005128,
     "DekuStick": 0x00005130,
     "Shield.2": 0x00005110,
+    "Shield.3.Face": 0x00005548,
     "Shield.3": 0x00005118,
     "Mask.Deku": 0x00005260,
     "Mask.Goron": 0x00005268,
@@ -891,6 +892,7 @@ export class UniversalAliasTable {
         wrapGen(`DL_FPS_RARM_SLINGSHOT`, `DL_SLINGSHOT`, undefined, [`DL_FPS_RFOREARM`]);
         wrapGen(`DL_FPS_RARM_BOW`, `DL_BOW`, undefined, [`DL_FPS_RFOREARM`]);
         wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_HOOKSHOT`]);
+        wrapGen(`DL_SHIELD_MIRROR_COMBINED`, `DL_SHIELD_MIRROR`, undefined, [`DL_SHIELD_MIRROR_FACE`]);
 
         // Step 7: Build skeleton.
         let _boneoffs: Array<number> = [];
