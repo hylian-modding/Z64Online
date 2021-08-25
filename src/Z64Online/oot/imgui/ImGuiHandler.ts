@@ -220,6 +220,10 @@ export class ImGuiHandler {
                             this.settings.diagnosticMode = !this.settings.diagnosticMode;
                             this.ModLoader.config.save();
                         }
+                        if (this.ModLoader.ImGui.menuItem("Autosave", undefined, this.settings.autosaves)){
+                            this.settings.autosaves = !this.settings.autosaves;
+                            this.ModLoader.config.save();
+                        }
                         this.ModLoader.ImGui.endMenu();
                     }
                     if (this.ModLoader.ImGui.beginMenu("Sync Settings")){
