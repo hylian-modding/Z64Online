@@ -67,7 +67,7 @@ export class OOT_PuppetOverlordServer extends PuppetOverlordServer {
         if (storage.puppetStubs.has(packet.player.uuid)) {
             storage.puppetStubs.get(packet.player.uuid)!.writeData(p.data.bundle);
         }
-        this.parent.sendPacketToPlayersInScene(packet);
+        //this.parent.sendPacketToPlayersInScene(packet);
     }
 }
 

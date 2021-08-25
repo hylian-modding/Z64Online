@@ -20,4 +20,5 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   scene_keys: any = {};
   first_time_sync = false;
   playerModelCache: any = {};
+  lastKnownSaveName: string = "Link";
 }

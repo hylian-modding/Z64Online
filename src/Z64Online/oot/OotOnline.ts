@@ -35,6 +35,7 @@ export class OotOnlineConfigCategory {
   syncMasks: boolean = true;
   syncBottleContents: boolean = true;
   diagnosticMode: boolean = false;
+  autosaves: boolean = true;
 }
 
 export default class OotOnline implements IZ64GameMain, IOotUtility {

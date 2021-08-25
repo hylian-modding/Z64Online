@@ -39,6 +39,7 @@ import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
+import { zeldaString } from "Z64Lib/API/imports";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -108,6 +109,7 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "syncMasks", true);
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
         this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
+        this.ModLoader.config.setData("OotOnline", "autosaves", true);
         this.gui.settings = this.config;
         this.modelManager.child = new ModelManagerOot(this.modelManager);
     }
@@ -136,7 +138,7 @@ export default class OotOnlineClient {
     }
 
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE)
-    onSendToScene(send: SendToScene){
+    onSendToScene(send: SendToScene) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             send.packet.lobby,
             this.parent
@@ -145,8 +147,8 @@ export default class OotOnlineClient {
             return;
         }
         let players = Object.keys(storage.players);
-        for (let i = 0; i < players.length; i++){
-            if (storage.players[players[i]] === send.scene){
+        for (let i = 0; i < players.length; i++) {
+            if (storage.players[players[i]] === send.scene) {
                 this.ModLoader.serverSide.sendPacketToSpecificPlayer(send.packet, storage.networkPlayerInstances[players[i]]);
             }
         }
@@ -197,10 +199,6 @@ export default class OotOnlineClient {
                 this.clientStorage.lastbeans = this.core.OOT!.save.inventory.magicBeansCount;
                 this.updateInventory();
             }
-
-            if (this.ModLoader.emulator.rdramRead8(0x80600144) === 0x1) {
-                return;
-            }
             let live_scene_chests: Buffer = this.core.OOT!.global.liveSceneData_chests;
             let live_scene_switches: Buffer = this.core.OOT!.global.liveSceneData_switch;
             let live_scene_collect: Buffer = this.core.OOT!.global.liveSceneData_collectable;
@@ -229,7 +227,36 @@ export default class OotOnlineClient {
             }
             this.core.OOT!.global.writeSaveDataForCurrentScene(save_scene_data);
             this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.OOT!.global.scene, this.clientStorage.world));
+            if (this.config.autosaves) {
+                this.ModLoader.utils.setTimeoutFrames(() => {
+                    this.notificationManager.onAutoSave(this.autosaveIntoSlot2());
+                }, 20 * 3);
+            }
         }
+    }
+
+    autosaveIntoSlot2() {
+        let saveArg: number = this.syncContext + 0x14;
+        let saveArgCount: number = 1;
+        let name = this.core.OOT!.save.player_name;
+        let saveSlot = this.ModLoader.emulator.rdramRead32(0x8011A5D0 + 0x1354);
+        let autosaveSlot = -1;
+        if (saveSlot === 0) autosaveSlot = 1;
+        if (saveSlot === 1) autosaveSlot = 0;
+        if (saveSlot === 2) autosaveSlot = 1;
+        this.ModLoader.emulator.rdramWrite32(0x8011A5D0 + 0x1354, autosaveSlot);
+        this.core.OOT!.save.player_name = "autosave";
+        if (name !== "autosave") {
+            this.clientStorage.lastKnownSaveName = name;
+        }
+        this.core.OOT!.commandBuffer.arbitraryFunctionCall(0x800905D4, saveArg, saveArgCount).then((buf: Buffer) => {
+            this.core.OOT!.save.player_name = name;
+            this.ModLoader.emulator.rdramWrite32(0x8011A5D0 + 0x1354, saveSlot);
+            if (this.core.OOT!.save.player_name === "autosave") {
+                this.core.OOT!.save.player_name = this.clientStorage.lastKnownSaveName;
+            }
+        });
+        return autosaveSlot;
     }
 
     updateBottles(onlyfillCache = false) {
@@ -623,11 +650,11 @@ export default class OotOnlineClient {
     }
 
     @EventHandler(EventsClient.ON_INJECT_FINISHED)
-    onPayloads(){
-        fs.readdirSync(path.resolve(__dirname, "payloads", "E0")).forEach((f: string)=>{
+    onPayloads() {
+        fs.readdirSync(path.resolve(__dirname, "payloads", "E0")).forEach((f: string) => {
             let file = path.resolve(__dirname, "payloads", "E0", f);
             let parse = path.parse(file);
-            if (parse.ext === ".ovl"){
+            if (parse.ext === ".ovl") {
                 this.ModLoader.payloadManager.parseFile(file);
             }
         });
@@ -710,6 +737,7 @@ export default class OotOnlineClient {
             }
         }
         this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.OOT!.link.current_sound_id);
+        this.ModLoader.emulator.rdramWrite32(this.syncContext + 0x14, 0x8011A5D0);
     }
 
     private updateMultiworld() {

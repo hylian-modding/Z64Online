@@ -156,6 +156,10 @@ export class Notifications {
         });
     }
 
+    onAutoSave(slot: number){
+        this.messages.push(new Notif(`Autosaving into slot ${slot + 1}`, this.itemIcons.get("mempak")!, 20 * 3, true));
+    }
+
     @PrivateEventHandler(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS)
     onLock(evt: any) {
         this.lockIncomingItems = true;
@@ -186,6 +190,9 @@ export class Notifications {
                 t.loadFromFile(p);
                 this.circleAssets.set(path.parse(file).name, t);
             });
+            let mem = this.ModLoader.Gfx.createTexture();
+            mem.loadFromFile(path.resolve(global["module-alias"]["moduleAliases"]["@Z64Online"], "common", "assets", "mempak.png"));
+            this.itemIcons.set("mempak", mem);
             this.resourcesLoaded = true;
         }
         if (!this.config.notifications) {
