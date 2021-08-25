@@ -7,6 +7,7 @@ import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangePr
 import { bus } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from '../../common/cosmetics/IModelManagerShim';
+import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
 
 export class ModelManagerOot implements IModelManagerShim {
 
@@ -19,10 +20,12 @@ export class ModelManagerOot implements IModelManagerShim {
         } catch (err) { }
         fs.copyFileSync(path.join(__dirname, "zobjs/OOT", "adult.zobj"), path.join(this.parent.cacheDir, "adult.zobj"));
         fs.copyFileSync(path.join(__dirname, "zobjs/OOT", "child.zobj"), path.join(this.parent.cacheDir, "child.zobj"));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
     }
+
     setupLinkModels(): void {
-        this.parent.registerDefaultModel(AgeOrForm.ADULT, path.resolve(__dirname, "zobjs", "OOT", "adult.zobj"));
-        this.parent.registerDefaultModel(AgeOrForm.CHILD, path.resolve(__dirname, "zobjs", "OOT", "child.zobj"));
+        this.parent.registerDefaultModel(AgeOrForm.ADULT, path.join(this.parent.cacheDir, "adult.zobj"));
+        this.parent.registerDefaultModel(AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"));
         this.parent.allocationManager.SetLocalPlayerModel(AgeOrForm.ADULT, this.parent.puppetModels.get(AgeOrForm.ADULT)!);
         this.parent.allocationManager.SetLocalPlayerModel(AgeOrForm.CHILD, this.parent.puppetModels.get(AgeOrForm.CHILD)!);
     }
@@ -101,11 +104,11 @@ export class ModelManagerOot implements IModelManagerShim {
     }
 
     loadAdultModelOOT(evt: any) {
-        this.parent.loadFormProxy(evt.rom, AgeOrForm.ADULT, path.join(this.parent.cacheDir, "adult.zobj"), path.resolve(__dirname, "zobjs", "OOT", "proxy_universal.zobj"), Z64_MANIFEST, 0x0015);
+        this.parent.loadFormProxy(evt.rom, AgeOrForm.ADULT, path.join(this.parent.cacheDir, "adult.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0015);
     }
 
     loadChildModelOOT(evt: any) {
-        this.parent.loadFormProxy(evt.rom, AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"), path.resolve(__dirname, "zobjs", "OOT", "proxy_universal.zobj"), Z64_MANIFEST, 0x0014);
+        this.parent.loadFormProxy(evt.rom, AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0014);
     }
 
     onRomPatched(evt: any) {

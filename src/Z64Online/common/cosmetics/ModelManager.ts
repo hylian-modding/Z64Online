@@ -58,7 +58,7 @@ export class ModelManagerClient {
   config!: Z64_EventConfig;
   //
   puppetModels: Map<AgeOrForm, IModelReference> = new Map<AgeOrForm, IModelReference>();
-  lockManager: boolean = false;
+  lockManager: boolean = true;
   managerDisabled: boolean = false;
   mainConfig!: OotOnlineConfigCategory;
   child!: IModelManagerShim;
@@ -163,6 +163,7 @@ export class ModelManagerClient {
 
     this.ModLoader.utils.setTimeoutFrames(() => {
       this.child.setupLinkModels();
+      this.lockManager = false;
     }, 3);
   }
 
@@ -267,7 +268,12 @@ export class ModelManagerClient {
     /**@todo Rewrite this shit after the world events module is ported. */
     bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
-    this.child.onRomPatched(evt);
+    try{
+      this.child.onRomPatched(evt);
+    }catch(err){
+      this.ModLoader.logger.error(err);
+      throw err;
+    }
 
     this.proxySyncTick = this.ModLoader.utils.setIntervalFrames(() => {
       this.syncProxiedObject();
@@ -488,12 +494,12 @@ export class ModelManagerClient {
     this.lockManager = false;
   }
 
-  @onTick()
+  //@onTick()
   onTick() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
-    if (this.core.OOT!.helper.isPaused()) return;
-    if (this.core.OOT!.helper.Player_InBlockingCsMode() || this.core.OOT!.helper.isLinkEnteringLoadingZone()) return;
+    //if (this.core.OOT!.helper.isPaused()) return;
+    //if (this.core.OOT!.helper.Player_InBlockingCsMode() || this.core.OOT!.helper.isLinkEnteringLoadingZone()) return;
     let link = this.child.findLink();
     let status = this.ModLoader.emulator.rdramRead8(link + 0x5016);
     if (status === 0) {

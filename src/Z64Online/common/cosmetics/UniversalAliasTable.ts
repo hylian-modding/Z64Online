@@ -7,6 +7,8 @@ import crypto from 'crypto';
 import { AgeOrForm } from '../types/Types';
 import { zzplayas_to_zzconvert } from 'Z64Lib/API/OoT/ModelData/backwards_compat/zzplayas_to_zzconvert';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
+import { adult } from '@Z64Online/oot/models/zobjs/OOT/adult';
+import { child } from '@Z64Online/oot/models/zobjs/OOT/child';
 
 const OOT_ADULT_LINK: any = {
     "Cube": 0x000053C8,
@@ -455,7 +457,7 @@ export class UniversalAliasTable {
         if (BANK_OBJECTS.size === 0) {
             let parse = new ZZPlayasEmbedParser();
 
-            let zobj_adult = fs.readFileSync("./cache/adult.zobj");
+            let zobj_adult = adult;
             let parse_adult = parse.parse(zobj_adult);
             Object.keys(parse_adult).forEach((key: string) => {
                 let o = optimize(zobj_adult, [parse_adult[key]]);
@@ -463,7 +465,7 @@ export class UniversalAliasTable {
                 BANK_OBJECTS.set(piece.hash, piece);
             });
 
-            let zobj_child = fs.readFileSync("./cache/child.zobj");
+            let zobj_child = child;
             let parse_child = parse.parse(zobj_child);
             Object.keys(parse_child).forEach((key: string) => {
                 let o = optimize(zobj_child, [parse_child[key]]);
@@ -701,8 +703,11 @@ export class UniversalAliasTable {
             sb.writeUInt32BE(limb.unk1);
             sb.writeUInt32BE(limb.unk2);
             if (limb.piece1 !== undefined) {
-                sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
-                sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
+                /* sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
+                sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000); */
+
+                sb.writeUInt32BE(0x5820 + 0x06000000);
+                sb.writeUInt32BE(0x5820 + 0x06000000);
                 skeletonInfo[limb.name] = limb.piece1.newOffset;
             } else {
                 sb.writeUInt32BE(0);
