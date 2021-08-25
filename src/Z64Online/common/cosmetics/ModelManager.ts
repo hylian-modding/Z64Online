@@ -494,7 +494,7 @@ export class ModelManagerClient {
     this.lockManager = false;
   }
 
-  //@onTick()
+  @onTick()
   onTick() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;

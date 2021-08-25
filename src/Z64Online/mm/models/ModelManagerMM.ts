@@ -24,7 +24,7 @@ export class ModelManagerMM implements IModelManagerShim {
     }
 
     loadHumanModelMM(evt: any) {
-        this.parent.loadFormProxy(evt.rom, AgeOrForm.HUMAN, path.join(this.parent.cacheDir, "proxy_universal.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0011);
+        this.parent.loadFormProxy(evt.rom, AgeOrForm.HUMAN, path.join(this.parent.cacheDir, "human.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0011);
     }
 
     onRomPatched(evt: any): void {
@@ -73,8 +73,8 @@ export class ModelManagerMM implements IModelManagerShim {
     }
 
     setupLinkModels(): void {
-        //this.parent.registerDefaultModel(AgeOrForm.HUMAN, path.join(this.parent.cacheDir, "human.zobj"));
-        //this.parent.allocationManager.SetLocalPlayerModel(AgeOrForm.CHILD, this.parent.puppetModels.get(AgeOrForm.HUMAN)!);
+        this.parent.registerDefaultModel(AgeOrForm.HUMAN, path.join(this.parent.cacheDir, "human.zobj"));
+        this.parent.allocationManager.SetLocalPlayerModel(AgeOrForm.CHILD, this.parent.puppetModels.get(AgeOrForm.HUMAN)!);
     }
 
 }
