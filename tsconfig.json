@@ -16,8 +16,8 @@
       "@sound/*": [
         "./build/emulator/*"
       ],
-      "@OotOnline/*": [
-        "./src/OotOnline/*"
+      "@Z64Online/*": [
+        "./src/Z64Online/*"
       ]
     },
     "noImplicitAny": false

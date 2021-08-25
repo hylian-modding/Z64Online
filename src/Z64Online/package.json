@@ -1,0 +1,18 @@
+{
+  "name": "Z64Online",
+  "version": "3.1.0",
+  "date": "Wed, 25 Aug 2021 02:02:10 GMT",
+  "description": "",
+  "main": "Z64Online.js",
+  "author": "denoflions",
+  "credits": "\nASM: Ideka, glank.\nPuppet contributors: Drahsid, Fig, Psi-Hate CrookedPoe.\nHelpful advice: Noka, Skawo.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
+  "license": "GPL-3.0",
+  "core": [
+    "Z64Lib"
+  ],
+  "updateUrl": "https://repo.modloader64.com/mods/Ooto/update/update.json",
+  "devUrl": "https://repo.modloader64.com/mods/Ooto/dev/update.json",
+  "modloader64_deps": {
+    "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
+  }
+}

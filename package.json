@@ -1,5 +1,5 @@
 {
-  "name": "OotOnline",
+  "name": "Z64Online",
   "version": "3.1.0",
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
