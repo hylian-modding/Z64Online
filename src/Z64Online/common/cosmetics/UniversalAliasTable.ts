@@ -113,6 +113,202 @@ const OOT_CHILD_LINK: any = {
     "Shield.2": 0x00005110
 };
 
+const MM_HUMAN_LINK: any = {
+    "Cube": 0x000053C8,
+    "Sheath.1": 0x000050C0,
+    "Sheath.2": 0x000050C8,
+    "Sheath.3": 0x000050D0,
+    "Sword.4": 0x00005290,
+    "FPS.Hookshot": 0x00005170,
+    "Hilt.1": 0x000050D8, 
+    "Hilt.2": 0x000050E0,
+    "Blade.1": 0x000050F0,
+    "Blade.2": 0x000050F8,
+    "Hookshot.Spike": 0x00005158,
+    "Hookshot": 0x00005148,
+    "Fist.L": 0x000050A0,
+    "Fist.R": 0x000050B8,
+    "FPS.Forearm.R": 0x00005168,
+    "Bottle.Hand.L": 0x000050A8,
+    "Bow.String": 0x00005140,
+    "Bow": 0x00005138,
+    "Blade.3": 0x00005100,
+    "Bottle": 0x00005120,
+    "Bottle.Filling": 0x00005548,
+    "Broken.Blade.3": 0x000051E0,
+    "Hilt.3": 0x000050E8,
+    "Hookshot.Aiming.Reticule": 0x00005160,
+    "Hookshot.Chain": 0x00005150,
+    "Ocarina": 0x00005128,
+    "DekuStick": 0x00005130,
+    "Shield.2": 0x00005110,
+    "Shield.3.Face": 0x00005548,
+    "Shield.3": 0x00005118,
+    "Mask.Deku": 0x00005260,
+    "Mask.Goron": 0x00005268,
+    "Mask.Zora": 0x00005270,
+    "Mask.Deity": 0x00005278,
+    "Limb 1": 0x00005020,
+    "Limb 3": 0x00005028,
+    "Limb 4": 0x00005030,
+    "Limb 5": 0x00005038,
+    "Limb 6": 0x00005040,
+    "Limb 7": 0x00005048,
+    "Limb 8": 0x00005050,
+    "Limb 10": 0x00005058,
+    "Limb 11": 0x00005060,
+    "Limb 12": 0x00005068,
+    "Limb 13": 0x00005070,
+    "Limb 14": 0x00005078,
+    "Limb 15": 0x00005098,
+    "Limb 16": 0x00005080,
+    "Limb 17": 0x00005088,
+    "Limb 18": 0x000050B0,
+    "Limb 20": 0x00005090
+};
+
+const MM_DEKU_LINK: any = {
+    "Cube": 0x000053C8,
+    "Sheath": 0x000050C0,
+    "Fist.L": 0x000050A0,
+    "Fist.R": 0x000050B8,
+    "Bottle.Hand.L": 0x000050A8,
+    "Bottle": 0x00005120,
+    "Bottle.Filling": 0x00005548,
+    "Shield": 0x00005298,
+    "Pipe.Mouth": 0x000052A0,
+    "Pipe.Right": 0x000052A8,
+    "Pipe.Up": 0x000052B0,
+    "Pipe.Down": 0x000052B8,
+    "Pipe.Left": 0x000052C0,
+    "Pipe.A": 0x000052C8,
+    "Flower.Stem.R": 0x000052D0,
+    "Flower.Stem.L": 0x000052D8,
+    "Flower.Petal": 0x000052E0,
+    "Flower.Propeller.Closed": 0x000052E8,
+    "Flower.Center.Closed": 0x000052F0,
+    "Flower.Propeller.Open": 0x000052F8,
+    "Flower.Center.Open": 0x00005300,
+    "Pad.Wood": 0x00005308,
+    "Pad.Grass": 0x00005310,
+    "Pad.Open": 0x00005318,
+    "Limb 1": 0x00005020,
+    "Limb 3": 0x00005028,
+    "Limb 4": 0x00005030,
+    "Limb 5": 0x00005038,
+    "Limb 6": 0x00005040,
+    "Limb 7": 0x00005048,
+    "Limb 8": 0x00005050,
+    "Limb 10": 0x00005058,
+    "Limb 11": 0x00005060,
+    "Limb 12": 0x00005068,
+    "Limb 13": 0x00005070,
+    "Limb 14": 0x00005078,
+    "Limb 15": 0x00005098,
+    "Limb 16": 0x00005080,
+    "Limb 17": 0x00005088,
+    "Limb 18": 0x000050B0,
+    "Limb 20": 0x00005090
+};
+
+const MM_GORON_LINK: any = {
+    "Cube": 0x000053C8,
+    "Sheath": 0x000050C0,
+    "Fist.L": 0x000050A0,
+    "Fist.R": 0x000050B8,
+    "Bottle.Hand.L": 0x000050A8,
+    "Bottle": 0x00005120,
+    "Bottle.Filling": 0x00005548,
+    "Shield": 0x00005298,
+    "Drum.Strap": 0x00005330,
+    "Drum.Up": 0x00005330,
+    "Drum.Left": 0x00005338,
+    "Drum.Right": 0x00005340,
+    "Drum.Down": 0x00005348,
+    "Drum.A": 0x00005350,
+    "FirePunch": 0x00005320,
+    "Limb 1": 0x00005020,
+    "Limb 3": 0x00005028,
+    "Limb 4": 0x00005030,
+    "Limb 5": 0x00005038,
+    "Limb 6": 0x00005040,
+    "Limb 7": 0x00005048,
+    "Limb 8": 0x00005050,
+    "Limb 10": 0x00005058,
+    "Limb 11": 0x00005060,
+    "Limb 12": 0x00005068,
+    "Limb 13": 0x00005070,
+    "Limb 14": 0x00005078,
+    "Limb 15": 0x00005098,
+    "Limb 16": 0x00005080,
+    "Limb 17": 0x00005088,
+    "Limb 18": 0x000050B0,
+    "Limb 20": 0x00005090
+};
+
+const MM_ZORA_LINK: any = {
+    "Cube": 0x000053C8,
+    "Sheath": 0x000053B0,
+    "Fist.L": 0x000050A0,
+    "Fist.R": 0x000050B8,
+    "Bottle.Hand.L": 0x000050A8,
+    "Bottle": 0x00005120,
+    "Bottle.Filling": 0x00005548,
+    "Shield": 0x00005298,
+    "Fin.L": 0x00005388,
+    "Fin.Swim.L": 0x00005398,
+    "Fin.R": 0x00005398,
+    "Fin.Swim.R": 0x000053A0,
+    "Hand.Guitar.L": 0x000053A8,
+    "Electricity": 0x000053B8,
+    "Guitar": 0x00005540,
+    "Limb 1": 0x00005020,
+    "Limb 3": 0x00005028,
+    "Limb 4": 0x00005030,
+    "Limb 5": 0x00005038,
+    "Limb 6": 0x00005040,
+    "Limb 7": 0x00005048,
+    "Limb 8": 0x00005050,
+    "Limb 10": 0x00005058,
+    "Limb 11": 0x00005060,
+    "Limb 12": 0x00005068,
+    "Limb 13": 0x00005070,
+    "Limb 14": 0x00005078,
+    "Limb 15": 0x00005098,
+    "Limb 16": 0x00005080,
+    "Limb 17": 0x00005088,
+    "Limb 18": 0x000050B0,
+    "Limb 20": 0x00005090
+};
+
+const MM_DEITY_LINK: any = {
+    "Cube": 0x000053C8,
+    "Sheath": 0x000053B0,
+    "Fist.L": 0x000050A0,
+    "Fist.R": 0x000050B8,
+    "Bottle.Hand.L": 0x000050A8,
+    "Bottle": 0x00005120,
+    "Bottle.Filling": 0x00005548,
+    "Sword": 0x000053C0,
+    "Limb 1": 0x00005020,
+    "Limb 3": 0x00005028,
+    "Limb 4": 0x00005030,
+    "Limb 5": 0x00005038,
+    "Limb 6": 0x00005040,
+    "Limb 7": 0x00005048,
+    "Limb 8": 0x00005050,
+    "Limb 10": 0x00005058,
+    "Limb 11": 0x00005060,
+    "Limb 12": 0x00005068,
+    "Limb 13": 0x00005070,
+    "Limb 14": 0x00005078,
+    "Limb 15": 0x00005098,
+    "Limb 16": 0x00005080,
+    "Limb 17": 0x00005088,
+    "Limb 18": 0x000050B0,
+    "Limb 20": 0x00005090
+};
+
 const TABLE_SIZE: number = 256;
 const MAX_BONE_SIZE: number = 0xFF;
 const PAD_VALUE: number = 0xFF;
@@ -684,6 +880,7 @@ export class UniversalAliasTable {
         }
         wrapGen('DL_LFIST_SWORD3_BROKEN', 'DL_SWORD_HILT_3', undefined, ['DL_SWORD_BLADE_3_BROKEN', 'DL_LFIST']);
         wrapGen(`DL_LFIST_HAMMER`, `DL_HAMMER`, undefined, [`DL_LFIST`]);
+        wrapGen(`DL_RFIST_SWORD4`, `DL_SWORD4`, undefined, [`DL_RFIST`]);
         wrapGen(`DL_RFIST_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_RFIST`]);
         wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_1`, undefined, [`DL_RHAND`]);
         wrapGen(`DL_RHAND_OCARINA_TIME`, `DL_OCARINA_2`, undefined, [`DL_RHAND`]);
@@ -694,6 +891,9 @@ export class UniversalAliasTable {
         wrapGen(`DL_LFIST_BOOMERANG`, `DL_BOOMERANG`, undefined, [`DL_LFIST`]);
         wrapGen(`DL_RFIST_SLINGSHOT`, `DL_SLINGSHOT`, undefined, ['DL_RFIST'])
         wrapGen(`DL_FPS_RARM_SLINGSHOT`, `DL_SLINGSHOT`, undefined, [`DL_FPS_RFOREARM`]);
+        wrapGen(`DL_FPS_RARM_BOW`, `DL_BOW`, undefined, [`DL_FPS_RFOREARM`]);
+        wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_HOOKSHOT`]);
+        wrapGen(`DL_SHIELD_MIRROR_COMBINED`, `DL_SHIELD_MIRROR`, undefined, [`DL_SHIELD_MIRROR_FACE`]);
 
         // Step 7: Build skeleton.
         let _boneoffs: Array<number> = [];
