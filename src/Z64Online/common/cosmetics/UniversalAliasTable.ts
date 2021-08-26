@@ -223,7 +223,7 @@ const MM_GORON_LINK: any = {
     "Bottle": 0x00005120,
     "Bottle.Filling": 0x00005548,
     "Shield": 0x00005298,
-    "Drum.Strap": 0x00005330,
+    "Drum.Strap": 0x00005328,
     "Drum.Up": 0x00005330,
     "Drum.Left": 0x00005338,
     "Drum.Right": 0x00005340,
