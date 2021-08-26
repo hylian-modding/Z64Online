@@ -1056,6 +1056,7 @@ export class UniversalAliasTable {
         wrapGen(`DL_FPS_RARM_BOW`, `DL_BOW`, undefined, [`DL_FPS_RFOREARM`]);
         wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_RFOREARM`, `DL_FPS_HOOKSHOT`]);
         wrapGen(`DL_SHIELD_MIRROR_COMBINED`, `DL_SHIELD_MIRROR`, undefined, [`DL_SHIELD_MIRROR_FACE`]);
+        wrapGen(`DL_GUITAR_HAND`, `DL_LHAND`, undefined, [`DL_ZORA_GUITAR`]);
 
         // Step 7: Build skeleton.
         for (let i = 0; i < skeletons.length; i++) {
