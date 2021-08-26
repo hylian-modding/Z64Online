@@ -6,4 +6,5 @@ export interface IModelManagerShim {
     onSceneChange(scene: Scene): void;
     findLink(): number;
     setupLinkModels(): void;
+    safetyCheck(): boolean;
 }

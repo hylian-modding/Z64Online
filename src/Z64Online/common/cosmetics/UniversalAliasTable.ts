@@ -7,8 +7,11 @@ import crypto from 'crypto';
 import { AgeOrForm } from '../types/Types';
 import { zzplayas_to_zzconvert } from 'Z64Lib/API/OoT/ModelData/backwards_compat/zzplayas_to_zzconvert';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
-import { adult } from '@Z64Online/oot/models/zobjs/OOT/adult';
-import { child } from '@Z64Online/oot/models/zobjs/OOT/child';
+import { adult } from '../../oot/models/zobjs/OOT/adult';
+import { child } from '../../oot/models/zobjs/OOT/child';
+import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
+import { proxy_universal } from '../assets/proxy_universal';
 
 const OOT_ADULT_LINK: any = {
     "Cube": 0x000053C8,
@@ -120,7 +123,7 @@ const MM_HUMAN_LINK: any = {
     "Sheath.3": 0x000050D0,
     "Sword.4": 0x00005290,
     "FPS.Hookshot": 0x00005170,
-    "Hilt.1": 0x000050D8, 
+    "Hilt.1": 0x000050D8,
     "Hilt.2": 0x000050E0,
     "Blade.1": 0x000050F0,
     "Blade.2": 0x000050F8,
@@ -139,7 +142,7 @@ const MM_HUMAN_LINK: any = {
     "Hilt.3": 0x000050E8,
     "Hookshot.Aiming.Reticule": 0x00005160,
     "Hookshot.Chain": 0x00005150,
-    "Ocarina": 0x00005128,
+    "Ocarina.2": 0x00005128,
     "DekuStick": 0x00005130,
     "Shield.2": 0x00005110,
     "Shield.3.Face": 0x00005548,
@@ -243,18 +246,22 @@ const MM_GORON_LINK: any = {
     "Limb 16": 0x00005080,
     "Limb 17": 0x00005088,
     "Limb 18": 0x000050B0,
-    "Limb 20": 0x00005090
+    "Limb 20": 0x00005090,
+    "Roll.Fire.Init": 0x00005378,
+    "Roll.Fire": 0x00005380,
+    "Roll.Curled": 0x00005368,
+    "Roll.Spikes": 0x00005370
 };
 
 const MM_ZORA_LINK: any = {
     "Cube": 0x000053C8,
-    "Sheath": 0x000053B0,
+    "Sheath": 0x000050C0,
     "Fist.L": 0x000050A0,
     "Fist.R": 0x000050B8,
     "Bottle.Hand.L": 0x000050A8,
     "Bottle": 0x00005120,
     "Bottle.Filling": 0x00005548,
-    "Shield": 0x00005298,
+    "Shield": 0x000053B0,
     "Fin.L": 0x00005388,
     "Fin.Swim.L": 0x00005398,
     "Fin.R": 0x00005398,
@@ -344,13 +351,30 @@ export class Bone {
 }
 
 export function getManifestForForm(form: AgeOrForm) {
-    switch (form) {
-        case AgeOrForm.ADULT:
-            return new OotAdultLinkManifest();
-        case AgeOrForm.CHILD:
-            return new OotChildLinkManifest();
-        default:
-            return new DummyManifest();
+    if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
+        switch (form) {
+            case AgeOrForm.ADULT:
+                return new OotAdultLinkManifest();
+            case AgeOrForm.CHILD:
+                return new OotChildLinkManifest();
+            default:
+                return new DummyManifest();
+        }
+    } else {
+        switch (form) {
+            case AgeOrForm.HUMAN:
+                return new MMHumanLinkManifest();
+            case AgeOrForm.ZORA:
+                return new MMZoraLinkManifest();
+            case AgeOrForm.DEKU:
+                return new MMNutsLinkManifest();
+            case AgeOrForm.FD:
+                return new MMFDLinkManifest();
+            case AgeOrForm.GORON:
+                return new MMGoronManifest();
+            default:
+                return new DummyManifest();
+        }
     }
 }
 
@@ -416,6 +440,77 @@ export class OotChildLinkManifest implements IManifest {
     }
 }
 
+export class MMHumanLinkManifest implements IManifest {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+
+        // Kokiri Sword
+        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), 0x00005890);
+        // Razor Sword
+        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -480, -240, -14, 1)), 0x000058D0);
+        // Gilded Sword
+        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), 0x00005910);
+
+        // Shield 2
+        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 182, 552, 0, 0, 1)), 0x00005990);
+        // Shield 3
+        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 182, 552, 0, -50, 1)), 0x000059D0);
+
+
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (MM_HUMAN_LINK.hasOwnProperty(name)) {
+                let __off = MM_HUMAN_LINK[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
+    }
+}
+
+export class MMZoraLinkManifest implements IManifest {
+
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (MM_ZORA_LINK.hasOwnProperty(name)) {
+                let __off = MM_ZORA_LINK[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
+    }
+
+}
+
+export class MMNutsLinkManifest implements IManifest {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (MM_DEKU_LINK.hasOwnProperty(name)) {
+                let __off = MM_DEKU_LINK[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
+    }
+}
+
+export class MMFDLinkManifest implements IManifest {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (MM_DEITY_LINK.hasOwnProperty(name)) {
+                let __off = MM_DEITY_LINK[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
+    }
+}
+
+export class MMGoronManifest implements IManifest {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (MM_GORON_LINK.hasOwnProperty(name)) {
+                let __off = MM_GORON_LINK[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
+    }
+}
+
 export class DummyManifest implements IManifest {
     build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
     }
@@ -423,6 +518,18 @@ export class DummyManifest implements IManifest {
 
 const BANK_OBJECTS: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
 export const CUBE: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
+
+export class Skeleton {
+    bones: Array<Bone>;
+    num: number;
+    num2: number;
+
+    constructor(num: number, limbs: Array<Bone>, num2: number) {
+        this.num = num;
+        this.bones = limbs;
+        this.num2 = num2;
+    }
+}
 
 export class UniversalAliasTable {
 
@@ -528,7 +635,7 @@ export class UniversalAliasTable {
     private *createZoraHex(sb: SmartBuffer) {
         let b = new SmartBuffer();
         b.writeBuffer(Buffer.from('FF142040FE0A204003142040F40A4020', 'hex'));
-        b.writeBuffer(Buffer.from('0300000106005000FC00000106005008', 'hex'));
+        b.writeBuffer(Buffer.from('0300000106005000FC00000106005870', 'hex'));
         let buf = b.toBuffer();
         yield buf;
         sb.writeBuffer(buf);
@@ -582,6 +689,20 @@ export class UniversalAliasTable {
         buf.fill(0);
         yield buf;
         sb.writeBuffer(buf);
+        yield true;
+    }
+
+    private *createGoronMagic(sb: SmartBuffer) {
+        let b = Buffer.from("00004000C000C000C000C000C000C000C000C000C000C000C00040004000400040004000400040004000400040004000400040004000400040004000C000C067C0C3C111C14FC17BC191C18FC172C139C0D5C042C075C144C21FC2FAC3CBC486C520C590C5CEC5CEC581C4E9C41CC331C23DC155C08F4000C000C000C000C000C000C000C000C000C000C000C00040004000400040004000400040004000400040004000400040004000400040004000F842F8E8FA20FBCEFDD9002302920509076F09A70B960D200E2A0E970E6E0DCB0CCB0B890A2208B2075505C403C3017EFF23FCDFFAE0F953F86400000000000000000000000000000001001E003B0000000000580000000000000000001D000006005000060050EC0001000000000A8C", 'hex');
+        b.writeUInt32BE(0x06005AD0, 0x110);
+        b.writeUInt32BE(0x06005BBC, 0x114);
+        yield b;
+        let s = new SmartBuffer();
+        s.writeBuffer(b);
+        while (s.length % 0x10 !== 0) {
+            s.writeUInt8(PAD_VALUE);
+        }
+        sb.writeBuffer(s.toBuffer());
         yield true;
     }
 
@@ -649,6 +770,12 @@ export class UniversalAliasTable {
         LIMB_GENERATOR.next();
     }
 
+    addGoronMagic(sb: SmartBuffer) {
+        let GORON_MAGIC_GENERATOR = this.createGoronMagic(sb);
+        let _GORON_MAGIC = GORON_MAGIC_GENERATOR.next()!.value as Buffer;
+        GORON_MAGIC_GENERATOR.next();
+    }
+
     private loadBankObjects() {
         if (BANK_OBJECTS.size === 0) {
             let parse = new ZZPlayasEmbedParser();
@@ -681,7 +808,7 @@ export class UniversalAliasTable {
         sb.writeBuffer(crypto.randomBytes(0x5000));
         this.addHeader(sb, 1);
         for (let i = 0; i < TABLE_SIZE; i++) {
-            this.addEntry(sb, 0x00005818);
+            this.addEntry(sb, 0x000053C8);
         }
         let df = this.addDF(sb);
         sb.writeUInt32BE(0x06000000 + df, 0x00005818 + 0x4);
@@ -689,11 +816,12 @@ export class UniversalAliasTable {
         let skelsec = sb.writeOffset;
         this.addSkelSection(sb, dummy_skel, dummy_skel, dummy_skel, dummy_skel);
         this.addZoraHex(sb);
-        for (let i = 0; i < 13; i++) {
+        for (let i = 0; i < 9; i++) {
             this.addMatrix(sb, 0, 0, 0, 0, 0, 0, 1);
         }
+        this.addGoronMagic(sb);
         let limbtablepos = sb.writeOffset;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 4; i++) {
             this.addLimbTable(sb);
         }
         while (sb.length % 0x10 !== 0) {
@@ -724,8 +852,8 @@ export class UniversalAliasTable {
         return { sb };
     }
 
-    findHierarchy(buf: Buffer) {
-        for (let i = 0; i < buf.byteLength; i += 4) {
+    findHierarchy(buf: Buffer, start: number = 0) {
+        for (let i = start; i < buf.byteLength; i += 4) {
             // Is this possibly an 06 pointer?
             if (buf.readUInt8(i) === 0x06) {
                 let possible = buf.readUInt32BE(i) & 0x00FFFFFF;
@@ -790,27 +918,55 @@ export class UniversalAliasTable {
         pieces.set("Cube", CUBE.get("cube")!)
 
         // Step 2: Scan Skeleton.
-        let skeleton: Array<Bone> = [];
-        let skel2: number = 0;
-        let skel3: number = 0;
-        let bones: number = 0;
-        let __bones: number = 0;
+        let skeletons: Array<Skeleton> = [];
 
-        skel2 = this.findHierarchy(zobj)!.pos & 0x00FFFFFF;
-        skel3 = zobj.readUInt32BE(skel2) & 0x00FFFFFF;
-        bones = zobj.readUInt32BE(skel2 + 0x5);
-        __bones = zobj.readUInt8(skel2 + 0x4);
-        for (let i = 0; i < __bones; i++) {
-            let pointer = zobj.readUInt32BE(skel3 + (i * 0x4)) & 0x00FFFFFF;
-            let unk1 = zobj.readUInt32BE(pointer);
-            let unk2 = zobj.readUInt32BE(pointer + 0x4);
-            let dlist1 = zobj.readUInt32BE(pointer + 0x8) & 0x00FFFFFF;
-            let limb = new Bone(`Limb ${i}`, pointer, unk1, unk2, dlist1);
-            if (dlist1 > 0) {
-                let op = optimize(zobj, [dlist1]);
-                limb.piece1 = new ZobjPiece(op.zobj, op.oldOffs2NewOffs.get(dlist1)!);
+        let lastSkeleton: number = 0;
+        for (let i = 0; i < 4; i++) {
+            let skeleton: Array<Bone> = [];
+            let skel2: number = 0;
+            let skel3: number = 0;
+            let bones: number = 0;
+            let __bones: number = 0;
+            let f = this.findHierarchy(zobj, lastSkeleton);
+            if (f === undefined) {
+                break;
             }
-            skeleton.push(limb);
+            lastSkeleton = f!.pos + 0x9;
+            while (lastSkeleton % 0x10 !== 0) {
+                lastSkeleton++;
+            }
+            console.log(`Skeleton header: ${f.pos.toString(16)}`);
+            skel2 = f.pos & 0x00FFFFFF;
+            skel3 = zobj.readUInt32BE(skel2) & 0x00FFFFFF;
+            bones = zobj.readUInt32BE(skel2 + 0x5);
+            __bones = zobj.readUInt8(skel2 + 0x4);
+            console.log(`Bones: ${__bones}`);
+            for (let i = 0; i < __bones; i++) {
+                let pointer = zobj.readUInt32BE(skel3 + (i * 0x4)) & 0x00FFFFFF;
+                let unk1 = zobj.readUInt32BE(pointer);
+                let unk2 = zobj.readUInt32BE(pointer + 0x4);
+                let dlist1 = zobj.readUInt32BE(pointer + 0x8) & 0x00FFFFFF;
+                let limb = new Bone(`Limb ${i}`, pointer, unk1, unk2, dlist1);
+                if (dlist1 > 0) {
+                    let op = optimize(zobj, [dlist1]);
+                    limb.piece1 = new ZobjPiece(op.zobj, op.oldOffs2NewOffs.get(dlist1)!);
+                }
+                skeleton.push(limb);
+            }
+            skeletons.push(new Skeleton(__bones, skeleton, bones));
+        }
+        if (skeletons[0].num !== 21 && skeletons.length > 1) {
+            let index = 0;
+            for (let i = 0; i < skeletons.length; i++) {
+                if (skeletons[i].num === 21) {
+                    index = i;
+                    break;
+                }
+            }
+            let sk1 = skeletons[index];
+            let sk2 = skeletons[0];
+            skeletons[index] = sk2;
+            skeletons[0] = sk1;
         }
 
         // Step 3: Create scaffolding for new Zobj.
@@ -834,20 +990,26 @@ export class UniversalAliasTable {
             }
         };
         pieces.forEach(processPiece);
-        skeleton.forEach((limb: Bone) => {
-            if (limb.piece1 !== undefined) {
-                processPiece(limb.piece1, `${limb.name} dlist1`);
-            }
-        });
+
+        for (let i = 0; i < skeletons.length; i++) {
+            skeletons[i].bones.forEach((limb: Bone) => {
+                if (limb.piece1 !== undefined) {
+                    processPiece(limb.piece1, `${limb.name} dlist1`);
+                }
+            });
+        }
+
         let model_data = optimize(temp.toBuffer(), off, sb.writeOffset, 0x06, true);
         sb.writeBuffer(temp.toBuffer().slice(0x0, 0x5000), 0x0);
         sb.writeBuffer(model_data.zobj);
 
-        skeleton.forEach((limb: Bone) => {
-            if (limb.piece1 !== undefined) {
-                limb.piece1.newOffset = model_data.oldOffs2NewOffs.get(limb.piece1.newOffset)!;
-            }
-        });
+        for (let i = 0; i < skeletons.length; i++) {
+            skeletons[i].bones.forEach((limb: Bone) => {
+                if (limb.piece1 !== undefined) {
+                    limb.piece1.newOffset = model_data.oldOffs2NewOffs.get(limb.piece1.newOffset)!;
+                }
+            });
+        }
 
         // Step 5: Call form specific function.
         manifest.build(sb, model_data, pieces);
@@ -892,37 +1054,39 @@ export class UniversalAliasTable {
         wrapGen(`DL_RFIST_SLINGSHOT`, `DL_SLINGSHOT`, undefined, ['DL_RFIST'])
         wrapGen(`DL_FPS_RARM_SLINGSHOT`, `DL_SLINGSHOT`, undefined, [`DL_FPS_RFOREARM`]);
         wrapGen(`DL_FPS_RARM_BOW`, `DL_BOW`, undefined, [`DL_FPS_RFOREARM`]);
-        wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_HOOKSHOT`]);
+        wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_RFOREARM`, `DL_FPS_HOOKSHOT`]);
         wrapGen(`DL_SHIELD_MIRROR_COMBINED`, `DL_SHIELD_MIRROR`, undefined, [`DL_SHIELD_MIRROR_FACE`]);
 
         // Step 7: Build skeleton.
-        let _boneoffs: Array<number> = [];
-        let skeletonInfo: any = {};
-        skeleton.forEach((limb: Bone) => {
-            let _boneoff = sb.writeOffset;
-            sb.writeUInt32BE(limb.unk1);
-            sb.writeUInt32BE(limb.unk2);
-            if (limb.piece1 !== undefined) {
-                /* sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
-                sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000); */
-
-                sb.writeUInt32BE(0x5820 + 0x06000000);
-                sb.writeUInt32BE(0x5820 + 0x06000000);
-                skeletonInfo[limb.name] = limb.piece1.newOffset;
-            } else {
-                sb.writeUInt32BE(0);
-                sb.writeUInt32BE(0);
+        for (let i = 0; i < skeletons.length; i++) {
+            let _boneoffs: Array<number> = [];
+            this.addDebugLabel(scaffold.sb, `Skeleton ${i}`);
+            this.addDF(scaffold.sb);
+            skeletons[i].bones.forEach((limb: Bone) => {
+                let _boneoff = sb.writeOffset;
+                sb.writeUInt32BE(limb.unk1);
+                sb.writeUInt32BE(limb.unk2);
+                if (limb.piece1 !== undefined) {
+                    sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
+                    sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
+                    /*                     sb.writeUInt32BE(0x000053C8 + 0x06000000);
+                                        sb.writeUInt32BE(0x000053C8 + 0x06000000); */
+                } else {
+                    sb.writeUInt32BE(0);
+                    sb.writeUInt32BE(0);
+                }
+                _boneoffs.push(0x06000000 + _boneoff);
+            });
+            for (let j = 0; j < _boneoffs.length; j++) {
+                sb.writeUInt32BE(_boneoffs[j], scaffold.limbtablepos + (i * (0x4 * MAX_BONE_SIZE)) + (j * 0x4));
             }
-            _boneoffs.push(0x06000000 + _boneoff);
-        });
-        for (let i = 0; i < _boneoffs.length; i++) {
-            sb.writeUInt32BE(_boneoffs[i], scaffold.limbtablepos + (i * 0x4));
+            let skelh = new SmartBuffer();
+            skelh.writeUInt32BE(scaffold.limbtablepos + (i * (0x4 * MAX_BONE_SIZE)) + 0x06000000);
+            skelh.writeUInt8(skeletons[i].num);
+            skelh.writeUInt32BE(skeletons[i].num2);
+            sb.writeBuffer(skelh.toBuffer(), scaffold.skelsec + (i * 0x10));
         }
-        let skelh = new SmartBuffer();
-        skelh.writeUInt32BE(scaffold.limbtablepos + 0x06000000);
-        skelh.writeUInt8(__bones);
-        skelh.writeUInt32BE(bones);
-        sb.writeBuffer(skelh.toBuffer(), scaffold.skelsec);
+
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }
@@ -933,3 +1097,5 @@ export class UniversalAliasTable {
         return sb.toBuffer();
     }
 }
+
+fs.writeFileSync("./test.zobj", new UniversalAliasTable().createTable(proxy_universal, new DummyManifest()));

@@ -142,6 +142,8 @@ export class ModelManagerClient {
         this.allocationManager.getLocalPlayerData().additionalData.set(form, manifest.inject(this.ModLoader, rom, proxy, true, obj_id));
         this.ModLoader.utils.setTimeoutFrames(() => {
           bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
+          alloc.ref.isPlayerModel = false;
+          alloc.ref.loadModel();
           this.allocationManager.getLocalPlayerData().AgesOrForms.set(form, alloc.ref);
         }, 2);
       }
@@ -498,8 +500,7 @@ export class ModelManagerClient {
   onTick() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
-    //if (this.core.OOT!.helper.isPaused()) return;
-    //if (this.core.OOT!.helper.Player_InBlockingCsMode() || this.core.OOT!.helper.isLinkEnteringLoadingZone()) return;
+    if (!this.child.safetyCheck()) return;
     let link = this.child.findLink();
     let status = this.ModLoader.emulator.rdramRead8(link + 0x5016);
     if (status === 0) {

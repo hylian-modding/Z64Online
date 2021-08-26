@@ -23,6 +23,12 @@ export class ModelManagerOot implements IModelManagerShim {
         fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
     }
 
+    safetyCheck(): boolean {
+        if (this.parent.core.OOT!.helper.isPaused()) return false;
+        if (this.parent.core.OOT!.helper.Player_InBlockingCsMode() || this.parent.core.OOT!.helper.isLinkEnteringLoadingZone()) return false;
+        return true;
+    }
+
     setupLinkModels(): void {
         this.parent.registerDefaultModel(AgeOrForm.ADULT, path.join(this.parent.cacheDir, "adult.zobj"));
         this.parent.registerDefaultModel(AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"));
@@ -35,18 +41,18 @@ export class ModelManagerOot implements IModelManagerShim {
         let obj_list: number = 0x801D9C44;
         let obj_id = age === AgeOrForm.ADULT ? 0x00140000 : 0x00150000;
         for (let i = 4; i < 0x514; i += 4) {
-          let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
-          if (value === obj_id) {
-            link_object_pointer = obj_list + i + 4;
-            break;
-          }
+            let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
+            if (value === obj_id) {
+                link_object_pointer = obj_list + i + 4;
+                break;
+            }
         }
         if (link_object_pointer === 0) return { exists: false, pointer: 0 };
         link_object_pointer = this.parent.ModLoader.emulator.rdramRead32(link_object_pointer);
         return { exists: this.parent.ModLoader.emulator.rdramReadBuffer(link_object_pointer + 0x5000, 0xB).toString() === "MODLOADER64", pointer: link_object_pointer };
-      }
-    
-      findLink() {
+    }
+
+    findLink() {
         let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);
         let obj_list: number = 0x801D9C44;
         obj_list += 0xC;
@@ -55,19 +61,19 @@ export class ModelManagerOot implements IModelManagerShim {
         obj_list += 0x4;
         let pointer = this.parent.ModLoader.emulator.rdramRead32(obj_list);
         return pointer;
-      }
-    
-      findGameplayKeep() {
+    }
+
+    findGameplayKeep() {
         let obj_list: number = 0x801D9C44;
         let obj_id = 0x00010000;
         for (let i = 4; i < 0x514; i += 4) {
-          let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
-          if (value === obj_id) {
-            return this.parent.ModLoader.emulator.rdramRead32(obj_list + i + 4);
-          }
+            let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
+            if (value === obj_id) {
+                return this.parent.ModLoader.emulator.rdramRead32(obj_list + i + 4);
+            }
         }
         return -1;
-      }
+    }
 
     onSceneChange(scene: Scene): void {
         if (this.parent.managerDisabled) return;
@@ -79,7 +85,7 @@ export class ModelManagerOot implements IModelManagerShim {
         let link = this.doesLinkObjExist(this.parent.core.OOT!.save.age);
         if (link.exists) {
             this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.OOT!.save.age, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!);
-            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!.pointer, 0x6FB0);
+            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!.pointer, 0x6CB0);
             this.parent.ModLoader.emulator.rdramWriteBuffer(link.pointer, copy);
             this.parent.ModLoader.emulator.rdramWrite8(link.pointer + 0x5016, 0x1);
             curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!;

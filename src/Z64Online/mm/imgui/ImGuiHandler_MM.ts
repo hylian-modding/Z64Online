@@ -3,6 +3,7 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { bus } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
+import { Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
 
 export class ImGuiHandler_MM {
 
