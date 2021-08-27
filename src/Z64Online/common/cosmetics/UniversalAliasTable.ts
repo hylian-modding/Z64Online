@@ -147,10 +147,10 @@ const MM_HUMAN_LINK: any = {
     "Shield.2": 0x00005110,
     "Shield.3.Face": 0x00005548,
     "Shield.3": 0x00005118,
-    "Mask.Deku": 0x00005260,
+    /* "Mask.Deku": 0x00005260,
     "Mask.Goron": 0x00005268,
     "Mask.Zora": 0x00005270,
-    "Mask.Deity": 0x00005278,
+    "Mask.Deity": 0x00005278, */
     "Limb 1": 0x00005020,
     "Limb 3": 0x00005028,
     "Limb 4": 0x00005030,
@@ -314,6 +314,10 @@ const MM_DEITY_LINK: any = {
     "Limb 17": 0x00005088,
     "Limb 18": 0x000050B0,
     "Limb 20": 0x00005090
+};
+
+const DUMMY_LINK: any = {
+    "Cube": 0x000053C8
 };
 
 const TABLE_SIZE: number = 256;
@@ -513,6 +517,12 @@ export class MMGoronManifest implements IManifest {
 
 export class DummyManifest implements IManifest {
     build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (DUMMY_LINK.hasOwnProperty(name)) {
+                let __off = MM_GORON_LINK[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
     }
 }
 
@@ -797,8 +807,14 @@ export class UniversalAliasTable {
             });
         }
         if (CUBE.size === 0) {
-            let p = optimize(fs.readFileSync(path.resolve(__dirname, "cube.zobj")), [0x388]);
-            CUBE.set("cube", new ZobjPiece(p.zobj, p.oldOffs2NewOffs.get(0x388)!));
+            let parse = new ZZPlayasEmbedParser();
+            let cube = fs.readFileSync(path.resolve(__dirname, "cube.zobj"));
+            let parse_cube = parse.parse(cube);
+            Object.keys(parse_cube).forEach((key: string) => {
+                let o = optimize(cube, [parse_cube[key]]);
+                let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_cube[key])!);
+                CUBE.set(key, piece);
+            });
         }
     }
 
@@ -809,6 +825,7 @@ export class UniversalAliasTable {
         this.addHeader(sb, 1);
         for (let i = 0; i < TABLE_SIZE; i++) {
             this.addEntry(sb, 0x000053C8);
+            //this.addEntry(sb, 0x00005818);
         }
         let df = this.addDF(sb);
         sb.writeUInt32BE(0x06000000 + df, 0x00005818 + 0x4);
@@ -832,8 +849,10 @@ export class UniversalAliasTable {
 
     generateMinimizedScaffolding(length: number, top: number = 0x5000) {
         let sb = new SmartBuffer();
-        sb.writeBuffer(crypto.randomBytes(top));
-        this.addHeader(sb, 1);
+        if (top > 0){
+            sb.writeBuffer(crypto.randomBytes(top));
+        }
+        this.addHeader(sb, 0x69);
         while (length % 2 !== 0) {
             length++;
         }
@@ -888,6 +907,17 @@ export class UniversalAliasTable {
         return undefined;
     }
 
+    jsonToBinary(str: string){
+        let o = JSON.parse(str);
+        let b = new SmartBuffer();
+        b.writeUInt32BE(Object.keys(o).length);
+        Object.keys(o).forEach((key: string)=>{
+            b.writeUInt32BE(parseInt(key));
+            b.writeUInt32BE(o[key]);
+        });
+        return b.toBuffer();
+    }
+
     createTable(p: Buffer, manifest: IManifest, nostub: boolean = false) {
         if (p.indexOf("UNIVERSAL_ALIAS_TABLE") > -1) return p;
         let pieces: Map<string, ZobjPiece> = new Map();
@@ -915,7 +945,7 @@ export class UniversalAliasTable {
                 pieces.set(key, piece);
             }
         });
-        pieces.set("Cube", CUBE.get("cube")!)
+        pieces.set("Cube", CUBE.get("Cube")!)
 
         // Step 2: Scan Skeleton.
         let skeletons: Array<Skeleton> = [];
@@ -973,7 +1003,52 @@ export class UniversalAliasTable {
         let scaffold = this.generateScaffolding();
         let sb: SmartBuffer = scaffold.sb;
 
-        // Step 4: Deduplicate assets and copy into new zobj.
+        // Step 4: Create combined display lists.
+        let restores: any = {};
+        let wrapGen = (name: string, dl1: string, mtx1: string | undefined, dl2: Array<string>) => {
+            let off = 0;
+            if (mtx1 !== undefined) {
+                off = this.addMtxPushPop(sb, name, defines.get(mtx1)!, this.createJump(sb, defines.get(dl1)!, true).next().value! as Buffer);
+            } else {
+                off = this.addDebugLabel(sb, name);
+                this.addEntry(sb, defines.get(dl1)!, true);
+            }
+            for (let i = 0; i < dl2.length; i++) {
+                this.addEntry(sb, defines.get(dl2[i])!, true);
+            }
+            this.addDF(sb);
+            sb.writeUInt32BE(off + 0x06000000, defines.get(name)! + 0x4);
+            restores[defines.get(name)! + 0x4] = 0x06000000 + off;
+        };
+
+        for (let i = 1; i < 4; i++) {
+            wrapGen(`DL_SWORD${i}_SHEATHED`, `DL_SWORD_HILT_${i}`, `MATRIX_SWORD${i}_BACK`, [`DL_SWORD_SHEATH_${i}`]);
+            wrapGen(`DL_SHIELD${i}_BACK`, `DL_SHIELD_${i}`, `MATRIX_SHIELD${i}_BACK`, []);
+            for (let j = 1; j < 4; j++) {
+                wrapGen(`DL_SWORD${j}_SHIELD${i}`, `DL_SWORD${j}_SHEATHED`, undefined, [`DL_SHIELD${i}_BACK`]);
+                wrapGen(`DL_SWORD${j}_SHIELD${i}_SHEATH`, `DL_SHIELD${i}_BACK`, undefined, [`DL_SWORD_SHEATH_${j}`]);
+            }
+            wrapGen(`DL_LFIST_SWORD${i}`, `DL_SWORD_HILT_${i}`, undefined, [`DL_SWORD_BLADE_${i}`, `DL_LFIST`]);
+            wrapGen(`DL_RFIST_SHIELD_${i}`, `DL_SHIELD_${i}`, undefined, [`DL_RFIST`]);
+        }
+        wrapGen('DL_LFIST_SWORD3_BROKEN', 'DL_SWORD_HILT_3', undefined, ['DL_SWORD_BLADE_3_BROKEN', 'DL_LFIST']);
+        wrapGen(`DL_LFIST_HAMMER`, `DL_HAMMER`, undefined, [`DL_LFIST`]);
+        wrapGen(`DL_RFIST_SWORD4`, `DL_SWORD4`, undefined, [`DL_RFIST`]);
+        wrapGen(`DL_RFIST_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_RFIST`]);
+        wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_1`, undefined, [`DL_RHAND`]);
+        wrapGen(`DL_RHAND_OCARINA_TIME`, `DL_OCARINA_2`, undefined, [`DL_RHAND`]);
+        wrapGen(`DL_RFIST_BOW`, `DL_BOW`, undefined, [`DL_RFIST`]);
+        wrapGen(`DL_FPS_RHAND_BOW`, `DL_BOW`, undefined, [`DL_RHAND`]);
+        wrapGen(`DL_FPS_LHAND_HOOKSHOT`, `DL_FPS_HOOKSHOT`, undefined, [`DL_FPS_RHAND`]);
+        wrapGen(`DL_SHIELD1_ODD`, `DL_SHIELD_1`, 'MATRIX_SHIELD1_ITEM', []);
+        wrapGen(`DL_LFIST_BOOMERANG`, `DL_BOOMERANG`, undefined, [`DL_LFIST`]);
+        wrapGen(`DL_RFIST_SLINGSHOT`, `DL_SLINGSHOT`, undefined, ['DL_RFIST'])
+        wrapGen(`DL_FPS_RARM_SLINGSHOT`, `DL_SLINGSHOT`, undefined, [`DL_FPS_RFOREARM`]);
+        wrapGen(`DL_FPS_RARM_BOW`, `DL_BOW`, undefined, [`DL_FPS_RFOREARM`]);
+        wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_RFOREARM`, `DL_FPS_HOOKSHOT`]);
+        wrapGen(`DL_SHIELD_MIRROR_COMBINED`, `DL_SHIELD_MIRROR`, undefined, [`DL_SHIELD_MIRROR_FACE`]);
+
+        // Step 5: Deduplicate assets and copy into new zobj.
         let temp = new SmartBuffer();
         temp.writeBuffer(zobj.slice(0, 0x5000));
         let off: Array<number> = [];
@@ -1011,51 +1086,8 @@ export class UniversalAliasTable {
             });
         }
 
-        // Step 5: Call form specific function.
+        // Step 6: Call form specific function.
         manifest.build(sb, model_data, pieces);
-
-        // Step 6: Create combined display lists.
-        let wrapGen = (name: string, dl1: string, mtx1: string | undefined, dl2: Array<string>) => {
-            let off = 0;
-            if (mtx1 !== undefined) {
-                off = this.addMtxPushPop(sb, name, defines.get(mtx1)!, this.createJump(sb, defines.get(dl1)!, true).next().value! as Buffer);
-            } else {
-                off = this.addDebugLabel(sb, name);
-                this.addEntry(sb, defines.get(dl1)!, true);
-            }
-            for (let i = 0; i < dl2.length; i++) {
-                this.addEntry(sb, defines.get(dl2[i])!, true);
-            }
-            this.addDF(sb);
-            sb.writeUInt32BE(off + 0x06000000, defines.get(name)! + 0x4);
-        };
-
-        for (let i = 1; i < 4; i++) {
-            wrapGen(`DL_SWORD${i}_SHEATHED`, `DL_SWORD_HILT_${i}`, `MATRIX_SWORD${i}_BACK`, [`DL_SWORD_SHEATH_${i}`]);
-            wrapGen(`DL_SHIELD${i}_BACK`, `DL_SHIELD_${i}`, `MATRIX_SHIELD${i}_BACK`, []);
-            for (let j = 1; j < 4; j++) {
-                wrapGen(`DL_SWORD${j}_SHIELD${i}`, `DL_SWORD${j}_SHEATHED`, undefined, [`DL_SHIELD${i}_BACK`]);
-                wrapGen(`DL_SWORD${j}_SHIELD${i}_SHEATH`, `DL_SHIELD${i}_BACK`, undefined, [`DL_SWORD_SHEATH_${j}`]);
-            }
-            wrapGen(`DL_LFIST_SWORD${i}`, `DL_SWORD_HILT_${i}`, undefined, [`DL_SWORD_BLADE_${i}`, `DL_LFIST`]);
-            wrapGen(`DL_RFIST_SHIELD_${i}`, `DL_SHIELD_${i}`, undefined, [`DL_RFIST`]);
-        }
-        wrapGen('DL_LFIST_SWORD3_BROKEN', 'DL_SWORD_HILT_3', undefined, ['DL_SWORD_BLADE_3_BROKEN', 'DL_LFIST']);
-        wrapGen(`DL_LFIST_HAMMER`, `DL_HAMMER`, undefined, [`DL_LFIST`]);
-        wrapGen(`DL_RFIST_SWORD4`, `DL_SWORD4`, undefined, [`DL_RFIST`]);
-        wrapGen(`DL_RFIST_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_RFIST`]);
-        wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_1`, undefined, [`DL_RHAND`]);
-        wrapGen(`DL_RHAND_OCARINA_TIME`, `DL_OCARINA_2`, undefined, [`DL_RHAND`]);
-        wrapGen(`DL_RFIST_BOW`, `DL_BOW`, undefined, [`DL_RFIST`]);
-        wrapGen(`DL_FPS_RHAND_BOW`, `DL_BOW`, undefined, [`DL_RHAND`]);
-        wrapGen(`DL_FPS_LHAND_HOOKSHOT`, `DL_FPS_HOOKSHOT`, undefined, [`DL_FPS_RHAND`]);
-        wrapGen(`DL_SHIELD1_ODD`, `DL_SHIELD_1`, 'MATRIX_SHIELD1_ITEM', []);
-        wrapGen(`DL_LFIST_BOOMERANG`, `DL_BOOMERANG`, undefined, [`DL_LFIST`]);
-        wrapGen(`DL_RFIST_SLINGSHOT`, `DL_SLINGSHOT`, undefined, ['DL_RFIST'])
-        wrapGen(`DL_FPS_RARM_SLINGSHOT`, `DL_SLINGSHOT`, undefined, [`DL_FPS_RFOREARM`]);
-        wrapGen(`DL_FPS_RARM_BOW`, `DL_BOW`, undefined, [`DL_FPS_RFOREARM`]);
-        wrapGen(`DL_FPS_RARM_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_FPS_RFOREARM`, `DL_FPS_HOOKSHOT`]);
-        wrapGen(`DL_SHIELD_MIRROR_COMBINED`, `DL_SHIELD_MIRROR`, undefined, [`DL_SHIELD_MIRROR_FACE`]);
 
         // Step 7: Build skeleton.
         for (let i = 0; i < skeletons.length; i++) {
@@ -1087,6 +1119,13 @@ export class UniversalAliasTable {
             sb.writeBuffer(skelh.toBuffer(), scaffold.skelsec + (i * 0x10));
         }
 
+        while (sb.length % 0x10 !== 0) {
+            sb.writeUInt8(PAD_VALUE);
+        }
+        // Step 8: Footer
+        let footer = sb.writeOffset;
+        sb.writeUInt32BE(0x06000000 + footer, 0x5017);
+        sb.writeBuffer(this.jsonToBinary(JSON.stringify(restores)));
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }

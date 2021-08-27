@@ -15,15 +15,15 @@ typedef struct
     u8 version;
     u32 dlistCount;
     u16 objID;
-    u32 embeddedOverlay;
+    void* embeddedOverlay;
     u8 proxyStatus;
-    u8 pad[0x4];
+    void* restoreList;
     u8 form;
-    u32 skeletonSectionPointer;
+    void* skeletonSectionPointer;
 } Z64O_Header;
 
 typedef struct{
-    u32 pointer;
+    void* pointer;
     u8 total;
     u32 visible;
     u8 pad[7];

@@ -7,16 +7,18 @@ import { object_link_child_zzconvert_manifest } from "./zobjs/MM/object_link_chi
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import { Z64_MANIFEST } from "@Z64Online/common/types/GameAliases";
 import { proxy_universal } from "@Z64Online/common/assets/proxy_universal";
-import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
+import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
 import { object_link_zora_zzconvert_manifest } from "./zobjs/MM/object_link_zora_zzconvert_manifest";
 import { object_link_nuts_zzconvert_manifest } from "./zobjs/MM/object_link_nuts_zzconvert_manifest";
 import { object_link_boy_zzconvert_manifest } from "./zobjs/MM/object_link_boy_zzconvert_manifest";
 import { object_link_goron_zzconvert_manifest } from "./zobjs/MM/object_link_goron_zzconvert_manifest";
+import { masks } from "./zobjs/MM/masks";
 
 export class ModelManagerMM implements IModelManagerShim {
 
     parent!: ModelManagerClient;
+    maskRef!: IModelReference;
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
@@ -28,6 +30,7 @@ export class ModelManagerMM implements IModelManagerShim {
         fs.writeFileSync(path.join(this.parent.cacheDir, "nuts.zobj"), object_link_nuts_zzconvert_manifest);
         fs.writeFileSync(path.join(this.parent.cacheDir, "fd.zobj"), object_link_boy_zzconvert_manifest);
         fs.writeFileSync(path.join(this.parent.cacheDir, "goron.zobj"), object_link_goron_zzconvert_manifest);
+        fs.writeFileSync(path.join(this.parent.cacheDir, "masks.zobj"), masks);
         fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
     }
 
@@ -49,16 +52,23 @@ export class ModelManagerMM implements IModelManagerShim {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.ZORA, path.join(this.parent.cacheDir, "zora.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x014D);
     }
 
-    loadNutsModelMM(evt: any){
+    loadNutsModelMM(evt: any) {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.ZORA, path.join(this.parent.cacheDir, "nuts.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0154);
     }
 
-    loadFDModelMM(evt: any){
+    loadFDModelMM(evt: any) {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.FD, path.join(this.parent.cacheDir, "fd.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0010);
     }
 
-    loadGoronModelMM(evt: any){
+    loadGoronModelMM(evt: any) {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.FD, path.join(this.parent.cacheDir, "goron.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x014C);
+    }
+
+    maskPatchingShit(evt: any) {
+        this.parent.ModLoader.utils.setTimeoutFrames(() => {
+            this.maskRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "masks.zobj")), true);
+            this.maskRef.loadModel();
+        }, 20);
     }
 
     onRomPatched(evt: any): void {
@@ -67,6 +77,7 @@ export class ModelManagerMM implements IModelManagerShim {
         this.loadNutsModelMM(evt);
         this.loadFDModelMM(evt);
         this.loadGoronModelMM(evt);
+        this.maskPatchingShit(evt);
     }
 
     onSceneChange(scene: number): void {
@@ -78,8 +89,27 @@ export class ModelManagerMM implements IModelManagerShim {
         let curRef: IModelReference | undefined;
         let link = this.findLink();
         this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.MM!.save.form, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!);
-        let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, 0x6CB0);
+        let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, 0x6BE0);
         this.parent.ModLoader.emulator.rdramWriteBuffer(link, copy);
+        let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link + 0x5017, 0x4).readUInt32BE(0);
+        let count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
+        restoreList += 0x4;
+        for (let i = 0; i < count; i++) {
+            let addr = (i * 0x8) + restoreList;
+            let alias = this.parent.ModLoader.emulator.rdramRead32(addr);
+            let combiner = this.parent.ModLoader.emulator.rdramRead32(addr + 0x4);
+            this.parent.ModLoader.emulator.rdramWrite32(link + alias, combiner);
+        }
+        if (this.maskRef !== undefined && this.maskRef.isLoaded) {
+            let deku = this.maskRef.pointer + 0x20;
+            let goron = this.maskRef.pointer + 0x28;
+            let zora = this.maskRef.pointer + 0x30;
+            let fd = this.maskRef.pointer + 0x38;
+            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005260 + 0x4, deku);
+            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005268 + 0x4, goron);
+            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005270 + 0x4, zora);
+            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005278 + 0x4, fd);
+        }
         this.parent.ModLoader.emulator.rdramWrite8(link + 0x5016, 0x1);
         curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!;
         if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
