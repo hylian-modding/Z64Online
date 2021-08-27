@@ -1,10 +1,10 @@
 import { IModelManagerShim } from "@Z64Online/common/cosmetics/IModelManagerShim";
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/ModelManager";
-import { Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
+import { Z64_GAME, Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
 import fs from 'fs';
 import path from 'path';
 import { AgeOrForm } from "@Z64Online/common/types/Types";
-import { Z64_MANIFEST } from "@Z64Online/common/types/GameAliases";
+import { Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from "@Z64Online/common/types/GameAliases";
 import { proxy_universal } from "@Z64Online/common/assets/proxy_universal";
 import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
@@ -15,11 +15,20 @@ import { human } from "./zobjs/human";
 import { masks } from "./zobjs/masks";
 import { nuts } from "./zobjs/nuts";
 import { zora } from "./zobjs/zora";
+import { swords } from "./zobjs/swords";
+import { bottle } from "./zobjs/bottle";
+import { stick } from "./zobjs/stick";
+import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
+import { optimize } from "Z64Lib/API/zzoptimize";
+import { UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 
 export class ModelManagerMM implements IModelManagerShim {
 
     parent!: ModelManagerClient;
     maskRef!: IModelReference;
+    swordRef!: IModelReference;
+    bottleRef!: IModelReference;
+    stickRef!: IModelReference;
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
@@ -35,7 +44,7 @@ export class ModelManagerMM implements IModelManagerShim {
         return true;
     }
 
-    unpackModels(evt: any){
+    unpackModels(evt: any) {
         try {
             fs.mkdirSync(this.parent.cacheDir);
         } catch (err) { }
@@ -45,6 +54,9 @@ export class ModelManagerMM implements IModelManagerShim {
         fs.writeFileSync(path.join(this.parent.cacheDir, "fd.zobj"), decodeAsset(fd, evt.rom));
         fs.writeFileSync(path.join(this.parent.cacheDir, "goron.zobj"), decodeAsset(goron, evt.rom));
         fs.writeFileSync(path.join(this.parent.cacheDir, "masks.zobj"), decodeAsset(masks, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "swords.zobj"), decodeAsset(swords, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "bottle.zobj"), decodeAsset(bottle, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "stick.zobj"), decodeAsset(stick, evt.rom));
         fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), decodeAsset(proxy_universal, evt.rom));
     }
 
@@ -72,6 +84,15 @@ export class ModelManagerMM implements IModelManagerShim {
         this.parent.ModLoader.utils.setTimeoutFrames(() => {
             this.maskRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "masks.zobj")), true);
             this.maskRef.loadModel();
+
+            this.swordRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "swords.zobj")), true);
+            this.swordRef.loadModel();
+
+            this.bottleRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "bottle.zobj")), true);
+            this.bottleRef.loadModel();
+
+            this.stickRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "stick.zobj")), true);
+            this.stickRef.loadModel();
         }, 20);
     }
 
@@ -83,6 +104,15 @@ export class ModelManagerMM implements IModelManagerShim {
         this.loadFDModelMM(evt);
         this.loadGoronModelMM(evt);
         this.maskPatchingShit(evt);
+
+/*         let tools = new Z64RomTools(this.parent.ModLoader, Z64_GAME);
+        let gk = tools.decompressDMAFileFromRom(evt.rom, 649);
+        let scaffold = new UniversalAliasTable().generateMinimizedScaffolding(2, 0);
+        let op = optimize(gk, [0x03E0, 0x0320], scaffold.sb.length, 0x04, true);
+        scaffold.sb.writeUInt32BE(op.oldOffs2NewOffs.get(0x03E0)! + 0x06000000, 0x24);
+        scaffold.sb.writeUInt32BE(op.oldOffs2NewOffs.get(0x0320)! + 0x06000000, 0x2C);
+        scaffold.sb.writeBuffer(op.zobj);
+        fs.writeFileSync("./bottle.zobj", scaffold.sb.toBuffer()); */
     }
 
     onSceneChange(scene: number): void {
@@ -136,7 +166,7 @@ export class ModelManagerMM implements IModelManagerShim {
 
     findLink() {
         let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);
-        let obj_list: number = 0x803FE8A8;
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
         obj_list += 0xC;
         let offset = index * 0x44;
         obj_list += offset;

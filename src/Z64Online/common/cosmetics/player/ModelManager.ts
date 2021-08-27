@@ -31,15 +31,15 @@ import { Z64 } from 'Z64Lib/API/imports';
 import { Tunic } from 'Z64Lib/API/OOT/OOTAPI';
 import { Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
 import { EquipmentManifest } from './EquipmentManifest';
-import { ModelAllocationManager } from './ModelAllocationManager';
-import { ModelReference } from './ModelContainer';
+import { ModelAllocationManager } from '../utils/ModelAllocationManager';
+import { ModelReference } from '../utils/ModelContainer';
 import { OOTO_PRIVATE_EVENTS } from '../api/InternalAPI';
 import { Puppet } from '../../oot/puppet/Puppet';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../../oot/network/OotOPackets';
 import { ModelPlayer } from './ModelPlayer';
 import { Z64_GAME, Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { OotOnlineStorageClient } from '../../oot/storage/OotOnlineStorageClient';
-import { IModelManagerShim } from "./IModelManagerShim";
+import { IModelManagerShim } from "../utils/IModelManagerShim";
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()

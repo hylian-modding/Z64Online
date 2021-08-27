@@ -19,7 +19,7 @@ typedef struct
     u8 proxyStatus;
     void* restoreList;
     u8 form;
-    void* skeletonSectionPointer;
+    Z64O_SkeletonSection* skeletonSectionPointer;
 } Z64O_Header;
 
 typedef struct{
@@ -68,10 +68,6 @@ typedef struct
     Z64O_MTX SHIELD_WEIRD0;
     Z64O_MTX BUNNY0;
     Z64O_MTX BUNNY1;
-    Z64O_MTX MM1;
-    Z64O_MTX MM2;
-    Z64O_MTX MM3;
-    Z64O_MTX MM4;
     Z64O_LimbTable limbTable1;
     Z64O_LimbTable limbTable2;
     Z64O_LimbTable limbTable3;

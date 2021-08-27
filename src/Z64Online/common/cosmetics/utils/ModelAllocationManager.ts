@@ -1,4 +1,4 @@
-import { ModelPlayer } from './ModelPlayer';
+import { ModelPlayer } from '../player/ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModelObject, ModelReference } from './ModelContainer';

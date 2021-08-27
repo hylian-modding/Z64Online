@@ -1,7 +1,7 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { Postinit } from "modloader64_api/PluginLifecycle";
-import { IModelReference } from "../api/Z64API";
+import { IModelReference } from "../../api/Z64API";
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IActor, Z64 } from "Z64Lib/API/imports";
 

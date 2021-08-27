@@ -17,6 +17,7 @@ import { nuts } from '@Z64Online/mm/models/zobjs/nuts';
 import { goron } from '@Z64Online/mm/models/zobjs/goron';
 import { zora } from '@Z64Online/mm/models/zobjs/zora';
 import { fd } from '@Z64Online/mm/models/zobjs/fd';
+import { cube } from '../assets/cube';
 
 const ERROR_CUBE_POINTER: number = 0x000053C8;
 const DF_POINTER: number = 0x00005818;
@@ -823,10 +824,11 @@ export class UniversalAliasTable {
         }
         if (CUBE.size === 0) {
             let parse = new ZZPlayasEmbedParser();
-            let cube = fs.readFileSync(path.resolve(__dirname, "cube.zobj"));
-            let parse_cube = parse.parse(cube);
+            let entropy = crypto.randomBytes(0x5000);
+            let _cube = decodeAsset(cube, entropy);
+            let parse_cube = parse.parse(_cube);
             Object.keys(parse_cube).forEach((key: string) => {
-                let o = optimize(cube, [parse_cube[key]]);
+                let o = optimize(_cube, [parse_cube[key]]);
                 let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_cube[key])!);
                 CUBE.set(key, piece);
             });

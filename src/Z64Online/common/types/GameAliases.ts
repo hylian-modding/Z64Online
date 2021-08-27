@@ -13,6 +13,7 @@ export let Z64_ADULT: AgeOrForm;
 export let Z64_TITLE_SCREEN_FORM: AgeOrForm;
 // Playas stuff
 export let Z64_MANIFEST: Manifest;
+export let Z64_OBJECT_TABLE_RAM: number = 0;
 
 export function setupOot(){
     Z64_ANIM_BANK_DMA = OOT_ANIM_BANK_DMA;
@@ -23,6 +24,7 @@ export function setupOot(){
     Z64_MANIFEST = new OOTManifest();
     Z64_ADULT_ZOBJ_DMA = 502;
     Z64_CHILD_ZOBJ_DMA = 503;
+    Z64_OBJECT_TABLE_RAM = 0x801D9C44;
 }
 
 export function setupMM(){
@@ -34,6 +36,7 @@ export function setupMM(){
     Z64_MANIFEST = new MMManifest();
     Z64_ADULT_ZOBJ_DMA = 654;
     Z64_CHILD_ZOBJ_DMA = 654;
+    Z64_OBJECT_TABLE_RAM = 0x803FE8A8;
 }
 
 export function markAsRandomizer(){

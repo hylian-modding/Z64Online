@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { ModelManagerClient } from '../../common/cosmetics/ModelManager';
 import { AgeOrForm, Scene } from '@Z64Online/common/types/Types';
-import { Z64_MANIFEST } from '@Z64Online/common/types/GameAliases';
+import { Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/common/types/GameAliases';
 import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
 import { bus } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
@@ -35,7 +35,7 @@ export class ModelManagerOot implements IModelManagerShim {
 
     doesLinkObjExist(age: AgeOrForm) {
         let link_object_pointer: number = 0;
-        let obj_list: number = 0x801D9C44;
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
         let obj_id = age === AgeOrForm.ADULT ? 0x00140000 : 0x00150000;
         for (let i = 4; i < 0x514; i += 4) {
             let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
@@ -51,7 +51,7 @@ export class ModelManagerOot implements IModelManagerShim {
 
     findLink() {
         let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);
-        let obj_list: number = 0x801D9C44;
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
         obj_list += 0xC;
         let offset = index * 0x44;
         obj_list += offset;
@@ -61,7 +61,7 @@ export class ModelManagerOot implements IModelManagerShim {
     }
 
     findGameplayKeep() {
-        let obj_list: number = 0x801D9C44;
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
         let obj_id = 0x00010000;
         for (let i = 4; i < 0x514; i += 4) {
             let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
