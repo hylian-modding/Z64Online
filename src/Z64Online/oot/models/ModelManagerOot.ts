@@ -9,8 +9,8 @@ import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from '../../common/cosmetics/IModelManagerShim';
 import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
 import { decodeAsset } from '@Z64Online/common/assets/decoder';
-import { adult } from './zobjs/OOT/adult';
-import { child } from './zobjs/OOT/child';
+import { adult } from './zobjs/adult';
+import { child } from './zobjs/child';
 
 export class ModelManagerOot implements IModelManagerShim {
 

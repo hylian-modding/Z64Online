@@ -8,13 +8,13 @@ import { Z64_MANIFEST } from "@Z64Online/common/types/GameAliases";
 import { proxy_universal } from "@Z64Online/common/assets/proxy_universal";
 import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
-import { masks } from "./zobjs/MM/masks";
 import { decodeAsset } from "@Z64Online/common/assets/decoder";
-import { human } from "./zobjs/MM/human";
-import { zora } from "./zobjs/MM/zora";
-import { nuts } from "./zobjs/MM/nuts";
-import { fd } from "./zobjs/MM/fd";
-import { goron } from "./zobjs/MM/goron";
+import { fd } from "./zobjs/fd";
+import { goron } from "./zobjs/goron";
+import { human } from "./zobjs/human";
+import { masks } from "./zobjs/masks";
+import { nuts } from "./zobjs/nuts";
+import { zora } from "./zobjs/zora";
 
 export class ModelManagerMM implements IModelManagerShim {
 

@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import { AgeOrForm } from '../types/Types';
 import { zzplayas_to_zzconvert } from 'Z64Lib/API/OoT/ModelData/backwards_compat/zzplayas_to_zzconvert';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
-import { adult } from '../../oot/models/zobjs/OOT/adult';
+import { adult } from '../../oot/models/zobjs/adult';
 import { child } from '../../oot/models/zobjs/OOT/child';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
