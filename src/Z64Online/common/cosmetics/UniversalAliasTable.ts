@@ -7,11 +7,16 @@ import crypto from 'crypto';
 import { AgeOrForm } from '../types/Types';
 import { zzplayas_to_zzconvert } from 'Z64Lib/API/OoT/ModelData/backwards_compat/zzplayas_to_zzconvert';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
-import { adult } from '../../oot/models/zobjs/adult';
-import { child } from '../../oot/models/zobjs/OOT/child';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
-import { proxy_universal } from '../assets/proxy_universal';
+import { adult } from '@Z64Online/oot/models/zobjs/adult';
+import { child } from '@Z64Online/oot/models/zobjs/child';
+import { human } from '@Z64Online/mm/models/zobjs/human';
+import { decodeAsset } from '../assets/decoder';
+import { nuts } from '@Z64Online/mm/models/zobjs/nuts';
+import { goron } from '@Z64Online/mm/models/zobjs/goron';
+import { zora } from '@Z64Online/mm/models/zobjs/zora';
+import { fd } from '@Z64Online/mm/models/zobjs/fd';
 
 const OOT_ADULT_LINK: any = {
     "Cube": 0x000053C8,
@@ -147,10 +152,10 @@ const MM_HUMAN_LINK: any = {
     "Shield.2": 0x00005110,
     "Shield.3.Face": 0x00005548,
     "Shield.3": 0x00005118,
-    /* "Mask.Deku": 0x00005260,
+    "Mask.Deku": 0x00005260,
     "Mask.Goron": 0x00005268,
     "Mask.Zora": 0x00005270,
-    "Mask.Deity": 0x00005278, */
+    "Mask.Deity": 0x00005278,
     "Limb 1": 0x00005020,
     "Limb 3": 0x00005028,
     "Limb 4": 0x00005030,
@@ -788,23 +793,29 @@ export class UniversalAliasTable {
 
     private loadBankObjects() {
         if (BANK_OBJECTS.size === 0) {
-            let parse = new ZZPlayasEmbedParser();
-
-            let zobj_adult = adult;
-            let parse_adult = parse.parse(zobj_adult);
-            Object.keys(parse_adult).forEach((key: string) => {
-                let o = optimize(zobj_adult, [parse_adult[key]]);
-                let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_adult[key])!);
-                BANK_OBJECTS.set(piece.hash, piece);
-            });
-
-            let zobj_child = child;
-            let parse_child = parse.parse(zobj_child);
-            Object.keys(parse_child).forEach((key: string) => {
-                let o = optimize(zobj_child, [parse_child[key]]);
-                let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_child[key])!);
-                BANK_OBJECTS.set(piece.hash, piece);
-            });
+            console.log("Loading Bank objects...");
+            let objs: Array<Buffer> = [];
+            let entropy = crypto.randomBytes(0x5000);
+            if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
+                objs.push(decodeAsset(adult, entropy));
+                objs.push(decodeAsset(child, entropy));
+            } else {
+                objs.push(decodeAsset(human, entropy));
+                objs.push(decodeAsset(nuts, entropy));
+                objs.push(decodeAsset(goron, entropy));
+                objs.push(decodeAsset(zora, entropy));
+                objs.push(decodeAsset(fd, entropy));
+            }
+            for (let i = 0; i < objs.length; i++) {
+                let parse = new ZZPlayasEmbedParser();
+                let zobj = objs[i];
+                let parse_zobj = parse.parse(zobj);
+                Object.keys(parse_zobj).forEach((key: string) => {
+                    let o = optimize(zobj, [parse_zobj[key]]);
+                    let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_zobj[key])!);
+                    BANK_OBJECTS.set(piece.hash, piece);
+                });
+            }
         }
         if (CUBE.size === 0) {
             let parse = new ZZPlayasEmbedParser();
@@ -849,7 +860,7 @@ export class UniversalAliasTable {
 
     generateMinimizedScaffolding(length: number, top: number = 0x5000) {
         let sb = new SmartBuffer();
-        if (top > 0){
+        if (top > 0) {
             sb.writeBuffer(crypto.randomBytes(top));
         }
         this.addHeader(sb, 0x69);
@@ -907,11 +918,11 @@ export class UniversalAliasTable {
         return undefined;
     }
 
-    jsonToBinary(str: string){
+    jsonToBinary(str: string) {
         let o = JSON.parse(str);
         let b = new SmartBuffer();
         b.writeUInt32BE(Object.keys(o).length);
-        Object.keys(o).forEach((key: string)=>{
+        Object.keys(o).forEach((key: string) => {
             b.writeUInt32BE(parseInt(key));
             b.writeUInt32BE(o[key]);
         });
@@ -965,12 +976,10 @@ export class UniversalAliasTable {
             while (lastSkeleton % 0x10 !== 0) {
                 lastSkeleton++;
             }
-            console.log(`Skeleton header: ${f.pos.toString(16)}`);
             skel2 = f.pos & 0x00FFFFFF;
             skel3 = zobj.readUInt32BE(skel2) & 0x00FFFFFF;
             bones = zobj.readUInt32BE(skel2 + 0x5);
             __bones = zobj.readUInt8(skel2 + 0x4);
-            console.log(`Bones: ${__bones}`);
             for (let i = 0; i < __bones; i++) {
                 let pointer = zobj.readUInt32BE(skel3 + (i * 0x4)) & 0x00FFFFFF;
                 let unk1 = zobj.readUInt32BE(pointer);
