@@ -1,4 +1,3 @@
-import { ModelManagerClient } from "@Z64Online/common/cosmetics/ModelManager";
 import { ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ModelManagerMM } from "./models/ModelManagerMM";
@@ -9,6 +8,7 @@ import fs from 'fs';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ImGuiHandler_MM } from "./imgui/ImGuiHandler_MM";
+import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 
 export default class MMOnlineClient{
     

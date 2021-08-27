@@ -1,16 +1,16 @@
 import path from 'path';
 import fs from 'fs';
-import { ModelManagerClient } from '../../common/cosmetics/ModelManager';
 import { AgeOrForm, Scene } from '@Z64Online/common/types/Types';
 import { Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/common/types/GameAliases';
 import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
 import { bus } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
-import { IModelManagerShim } from '../../common/cosmetics/IModelManagerShim';
 import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
 import { decodeAsset } from '@Z64Online/common/assets/decoder';
 import { adult } from './zobjs/adult';
 import { child } from './zobjs/child';
+import { ModelManagerClient } from '@Z64Online/common/cosmetics/player/ModelManager';
+import { IModelManagerShim } from '@Z64Online/common/cosmetics/utils/IModelManagerShim';
 
 export class ModelManagerOot implements IModelManagerShim {
 

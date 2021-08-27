@@ -1,5 +1,4 @@
 import { SmartBuffer } from 'smart-buffer';
-import { MatrixTranslate } from './MatrixTranslate';
 import fs from 'fs';
 import path from 'path';
 import { IOptimized, optimize } from 'Z64Lib/API/zzoptimize';
@@ -18,6 +17,7 @@ import { goron } from '@Z64Online/mm/models/zobjs/goron';
 import { zora } from '@Z64Online/mm/models/zobjs/zora';
 import { fd } from '@Z64Online/mm/models/zobjs/fd';
 import { cube } from '../assets/cube';
+import { MatrixTranslate } from './utils/MatrixTranslate';
 
 const ERROR_CUBE_POINTER: number = 0x000053C8;
 const DF_POINTER: number = 0x00005818;

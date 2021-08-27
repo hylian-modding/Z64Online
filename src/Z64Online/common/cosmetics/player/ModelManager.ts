@@ -33,13 +33,13 @@ import { Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
 import { EquipmentManifest } from './EquipmentManifest';
 import { ModelAllocationManager } from '../utils/ModelAllocationManager';
 import { ModelReference } from '../utils/ModelContainer';
-import { OOTO_PRIVATE_EVENTS } from '../api/InternalAPI';
-import { Puppet } from '../../oot/puppet/Puppet';
-import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '../../oot/network/OotOPackets';
 import { ModelPlayer } from './ModelPlayer';
 import { Z64_GAME, Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
-import { OotOnlineStorageClient } from '../../oot/storage/OotOnlineStorageClient';
 import { IModelManagerShim } from "../utils/IModelManagerShim";
+import { OOTO_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
+import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/oot/network/OotOPackets';
+import { Puppet } from '@Z64Online/oot/puppet/Puppet';
+import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()

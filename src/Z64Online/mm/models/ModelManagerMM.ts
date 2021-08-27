@@ -1,5 +1,3 @@
-import { IModelManagerShim } from "@Z64Online/common/cosmetics/IModelManagerShim";
-import { ModelManagerClient } from "@Z64Online/common/cosmetics/ModelManager";
 import { Z64_GAME, Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
 import fs from 'fs';
 import path from 'path';
@@ -21,6 +19,8 @@ import { stick } from "./zobjs/stick";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { optimize } from "Z64Lib/API/zzoptimize";
 import { UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
+import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
+import { IModelManagerShim } from "@Z64Online/common/cosmetics/utils/IModelManagerShim";
 
 export class ModelManagerMM implements IModelManagerShim {
 

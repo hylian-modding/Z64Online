@@ -1,7 +1,7 @@
 import fs from 'fs';
-import { Bone, UniversalAliasTable, ZobjPiece } from './UniversalAliasTable';
 import { optimize } from 'Z64Lib/API/zzoptimize';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
+import { Bone, ZobjPiece, UniversalAliasTable } from '../UniversalAliasTable';
 
 function findHierarchy(buf: Buffer) {
     for (let i = 0; i < buf.byteLength; i += 4) {

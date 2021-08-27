@@ -2,7 +2,6 @@ import { OOTO_PRIVATE_EVENTS, SendToScene } from "@Z64Online/common/api/Internal
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { EmoteManager } from "@Z64Online/common/cosmetics/emoteManager";
 import { NPCReplacer } from "@Z64Online/common/cosmetics/npc/NPCReplacer";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import { markAsRandomizer } from "@Z64Online/common/types/GameAliases";
@@ -27,7 +26,6 @@ import { Multiworld, MultiWorld_ItemPacket } from "./compat/OotR";
 import RomFlags from "./compat/RomFlags";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
-import { ModelManagerClient } from "../common/cosmetics/ModelManager";
 import { OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket, Ooto_ClientSceneContextUpdate, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, OotO_RomFlagsPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket } from "./network/OotOPackets";
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from "./OotOnline";
 import { ThiccOpa } from "./opa/ThiccOpa";
@@ -39,7 +37,8 @@ import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
-import { zeldaString } from "Z64Lib/API/imports";
+import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
+import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
