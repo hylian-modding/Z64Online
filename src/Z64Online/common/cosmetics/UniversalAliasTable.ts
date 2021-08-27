@@ -18,6 +18,10 @@ import { goron } from '@Z64Online/mm/models/zobjs/goron';
 import { zora } from '@Z64Online/mm/models/zobjs/zora';
 import { fd } from '@Z64Online/mm/models/zobjs/fd';
 
+const ERROR_CUBE_POINTER: number = 0x000053C8;
+const DF_POINTER: number = 0x00005818;
+const USE_ERROR_CUBE: boolean = true;
+
 const OOT_ADULT_LINK: any = {
     "Cube": 0x000053C8,
     "Sheath": 0x000050C8,
@@ -835,8 +839,11 @@ export class UniversalAliasTable {
         sb.writeBuffer(crypto.randomBytes(0x5000));
         this.addHeader(sb, 1);
         for (let i = 0; i < TABLE_SIZE; i++) {
-            this.addEntry(sb, 0x000053C8);
-            //this.addEntry(sb, 0x00005818);
+            if (USE_ERROR_CUBE) {
+                this.addEntry(sb, ERROR_CUBE_POINTER);
+            } else {
+                this.addEntry(sb, DF_POINTER);
+            }
         }
         let df = this.addDF(sb);
         sb.writeUInt32BE(0x06000000 + df, 0x00005818 + 0x4);
