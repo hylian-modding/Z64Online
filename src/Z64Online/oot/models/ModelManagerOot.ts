@@ -8,6 +8,9 @@ import { bus } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from '../../common/cosmetics/IModelManagerShim';
 import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
+import { decodeAsset } from '@Z64Online/common/assets/decoder';
+import { adult } from './zobjs/OOT/adult';
+import { child } from './zobjs/OOT/child';
 
 export class ModelManagerOot implements IModelManagerShim {
 
@@ -15,12 +18,6 @@ export class ModelManagerOot implements IModelManagerShim {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
-        try {
-            fs.mkdirSync(this.parent.cacheDir);
-        } catch (err) { }
-        fs.copyFileSync(path.join(__dirname, "zobjs/OOT", "adult.zobj"), path.join(this.parent.cacheDir, "adult.zobj"));
-        fs.copyFileSync(path.join(__dirname, "zobjs/OOT", "child.zobj"), path.join(this.parent.cacheDir, "child.zobj"));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
     }
 
     safetyCheck(): boolean {
@@ -117,7 +114,17 @@ export class ModelManagerOot implements IModelManagerShim {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0014);
     }
 
+    unpackModels(evt: any){
+        try {
+            fs.mkdirSync(this.parent.cacheDir);
+        } catch (err) { }
+        fs.writeFileSync(path.join(this.parent.cacheDir, "adult.zobj"), decodeAsset(adult, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "child.zobj"), decodeAsset(child, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), decodeAsset(proxy_universal, evt.rom));
+    }
+
     onRomPatched(evt: any) {
+        this.unpackModels(evt);
         this.loadAdultModelOOT(evt);
         this.loadChildModelOOT(evt);
     }

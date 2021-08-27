@@ -1138,4 +1138,4 @@ export class UniversalAliasTable {
     }
 }
 
-fs.writeFileSync("./test.zobj", new UniversalAliasTable().createTable(proxy_universal, new DummyManifest()));
+/* fs.writeFileSync("./test.zobj", new UniversalAliasTable().createTable(proxy_universal, new DummyManifest())); */

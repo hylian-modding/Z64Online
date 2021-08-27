@@ -3,17 +3,18 @@ import { ModelManagerClient } from "@Z64Online/common/cosmetics/ModelManager";
 import { Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
 import fs from 'fs';
 import path from 'path';
-import { object_link_child_zzconvert_manifest } from "./zobjs/MM/object_link_child_zzconvert_manifest";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import { Z64_MANIFEST } from "@Z64Online/common/types/GameAliases";
 import { proxy_universal } from "@Z64Online/common/assets/proxy_universal";
 import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
-import { object_link_zora_zzconvert_manifest } from "./zobjs/MM/object_link_zora_zzconvert_manifest";
-import { object_link_nuts_zzconvert_manifest } from "./zobjs/MM/object_link_nuts_zzconvert_manifest";
-import { object_link_boy_zzconvert_manifest } from "./zobjs/MM/object_link_boy_zzconvert_manifest";
-import { object_link_goron_zzconvert_manifest } from "./zobjs/MM/object_link_goron_zzconvert_manifest";
 import { masks } from "./zobjs/MM/masks";
+import { decodeAsset } from "@Z64Online/common/assets/decoder";
+import { human } from "./zobjs/MM/human";
+import { zora } from "./zobjs/MM/zora";
+import { nuts } from "./zobjs/MM/nuts";
+import { fd } from "./zobjs/MM/fd";
+import { goron } from "./zobjs/MM/goron";
 
 export class ModelManagerMM implements IModelManagerShim {
 
@@ -22,16 +23,6 @@ export class ModelManagerMM implements IModelManagerShim {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
-        try {
-            fs.mkdirSync(this.parent.cacheDir);
-        } catch (err) { }
-        fs.writeFileSync(path.join(this.parent.cacheDir, "human.zobj"), object_link_child_zzconvert_manifest);
-        fs.writeFileSync(path.join(this.parent.cacheDir, "zora.zobj"), object_link_zora_zzconvert_manifest);
-        fs.writeFileSync(path.join(this.parent.cacheDir, "nuts.zobj"), object_link_nuts_zzconvert_manifest);
-        fs.writeFileSync(path.join(this.parent.cacheDir, "fd.zobj"), object_link_boy_zzconvert_manifest);
-        fs.writeFileSync(path.join(this.parent.cacheDir, "goron.zobj"), object_link_goron_zzconvert_manifest);
-        fs.writeFileSync(path.join(this.parent.cacheDir, "masks.zobj"), masks);
-        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
     }
 
     dummy(): boolean {
@@ -42,6 +33,19 @@ export class ModelManagerMM implements IModelManagerShim {
         if (this.parent.core.MM!.helper.isPaused()) return false;
         if (this.dummy() || this.parent.core.MM!.helper.isLinkEnteringLoadingZone()) return false;
         return true;
+    }
+
+    unpackModels(evt: any){
+        try {
+            fs.mkdirSync(this.parent.cacheDir);
+        } catch (err) { }
+        fs.writeFileSync(path.join(this.parent.cacheDir, "human.zobj"), decodeAsset(human, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "zora.zobj"), decodeAsset(zora, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "nuts.zobj"), decodeAsset(nuts, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "fd.zobj"), decodeAsset(fd, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "goron.zobj"), decodeAsset(goron, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "masks.zobj"), decodeAsset(masks, evt.rom));
+        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), decodeAsset(proxy_universal, evt.rom));
     }
 
     loadHumanModelMM(evt: any) {
@@ -72,6 +76,7 @@ export class ModelManagerMM implements IModelManagerShim {
     }
 
     onRomPatched(evt: any): void {
+        this.unpackModels(evt);
         this.loadHumanModelMM(evt);
         this.loadZoraModelMM(evt);
         this.loadNutsModelMM(evt);
