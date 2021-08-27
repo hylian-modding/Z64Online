@@ -143,7 +143,6 @@ export class ModelManagerClient {
         this.ModLoader.utils.setTimeoutFrames(() => {
           bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
           alloc.ref.isPlayerModel = false;
-          alloc.ref.loadModel();
           this.allocationManager.getLocalPlayerData().AgesOrForms.set(form, alloc.ref);
         }, 2);
       }
