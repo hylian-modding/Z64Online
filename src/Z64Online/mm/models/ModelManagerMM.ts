@@ -10,7 +10,7 @@ import { decodeAsset } from "@Z64Online/common/assets/decoder";
 import { fd } from "./zobjs/fd";
 import { goron } from "./zobjs/goron";
 import { human } from "./zobjs/human";
-import { masks } from "./zobjs/masks";
+import { DEITY_MASK_GI, DEITY_MASK_NORMAL, DEITY_MASK_SCREAMING, DEKU_MASK_GI, DEKU_MASK_NORMAL, DEKU_MASK_SCREAMING, GORON_MASK_GI, GORON_MASK_NORMAL, GORON_MASK_SCREAMING, masks, ZORA_MASK_GI, ZORA_MASK_NORMAL, ZORA_MASK_SCREAMING } from "./zobjs/masks";
 import { nuts } from "./zobjs/nuts";
 import { zora } from "./zobjs/zora";
 import { swords } from "./zobjs/swords";
@@ -18,9 +18,10 @@ import { bottle } from "./zobjs/bottle";
 import { stick } from "./zobjs/stick";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { optimize } from "Z64Lib/API/zzoptimize";
-import { UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 import { IModelManagerShim } from "@Z64Online/common/cosmetics/utils/IModelManagerShim";
+import { SmartBuffer } from 'smart-buffer';
+import { DL_DEITY_MASK, DL_DEITY_MASK_GI, DL_DEITY_MASK_SCREAM, DL_DEKU_MASK, DL_DEKU_MASK_GI, DL_DEKU_MASK_SCREAM, DL_GORON_MASK, DL_GORON_MASK_GI, DL_GORON_MASK_SCREAM, DL_ZORA_MASK, DL_ZORA_MASK_GI, DL_ZORA_MASK_SCREAM } from "@Z64Online/common/cosmetics/Defines";
 
 export class ModelManagerMM implements IModelManagerShim {
 
@@ -29,6 +30,8 @@ export class ModelManagerMM implements IModelManagerShim {
     swordRef!: IModelReference;
     bottleRef!: IModelReference;
     stickRef!: IModelReference;
+    //
+    MaskMap: Map<string, { offset: number, vrom: number, replacement: number, alias: number }> = new Map();
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
@@ -80,7 +83,24 @@ export class ModelManagerMM implements IModelManagerShim {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.FD, path.join(this.parent.cacheDir, "goron.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x014C);
     }
 
-    maskPatchingShit(evt: any) {
+    replaceMasks(evt: any) {
+        let tools = new Z64RomTools(this.parent.ModLoader, Z64_GAME);
+
+        let moveAndClear = (dma: number) => {
+            let buf = tools.decompressDMAFileFromRom(evt.rom, dma);
+            this.parent.ModLoader.utils.clearBuffer(buf);
+            return tools.relocateFileToExtendedRom(evt.rom, dma, buf, 0, true)
+        };
+
+        this.MaskMap.set("goron_mask_t", { vrom: moveAndClear(678), offset: 0x14A0, replacement: GORON_MASK_SCREAMING, alias: DL_GORON_MASK_SCREAM });
+        this.MaskMap.set("goron_mask_gi", { vrom: moveAndClear(801), offset: 0xBA0, replacement: GORON_MASK_GI, alias: DL_GORON_MASK_GI });
+        this.MaskMap.set("zora_mask_t", { vrom: moveAndClear(679), offset: 0xDB0, replacement: ZORA_MASK_SCREAMING, alias: DL_ZORA_MASK_SCREAM });
+        this.MaskMap.set("zora_mask_gi", { vrom: moveAndClear(802), offset: 0x7D0, replacement: ZORA_MASK_GI, alias: DL_ZORA_MASK_GI });
+        this.MaskMap.set("deku_mask_t", { vrom: moveAndClear(680), offset: 0x1D90, replacement: DEKU_MASK_SCREAMING, alias: DL_DEKU_MASK_SCREAM });
+        this.MaskMap.set("deku_mask_gi", { vrom: moveAndClear(933), offset: 0xB50, replacement: DEKU_MASK_GI, alias: DL_DEKU_MASK_GI });
+        this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: DEITY_MASK_SCREAMING, alias: DL_DEITY_MASK_SCREAM });
+        this.MaskMap.set("fd_mask_gi", { vrom: moveAndClear(1047), offset: 0xB90, replacement: DEITY_MASK_GI, alias: DL_DEITY_MASK_GI });
+
         this.parent.ModLoader.utils.setTimeoutFrames(() => {
             this.maskRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "masks.zobj")), true);
             this.maskRef.loadModel();
@@ -94,6 +114,7 @@ export class ModelManagerMM implements IModelManagerShim {
             this.stickRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "stick.zobj")), true);
             this.stickRef.loadModel();
         }, 20);
+
     }
 
     onRomPatched(evt: any): void {
@@ -103,16 +124,26 @@ export class ModelManagerMM implements IModelManagerShim {
         this.loadNutsModelMM(evt);
         this.loadFDModelMM(evt);
         this.loadGoronModelMM(evt);
-        this.maskPatchingShit(evt);
-
-/*         let tools = new Z64RomTools(this.parent.ModLoader, Z64_GAME);
-        let gk = tools.decompressDMAFileFromRom(evt.rom, 649);
-        let scaffold = new UniversalAliasTable().generateMinimizedScaffolding(2, 0);
-        let op = optimize(gk, [0x03E0, 0x0320], scaffold.sb.length, 0x04, true);
-        scaffold.sb.writeUInt32BE(op.oldOffs2NewOffs.get(0x03E0)! + 0x06000000, 0x24);
-        scaffold.sb.writeUInt32BE(op.oldOffs2NewOffs.get(0x0320)! + 0x06000000, 0x2C);
-        scaffold.sb.writeBuffer(op.zobj);
-        fs.writeFileSync("./bottle.zobj", scaffold.sb.toBuffer()); */
+        this.replaceMasks(evt);
+        let fn = (buf: Buffer, dlists: Array<number>, segment: number = 0x06) => {
+            fs.writeFileSync("./temp.zobj", buf);
+            for (let i = 0; i < dlists.length; i++) {
+                let op = optimize(buf, [dlists[i]], 0, segment, true);
+                let offset = op.oldOffs2NewOffs.get(dlists[i])!;
+                let sb = new SmartBuffer();
+                sb.writeBuffer(op.zobj);
+                while (sb.length % 0x10 !== 0) {
+                    sb.writeUInt8(0xFF);
+                }
+                sb.writeUInt8(0xFF);
+                while (sb.length % 0x10 !== 0) {
+                    sb.writeUInt8(0xFF);
+                }
+                sb.writeOffset = sb.length - 4;
+                sb.writeUInt32BE(offset);
+                fs.writeFileSync(`./0x${dlists[i].toString(16)}.zobj`, sb.toBuffer());
+            }
+        };
     }
 
     onSceneChange(scene: number): void {
@@ -136,14 +167,21 @@ export class ModelManagerMM implements IModelManagerShim {
             this.parent.ModLoader.emulator.rdramWrite32(link + alias, combiner);
         }
         if (this.maskRef !== undefined && this.maskRef.isLoaded) {
-            let deku = this.maskRef.pointer + 0x20;
-            let goron = this.maskRef.pointer + 0x28;
-            let zora = this.maskRef.pointer + 0x30;
-            let fd = this.maskRef.pointer + 0x38;
-            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005260 + 0x4, deku);
-            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005268 + 0x4, goron);
-            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005270 + 0x4, zora);
-            this.parent.ModLoader.emulator.rdramWrite32(link + 0x00005278 + 0x4, fd);
+            let deku = this.maskRef.pointer + (DEKU_MASK_NORMAL & 0x00FFFFFF);
+            let goron = this.maskRef.pointer + (GORON_MASK_NORMAL & 0x00FFFFFF);
+            let zora = this.maskRef.pointer + (ZORA_MASK_NORMAL & 0x00FFFFFF);
+            let fd = this.maskRef.pointer + (DEITY_MASK_NORMAL & 0x00FFFFFF);
+            this.parent.ModLoader.emulator.rdramWrite32(link + DL_DEKU_MASK + 0x4, deku);
+            this.parent.ModLoader.emulator.rdramWrite32(link + DL_GORON_MASK + 0x4, goron);
+            this.parent.ModLoader.emulator.rdramWrite32(link + DL_ZORA_MASK + 0x4, zora);
+            this.parent.ModLoader.emulator.rdramWrite32(link + DL_DEITY_MASK + 0x4, fd);
+            this.MaskMap.forEach((obj) => {
+                for (let i = 0; i < 5; i++) {
+                    this.parent.ModLoader.emulator.rdramWrite32(link + obj.alias + 0x4, (this.maskRef.pointer + (obj.replacement & 0x00FFFFFF)));
+                    this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8)), 0xDE010000);
+                    this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8) + 4), link + obj.alias);
+                }
+            });
         }
         this.parent.ModLoader.emulator.rdramWrite8(link + 0x5016, 0x1);
         curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!;
@@ -166,6 +204,17 @@ export class ModelManagerMM implements IModelManagerShim {
 
     findLink() {
         let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
+        obj_list += 0xC;
+        let offset = index * 0x44;
+        obj_list += offset;
+        obj_list += 0x4;
+        let pointer = this.parent.ModLoader.emulator.rdramRead32(obj_list);
+        return pointer;
+    }
+
+    findGK() {
+        let index = 0;
         let obj_list: number = Z64_OBJECT_TABLE_RAM;
         obj_list += 0xC;
         let offset = index * 0x44;

@@ -608,7 +608,7 @@ export class UniversalAliasTable {
         let h = new SmartBuffer();
         h.writeString("MODLOADER64");
         /* Version */ h.writeUInt8(0x1);
-        /* Dlist Count */ h.writeUInt32BE(256 >> 2);
+        /* Dlist Count */ h.writeUInt32BE(256);
         /* Obj ID */ h.writeUInt16BE(0);
         /* Embedded overlay */ h.writeUInt32BE(0);
         /* Padding */
@@ -1156,4 +1156,4 @@ export class UniversalAliasTable {
     }
 }
 
-/* fs.writeFileSync("./test.zobj", new UniversalAliasTable().createTable(proxy_universal, new DummyManifest())); */
+/* fs.writeFileSync("./test.zobj", new UniversalAliasTable().createTable(decodeAsset(proxy_universal, crypto.randomBytes(0x5000)), new DummyManifest())); */

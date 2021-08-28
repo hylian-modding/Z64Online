@@ -776,7 +776,6 @@ export default class OotOnlineClient {
                     this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSkulltulas();
-                    this.updateSyncContext();
                     if (RomFlags.isMultiworld) {
                         this.updateMultiworld();
                     }
@@ -787,5 +786,6 @@ export default class OotOnlineClient {
 
     inventoryUpdateTick() {
         this.updateInventory();
+        this.updateSyncContext();
     }
 }

@@ -11,12 +11,12 @@ program.option('-i, --input <file>', 'input file');
 program.parse(process.argv);
 
 if (program.input) {
-    encode();
+    encode(program.input);
 }
 
-function encode() {
-    let str: string = "export const " + path.parse(program.input).name.split(" ").join("_").split("-").join("_") + ": Buffer = Buffer.from(\"";
-    let buf: Buffer = fs.readFileSync(program.input);
+export function encode(input: string) {
+    let str: string = "export const " + path.parse(input).name.split(" ").join("_").split("-").join("_") + ": Buffer = Buffer.from(\"";
+    let buf: Buffer = fs.readFileSync(input);
     let hashes: Set<string> = new Set();
     console.log("Calculating hashes...");
     for (let i = 0; i < buf.byteLength; i++) {
@@ -52,5 +52,5 @@ function encode() {
     }
     str += zlib.deflateSync(sb.toBuffer()).toString('base64');
     str += "\", 'base64');\n";
-    fs.writeFileSync(path.resolve(path.parse(program.input).dir, path.parse(program.input).name.split(" ").join("_").split("-").join("_") + ".ts"), str);
+    fs.writeFileSync(path.resolve(path.parse(input).dir, path.parse(input).name.split(" ").join("_").split("-").join("_") + ".ts"), str);
 }

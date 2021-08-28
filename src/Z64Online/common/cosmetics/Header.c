@@ -42,6 +42,11 @@ typedef struct
     u8 unk0[0x10];
 } Z64O_ZoraUnk;
 
+typedef struct
+{
+    u8 data[0x120];
+} Z64O_GoronCrouchData;
+
 typedef struct{
     u32 df[0x2];
     u32 pad[0x2];
@@ -72,6 +77,7 @@ typedef struct
     Z64O_LimbTable limbTable2;
     Z64O_LimbTable limbTable3;
     Z64O_LimbTable limbTable4;
+    Z64O_GoronCrouchData goronStuff;
 } Z64O_Footer;
 
 typedef struct{

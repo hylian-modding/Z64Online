@@ -56,7 +56,21 @@ export enum Z64OnlineEvents {
   LOCAL_MODEL_CHANGE_FINISHED = "OotOnline:LOCAL_MODEL_CHANGE_FINISHED",
   CUSTOM_ANIMATION_BANK_REGISTER = "OotOnline:CUSTOM_ANIMATION_BANK_REGISTER",
   FORCE_CUSTOM_ANIMATION_BANK = "OotOnline:FORCE_CUSTOM_ANIMATION_BANK",
-  CUSTOM_ANIMATION_BANK_EQUIPPED = "OotOnline:CUSTOM_ANIMATION_BANK_EQUIPPED"
+  CUSTOM_ANIMATION_BANK_EQUIPPED = "OotOnline:CUSTOM_ANIMATION_BANK_EQUIPPED",
+  // Objects
+  OBJECT_SPAWN = "Z64Online:ObjectSpawn"
+}
+
+export class Z64_ObjectSpawn {
+  id: number;
+  objTablePointer: number;
+  pointer: number;
+
+  constructor(id: number, objTablePointer: number, pointer: number) {
+    this.id = id;
+    this.objTablePointer = objTablePointer;
+    this.pointer = pointer;
+  }
 }
 
 export class Z64Online_LocalModelChangeProcessEvt {
@@ -204,10 +218,10 @@ export class Z64OnlineAPI_PuppetStubCreated {
   }
 }
 
-export class Z64OnlineAPI_PuppetStubDestroyed{
+export class Z64OnlineAPI_PuppetStubDestroyed {
   player: INetworkPlayer;
 
-  constructor(player: INetworkPlayer){
+  constructor(player: INetworkPlayer) {
     this.player = player;
   }
 }
