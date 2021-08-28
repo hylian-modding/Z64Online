@@ -16,7 +16,7 @@ export class ImGuiHandler_MM {
     onViUpdate() {
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                if (this.ModLoader.ImGui.beginMenu("Z64O")) {
                     if (this.ModLoader.ImGui.button("DUMP RAM")) {
                         bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
                     }

@@ -41,6 +41,7 @@ export enum Z64OnlineEvents {
   LOAD_EQUIPMENT_BUFFER = "OotOnline:LoadEquipmentBuffer",
   LOAD_EQUIPMENT_PAK = "OotOnline:LoadEquipmentPak",
   REFRESH_EQUIPMENT = "OotOnline:RefreshEquipment",
+  SWORD_NEEDS_UPDATE = "MmOnline:UpdateSwordB",
   CLEAR_EQUIPMENT = "OotOnline:ClearEquipment",
   EQUIPMENT_ZOBJ_LOADED = "OotOnline:EqZobjLoad",
   EQUIPMENT_LOAD_START = "OotOnline:EqZobjLoadStart",

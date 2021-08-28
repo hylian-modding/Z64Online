@@ -3,7 +3,7 @@ import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { Init } from "modloader64_api/PluginLifecycle";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { OOTO_PRIVATE_EVENTS } from "../../api/InternalAPI";
+import { Z64O_PRIVATE_EVENTS } from "../../api/InternalAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { Z64_ANIM_BANK_DMA } from "@Z64Online/common/types/GameAliases";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
@@ -24,7 +24,7 @@ export default class AnimationManager {
 
     @Init()
     onInit() {
-        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER, this.banks);
+        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER, this.banks);
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)

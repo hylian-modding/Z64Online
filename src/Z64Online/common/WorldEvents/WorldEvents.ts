@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { StorageContainer } from 'modloader64_api/Storage';
 import { EventController } from '../events/EventController';
-import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, OOTO_PRIVATE_EVENTS, RewardTicket } from '@Z64Online/common/api/InternalAPI';
+import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, Z64O_PRIVATE_EVENTS, RewardTicket } from '@Z64Online/common/api/InternalAPI';
 import { AssetContainer } from '../events/AssetContainer';
 import zlib from 'zlib';
 import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
@@ -93,7 +93,7 @@ export class WorldEventRewards {
         this.customSoundGroups.delete(undefined);
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.REGISTER_ANIM_BANKS_WITH_COSTUME_MANAGER)
     onAnimReg(evt: Map<string, Buffer>) {
         this.anims = evt;
     }
@@ -226,7 +226,7 @@ export class WorldEventRewards {
         }
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET)
     onAssetData(assetURLS: Array<string>) {
         if (assetURLS.length === 0){
             if (this.config.assetcache !== ""){
@@ -328,7 +328,7 @@ export class WorldEventRewards {
         try {
             if (this.ModLoader.ImGui.beginMainMenuBar()) {
                 if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                    if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                    if (this.ModLoader.ImGui.beginMenu("Z64O")) {
                         if (this.ModLoader.ImGui.menuItem("Costume Manager")) {
                             this.rewardsWindowStatus[0] = !this.rewardsWindowStatus[0];
                         }
@@ -610,30 +610,30 @@ export class WorldEventRewards {
         }, 10);
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.ASSET_LOOKUP)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.ASSET_LOOKUP)
     assetLookup(evt: OOTO_PRIVATE_ASSET_LOOKUP_OBJ) {
         let asset = this._getAllAssetByUUID(evt.uuid)!;
         evt.asset = this.ModLoader.utils.cloneBuffer(asset);
         evt.ticket = this.allRewardTickets.get(evt.uuid)!;
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_WALLET_GET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLIENT_WALLET_GET)
     coinLookup(evt: OOTO_PRIVATE_COIN_LOOKUP_OBJ) {
         evt.coins = this.rewardContainer.coins;
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_WALLET_SET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLIENT_WALLET_SET)
     coinChange(evt: OOTO_PRIVATE_COIN_LOOKUP_OBJ) {
         this.rewardContainer.coins += evt.coins;
         this.transactionProcess();
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_DOES_HAVE)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLIENT_UNLOCK_DOES_HAVE)
     onCheck(evt: OOTO_PRIVATE_ASSET_HAS_CHECK) {
         evt.has = this.rewardContainer.tickets.find(t => { return t.uuid === evt.ticket.uuid }) !== undefined;
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_UNLOCK_TICKET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLIENT_UNLOCK_TICKET)
     onUnlock(ticket: RewardTicket) {
         if (this.allRewardTickets.has(ticket.uuid)) {
             this.rewardContainer.tickets.push(this.allRewardTickets.get(ticket.uuid)!);
@@ -649,13 +649,13 @@ export class WorldEventRewards {
         this.loadTickets();
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SAVE_EXTERNAL_EVENT_DATA)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.SAVE_EXTERNAL_EVENT_DATA)
     onSaveEvent(evt: ExternalEventData) {
         this.rewardContainer.externalData[evt.tag] = evt.data;
         new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.GET_EXTERNAL_EVENT_DATA)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.GET_EXTERNAL_EVENT_DATA)
     onLoadEvent(evt: ExternalEventData) {
         if (this.rewardContainer.externalData.hasOwnProperty(evt.tag)) {
             evt.data = this.rewardContainer.externalData[evt.tag];
@@ -679,17 +679,17 @@ export class WorldEvents {
     eventStack: Map<string, EventController> = new Map<string, EventController>();
     alreadyProcessedEvents: boolean = false;
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET)
     onEventData(eventURLs: Array<string>) {
         this.loadEvents(eventURLs);
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET)
     onEventDataServer(eventURLs: Array<string>) {
         this.loadEvents(eventURLs);
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET)
     onAssetDataServer(assetURLs: Array<string>) {
     }
 

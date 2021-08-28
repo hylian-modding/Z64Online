@@ -1,7 +1,8 @@
-import { OOTO_PRIVATE_EVENTS, SendToScene } from "@Z64Online/common/api/InternalAPI";
+import { Z64O_PRIVATE_EVENTS, SendToScene } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
+import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
 import { NPCReplacer } from "@Z64Online/common/cosmetics/npc/NPCReplacer";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import { markAsRandomizer } from "@Z64Online/common/types/GameAliases";
@@ -26,6 +27,7 @@ import { Multiworld, MultiWorld_ItemPacket } from "./compat/OotR";
 import RomFlags from "./compat/RomFlags";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
+import { ModelManagerClient } from "../common/cosmetics/player/ModelManager";
 import { OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket, Ooto_ClientSceneContextUpdate, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, OotO_RomFlagsPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket } from "./network/OotOPackets";
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from "./OotOnline";
 import { ThiccOpa } from "./opa/ThiccOpa";
@@ -37,8 +39,7 @@ import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
-import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
-import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
+import { zeldaString } from "Z64Lib/API/imports";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -136,7 +137,7 @@ export default class OotOnlineClient {
         }, 20);
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.SEND_TO_SCENE)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.SEND_TO_SCENE)
     onSendToScene(send: SendToScene) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             send.packet.lobby,
@@ -172,14 +173,14 @@ export default class OotOnlineClient {
         if (this.core.OOT!.helper.Player_InBlockingCsMode() || !this.LobbyConfig.data_syncing) return;
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
-            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
-            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
+            this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
+            this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
         }
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.UPDATE_KEY_HASH)
     updateKeyHash(evt: any) {
         let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.OOT!.save.keyManager.getRawKeyBuffer());
         this.clientStorage.keySaveHash = keyHash;
@@ -314,12 +315,12 @@ export default class OotOnlineClient {
             if (lobby.data.Z64OAssetsURL.length > 0) {
                 this.ModLoader.logger.info("Server sent asset data.");
             }
-            this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
+            this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CLIENT_ASSET_DATA_GET, lobby.data.Z64OAssetsURL);
         }
         if (lobby.data.hasOwnProperty("Z64OEventsActive")) {
             if (lobby.data.Z64OEventsActive.length > 0) {
                 this.ModLoader.logger.info("Server sent event data.");
-                this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET, lobby.data.Z64OEventsActive);
+                this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CLIENT_EVENT_DATA_GET, lobby.data.Z64OEventsActive);
             }
         }
     }

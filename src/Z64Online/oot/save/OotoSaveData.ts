@@ -7,7 +7,7 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { InventoryItem, IOOTCore, ScarecrowSongNoteStruct } from "Z64Lib/API/OOT/OOTAPI";
 import { SceneStruct } from "Z64Lib/API/Common/Z64API"
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
-import { OOTO_PRIVATE_EVENTS } from "../../common/api/InternalAPI";
+import { Z64O_PRIVATE_EVENTS } from "../../common/api/InternalAPI";
 import { ISaveSyncData } from "@Z64Online/common/save/ISaveSyncData";
 import { TriforceHuntHelper } from "@Z64Online/oot/compat/OotR";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
@@ -62,7 +62,6 @@ export class OotOSaveData implements ISaveSyncData {
     obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
     obj['scarecrowsSongChildFlag'] = this.core.save.scarecrowsSongChildFlag;
     obj['scarecrowsSong'] = this.core.save.scarecrowsSong;
-    obj["inventory"]["magicBeansCount"] = this.core.save.inventory.magicBeansCount;
     obj["triforcePieces"] = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
     let obj2: any = {};
     for (let i = 0; i < keys.length; i++) {
@@ -81,7 +80,7 @@ export class OotOSaveData implements ISaveSyncData {
       if (side === ProxySide.CLIENT) {
         if (this.isNotEqual(keys.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
           this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
-          this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
+          this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
           bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet(i.toString(), keys.keys[i]));
         }
       } else {
@@ -96,7 +95,7 @@ export class OotOSaveData implements ISaveSyncData {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
-        this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
+        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.UPDATE_KEY_HASH, {});
       }
     }
   }
@@ -169,7 +168,7 @@ export class OotOSaveData implements ISaveSyncData {
 
   forceOverrideSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
     try {
-      this.ModLoader.privateBus.emit(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
+      this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
       let obj: IOOTSyncSave = JSON.parse(save.toString());
 
       storage.death_counter = obj.death_counter;

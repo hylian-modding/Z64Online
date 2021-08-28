@@ -2,7 +2,7 @@ import { IOotOClientside } from "@Z64Online/oot/save/IOotOClientside";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
 
-export const enum OOTO_PRIVATE_EVENTS {
+export const enum Z64O_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
     CLIENT_EVENT_DATA_GET = "CLIENT_EVENT_DATA_GET",
     SERVER_EVENT_DATA_GET = "SERVER_EVENT_DATA_GET",

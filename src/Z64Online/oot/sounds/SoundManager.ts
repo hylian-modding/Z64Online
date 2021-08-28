@@ -267,7 +267,7 @@ export class SoundManagerClient {
     onVi() {
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                if (this.ModLoader.ImGui.beginMenu("OotO")) {
+                if (this.ModLoader.ImGui.beginMenu("Z64O")) {
                     if (this.ModLoader.ImGui.beginMenu("General Settings")) {
                         this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", this.volume_local, 0.1, 1.0);
                         this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", this.volume_remote, 0.1, 1.0);

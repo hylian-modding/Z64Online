@@ -13,7 +13,7 @@ import fs from 'fs';
 import path from 'path';
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
-import { OOTO_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
+import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { IOotOClientside } from "@Z64Online/oot/save/IOotOClientside";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
@@ -149,7 +149,7 @@ export class Notifications {
         this.messages.push(new Notif(player.nickname + " disconnected!", this.itemIcons.get("navi")!, this.MAX_TIMER));
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.DOING_SYNC_CHECK)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK)
     onSync(evt: any) {
         this.circleAssets.forEach((asset: Texture, key: string) => {
             this.messages.push(new Notif("", asset, this.CIRCLE_TIMER_MAX, true));
@@ -160,7 +160,7 @@ export class Notifications {
         this.messages.push(new Notif(`Autosaving into slot ${slot + 1}`, this.itemIcons.get("mempak")!, 20 * 3, true));
     }
 
-    @PrivateEventHandler(OOTO_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS)
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS)
     onLock(evt: any) {
         this.lockIncomingItems = true;
         this.ModLoader.utils.setTimeoutFrames(() => {
