@@ -114,13 +114,17 @@ export class ModelManagerOot implements IModelManagerShim {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0014);
     }
 
-    unpackModels(evt: any){
+    unpackModels(evt: any) {
         try {
             fs.mkdirSync(this.parent.cacheDir);
         } catch (err) { }
-        fs.writeFileSync(path.join(this.parent.cacheDir, "adult.zobj"), decodeAsset(adult, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "child.zobj"), decodeAsset(child, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), decodeAsset(proxy_universal, evt.rom));
+        let extractIfMissing = (p: string, buf: Buffer, rom: Buffer) => {
+            if (fs.existsSync(p)) return;
+            fs.writeFileSync(p, decodeAsset(buf, rom));
+        };
+        extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), adult, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), child, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
     }
 
     onRomPatched(evt: any) {

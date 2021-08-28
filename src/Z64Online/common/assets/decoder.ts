@@ -2,7 +2,8 @@ import crypto from 'crypto';
 import { SmartBuffer } from 'smart-buffer';
 import zlib from 'zlib';
 
-export function decodeAsset(buf: Buffer, entropy: Buffer) {
+export function decodeAsset(buf: Buffer, entropy?: Buffer) {
+    if (entropy === undefined) entropy = crypto.randomBytes(0x5000);
     let inp_b = new SmartBuffer().writeBuffer(zlib.inflateSync(buf));
     let count = inp_b.readUInt32BE(0xC);
     inp_b.readOffset = 0x10;

@@ -51,16 +51,20 @@ export class ModelManagerMM implements IModelManagerShim {
         try {
             fs.mkdirSync(this.parent.cacheDir);
         } catch (err) { }
-        fs.writeFileSync(path.join(this.parent.cacheDir, "human.zobj"), decodeAsset(human, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "zora.zobj"), decodeAsset(zora, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "nuts.zobj"), decodeAsset(nuts, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "fd.zobj"), decodeAsset(fd, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "goron.zobj"), decodeAsset(goron, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "masks.zobj"), decodeAsset(masks, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "swords.zobj"), decodeAsset(swords, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "bottle.zobj"), decodeAsset(bottle, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "stick.zobj"), decodeAsset(stick, evt.rom));
-        fs.writeFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj"), decodeAsset(proxy_universal, evt.rom));
+        let extractIfMissing = (p: string, buf: Buffer, rom: Buffer) => {
+            if (fs.existsSync(p)) return;
+            fs.writeFileSync(p, decodeAsset(buf, rom));
+        };
+        extractIfMissing(path.join(this.parent.cacheDir, "human.zobj"), human, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "zora.zobj"), zora, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "nuts.zobj"), nuts, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "fd.zobj"), fd, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "goron.zobj"), goron, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "masks.zobj"), masks, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "swords.zobj"), swords, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "bottle.zobj"), bottle, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "stick.zobj"), stick, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
     }
 
     loadHumanModelMM(evt: any) {

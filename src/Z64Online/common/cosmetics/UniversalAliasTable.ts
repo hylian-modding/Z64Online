@@ -8,14 +8,7 @@ import { zzplayas_to_zzconvert } from 'Z64Lib/API/OoT/ModelData/backwards_compat
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
-import { adult } from '@Z64Online/oot/models/zobjs/adult';
-import { child } from '@Z64Online/oot/models/zobjs/child';
-import { human } from '@Z64Online/mm/models/zobjs/human';
 import { decodeAsset } from '../assets/decoder';
-import { nuts } from '@Z64Online/mm/models/zobjs/nuts';
-import { goron } from '@Z64Online/mm/models/zobjs/goron';
-import { zora } from '@Z64Online/mm/models/zobjs/zora';
-import { fd } from '@Z64Online/mm/models/zobjs/fd';
 import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
 
@@ -800,16 +793,15 @@ export class UniversalAliasTable {
         if (BANK_OBJECTS.size === 0) {
             console.log("Loading Bank objects...");
             let objs: Array<Buffer> = [];
-            let entropy = crypto.randomBytes(0x5000);
             if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-                objs.push(decodeAsset(adult, entropy));
-                objs.push(decodeAsset(child, entropy));
+                objs.push(fs.readFileSync("./cache/adult.zobj"));
+                objs.push(fs.readFileSync("./cache/child.zobj"));
             } else {
-                objs.push(decodeAsset(human, entropy));
-                objs.push(decodeAsset(nuts, entropy));
-                objs.push(decodeAsset(goron, entropy));
-                objs.push(decodeAsset(zora, entropy));
-                objs.push(decodeAsset(fd, entropy));
+                objs.push(fs.readFileSync("./cache/human.zobj"));
+                objs.push(fs.readFileSync("./cache/nuts.zobj"));
+                objs.push(fs.readFileSync("./cache/goron.zobj"));
+                objs.push(fs.readFileSync("./cache/zora.zobj"));
+                objs.push(fs.readFileSync("./cache/fd.zobj"));
             }
             for (let i = 0; i < objs.length; i++) {
                 let parse = new ZZPlayasEmbedParser();
@@ -824,8 +816,7 @@ export class UniversalAliasTable {
         }
         if (CUBE.size === 0) {
             let parse = new ZZPlayasEmbedParser();
-            let entropy = crypto.randomBytes(0x5000);
-            let _cube = decodeAsset(cube, entropy);
+            let _cube = decodeAsset(cube);
             let parse_cube = parse.parse(_cube);
             Object.keys(parse_cube).forEach((key: string) => {
                 let o = optimize(_cube, [parse_cube[key]]);
