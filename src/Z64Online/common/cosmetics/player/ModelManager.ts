@@ -162,7 +162,9 @@ export class ModelManagerClient {
   }
 
   registerDefaultModel(form: AgeOrForm, zobj: string) {
-    this.puppetModels.set(form, this.allocationManager.registerModel(new UniversalAliasTable().createTable(fs.readFileSync(zobj), getManifestForForm(form), true)));
+    let model = new UniversalAliasTable().createTable(fs.readFileSync(zobj), getManifestForForm(form), true);
+    CDNClient.singleton.registerWithCache(model);
+    this.puppetModels.set(form, this.allocationManager.registerModel(model));
     this.puppetModels.get(form)!.isPlayerModel = false;
   }
 
