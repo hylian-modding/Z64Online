@@ -2,13 +2,10 @@ import { ModelPlayer } from '../player/ModelPlayer';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModelObject, ModelReference } from './ModelContainer';
-import fs from 'fs';
-import path from 'path';
 import { IModelReference } from '@Z64Online/common/api/Z64API';
 import { AgeOrForm } from '@Z64Online/common/types/Types';
 import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
 import { Z64_PLAYER_PROXY } from '@Z64Online/common/types/GameAliases';
-import { puppet_inst } from '@Z64Online/common/puppet/puppet_inst';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -182,7 +179,7 @@ export class ModelAllocationManager {
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
-    let proxy = Buffer.alloc(Z64_PLAYER_PROXY.byteLength + puppet_inst.byteLength);
+    let proxy = Buffer.alloc(Z64_PLAYER_PROXY.byteLength);
     Z64_PLAYER_PROXY.copy(proxy);
     let pointer: number = this.ModLoader.gfx_heap!.malloc(proxy.byteLength);
     if (pointer === 0) return undefined;

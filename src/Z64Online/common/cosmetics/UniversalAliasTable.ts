@@ -11,6 +11,7 @@ import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames'
 import { decodeAsset } from '../assets/decoder';
 import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
+import { TEX_EYES, TEX_MOUTH } from './Defines';
 
 const ERROR_CUBE_POINTER: number = 0x000053C8;
 const DF_POINTER: number = 0x00005818;
@@ -1011,6 +1012,9 @@ export class UniversalAliasTable {
         // Step 3: Create scaffolding for new Zobj.
         let scaffold = this.generateScaffolding();
         let sb: SmartBuffer = scaffold.sb;
+
+        sb.writeUInt32BE(0x06000000, TEX_EYES + 4);
+        sb.writeUInt32BE(0x06004000, TEX_MOUTH + 4);
 
         // Step 4: Create combined display lists.
         let restores: any = {};

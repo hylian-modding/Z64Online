@@ -1,6 +1,6 @@
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { PuppetOverlordClient, PuppetOverlordServer } from "@Z64Online/common/puppet/PuppetOverlord";
-import { Core, Scene } from "@Z64Online/common/types/Types";
+import { Core, IZ64GameMain, Scene } from "@Z64Online/common/types/Types";
 import { HorseData } from "@Z64Online/oot/puppet/HorseData";
 import { Puppet } from "@Z64Online/oot/puppet/Puppet";
 import { Ooto_PuppetPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket } from "@Z64Online/oot/network/OotOPackets";
@@ -22,7 +22,7 @@ import { OotOnlineStorage } from "@Z64Online/oot/storage/OotOnlineStorage";
 
 export class OOT_PuppetOverlordServer extends PuppetOverlordServer {
     @ParentReference()
-    parent!: IZ64OnlineHelpers;
+    parent!: IZ64GameMain;
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
 
@@ -75,7 +75,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
 
     private Epona: HorseData | undefined;
     @ParentReference()
-    parent!: IOotUtility;
+    parent!: IZ64GameMain;
     @ModLoaderAPIInject()
     ModLoader: IModLoaderAPI = {} as any;
     @InjectCore()
@@ -91,7 +91,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
                     this.core.OOT!,
                     0x0,
                     this.ModLoader,
-                    this.parent
+                    (this.parent as any)["OOT"] as IOotUtility
                 )
             );
             this.ModLoader.logger.info('Player ' + player.nickname + ' assigned new puppet ' + this.puppets.get(player.uuid)!.id + '.');
@@ -130,7 +130,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
             this.core.OOT!,
             0x0,
             this.ModLoader,
-            this.parent
+            (this.parent as any)["OOT"] as IOotUtility
         );
     }
 

@@ -22,6 +22,7 @@ import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { Command } from "Z64Lib/API/Common/ICommandBuffer";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { Z64_GLOBAL_PTR } from "Z64Lib/src/Common/types/GameAliases";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -60,6 +61,10 @@ export class ImGuiHandler {
     curActor: number = 0;
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
+    showSpawner: boolean = false;
+    spawnID: string_ref = [""];
+    spawnParam: string_ref = [""];
+    spawnParam2: string_ref = [""];
     // #endif
 
     constructor() {
@@ -176,15 +181,15 @@ export class ImGuiHandler {
         }
 
         // #ifdef IS_DEV_BUILD
-        if (this.core.OOT!.helper.isTitleScreen()){
+        if (this.core.OOT!.helper.isTitleScreen()) {
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "Z64Online", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Version: ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 68), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Build Date: ${BUILD_DATE}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 36), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
         }
         // #endif
 
-        if (this.ModLoader.isModLoaded("Multiworld64")){
-            if (this.ModLoader.ImGui.begin("MULTIWORLD64 WARNING")){
+        if (this.ModLoader.isModLoaded("Multiworld64")) {
+            if (this.ModLoader.ImGui.begin("MULTIWORLD64 WARNING")) {
                 this.ModLoader.ImGui.text("You appear to be running Multiworld64.");
                 this.ModLoader.ImGui.text("This mod is unnecessary as OotO 3.X natively supports multiworld.");
                 this.ModLoader.ImGui.text("You should delete Multiworld64 to avoid conflicts.");
@@ -212,21 +217,21 @@ export class ImGuiHandler {
                             this.settings.notifications = !this.settings.notifications
                             this.ModLoader.config.save();
                         }
-                        if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)){
+                        if (this.ModLoader.ImGui.menuItem("Notification Sounds", undefined, this.settings.notificationSound)) {
                             this.settings.notificationSound = !this.settings.notificationSound;
                             this.ModLoader.config.save();
                         }
-                        if (this.ModLoader.ImGui.menuItem("Diagnostic Mode", undefined, this.settings.diagnosticMode)){
+                        if (this.ModLoader.ImGui.menuItem("Diagnostic Mode", undefined, this.settings.diagnosticMode)) {
                             this.settings.diagnosticMode = !this.settings.diagnosticMode;
                             this.ModLoader.config.save();
                         }
-                        if (this.ModLoader.ImGui.menuItem("Autosave", undefined, this.settings.autosaves)){
+                        if (this.ModLoader.ImGui.menuItem("Autosave", undefined, this.settings.autosaves)) {
                             this.settings.autosaves = !this.settings.autosaves;
                             this.ModLoader.config.save();
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
-                    if (this.ModLoader.ImGui.beginMenu("Sync Settings")){
+                    if (this.ModLoader.ImGui.beginMenu("Sync Settings")) {
                         if (this.ModLoader.ImGui.menuItem("Sync Masks", undefined, this.settings.syncMasks)) {
                             this.settings.syncMasks = !this.settings.syncMasks;
                             this.ModLoader.config.save();
@@ -238,9 +243,9 @@ export class ImGuiHandler {
                         this.ModLoader.ImGui.endMenu();
                     }
                     // #ifdef IS_DEV_BUILD
-                    if (this.ModLoader.ImGui.beginMenu("Game Sounds")){
+                    if (this.ModLoader.ImGui.beginMenu("Game Sounds")) {
                         this.ModLoader.ImGui.inputText("sound id", this.sound_id);
-                        if (this.ModLoader.ImGui.button("play")){
+                        if (this.ModLoader.ImGui.button("play")) {
                             this.core.OOT!.commandBuffer.runCommand(Command.PLAYSOUND, parseInt(this.sound_id[0]));
                         }
                         this.ModLoader.ImGui.endMenu();
@@ -259,8 +264,11 @@ export class ImGuiHandler {
                     if (this.ModLoader.ImGui.button("DUMP RAM")) {
                         bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
                     }
-                    if (this.ModLoader.ImGui.button("PRINT LINK POS")){
+                    if (this.ModLoader.ImGui.button("PRINT LINK POS")) {
                         console.log(JSON.stringify(this.core.OOT!.link.position.getVec3()));
+                    }
+                    if (this.ModLoader.ImGui.menuItem("Actor Spawner")) {
+                        this.showSpawner = true;
                     }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
@@ -279,18 +287,18 @@ export class ImGuiHandler {
                 let offset = 0x1C30;
                 for (let i = 0; i < 12; i++) {
                     treeNodeDepth++;
-                    let ptr = this.ModLoader.emulator.rdramRead32(global.ModLoader.global_context_pointer);
+                    let ptr = this.ModLoader.emulator.rdramRead32(Z64_GLOBAL_PTR);
                     ptr += offset + (i * 8) + 4;
                     if (this.ModLoader.ImGui.treeNode(this.actorCategories[i] + "###OotO:ActorDebugTree" + treeNodeDepth)) {
                         this.ModLoader.ImGui.sameLine()
                         this.ModLoader.ImGui.textDisabled(ptr.toString(16).toUpperCase())
 
-                        if (this.ModLoader.emulator.rdramReadPtr32(global.ModLoader.global_context_pointer, offset + (i * 8)) === 0) {
+                        if (this.ModLoader.emulator.rdramReadPtr32(Z64_GLOBAL_PTR, offset + (i * 8)) === 0) {
                             this.ModLoader.ImGui.treePop();
                             continue;
                         }
 
-                        let next = this.ModLoader.emulator.rdramReadPtr32(global.ModLoader.global_context_pointer, offset + (i * 8) + 4);
+                        let next = this.ModLoader.emulator.rdramReadPtr32(Z64_GLOBAL_PTR, offset + (i * 8) + 4);
 
                         while (next !== 0) {
                             let name = this.actorNames["0x" + this.ModLoader.emulator.rdramRead16(next).toString(16).toUpperCase()];
@@ -390,8 +398,24 @@ export class ImGuiHandler {
                     actor.destroy();
                 }
 
-                if (this.ModLoader.ImGui.smallButton("Clone Actor")){
+                if (this.ModLoader.ImGui.smallButton("Clone Actor")) {
                     this.core.OOT!.commandBuffer.spawnActor(actor.actorID, actor.variable, this.core.OOT!.link.position.getVec3(), this.core.OOT!.link.rotation.getVec3());
+                }
+            }
+            this.ModLoader.ImGui.end();
+        }
+        if (this.showSpawner) {
+            if (this.ModLoader.ImGui.begin("Actor Spawner###OotO:ActorSpawner")) {
+                this.ModLoader.ImGui.inputText("ID", this.spawnID);
+                this.ModLoader.ImGui.inputText("Param", this.spawnParam);
+                this.ModLoader.ImGui.inputText("Rot", this.spawnParam2);
+                if (this.ModLoader.ImGui.smallButton("Spawn")) {
+                    let pos = this.core.OOT!.link.position.getVec3();
+                    let rot = this.core.OOT!.link.rotation.getVec3();
+                    let spawn = this.ModLoader.heap!.malloc(0x1000);
+                    this.ModLoader.utils.setTimeoutFrames(() => {
+                        this.core.OOT!.commandBuffer.spawnActorRXY_Z(parseInt(this.spawnID[0], 16), parseInt(this.spawnParam[0], 16), parseInt(this.spawnParam2[0], 16), 0, pos, spawn);
+                    }, 1);
                 }
             }
             this.ModLoader.ImGui.end();

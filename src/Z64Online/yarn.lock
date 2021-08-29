@@ -2,6 +2,3 @@
 # yarn lockfile v1
 
 
-"f3djs@git+https://github.com/CrookedPoe/f3djs.git":
-  version "0.2.1"
-  resolved "git+https://github.com/CrookedPoe/f3djs.git#abe705a72c7b5bd67fd46f2fd5acfe9da5dc1c16"

@@ -654,17 +654,9 @@ export default class OotOnlineClient {
             let file = path.resolve(__dirname, "payloads", "E0", f);
             let parse = path.parse(file);
             if (parse.ext === ".ovl") {
-                this.ModLoader.payloadManager.parseFile(file);
+                this.clientStorage.overlayCache[path.parse(file).base] = this.ModLoader.payloadManager.parseFile(file);
             }
         });
-    }
-
-    @EventHandler(EventsClient.ON_PAYLOAD_INJECTED)
-    onPayload(evt: any) {
-        if (path.parse(evt.file).ext === ".ovl") {
-            let result: IOvlPayloadResult = evt.result;
-            this.clientStorage.overlayCache[evt.file] = result;
-        }
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)

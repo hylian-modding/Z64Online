@@ -64,7 +64,7 @@ export class ModelManagerClient {
   child!: IModelManagerShim;
 
   getLinkAgeOrForm() {
-    if (this.core.OOT !== undefined) return this.AgeOrForm;
+    if (this.core.OOT !== undefined) return this.core.OOT!.save.age;
     if (this.core.MM !== undefined) return this.core.MM!.save.form;
     return AgeOrForm.CHILD;
   }
