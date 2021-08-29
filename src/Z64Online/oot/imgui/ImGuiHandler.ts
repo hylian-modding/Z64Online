@@ -23,6 +23,7 @@ import { Command } from "Z64Lib/API/Common/ICommandBuffer";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Z64_GLOBAL_PTR } from "Z64Lib/src/Common/types/GameAliases";
+import { openMemoryUtils3Tab } from "@Z64Online/common/compat/MemoryUtils3";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -400,6 +401,12 @@ export class ImGuiHandler {
 
                 if (this.ModLoader.ImGui.smallButton("Clone Actor")) {
                     this.core.OOT!.commandBuffer.spawnActor(actor.actorID, actor.variable, this.core.OOT!.link.position.getVec3(), this.core.OOT!.link.rotation.getVec3());
+                }
+
+                if (this.ModLoader.isModLoaded("MemoryUtils3")){
+                    if (this.ModLoader.ImGui.smallButton("Open in MemoryUtils3")){
+                        openMemoryUtils3Tab(actor.pointer);
+                    }
                 }
             }
             this.ModLoader.ImGui.end();
