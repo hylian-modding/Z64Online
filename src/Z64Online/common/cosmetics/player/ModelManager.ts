@@ -63,6 +63,16 @@ export class ModelManagerClient {
   mainConfig!: OotOnlineConfigCategory;
   child!: IModelManagerShim;
 
+  getLinkAgeOrForm() {
+    if (this.core.OOT !== undefined) return this.AgeOrForm;
+    if (this.core.MM !== undefined) return this.core.MM!.save.form;
+    return AgeOrForm.CHILD;
+  }
+
+  get AgeOrForm(): AgeOrForm {
+    return this.getLinkAgeOrForm();
+  }
+
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
   onCustomModelAdult_new(evt: Z64Online_ModelAllocation) {
     if (this.managerDisabled) return;
@@ -187,11 +197,11 @@ export class ModelManagerClient {
           if (!has) {
             CDNClient.singleton.uploadFile(ref.hash, this.allocationManager.getModel(ref).zobj).then((done: boolean) => {
               if (done) {
-                this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(form, this.ModLoader.clientLobby, ref.hash, this.core.OOT!.save.age));
+                this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(form, this.ModLoader.clientLobby, ref.hash, this.AgeOrForm));
               }
             });
           } else {
-            this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(form, this.ModLoader.clientLobby, ref.hash, this.core.OOT!.save.age));
+            this.ModLoader.clientSide.sendPacket(new Z64_AllocateModelPacket(form, this.ModLoader.clientLobby, ref.hash, this.AgeOrForm));
           }
         });
       });
@@ -206,13 +216,13 @@ export class ModelManagerClient {
             if (!has) {
               CDNClient.singleton.uploadFile(id, model.zobj).then((done: boolean) => {
                 if (done) {
-                  let p = new Z64_EquipmentPakPacket(this.core.OOT!.save.age, this.ModLoader.clientLobby);
+                  let p = new Z64_EquipmentPakPacket(this.AgeOrForm, this.ModLoader.clientLobby);
                   p.ids = this.clientStorage.equipmentHashes;
                   this.ModLoader.clientSide.sendPacket(p);
                 }
               });
             } else {
-              let p = new Z64_EquipmentPakPacket(this.core.OOT!.save.age, this.ModLoader.clientLobby);
+              let p = new Z64_EquipmentPakPacket(this.AgeOrForm, this.ModLoader.clientLobby);
               p.ids = this.clientStorage.equipmentHashes;
               this.ModLoader.clientSide.sendPacket(p);
             }
@@ -269,9 +279,9 @@ export class ModelManagerClient {
     /**@todo Rewrite this shit after the world events module is ported. */
     bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
-    try{
+    try {
       this.child.onRomPatched(evt);
-    }catch(err){
+    } catch (err) {
       this.ModLoader.logger.error(err);
       throw err;
     }
@@ -362,9 +372,9 @@ export class ModelManagerClient {
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
     this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x58C, puppet.data.pointer);
     if (player.AgesOrForms.has(puppet.age)) {
-      this.setPuppetModel(player, player.AgesOrForms.get(puppet.age)!, puppet.age, this.core.OOT!.save.age);
+      this.setPuppetModel(player, player.AgesOrForms.get(puppet.age)!, puppet.age, this.AgeOrForm);
     } else {
-      this.setPuppetModel(player, this.puppetModels.get(puppet.age)!, puppet.age, this.core.OOT!.save.age);
+      this.setPuppetModel(player, this.puppetModels.get(puppet.age)!, puppet.age, this.AgeOrForm);
     }
     if (this.mainConfig.diagnosticMode) {
       DumpRam();
@@ -516,12 +526,12 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
-      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.OOT!.save.age)!;
+      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onDay(ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.OOT!.save.age);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
-        if (this.core.OOT!.save.age === AgeOrForm.ADULT) {
+        if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
         } else {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
@@ -535,12 +545,12 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
-      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.OOT!.save.age)!;
+      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onNight(ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.OOT!.save.age);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
-        if (this.core.OOT!.save.age === AgeOrForm.ADULT) {
+        if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
         } else {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
@@ -554,12 +564,12 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
-      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.OOT!.save.age)!;
+      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onHealthChanged(this.core.OOT!.save.heart_containers * 0x10, health, ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.OOT!.save.age);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
-        if (this.core.OOT!.save.age === AgeOrForm.ADULT) {
+        if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
         } else {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
@@ -573,12 +583,12 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
-      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.core.OOT!.save.age)!;
+      let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(ref, tunic);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.core.OOT!.save.age);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
-        if (this.core.OOT!.save.age === AgeOrForm.ADULT) {
+        if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
         } else {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);

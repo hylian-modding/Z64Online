@@ -1,11 +1,11 @@
 {
   "name": "Z64Online",
   "version": "3.1.0",
-  "date": "Sat, 28 Aug 2021 07:39:30 GMT",
+  "date": "Sun, 29 Aug 2021 00:35:03 GMT",
   "description": "",
   "main": "Z64Online.js",
-  "author": "denoflions",
-  "credits": "\nASM: Ideka, glank.\nPuppet contributors: Drahsid, Fig, Psi-Hate CrookedPoe.\nHelpful advice: Noka, Skawo.\nPrimary breaker of everything/Discord management: Maro.\nLinux Testing: PapaSmurf.\nCustom Model Help: zzplayas/zzconvert team.\nPrimary Model Tester: AriaHiroshi.",
+  "author": "denoflions, Psi-Hate, Drahsid, CrookedPoe",
+  "credits": "\nModeling Tools: z64me, Dragorn421, Neirn\nOot contributors: Fig\nMM contributors: Aegiker\nMMR support: Zoey Zolotova",
   "license": "GPL-3.0",
   "core": [
     "Z64Lib"
