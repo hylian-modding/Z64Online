@@ -24,6 +24,7 @@ import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Z64_GLOBAL_PTR } from "Z64Lib/src/Common/types/GameAliases";
 import { openMemoryUtils3Tab } from "@Z64Online/common/compat/MemoryUtils3";
+import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -33,12 +34,12 @@ function v3toTruncatedString(v3: Vector3, fixed: number = 4): string {
     return "(" + v3.x.toFixed(fixed).toString() + ", " + v3.y.toFixed(fixed).toString() + ", " + v3.z.toFixed(fixed).toString() + ")";
 }
 
-export class ImGuiHandler {
+export class ImGuiHandler extends ImGuiHandlerCommon{
 
     @ModLoaderAPIInject()
-    ModLoader!: IModLoaderAPI;
+    ModLoader: IModLoaderAPI = {} as any;
     @InjectCore()
-    core!: IZ64Main;
+    core: IZ64Main = {} as any;
     @ParentReference()
     parent!: IZ64OnlineHelpers;
     puppets: Array<Puppet> = [];
@@ -62,13 +63,10 @@ export class ImGuiHandler {
     curActor: number = 0;
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
-    showSpawner: boolean = false;
-    spawnID: string_ref = [""];
-    spawnParam: string_ref = [""];
-    spawnParam2: string_ref = [""];
     // #endif
 
     constructor() {
+        super();
         // #ifdef IS_DEV_BUILD
         this.actorNames = JSON.parse(fse.readFileSync(path.resolve(__dirname, "ACTOR_NAMES.json")).toString());
         // #endif
@@ -169,6 +167,7 @@ export class ImGuiHandler {
 
     @onViUpdate()
     onViUpdate() {
+        super.onViUpdate();
         if (this.font === undefined) {
             try {
                 this.font = this.ModLoader.Gfx.createFont();
@@ -267,9 +266,6 @@ export class ImGuiHandler {
                     }
                     if (this.ModLoader.ImGui.button("PRINT LINK POS")) {
                         console.log(JSON.stringify(this.core.OOT!.link.position.getVec3()));
-                    }
-                    if (this.ModLoader.ImGui.menuItem("Actor Spawner")) {
-                        this.showSpawner = true;
                     }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
@@ -407,22 +403,6 @@ export class ImGuiHandler {
                     if (this.ModLoader.ImGui.smallButton("Open in MemoryUtils3")){
                         openMemoryUtils3Tab(actor.pointer);
                     }
-                }
-            }
-            this.ModLoader.ImGui.end();
-        }
-        if (this.showSpawner) {
-            if (this.ModLoader.ImGui.begin("Actor Spawner###OotO:ActorSpawner")) {
-                this.ModLoader.ImGui.inputText("ID", this.spawnID);
-                this.ModLoader.ImGui.inputText("Param", this.spawnParam);
-                this.ModLoader.ImGui.inputText("Rot", this.spawnParam2);
-                if (this.ModLoader.ImGui.smallButton("Spawn")) {
-                    let pos = this.core.OOT!.link.position.getVec3();
-                    let rot = this.core.OOT!.link.rotation.getVec3();
-                    let spawn = this.ModLoader.heap!.malloc(0x1000);
-                    this.ModLoader.utils.setTimeoutFrames(() => {
-                        this.core.OOT!.commandBuffer.spawnActorRXY_Z(parseInt(this.spawnID[0], 16), parseInt(this.spawnParam[0], 16), parseInt(this.spawnParam2[0], 16), 0, pos, spawn);
-                    }, 1);
                 }
             }
             this.ModLoader.ImGui.end();

@@ -11,19 +11,21 @@ import path from 'path';
 import { changeKillfeedFont } from "modloader64_api/Announcements";
 import { rgba, xy } from "modloader64_api/Sylvain/vec";
 import { BUILD_DATE, VERSION_NUMBER } from "@Z64Online/common/lib/VERSION_NUMBER";
+import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
 
-export class ImGuiHandler_MM {
+export class ImGuiHandler_MM extends ImGuiHandlerCommon {
 
     @ModLoaderAPIInject()
-    ModLoader!: IModLoaderAPI;
+    ModLoader: IModLoaderAPI = {} as any;
     @InjectCore()
-    core!: IZ64Main;
+    core: IZ64Main = {} as any;
     input: string_ref = [""];
     result: string_ref = [""];
     font!: Font;
 
     @onViUpdate()
     onViUpdate() {
+        super.onViUpdate();
         if (this.font === undefined) {
             try {
                 this.font = this.ModLoader.Gfx.createFont();
@@ -36,7 +38,7 @@ export class ImGuiHandler_MM {
             return;
         }
         // #ifdef IS_DEV_BUILD
-        if (this.core.MM!.helper.isTitleScreen()){
+        if (this.core.MM!.helper.isTitleScreen()) {
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "Z64Online", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Version: ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 68), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Build Date: ${BUILD_DATE}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 36), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
