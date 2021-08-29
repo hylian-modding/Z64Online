@@ -48,3 +48,5 @@ cache/
 src/DoubleDynamite.pak
 patch_day.bin
 *.pak
+objects/
+decomp/

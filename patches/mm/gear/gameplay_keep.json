@@ -1,0 +1,32 @@
+[
+    {
+        "offset": "0x21A8",
+        "segment": "0x04",
+        "name": "object_hilt_1"
+    },
+    {
+        "offset": "0x1D00",
+        "segment": "0x04",
+        "name": "object_hilt_2"
+    },
+    {
+        "offset": "0x28C0",
+        "segment": "0x04",
+        "name": "object_blade_1"
+    },
+    {
+        "offset": "0x2168",
+        "segment": "0x04",
+        "name": "object_blade_2"
+    },
+    {
+        "offset": "0x03E0",
+        "segment": "0x04",
+        "name": "object_bottle"
+    },
+    {
+        "offset": "0x0320",
+        "segment": "0x04",
+        "name": "object_bottle_content"
+    }
+]

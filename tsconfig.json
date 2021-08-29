@@ -28,8 +28,7 @@
     "mods/**/*.ts",
     "cores/**/*.ts",
     "bin/paker.ts",
-    "tools/**/*.ts",
-    "bin/**/*.ts"
+    "tools/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -7,11 +7,11 @@ import { bus } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
 import { decodeAsset } from '@Z64Online/common/assets/decoder';
-import { adult } from './zobjs/adult';
-import { child } from './zobjs/child';
 import { ModelManagerClient } from '@Z64Online/common/cosmetics/player/ModelManager';
 import { IModelManagerShim } from '@Z64Online/common/cosmetics/utils/IModelManagerShim';
 import { DummyManifest, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
+import { object_link_boy } from './zobjs/object_link_boy';
+import { object_link_child } from './zobjs/object_link_child';
 
 export class ModelManagerOot implements IModelManagerShim {
 
@@ -123,8 +123,8 @@ export class ModelManagerOot implements IModelManagerShim {
             if (fs.existsSync(p)) return;
             fs.writeFileSync(p, decodeAsset(buf, rom));
         };
-        extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), adult, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), child, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), object_link_boy, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), object_link_child, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
         setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
