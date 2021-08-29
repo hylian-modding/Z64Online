@@ -10,6 +10,7 @@ import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 import { IOotOClientside } from '@Z64Online/oot/save/IOotOClientside';
 import { IActor } from 'Z64Lib/API/Common/IActor';
 import { AgeOrForm, IOvlPayloadResult } from 'Z64Lib/API/Common/Z64API';
+import { Z64_PLAYER_PROXY } from '@Z64Online/common/types/GameAliases';
 
 export class Puppet implements IPuppet {
   player: INetworkPlayer;
@@ -65,20 +66,17 @@ export class Puppet implements IPuppet {
       this.ModLoader.logger.debug('Puppet resurrected.');
       return;
     }
-    console.log("FUCK1");
     if (!this.isSpawned && !this.isSpawning) {
       bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      console.log("FUCK2");
-      (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer + 0x800).then((actor: IActor) => {
+      (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer + Z64_PLAYER_PROXY.byteLength).then((actor: IActor) => {
         this.data.pointer = actor.pointer;
         this.doNotDespawnMe(this.data.pointer);
         this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x24);
         this.isSpawned = true;
         this.isSpawning = false;
         bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
-        console.log("FUCK3");
       });
     }
     console.log(this.player.uuid + " puppet pointer: " + this.data.pointer);

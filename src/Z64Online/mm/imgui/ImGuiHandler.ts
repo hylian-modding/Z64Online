@@ -4,16 +4,44 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { bus } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { InputTextFlags, string_ref } from "modloader64_api/Sylvain/ImGui";
+import { InjectCore } from "modloader64_api/CoreInjection";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { Font } from "modloader64_api/Sylvain/Gfx";
+import path from 'path';
+import { changeKillfeedFont } from "modloader64_api/Announcements";
+import { rgba, xy } from "modloader64_api/Sylvain/vec";
+import { BUILD_DATE, VERSION_NUMBER } from "@Z64Online/common/lib/VERSION_NUMBER";
 
 export class ImGuiHandler_MM {
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
+    @InjectCore()
+    core!: IZ64Main;
     input: string_ref = [""];
     result: string_ref = [""];
+    font!: Font;
 
     @onViUpdate()
     onViUpdate() {
+        if (this.font === undefined) {
+            try {
+                this.font = this.ModLoader.Gfx.createFont();
+                this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 22, 2);
+                changeKillfeedFont(this.font);
+                global.ModLoader["FONT"] = this.font;
+            } catch (err) {
+                this.ModLoader.logger.error(err);
+            }
+            return;
+        }
+        // #ifdef IS_DEV_BUILD
+        if (this.core.MM!.helper.isTitleScreen()){
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "Z64Online", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Version: ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 68), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Build Date: ${BUILD_DATE}`, xy(2, this.ModLoader.ImGui.getWindowHeight() - 36), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
+        }
+        // #endif
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("Z64O")) {
@@ -25,26 +53,6 @@ export class ImGuiHandler_MM {
                 this.ModLoader.ImGui.endMenu();
             }
             this.ModLoader.ImGui.endMainMenuBar();
-        }
-        if (this.ModLoader.ImGui.begin("RAM SEARCH")){
-            this.ModLoader.ImGui.text(this.result[0]);
-            this.ModLoader.ImGui.inputText("Search", this.input, InputTextFlags.CharsHexadecimal);
-            if (this.ModLoader.ImGui.smallButton("Search")){
-                this.result[0] = "";
-                let b = Buffer.from(this.input[0], 'hex');
-                let ram = this.ModLoader.emulator.rdramReadBuffer(0, 16 * 1024 * 1024);
-                let i = ram.indexOf(b);
-                while(i > -1){
-                    this.result[0] = this.result[0] + i.toString(16).padStart(8, '0') + "\n";
-                    i += b.byteLength;
-                    if (ram.byteLength <= i){
-                        i = ram.indexOf(b, i);
-                        console.log(i);
-                    }else{
-                        i = -1;
-                    }
-                }
-            }
         }
         this.ModLoader.ImGui.end();
     }

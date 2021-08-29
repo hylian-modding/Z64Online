@@ -39,7 +39,6 @@ import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
-import { zeldaString } from "Z64Lib/API/imports";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 

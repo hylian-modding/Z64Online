@@ -2,7 +2,7 @@ import { Z64_GAME, Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
 import fs from 'fs';
 import path from 'path';
 import { AgeOrForm } from "@Z64Online/common/types/Types";
-import { Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from "@Z64Online/common/types/GameAliases";
+import { setPlayerProxy, Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from "@Z64Online/common/types/GameAliases";
 import { proxy_universal } from "@Z64Online/common/assets/proxy_universal";
 import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
@@ -22,6 +22,7 @@ import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelMana
 import { IModelManagerShim } from "@Z64Online/common/cosmetics/utils/IModelManagerShim";
 import { SmartBuffer } from 'smart-buffer';
 import { DL_DEITY_MASK, DL_DEITY_MASK_GI, DL_DEITY_MASK_SCREAM, DL_DEKU_MASK, DL_DEKU_MASK_GI, DL_DEKU_MASK_SCREAM, DL_GORON_MASK, DL_GORON_MASK_GI, DL_GORON_MASK_SCREAM, DL_ZORA_MASK, DL_ZORA_MASK_GI, DL_ZORA_MASK_SCREAM } from "@Z64Online/common/cosmetics/Defines";
+import { DummyManifest, UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 
 export class ModelManagerMM implements IModelManagerShim {
 
@@ -65,6 +66,7 @@ export class ModelManagerMM implements IModelManagerShim {
         extractIfMissing(path.join(this.parent.cacheDir, "bottle.zobj"), bottle, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "stick.zobj"), stick, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
+        setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
 
     loadHumanModelMM(evt: any) {

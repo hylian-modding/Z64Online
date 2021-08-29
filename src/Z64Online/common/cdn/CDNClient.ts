@@ -43,22 +43,21 @@ export class CDNClient {
     pendingQueryPromises: Map<string, (bool: boolean) => void> = new Map<string, (bool: boolean) => void>();
     pendingDownloads: Map<string, PendingDownload> = new Map<string, PendingDownload>();
     pendingUploads: Map<string, PendingUpload> = new Map<string, PendingUpload>();
-    cache: zip;
+    cache: Map<string, Buffer> = new Map();
 
     constructor() {
         CDNClient.singleton = this;
-        this.cache = new zip();
     }
 
     registerWithCache(buf: Buffer){
-        this.cache.addFile(this.ModLoader.utils.hashBuffer(buf), buf);
+        this.cache.set(this.ModLoader.utils.hashBuffer(buf), buf);
     }
 
     askCDN(buf: Buffer) {
         let pend = this.ModLoader.utils.hashBuffer(buf);
         this.pendingQueries.set(pend, buf);
         let promise = new Promise<boolean>((resolve, reject) => {
-            if (this.cache.getEntry(pend) !== null){
+            if (this.cache.has(pend)){
                 this.pendingQueries.delete(pend);
                 resolve(true);
                 return;
@@ -78,14 +77,13 @@ export class CDNClient {
 
     requestFile(id: string) {
         let promise = new Promise<Buffer>((resolve, reject) => {
-            if (this.cache.getEntry(id) !== null){
-                resolve(this.cache.getEntry(id)!.getData());
-                return;
+            if (this.cache.has(id)){
+                resolve(this.cache.get(id)!);
             }else{
                 this.pendingDownloads.set(id, new PendingDownload(resolve, reject));
+                this.ModLoader.clientSide.sendPacket(new CDNFileDownload_Packet(id));
             }
         });
-        this.ModLoader.clientSide.sendPacket(new CDNFileDownload_Packet(id));
         return promise;
     }
 
@@ -145,7 +143,7 @@ export class CDNClient {
                     this.ModLoader.utils.setTimeoutFrames(() => {
                         let _zip = new zip(body);
                         let data = _zip.getEntry(packet.model_id)!.getData();
-                        this.cache.addFile(packet.model_id, data);
+                        this.cache.set(packet.model_id, data);
                         this.pendingDownloads.get(packet.model_id)!.resolve(data);
                         this.pendingDownloads.delete(packet.model_id);
                     }, 1);

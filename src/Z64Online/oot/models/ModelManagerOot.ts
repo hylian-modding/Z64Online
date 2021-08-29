@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { AgeOrForm, Scene } from '@Z64Online/common/types/Types';
-import { Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/common/types/GameAliases';
+import { setPlayerProxy, Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/common/types/GameAliases';
 import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
 import { bus } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
@@ -11,6 +11,7 @@ import { adult } from './zobjs/adult';
 import { child } from './zobjs/child';
 import { ModelManagerClient } from '@Z64Online/common/cosmetics/player/ModelManager';
 import { IModelManagerShim } from '@Z64Online/common/cosmetics/utils/IModelManagerShim';
+import { DummyManifest, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
 
 export class ModelManagerOot implements IModelManagerShim {
 
@@ -125,6 +126,7 @@ export class ModelManagerOot implements IModelManagerShim {
         extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), adult, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), child, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
+        setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
 
     onRomPatched(evt: any) {

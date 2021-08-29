@@ -14,6 +14,7 @@ export let Z64_TITLE_SCREEN_FORM: AgeOrForm;
 // Playas stuff
 export let Z64_MANIFEST: Manifest;
 export let Z64_OBJECT_TABLE_RAM: number = 0;
+export let Z64_PLAYER_PROXY: Buffer;
 
 export function setupOot(){
     Z64_ANIM_BANK_DMA = OOT_ANIM_BANK_DMA;
@@ -41,4 +42,8 @@ export function setupMM(){
 
 export function markAsRandomizer(){
     Z64_IS_RANDOMIZER = true;
+}
+
+export function setPlayerProxy(buf: Buffer){
+    Z64_PLAYER_PROXY = buf;
 }
