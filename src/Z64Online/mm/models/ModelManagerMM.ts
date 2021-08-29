@@ -8,10 +8,8 @@ import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_Mod
 import { bus } from "modloader64_api/EventHandler";
 import { decodeAsset } from "@Z64Online/common/assets/decoder";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { optimize } from "Z64Lib/API/zzoptimize";
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 import { IModelManagerShim } from "@Z64Online/common/cosmetics/utils/IModelManagerShim";
-import { SmartBuffer } from 'smart-buffer';
 import * as defines from "@Z64Online/common/cosmetics/Defines";
 import { DummyManifest, UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 import * as masks from './zobjs/masks';
