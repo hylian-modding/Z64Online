@@ -44,7 +44,6 @@ src/Vanillamizer_skipintro.bps
 shop.json
 OotO.pem
 cache/
-*.bps
 src/DoubleDynamite.pak
 patch_day.bin
 *.pak
