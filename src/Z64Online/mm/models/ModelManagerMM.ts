@@ -88,13 +88,9 @@ export class ModelManagerMM implements IModelManagerShim {
         };
 
         this.MaskMap.set("goron_mask_t", { vrom: moveAndClear(678), offset: 0x14A0, replacement: gear.OBJECT_MASK_GORON_SCREAMING, alias: defines.DL_GORON_MASK_SCREAM });
-        this.MaskMap.set("goron_mask_gi", { vrom: moveAndClear(801), offset: 0xBA0, replacement: gear.OBJECT_MASK_GORON_GI, alias: defines.DL_GORON_MASK_GI });
         this.MaskMap.set("zora_mask_t", { vrom: moveAndClear(679), offset: 0xDB0, replacement: gear.OBJECT_MASK_ZORA_SCREAMING, alias: defines.DL_ZORA_MASK_SCREAM });
-        this.MaskMap.set("zora_mask_gi", { vrom: moveAndClear(802), offset: 0x7D0, replacement: gear.OBJECT_MASK_ZORA_GI, alias: defines.DL_ZORA_MASK_GI });
         this.MaskMap.set("deku_mask_t", { vrom: moveAndClear(680), offset: 0x1D90, replacement: gear.OBJECT_MASK_NUTS_SCREAMING, alias: defines.DL_DEKU_MASK_SCREAM });
-        this.MaskMap.set("deku_mask_gi", { vrom: moveAndClear(933), offset: 0xB50, replacement: gear.OBJECT_MASK_NUTS_GI, alias: defines.DL_DEKU_MASK_GI });
         this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: gear.OBJECT_MASK_DEITY_SCREAMING, alias: defines.DL_DEITY_MASK_SCREAM });
-        this.MaskMap.set("fd_mask_gi", { vrom: moveAndClear(1047), offset: 0xB90, replacement: gear.OBJECT_MASK_DEITY_GI, alias: defines.DL_DEITY_MASK_GI });
 
         this.parent.ModLoader.utils.setTimeoutFrames(() => {
             this.gearRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "gear.zobj")), true);
