@@ -409,12 +409,12 @@ gulp.task('setup', function () {
     fs.writeFileSync("./objects/mm/forms/object_link_zora.zobj", bps.applyBps(fs.readFileSync("./decomp/mm/baserom/object_link_zora"), fs.readFileSync("./patches/mm/object_link_zora.bps")));
     fs.writeFileSync("./objects/mm/forms/object_link_deity.zobj", bps.applyBps(fs.readFileSync("./decomp/mm/baserom/object_link_boy"), fs.readFileSync("./patches/mm/object_link_boy.bps")));
 
-    fs.readdirSync("./objects/oot/ages").forEach((f: string)=>{
+    fs.readdirSync("./objects/oot/ages").forEach((f: string) => {
         let file = path.resolve("./objects/oot/ages", f);
         encode(file);
     });
 
-    fs.readdirSync("./objects/mm/forms").forEach((f: string)=>{
+    fs.readdirSync("./objects/mm/forms").forEach((f: string) => {
         let file = path.resolve("./objects/mm/forms", f);
         encode(file);
     });
@@ -467,20 +467,26 @@ gulp.task('setup', function () {
             }
         });
         // Combine.
+        let count = 0;
+        fs.readdirSync(out).forEach((n: string) => {
+            if (path.parse(n).ext === ".ts") {
+                return;
+            }
+            count++;
+        });
         let sb = new SmartBuffer();
         sb.writeString("MODLOADER64");
         sb.writeUInt8(1);
-        let l = fs.readdirSync(out).length;
-        while (l % 2 !== 0) {
-            l++;
+        while (count % 2 !== 0) {
+            count++;
         }
-        sb.writeUInt32BE(l);
+        sb.writeUInt32BE(count);
         for (let i = 0; i < 0x10; i++) {
             sb.writeUInt8(0);
         }
         // First pass
         let fp = sb.writeOffset;
-        for (let i = 0; i < l; i++) {
+        for (let i = 0; i < count; i++) {
             sb.writeUInt32BE(0xDE010000);
             sb.writeUInt32BE(0xDEADBEEF);
         }
@@ -489,21 +495,21 @@ gulp.task('setup', function () {
         sb.writeUInt32BE(0x00000000);
         sb.writeOffset = fp;
         // Second pass.
-        for (let i = 0; i < l; i++) {
+        for (let i = 0; i < count; i++) {
             sb.writeUInt32BE(0xDE010000);
             sb.writeUInt32BE(0x06000000 + df);
         }
         let cur = fp + 0x4;
         let defines: Array<string> = [];
         fs.readdirSync(out).forEach((n: string) => {
-            if (path.parse(n).ext === ".ts"){
+            if (path.parse(n).ext === ".ts") {
                 return;
             }
             let file = path.resolve(out, n);
             let buf = fs.readFileSync(file);
             let offset = buf.readUInt32BE(buf.byteLength - 0x4);
             let op = optimize(buf, [offset & 0x00FFFFFF], sb.length, 0x06, true);
-            sb.writeUInt32BE(0x06000000 + op.oldOffs2NewOffs.get(offset)!, cur);
+            sb.writeUInt32BE(0x06000000 + op.oldOffs2NewOffs.get(offset & 0x00FFFFFF)!, cur);
             sb.writeBuffer(op.zobj);
             defines.push(`export const ${path.parse(n).name.toUpperCase()}: number = 0x${(cur - 0x4 + 0x06000000).toString(16).toUpperCase().padStart(8, '0')};\n`);
             cur += 0x8;
@@ -511,19 +517,20 @@ gulp.task('setup', function () {
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(0xFF);
         }
-        let o = path.resolve(out, path.parse(out).name + ".ts");
+        let o = path.resolve(out, path.parse(out).name + ".bin");
         fs.writeFileSync(o, sb.toBuffer());
         encode(o);
-        let str = fs.readFileSync(o).toString();
+        let t = path.resolve(path.parse(o).dir, path.parse(o).name + ".ts");
+        let str = fs.readFileSync(t).toString();
         str += "\n";
         for (let i = 0; i < defines.length; i++) {
             str += defines[i];
         }
-        fs.writeFileSync(o, str);
+        fs.writeFileSync(t, str);
+        fs.unlinkSync(o);
     };
 
     console.log("Generating mask zobjs...");
-    pdir("./patches/mm/masks", "./objects/mm/masks");
     pdir("./patches/mm/gear", "./objects/mm/gear");
     return gulp.src('.')
 });

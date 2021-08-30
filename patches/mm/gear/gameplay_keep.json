@@ -1,5 +1,25 @@
 [
     {
+        "offset": "0x56C0",
+        "segment": "0x04",
+        "name": "object_mask_nuts_normal"
+    },
+    {
+        "offset": "0x5A10",
+        "segment": "0x04",
+        "name": "object_mask_goron_normal"
+    },
+    {
+        "offset": "0x5360",
+        "segment": "0x04",
+        "name": "object_mask_zora_normal"
+    },
+    {
+        "offset": "0xB260",
+        "segment": "0x04",
+        "name": "object_mask_deity_normal"
+    },
+    {
         "offset": "0x21A8",
         "segment": "0x04",
         "name": "object_hilt_1"

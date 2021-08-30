@@ -12,7 +12,6 @@ import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelMana
 import { IModelManagerShim } from "@Z64Online/common/cosmetics/utils/IModelManagerShim";
 import * as defines from "@Z64Online/common/cosmetics/Defines";
 import { DummyManifest, UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
-import * as masks from './zobjs/masks';
 import * as gear from './zobjs/gear';
 import { object_link_human } from "./zobjs/object_link_human";
 import { object_link_zora } from "./zobjs/object_link_zora";
@@ -23,10 +22,7 @@ import { object_link_goron } from "./zobjs/object_link_goron";
 export class ModelManagerMM implements IModelManagerShim {
 
     parent!: ModelManagerClient;
-    maskRef!: IModelReference;
-    swordRef!: IModelReference;
-    bottleRef!: IModelReference;
-    stickRef!: IModelReference;
+    gearRef!: IModelReference;
     //
     MaskMap: Map<string, { offset: number, vrom: number, replacement: number, alias: number }> = new Map();
 
@@ -57,7 +53,6 @@ export class ModelManagerMM implements IModelManagerShim {
         extractIfMissing(path.join(this.parent.cacheDir, "nuts.zobj"), object_link_nuts, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "fd.zobj"), object_link_deity, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "goron.zobj"), object_link_goron, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "masks.zobj"), masks.masks, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "gear.zobj"), gear.gear, evt.rom);
         extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
         setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
@@ -92,27 +87,18 @@ export class ModelManagerMM implements IModelManagerShim {
             return tools.relocateFileToExtendedRom(evt.rom, dma, buf, 0, true)
         };
 
-        this.MaskMap.set("goron_mask_t", { vrom: moveAndClear(678), offset: 0x14A0, replacement: masks.OBJECT_MASK_GORON_SCREAMING, alias: defines.DL_GORON_MASK_SCREAM });
-        this.MaskMap.set("goron_mask_gi", { vrom: moveAndClear(801), offset: 0xBA0, replacement: masks.OBJECT_MASK_GORON_GI, alias: defines.DL_GORON_MASK_GI });
-        this.MaskMap.set("zora_mask_t", { vrom: moveAndClear(679), offset: 0xDB0, replacement: masks.OBJECT_MASK_ZORA_SCREAMING, alias: defines.DL_ZORA_MASK_SCREAM });
-        this.MaskMap.set("zora_mask_gi", { vrom: moveAndClear(802), offset: 0x7D0, replacement: masks.OBJECT_MASK_ZORA_GI, alias: defines.DL_ZORA_MASK_GI });
-        this.MaskMap.set("deku_mask_t", { vrom: moveAndClear(680), offset: 0x1D90, replacement: masks.OBJECT_MASK_NUTS_SCREAMING, alias: defines.DL_DEKU_MASK_SCREAM });
-        this.MaskMap.set("deku_mask_gi", { vrom: moveAndClear(933), offset: 0xB50, replacement: masks.OBJECT_MASK_ZORA_GI, alias: defines.DL_DEKU_MASK_GI });
-        this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: masks.OBJECT_MASK_DEITY_SCREAMING, alias: defines.DL_DEITY_MASK_SCREAM });
-        this.MaskMap.set("fd_mask_gi", { vrom: moveAndClear(1047), offset: 0xB90, replacement: masks.OBJECT_MASK_DEITY_GI, alias: defines.DL_DEITY_MASK_GI });
+        this.MaskMap.set("goron_mask_t", { vrom: moveAndClear(678), offset: 0x14A0, replacement: gear.OBJECT_MASK_GORON_SCREAMING, alias: defines.DL_GORON_MASK_SCREAM });
+        this.MaskMap.set("goron_mask_gi", { vrom: moveAndClear(801), offset: 0xBA0, replacement: gear.OBJECT_MASK_GORON_GI, alias: defines.DL_GORON_MASK_GI });
+        this.MaskMap.set("zora_mask_t", { vrom: moveAndClear(679), offset: 0xDB0, replacement: gear.OBJECT_MASK_ZORA_SCREAMING, alias: defines.DL_ZORA_MASK_SCREAM });
+        this.MaskMap.set("zora_mask_gi", { vrom: moveAndClear(802), offset: 0x7D0, replacement: gear.OBJECT_MASK_ZORA_GI, alias: defines.DL_ZORA_MASK_GI });
+        this.MaskMap.set("deku_mask_t", { vrom: moveAndClear(680), offset: 0x1D90, replacement: gear.OBJECT_MASK_NUTS_SCREAMING, alias: defines.DL_DEKU_MASK_SCREAM });
+        this.MaskMap.set("deku_mask_gi", { vrom: moveAndClear(933), offset: 0xB50, replacement: gear.OBJECT_MASK_NUTS_GI, alias: defines.DL_DEKU_MASK_GI });
+        this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: gear.OBJECT_MASK_DEITY_SCREAMING, alias: defines.DL_DEITY_MASK_SCREAM });
+        this.MaskMap.set("fd_mask_gi", { vrom: moveAndClear(1047), offset: 0xB90, replacement: gear.OBJECT_MASK_DEITY_GI, alias: defines.DL_DEITY_MASK_GI });
 
         this.parent.ModLoader.utils.setTimeoutFrames(() => {
-            this.maskRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "masks.zobj")), true);
-            this.maskRef.loadModel();
-
-            this.swordRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "swords.zobj")), true);
-            this.swordRef.loadModel();
-
-            this.bottleRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "bottle.zobj")), true);
-            this.bottleRef.loadModel();
-
-            this.stickRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "stick.zobj")), true);
-            this.stickRef.loadModel();
+            this.gearRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "gear.zobj")), true);
+            this.gearRef.loadModel();
         }, 20);
 
     }
@@ -147,18 +133,18 @@ export class ModelManagerMM implements IModelManagerShim {
             let combiner = this.parent.ModLoader.emulator.rdramRead32(addr + 0x4);
             this.parent.ModLoader.emulator.rdramWrite32(link + alias, combiner);
         }
-        if (this.maskRef !== undefined && this.maskRef.isLoaded) {
-            let deku = this.maskRef.pointer + (masks.OBJECT_MASK_NUTS_NORMAL & 0x00FFFFFF);
-            let goron = this.maskRef.pointer + (masks.OBJECT_MASK_GORON_NORMAL & 0x00FFFFFF);
-            let zora = this.maskRef.pointer + (masks.OBJECT_MASK_ZORA_NORMAL & 0x00FFFFFF);
-            let fd = this.maskRef.pointer + (masks.OBJECT_MASK_DEITY_NORMAL & 0x00FFFFFF);
+        if (this.gearRef !== undefined && this.gearRef.isLoaded) {
+            let deku = this.gearRef.pointer + (gear.OBJECT_MASK_NUTS_NORMAL & 0x00FFFFFF);
+            let goron = this.gearRef.pointer + (gear.OBJECT_MASK_GORON_NORMAL & 0x00FFFFFF);
+            let zora = this.gearRef.pointer + (gear.OBJECT_MASK_ZORA_NORMAL & 0x00FFFFFF);
+            let fd = this.gearRef.pointer + (gear.OBJECT_MASK_DEITY_NORMAL & 0x00FFFFFF);
             this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_DEKU_MASK + 0x4, deku);
             this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_GORON_MASK + 0x4, goron);
             this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_ZORA_MASK + 0x4, zora);
             this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_DEITY_MASK + 0x4, fd);
             this.MaskMap.forEach((obj) => {
                 for (let i = 0; i < 5; i++) {
-                    this.parent.ModLoader.emulator.rdramWrite32(link + obj.alias + 0x4, (this.maskRef.pointer + (obj.replacement & 0x00FFFFFF)));
+                    this.parent.ModLoader.emulator.rdramWrite32(link + obj.alias + 0x4, (this.gearRef.pointer + (obj.replacement & 0x00FFFFFF)));
                     this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8)), 0xDE010000);
                     this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8) + 4), link + obj.alias);
                 }
