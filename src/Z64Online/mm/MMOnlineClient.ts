@@ -853,6 +853,7 @@ export default class MMOnlineClient {
                     //this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSyncContext();
+                    this.updatePermFlags();
                 }
             }
         }

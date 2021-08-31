@@ -27,7 +27,7 @@ export class MMOSaveData implements ISaveSyncData {
     let obj: any = {};
     let keys = [
       'inventory', 'map_visible', 'map_visited', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
-      'questStatus', 'checksum', 'owl_statues', 'double_defense'
+      'questStatus', 'checksum', 'owl_statues', 'double_defense' , 'magicBeanCount'
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -144,18 +144,17 @@ export class MMOSaveData implements ISaveSyncData {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
       let obj: IMMSyncSave = JSON.parse(save.toString());
 
-
       storage.heart_containers = obj.heart_containers;
       storage.magic_meter_size = obj.magic_meter_size;
 
-      //storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
+      storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
 
-      this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, []);
-      this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, []);
+      this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, ['kokiriSword', 'masterSword', 'giantKnife', 'biggoronSword']);
+      this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, ['dekuShield', 'hylianShield', 'mirrorShield']);
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
 
-
+      
       //storage.permSceneData = obj.permSceneData;
       //storage.weekEventFlags = obj.weekEventFlags;
       //storage.infTable = obj.infTable;
@@ -194,9 +193,9 @@ export class MMOSaveData implements ISaveSyncData {
         bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, storage.magic_meter_size);
       }
 
-      //if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
-      //  storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
-      //}
+      if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
+        storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
+      }
 
       this.processMixedLoop(obj.swords, storage.swords, []);
       this.processMixedLoop(obj.shields, storage.shields, []);
@@ -221,12 +220,12 @@ export class MMOSaveData implements ISaveSyncData {
       if (obj.inventory.FIELD_BOTTLE5 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE5 === InventoryItem.NONE) {
         storage.inventory.FIELD_BOTTLE5 = obj.inventory.FIELD_BOTTLE5;
       }
-      
+
       if (obj.inventory.FIELD_BOTTLE6 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE6 === InventoryItem.NONE) {
         storage.inventory.FIELD_BOTTLE6 = obj.inventory.FIELD_BOTTLE4;
       }
 
-      this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE3", "FIELD_BOTTLE4" ,"FIELD_BOTTLE5", "FIELD_BOTTLE6"]);
+      this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE5", "FIELD_BOTTLE6"]);
 
       if (storage.questStatus.heartPieceCount >= 3 && obj.questStatus.heartPieceCount === 0) {
         storage.questStatus.heartPieceCount = 0;
@@ -290,7 +289,7 @@ export class MMOSaveData implements ISaveSyncData {
         //let cur = this.core.save.dungeonItemManager.getRawBuffer();
         //parseFlagChanges(obj.dungeon_items, cur);
         //this.core.save.dungeonItemManager.setRawBuffer(cur);
-        bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
+        //bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
       } else {
         //parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
       }
