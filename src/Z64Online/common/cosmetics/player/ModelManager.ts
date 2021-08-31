@@ -37,7 +37,7 @@ import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from "../utils/IModelManagerShim";
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/common/network/Z64OPackets';
-import { Puppet_OOT } from '@Z64Online/oot/puppet/Puppet';
+import { Puppet_OOT } from '@Z64Online/oot/puppet/Puppet_OOT';
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
 import { ALIAS_PROXY_SIZE } from '../Defines';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
@@ -354,6 +354,7 @@ export class ModelManagerClient {
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
     puppet.modelPointer = player.proxyPointer;
     player.playerIsSpawned = true;
+    this.ModLoader.logger.debug(`Puppet ${puppet.id} prespawn clear`);
   }
 
   /**@todo Rewrite this entire function once MM is in. */
@@ -366,7 +367,7 @@ export class ModelManagerClient {
     if (playerAge !== modelAge) return;
     let alias = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, ALIAS_PROXY_SIZE).slice(0x5000);
     this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + 0x5000, alias);
-
+    this.ModLoader.logger.debug(`Player ${player.uuid} model set to ${ref.pointer.toString(16)}`);
     if (this.mainConfig.diagnosticMode) {
       DumpRam();
     }

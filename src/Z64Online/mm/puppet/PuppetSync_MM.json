@@ -1,0 +1,23 @@
+{
+  "lengths": {
+    "pos": 20,
+    "rot": 6,
+    "fpos": 20,
+    "anim": 134,
+    "form": 1
+  },
+  "sources": {
+    "pos": 2151677396,
+    "rot": 2151677548,
+    "fpos": 2151677420,
+    "anim": 2151679232,
+    "form": 2149512848
+  },
+  "destinations": {
+    "pos": 36,
+    "rot": 188,
+    "fpos": 60,
+    "anim": 756,
+    "form": 904
+  }
+}

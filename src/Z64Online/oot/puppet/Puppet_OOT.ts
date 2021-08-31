@@ -3,7 +3,7 @@ import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IZ64Clientside } from '@Z64Online/common/storage/Z64Storage';
 import { PuppetAbstract } from '@Z64Online/common/puppet/PuppetAbstract';
-import { PuppetData_OOT } from './PuppetData';
+import { PuppetData_OOT } from './PuppetData_OOT';
 
 export class Puppet_OOT extends PuppetAbstract {
 

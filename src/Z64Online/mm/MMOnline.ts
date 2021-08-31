@@ -6,6 +6,9 @@ import { setupMM } from "@Z64Online/common/types/GameAliases";
 import { MMOnlineStorageClient } from "./storage/MMOnlineStorageClient";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { IZ64Utility } from "@Z64Online/common/api/InternalAPI";
+import { IZ64ClientStorage } from "@Z64Online/common/storage/Z64Storage";
+import { IPacketHeader } from "../../../../../ModLoader64/API/build/NetworkHandler";
 
 export const SCENE_ARR_SIZE = 0xD20;
 export const EVENT_ARR_SIZE = 0x8;
@@ -37,7 +40,7 @@ export class MMOnlineConfigCategory {
     syncMode: number = syncMode.BASIC;
 }
 
-export default class MMOnline implements IZ64GameMain {
+export default class MMOnline implements IZ64GameMain, IZ64Utility {
     @InjectCore()
     core!: IZ64Main;
     @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, "MMOnlineClient.js"))
@@ -52,6 +55,16 @@ export default class MMOnline implements IZ64GameMain {
     @Preinit()
     preinit(): void {
         setupMM();
+    }
+
+    sendPacketToPlayersInScene(packet: IPacketHeader): void {
+        if (this.server !== undefined) {
+            this.server.sendPacketToPlayersInScene(packet);
+        }
+    }
+
+    getClientStorage(): IZ64ClientStorage {
+        return this.client !== undefined ? this.client.clientStorage : null;
     }
 
     getServerURL(): string {

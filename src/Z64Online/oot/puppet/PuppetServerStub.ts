@@ -1,4 +1,4 @@
-import { SYNC_DATA } from "./PuppetData";
+import { SYNC_DATA } from "./PuppetData_OOT";
 import { SmartBuffer } from 'smart-buffer';
 import { IPuppetServerStub } from "@Z64Online/common/puppet/IPuppetServerStub";
 

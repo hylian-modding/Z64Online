@@ -13,7 +13,7 @@ export interface IPuppet {
     scene: Scene;
     readonly ageOrForm: AgeOrForm;
     spawn(): void;
-    processIncomingPuppetData(data: IPuppetData): void;
+    processIncomingPuppetData(data: {bundle: Buffer}): void;
     shovel(): void;
     despawn(): void;
 }

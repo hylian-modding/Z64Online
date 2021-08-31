@@ -1,13 +1,13 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import path from 'path';
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@Z64Online/common/api/Z64API';
-import { Puppet_OOT } from './Puppet';
+import { Puppet_OOT } from './Puppet_OOT';
 import { bus } from 'modloader64_api/EventHandler';
 import { PUPPET_INST_SIZE } from '@Z64Online/common/cosmetics/Defines';
 import { PuppetDataAbstract } from '@Z64Online/common/puppet/PuppetDataAbstract';
 import { SyncData } from '../../common/puppet/SyncData';
 
-export const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData_OOT.json"));
+export const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetSync_OOT.json"));
 
 export class PuppetData_OOT extends PuppetDataAbstract {
 
@@ -37,13 +37,9 @@ export class PuppetData_OOT extends PuppetDataAbstract {
 		}
 	}
 
-	get bundle(): Buffer {
-		return this.buf.toBuffer();
-	}
-
-	set bundle(buf: Buffer) {
+	processBundle(bundle: Buffer): void {
 		this.buf.clear();
-		this.buf.writeBuffer(buf);
+		this.buf.writeBuffer(bundle);
 		this.buf.readOffset = 0;
 		let keys = Object.keys(SYNC_DATA.destinations);
 		let pendingSound = 0;

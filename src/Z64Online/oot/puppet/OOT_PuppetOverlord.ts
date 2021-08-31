@@ -2,7 +2,7 @@ import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { PuppetOverlordClient, PuppetOverlordServer } from "@Z64Online/common/puppet/PuppetOverlord";
 import { Core, IZ64GameMain, Scene } from "@Z64Online/common/types/Types";
 import { HorseData } from "@Z64Online/common/puppet/HorseData";
-import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet";
+import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet_OOT";
 import { Z64O_PuppetPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket } from "@Z64Online/common/network/Z64OPackets";
 import { PuppetQuery, Z64OnlineAPI_PuppetStubCreated, Z64OnlineAPI_PuppetStubDestroyed, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";

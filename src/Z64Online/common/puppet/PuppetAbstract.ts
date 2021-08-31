@@ -62,25 +62,22 @@ export abstract class PuppetAbstract implements IPuppet {
             bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
             this.isSpawning = true;
             this.data!.pointer = 0x0;
-            this.parent.getClientStorage()!.puppetOvl.spawnActorRXY_Z(this.ageOrForm, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer).then((actor: IActor) => {
+            this.parent.getClientStorage()!.puppetOvl.spawnActorRXY_Z(this.ageOrForm, this.modelPointer, 0, new Vector3(8192, -2048, 8192)).then((actor: IActor) => {
                 this.data!.pointer = actor.pointer;
                 this.doNotDespawnMe(this.data!.pointer);
                 this.home = this.ModLoader.math.rdramReadV3(this.data!.pointer + 0x24);
                 this.isSpawned = true;
                 this.isSpawning = false;
+                this.ModLoader.logger.debug(`Puppet ${this.id} pointer: ${this.data!.pointer.toString(16)}`);
                 bus.emit(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED, this);
             });
         }
     }
 
-    processIncomingPuppetData(data: IPuppetData) {
+    processIncomingPuppetData(data: {bundle: Buffer}) {
         if (this.isSpawned && !this.isShoveled) {
             this.data!.ageOrFormLastFrame = this.ageOrForm;
-            let keys = Object.keys(data);
-            for (let i = 0; i < keys.length; i++) {
-                let key = keys[i];
-                (this.data as any)[key] = (data as any)[key];
-            }
+            this.data!.processBundle(data.bundle);
             if (this.data!.ageOrFormLastFrame !== this.ageOrForm) {
                 bus.emit(Z64OnlineEvents.PUPPET_AGE_CHANGED, this);
             }

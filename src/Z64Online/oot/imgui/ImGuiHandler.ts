@@ -3,7 +3,7 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { OotEvents, Scene } from "Z64Lib/API/OOT/OOTAPI";
-import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet";
+import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet_OOT";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import Vector3 from "modloader64_api/math/Vector3";

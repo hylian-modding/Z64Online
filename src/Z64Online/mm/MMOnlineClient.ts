@@ -32,6 +32,7 @@ import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult } from "Z64Lib/API/C
 import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import { Z64_SAVE } from "Z64Lib/src/Common/types/GameAliases";
 import { MMO_PermFlagsPacket } from './network/MMOPackets'
+import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
 function RGBA32ToA5(rgba: Buffer) {
@@ -73,6 +74,8 @@ export default class MMOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler_MM)
     gui!: ImGuiHandler_MM;
+    @SidedProxy(ProxySide.CLIENT, PuppetOverlord_MM)
+    puppets!: PuppetOverlord_MM;
     //@SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     //soundManager!: SoundManagerClient;
     //@SidedProxy(ProxySide.CLIENT, WorldEvents)
