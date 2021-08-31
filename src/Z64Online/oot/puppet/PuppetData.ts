@@ -6,6 +6,7 @@ import { Puppet } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 import { IPuppetData } from '@Z64Online/common/puppet/IPuppetData';
+import { PUPPET_INST_SIZE } from '@Z64Online/common/cosmetics/Defines';
 
 interface SyncData {
 	lengths: any;
@@ -13,7 +14,7 @@ interface SyncData {
 	destinations: any;
 }
 
-export const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetFields.json"));
+export const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData_OOT.json"));
 
 export class PuppetData implements IPuppetData {
 	parent: Puppet;
@@ -22,7 +23,7 @@ export class PuppetData implements IPuppetData {
 	buf: SmartBuffer;
 	ageLastFrame: AgeOrForm = AgeOrForm.ADULT;
 	age: AgeOrForm = AgeOrForm.ADULT;
-	backingShared: SharedArrayBuffer = new SharedArrayBuffer(0x400);
+	backingShared: SharedArrayBuffer = new SharedArrayBuffer(PUPPET_INST_SIZE);
 	backingBuffer: Buffer = Buffer.from(this.backingShared);
 
 	private readonly copyFields: string[] = new Array<string>();
@@ -53,7 +54,7 @@ export class PuppetData implements IPuppetData {
 		this.buf.clear();
 		let keys = Object.keys(SYNC_DATA.sources);
 		for (let i = 0; i < keys.length; i++) {
-			this.buf.writeBuffer(this.ModLoader.emulator.rdramReadBuffer(SYNC_DATA.sources[keys[i]], SYNC_DATA.lengths[keys[i]]));
+			this.buf.writeBuffer(this.getEntry(keys[i]));
 		}
 	}
 
@@ -81,10 +82,8 @@ export class PuppetData implements IPuppetData {
 				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
 			}
 		}
-		let temp = this.ModLoader.emulator.rdramReadBuffer(this.pointer, 0x400);
-		for (let i = 0; i < this.backingBuffer.byteLength; i++){
-			Atomics.store(this.backingBuffer, i, temp[i]);
-		}
+		let temp = this.ModLoader.emulator.rdramReadBuffer(this.pointer, PUPPET_INST_SIZE);
+		temp.copy(this.backingBuffer);
 		if (pendingSound > 0) {
 			let e = new RemoteSoundPlayRequest(this.parent.player, this.backingBuffer.slice(0x24, 0x24 + 0xC), pendingSound);
 			bus.emit(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND, e);

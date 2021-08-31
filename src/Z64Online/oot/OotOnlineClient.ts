@@ -157,6 +157,7 @@ export default class OotOnlineClient {
     onHeapReady() {
         this.syncContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["OotO_SyncContext"] = this.syncContext;
+        this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
 
         if (RomFlags.isOotR) {
             if (this.multiworld.isRomMultiworld()) {
@@ -655,6 +656,9 @@ export default class OotOnlineClient {
             let parse = path.parse(file);
             if (parse.ext === ".ovl") {
                 this.clientStorage.overlayCache[path.parse(file).base] = this.ModLoader.payloadManager.parseFile(file);
+                if (path.parse(file).base === "puppet_oot.ovl"){
+                    this.clientStorage.puppetOvl = this.clientStorage.overlayCache[path.parse(file).base];
+                }
             }
         });
     }

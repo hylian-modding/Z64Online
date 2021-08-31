@@ -180,9 +180,9 @@ export class ModelAllocationManager {
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
-    let proxy = Buffer.alloc((Z64_PLAYER_PROXY.byteLength - 0x5000) + PUPPET_INST_SIZE);
+    let proxy = Buffer.alloc(Z64_PLAYER_PROXY.byteLength);
     this.ModLoader.utils.clearBuffer(proxy);
-    Z64_PLAYER_PROXY.copy(proxy.slice(0x5000), PUPPET_INST_SIZE);
+    Z64_PLAYER_PROXY.copy(proxy);
     let pointer: number = this.ModLoader.gfx_heap!.malloc(proxy.byteLength);
     if (pointer === 0) return undefined;
 

@@ -70,10 +70,8 @@ export class Puppet implements IPuppet {
       bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
       this.isSpawning = true;
       this.data.pointer = 0x0;
-      console.log(this.modelPointer.toString(16));
-      (this.parent.getClientStorage()!.overlayCache["puppet.ovl"] as IOvlPayloadResult).spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer).then((actor: IActor) => {
+      this.parent.getClientStorage()!.puppetOvl.spawnActorRXY_Z(this.age, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.modelPointer).then((actor: IActor) => {
         this.data.pointer = actor.pointer;
-        console.log(this.data.pointer.toString(16));
         this.doNotDespawnMe(this.data.pointer);
         this.void = this.ModLoader.math.rdramReadV3(this.data.pointer + 0x24);
         this.isSpawned = true;

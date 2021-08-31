@@ -118,7 +118,7 @@ export class ModelManagerMM implements IModelManagerShim {
         let curRef: IModelReference | undefined;
         let link = this.findLink();
         this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.MM!.save.form, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!);
-        let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, 0x6BE0);
+        let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, defines.ALIAS_PROXY_SIZE);
         this.parent.ModLoader.emulator.rdramWriteBuffer(link, copy);
         let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link + 0x5017, 0x4).readUInt32BE(0);
         let count = this.parent.ModLoader.emulator.rdramRead32(restoreList);

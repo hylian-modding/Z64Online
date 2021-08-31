@@ -40,6 +40,7 @@ import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/oot/network/OotOPackets';
 import { Puppet } from '@Z64Online/oot/puppet/Puppet';
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
+import { ALIAS_PROXY_SIZE, PUPPET_INST_SIZE } from '../Defines';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -351,7 +352,7 @@ export class ModelManagerClient {
   onPuppetPreSpawn(puppet: Puppet) {
     /**@todo rewrite this shit after we uncrust the core. */
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
-    puppet.modelPointer = player.AgesOrForms.get(puppet.age)!.pointer;
+    puppet.modelPointer = player.proxyPointer;
     player.playerIsSpawned = true;
   }
 
@@ -363,6 +364,10 @@ export class ModelManagerClient {
     ref.loadModel();
 
     if (playerAge !== modelAge) return;
+    console.log("fuck 3");
+    let alias = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, ALIAS_PROXY_SIZE).slice(0x5000);
+    console.log(`copying shit from ${ref.pointer.toString(16)} to ${player.proxyPointer.toString(16)}`);
+    this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + 0x5000, alias);
 
     if (this.mainConfig.diagnosticMode) {
       DumpRam();
@@ -371,11 +376,13 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
   onPuppetSpawned(puppet: Puppet) {
+    console.log("fuck 1");
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
-    this.ModLoader.emulator.rdramWrite32(player.proxyPointer + 0x58C, puppet.data.pointer);
     if (player.AgesOrForms.has(puppet.age)) {
+      console.log("fuck 2");
       this.setPuppetModel(player, player.AgesOrForms.get(puppet.age)!, puppet.age, this.AgeOrForm);
     } else {
+      console.log("shit 1");
       this.setPuppetModel(player, this.puppetModels.get(puppet.age)!, puppet.age, this.AgeOrForm);
     }
     if (this.mainConfig.diagnosticMode) {

@@ -12,6 +12,7 @@ import { IModelManagerShim } from '@Z64Online/common/cosmetics/utils/IModelManag
 import { DummyManifest, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
 import { object_link_boy } from './zobjs/object_link_boy';
 import { object_link_child } from './zobjs/object_link_child';
+import { ALIAS_PROXY_SIZE } from '@Z64Online/common/cosmetics/Defines';
 
 export class ModelManagerOot implements IModelManagerShim {
 
@@ -83,7 +84,7 @@ export class ModelManagerOot implements IModelManagerShim {
         let link = this.doesLinkObjExist(this.parent.core.OOT!.save.age);
         if (link.exists) {
             this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.OOT!.save.age, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!);
-            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!.pointer, 0x6CB0);
+            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!.pointer, ALIAS_PROXY_SIZE);
             this.parent.ModLoader.emulator.rdramWriteBuffer(link.pointer, copy);
             this.parent.ModLoader.emulator.rdramWrite8(link.pointer + 0x5016, 0x1);
             curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!;

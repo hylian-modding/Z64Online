@@ -1,5 +1,6 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'Z64Lib/API/OOT/OOTAPI';
+import { IOvlPayloadResult } from 'Z64Lib/API/Common/Z64API';
 
 export class OotOnlineStorageClient extends OotOnlineStorageBase {
   world: number = 0;
@@ -16,6 +17,7 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase {
   ];
   equipmentHashes: Array<string> = [];
   overlayCache: any = {};
+  puppetOvl!: IOvlPayloadResult;
   localization: any = {};
   scene_keys: any = {};
   first_time_sync = false;

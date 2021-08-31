@@ -23,7 +23,6 @@
     "tunic": 3,
     "strength": 1,
     "gauntlet": 3,
-    "sound": 2,
     "ocarina": 1
   },
   "sources": {
@@ -50,7 +49,6 @@
     "tunic": 3735928559,
     "strength": 3735928559,
     "gauntlet": 3735928559,
-    "sound": 3735928559,
     "ocarina": 2148640331
   },
   "destinations": {
@@ -59,25 +57,24 @@
     "fpos": 56,
     "xz_speed": 104,
     "sword_info": 964,
-    "boots": 919,
-    "shield": 918,
-    "sword": 917,
-    "mask": 920,
-    "action_a": 928,
-    "action_b": 929,
+    "boots": 917,
+    "shield": 916,
+    "sword": 915,
+    "mask": 918,
+    "action_a": 926,
+    "action_b": 927,
     "state1": 932,
     "state2": 936,
     "state3": 940,
     "deku_stick_length": 956,
-    "body_angle": 922,
+    "body_angle": 920,
     "anim": 748,
-    "str": 916,
+    "str": 914,
     "ears": 944,
-    "age": 892,
-    "tunic": 904,
-    "strength": 916,
-    "gauntlet": 896,
-    "sound": 914,
-    "ocarina": 921
+    "age": 896,
+    "tunic": 908,
+    "strength": 914,
+    "gauntlet": 900,
+    "ocarina": 919
   }
 }
