@@ -264,7 +264,7 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
             if (this.puppets[i].scene === this.scene) {
                 try {
                     if (this.puppets[i] !== undefined) {
-                        let lp = this.ModLoader.math.rdramReadV3(this.puppets[i].data.pointer + 0x38);
+                        let lp = this.ModLoader.math.rdramReadV3(this.puppets[i].data!.pointer + 0x38);
                         let text = this.puppets[i].player.nickname;
 
                         let fovy = this.ModLoader.emulator.rdramReadF32(0x801C8570) // view.fovy

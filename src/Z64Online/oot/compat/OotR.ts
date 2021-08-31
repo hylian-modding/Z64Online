@@ -9,9 +9,9 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOotOClientside } from "@Z64Online/oot/save/IOotOClientside";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -27,7 +27,7 @@ export class Multiworld {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI
     @ParentReference()
-    parent!: IOotOClientside;
+    parent!: IZ64Clientside;
     @InjectCore()
     core!: IZ64Main;
     contextPointer: number = 0x801C8464;

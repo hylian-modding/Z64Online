@@ -14,11 +14,11 @@ import path from 'path';
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
-import { IOotOClientside } from "@Z64Online/oot/save/IOotOClientside";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
 
 class Notif {
     msg: string;
@@ -51,7 +51,7 @@ export class Notifications {
     @InjectCore()
     core!: IZ64Main;
     @ParentReference()
-    parent!: IOotOClientside;
+    parent!: IZ64Clientside;
     //---
     font!: Font;
     messages: Array<Notif> = [];
