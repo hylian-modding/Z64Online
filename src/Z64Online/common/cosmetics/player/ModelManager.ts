@@ -37,7 +37,7 @@ import { ModelPlayer } from './ModelPlayer';
 import { Z64_GAME, Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from "../utils/IModelManagerShim";
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
-import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/oot/network/OotOPackets';
+import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/common/network/Z64OPackets';
 import { Puppet } from '@Z64Online/oot/puppet/Puppet';
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
 import { ALIAS_PROXY_SIZE, PUPPET_INST_SIZE } from '../Defines';

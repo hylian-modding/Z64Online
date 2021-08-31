@@ -28,7 +28,7 @@ import RomFlags from "./compat/RomFlags";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
 import { ModelManagerClient } from "../common/cosmetics/player/ModelManager";
-import { OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket, Ooto_ClientSceneContextUpdate, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, OotO_RomFlagsPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket, Ooto_DownloadResponsePacket } from "./network/OotOPackets";
+import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_DownloadResponsePacket } from "../common/network/Z64OPackets";
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from "./OotOnline";
 import { ThiccOpa } from "./opa/ThiccOpa";
 import { OOT_PuppetOverlordClient } from "./puppet/OOT_PuppetOverlord";
@@ -156,7 +156,7 @@ export default class OotOnlineClient {
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
         this.syncContext = this.ModLoader.heap!.malloc(0x100);
-        global.ModLoader["OotO_SyncContext"] = this.syncContext;
+        global.ModLoader["Z64O_SyncContext"] = this.syncContext;
         this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
 
         if (RomFlags.isOotR) {
@@ -175,7 +175,7 @@ export default class OotOnlineClient {
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-            this.ModLoader.clientSide.sendPacket(new OotO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
+            this.ModLoader.clientSide.sendPacket(new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
         }
     }
@@ -192,7 +192,7 @@ export default class OotOnlineClient {
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.OOT!.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
                 this.clientStorage.keySaveHash = keyHash;
-                this.ModLoader.clientSide.sendPacket(new OotO_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
+                this.ModLoader.clientSide.sendPacket(new Z64O_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
             // and beans too why not.
             if (this.clientStorage.lastbeans !== this.core.OOT!.save.inventory.magicBeansCount) {
@@ -226,7 +226,7 @@ export default class OotOnlineClient {
                 return;
             }
             this.core.OOT!.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new Ooto_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.OOT!.global.scene, this.clientStorage.world));
+            this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.OOT!.global.scene, this.clientStorage.world));
             if (this.config.autosaves) {
                 this.ModLoader.utils.setTimeoutFrames(() => {
                     this.notificationManager.onAutoSave(this.autosaveIntoSlot2());
@@ -271,7 +271,7 @@ export default class OotOnlineClient {
                 this.clientStorage.bottleCache[i] = bottles[i];
                 this.ModLoader.logger.info('Bottle update.');
                 if (!onlyfillCache) {
-                    this.ModLoader.clientSide.sendPacket(new Ooto_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby));
                 }
             }
         }
@@ -341,13 +341,13 @@ export default class OotOnlineClient {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
-                    this.ModLoader.clientSide.sendPacket(new Ooto_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core.OOT!, this.ModLoader).createSave()));
-                    this.ModLoader.clientSide.sendPacket(new OotO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.hasFastBunHood, RomFlags.isMultiworld, RomFlags.isVanilla));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core.OOT!, this.ModLoader).createSave()));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.isVanilla, RomFlags.hasFastBunHood, RomFlags.isMultiworld));
                 }
             }, 50);
         }
         this.ModLoader.clientSide.sendPacket(
-            new Ooto_ScenePacket(
+            new Z64O_ScenePacket(
                 this.ModLoader.clientLobby,
                 scene,
                 this.core.OOT!.save.age
@@ -368,8 +368,8 @@ export default class OotOnlineClient {
         this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
     }
 
-    @NetworkHandler('Ooto_ScenePacket')
-    onSceneChange_client(packet: Ooto_ScenePacket) {
+    @NetworkHandler('Z64O_ScenePacket')
+    onSceneChange_client(packet: Z64O_ScenePacket) {
         this.ModLoader.logger.info(
             'client receive: Player ' +
             packet.player.nickname +
@@ -386,11 +386,11 @@ export default class OotOnlineClient {
     }
 
     // This packet is basically 'where the hell are you?' if a player has a puppet on file but doesn't know what scene its suppose to be in.
-    @NetworkHandler('Ooto_SceneRequestPacket')
-    onSceneRequest_client(packet: Ooto_SceneRequestPacket) {
+    @NetworkHandler('Z64O_SceneRequestPacket')
+    onSceneRequest_client(packet: Z64O_SceneRequestPacket) {
         if (this.core.OOT!.save !== undefined) {
             this.ModLoader.clientSide.sendPacketToSpecificPlayer(
-                new Ooto_ScenePacket(
+                new Z64O_ScenePacket(
                     this.ModLoader.clientLobby,
                     this.core.OOT!.global.scene,
                     this.core.OOT!.save.age
@@ -400,8 +400,8 @@ export default class OotOnlineClient {
         }
     }
 
-    @NetworkHandler('Ooto_BottleUpdatePacket')
-    onBottle_client(packet: Ooto_BottleUpdatePacket) {
+    @NetworkHandler('Z64O_BottleUpdatePacket')
+    onBottle_client(packet: Z64O_BottleUpdatePacket) {
         if (
             this.core.OOT!.helper.isTitleScreen() ||
             !this.core.OOT!.helper.isSceneNumberValid()
@@ -434,8 +434,8 @@ export default class OotOnlineClient {
     }
 
     // The server is giving me data.
-    @NetworkHandler('Ooto_DownloadResponsePacket')
-    onDownloadPacket_client(packet: Ooto_DownloadResponsePacket) {
+    @NetworkHandler('Z64O_DownloadResponsePacket')
+    onDownloadPacket_client(packet: Z64O_DownloadResponsePacket) {
         if (
             this.core.OOT!.helper.isTitleScreen() ||
             !this.core.OOT!.helper.isSceneNumberValid()
@@ -459,8 +459,8 @@ export default class OotOnlineClient {
         }, 20);
     }
 
-    @NetworkHandler('OotO_UpdateSaveDataPacket')
-    onSaveUpdate(packet: OotO_UpdateSaveDataPacket) {
+    @NetworkHandler('Z64O_UpdateSaveDataPacket')
+    onSaveUpdate(packet: Z64O_UpdateSaveDataPacket) {
         if (
             this.core.OOT!.helper.isTitleScreen() ||
             !this.core.OOT!.helper.isSceneNumberValid()
@@ -474,8 +474,8 @@ export default class OotOnlineClient {
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
-    @NetworkHandler('OotO_UpdateKeyringPacket')
-    onKeyUpdate(packet: OotO_UpdateKeyringPacket) {
+    @NetworkHandler('Z64O_UpdateKeyringPacket')
+    onKeyUpdate(packet: Z64O_UpdateKeyringPacket) {
         if (
             this.core.OOT!.helper.isTitleScreen() ||
             !this.core.OOT!.helper.isSceneNumberValid()
@@ -489,8 +489,8 @@ export default class OotOnlineClient {
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
-    @NetworkHandler('Ooto_ClientSceneContextUpdate')
-    onSceneContextSync_client(packet: Ooto_ClientSceneContextUpdate) {
+    @NetworkHandler('Z64O_ClientSceneContextUpdate')
+    onSceneContextSync_client(packet: Z64O_ClientSceneContextUpdate) {
         if (
             this.core.OOT!.helper.isTitleScreen() ||
             !this.core.OOT!.helper.isSceneNumberValid() ||
@@ -605,7 +605,7 @@ export default class OotOnlineClient {
     @EventHandler(OotEvents.ON_AGE_CHANGE)
     onAgeChange(age: AgeOrForm) {
         this.ModLoader.clientSide.sendPacket(
-            new Ooto_ScenePacket(
+            new Z64O_ScenePacket(
                 this.ModLoader.clientLobby,
                 this.core.OOT!.global.scene,
                 age

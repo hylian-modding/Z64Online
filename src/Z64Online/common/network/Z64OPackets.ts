@@ -3,27 +3,23 @@ import {
   packetHelper,
   UDPPacket,
 } from 'modloader64_api/ModLoaderDefaultImpls';
-import { PuppetData } from '../puppet/PuppetData';
+import { PuppetData } from '../../oot/puppet/PuppetData';
 import {
   AgeOrForm,
 } from 'Z64Lib/API/Common/Z64API';
 
-import {
-  InventoryItem,
-  Scene
-} from 'Z64Lib/API/OOT/OOTAPI';
-
-import { ActorPacketData } from '../actor_systems/ActorHookBase';
-import { HorseData } from '../puppet/HorseData';
+import { ActorPacketData } from '../../oot/actor_systems/ActorHookBase';
+import { HorseData } from '../../oot/puppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@Z64Online/common/save/IKeyRing';
+import { Scene } from '../types/Types';
 
-export class Ooto_PuppetPacket extends Packet {
+export class Z64O_PuppetPacket extends Packet {
   data: PuppetData;
   horse_data!: HorseData;
 
   constructor(puppetData: PuppetData, lobby: string) {
-    super('Ooto_PuppetPacket', 'Z64Online', lobby, true);
+    super('Z64O_PuppetPacket', 'Z64Online', lobby, true);
     this.data = puppetData;
   }
 
@@ -32,80 +28,80 @@ export class Ooto_PuppetPacket extends Packet {
   }
 }
 
-export class Ooto_ScenePacket extends Packet {
+export class Z64O_ScenePacket extends Packet {
   scene: Scene;
   age: AgeOrForm;
 
   constructor(lobby: string, scene: Scene, age: AgeOrForm) {
-    super('Ooto_ScenePacket', 'OotOnline', lobby, true);
+    super('Z64O_ScenePacket', 'Z64Online', lobby, true);
     this.scene = scene;
     this.age = age;
   }
 }
 
-export class Ooto_SceneRequestPacket extends Packet {
+export class Z64O_SceneRequestPacket extends Packet {
   constructor(lobby: string) {
-    super('Ooto_SceneRequestPacket', 'OotOnline', lobby, true);
+    super('Z64O_SceneRequestPacket', 'Z64Online', lobby, true);
   }
 }
 
-export class Ooto_BankSyncPacket extends Packet {
+export class Z64O_BankSyncPacket extends Packet {
   savings: number;
 
   constructor(saving: number, lobby: string) {
-    super('Ooto_BankSyncPacket', 'OotOnline', lobby, true);
+    super('Z64O_BankSyncPacket', 'Z64Online', lobby, true);
     this.savings = saving;
   }
 }
 
-export class Ooto_DownloadResponsePacket extends Packet {
+export class Z64O_DownloadResponsePacket extends Packet {
 
   save?: Buffer;
   keys?: IKeyRing;
   host: boolean;
 
   constructor(lobby: string, host: boolean) {
-    super('Ooto_DownloadResponsePacket', 'OotOnline', lobby, false);
+    super('Z64O_DownloadResponsePacket', 'Z64Online', lobby, false);
     this.host = host;
   }
 }
 
-export class Ooto_DownloadRequestPacket extends Packet {
+export class Z64O_DownloadRequestPacket extends Packet {
 
   save: Buffer;
 
   constructor(lobby: string, save: Buffer) {
-    super('Ooto_DownloadRequestPacket', 'OotOnline', lobby, false);
+    super('Z64O_DownloadRequestPacket', 'Z64Online', lobby, false);
     this.save = save;
   }
 }
 
-export class OotO_UpdateSaveDataPacket extends Packet {
+export class Z64O_UpdateSaveDataPacket extends Packet {
 
   save: Buffer;
   world: number;
 
   constructor(lobby: string, save: Buffer, world: number) {
-    super('OotO_UpdateSaveDataPacket', 'OotOnline', lobby, false);
+    super('Z64O_UpdateSaveDataPacket', 'Z64Online', lobby, false);
     this.save = save;
     this.world = world;
   }
 }
 
-export class OotO_UpdateKeyringPacket extends Packet {
+export class Z64O_UpdateKeyringPacket extends Packet {
 
   keys: IKeyRing;
   world: number;
 
   constructor(keys: IKeyRing, lobby: string, world: number) {
-    super('OotO_UpdateKeyringPacket', 'OotOnline', lobby, false);
+    super('Z64O_UpdateKeyringPacket', 'Z64Online', lobby, false);
     this.keys = keys;
     this.world = world;
   }
 
 }
 
-export class Ooto_ClientSceneContextUpdate extends Packet {
+export class Z64O_ClientSceneContextUpdate extends Packet {
   chests: Buffer;
   switches: Buffer;
   collect: Buffer;
@@ -124,7 +120,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
     scene: Scene,
     world: number
   ) {
-    super('Ooto_ClientSceneContextUpdate', 'OotOnline', lobby, false);
+    super('Z64O_ClientSceneContextUpdate', 'Z64Online', lobby, false);
     this.chests = chests;
     this.switches = switches;
     this.collect = collect;
@@ -135,7 +131,7 @@ export class Ooto_ClientSceneContextUpdate extends Packet {
   }
 }
 
-export class Ooto_ActorPacket extends Packet {
+export class Z64O_ActorPacket extends Packet {
   actorData: ActorPacketData;
   scene: Scene;
   room: number;
@@ -146,27 +142,27 @@ export class Ooto_ActorPacket extends Packet {
     room: number,
     lobby: string
   ) {
-    super('Ooto_ActorPacket', 'OotOnline', lobby, true);
+    super('Z64O_ActorPacket', 'Z64Online', lobby, true);
     this.actorData = data;
     this.scene = scene;
     this.room = room;
   }
 }
 
-export class Ooto_ActorDeadPacket extends Packet {
+export class Z64O_ActorDeadPacket extends Packet {
   actorUUID: string;
   scene: Scene;
   room: number;
 
   constructor(aid: string, scene: number, room: number, lobby: string) {
-    super('Ooto_ActorDeadPacket', 'OotOnline', lobby, true);
+    super('Z64O_ActorDeadPacket', 'Z64Online', lobby, true);
     this.actorUUID = aid;
     this.scene = scene;
     this.room = room;
   }
 }
 
-export class Ooto_SpawnActorPacket extends Packet {
+export class Z64O_SpawnActorPacket extends Packet {
   actorData: ActorPacketData;
   room: number;
   scene: Scene;
@@ -176,19 +172,19 @@ export class Ooto_SpawnActorPacket extends Packet {
     room: number,
     lobby: string
   ) {
-    super('Ooto_SpawnActorPacket', 'OotOnline', lobby, true);
+    super('Z64O_SpawnActorPacket', 'Z64Online', lobby, true);
     this.actorData = data;
     this.scene = scene;
     this.room = room;
   }
 }
 
-export class Ooto_BottleUpdatePacket extends Packet {
+export class Z64O_BottleUpdatePacket extends Packet {
   slot: number;
-  contents: InventoryItem;
+  contents: number;
 
-  constructor(slot: number, contents: InventoryItem, lobby: string) {
-    super('Ooto_BottleUpdatePacket', 'OotOnline', lobby, true);
+  constructor(slot: number, contents: number, lobby: string) {
+    super('Z64O_BottleUpdatePacket', 'Z64Online', lobby, true);
     this.slot = slot;
     this.contents = contents;
   }
@@ -227,15 +223,15 @@ export class Z64_EquipmentPakPacket extends Packet {
   }
 }
 
-export class OotO_RomFlagsPacket extends Packet {
-  isOotR: boolean;
-  hasFastBunHood: boolean;
-  isMultiworld: boolean;
+export class Z64O_RomFlagsPacket extends Packet {
+  isRando: boolean;
   isVanilla: boolean;
+  hasFastBunHood?: boolean;
+  isMultiworld?: boolean;
 
-  constructor(lobby: string, isOotR: boolean, hasFastBunHood: boolean, isMultiworld: boolean, isVanilla: boolean) {
-    super('OotO_RomFlagsPacket', 'OotO', lobby, false);
-    this.isOotR = isOotR;
+  constructor(lobby: string, isRando: boolean, isVanilla: boolean, hasFastBunHood?: boolean, isMultiworld?: boolean) {
+    super('Z64O_RomFlagsPacket', 'Z64O', lobby, false);
+    this.isRando = isRando;
     this.hasFastBunHood = hasFastBunHood;
     this.isMultiworld = isMultiworld;
     this.isVanilla = isVanilla;

@@ -15,7 +15,7 @@ import { OotEvents } from "Z64Lib/API/Common/Z64API";
 import { IActor } from "Z64Lib/API/imports";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { Ooto_ActorPacket, Ooto_SpawnActorPacket, Ooto_ActorDeadPacket } from "../network/OotOPackets";
+import { Z64O_ActorPacket, Z64O_SpawnActorPacket, Z64O_ActorDeadPacket } from "../../common/network/Z64OPackets";
 import { ActorHookBase, ActorHookProcessor, HookInfo, ActorPacketData, ActorPacketData_Impl, getActorBehavior } from "./ActorHookBase";
 import fs from 'fs';
 
@@ -32,8 +32,8 @@ export class ActorHookingManagerServer {
   @ParentReference()
   parent!: IZ64OnlineHelpers;
 
-  @ServerNetworkHandler('Ooto_ActorPacket')
-  onActorPacketServer(packet: Ooto_ActorPacket) {
+  @ServerNetworkHandler('Z64O_ActorPacket')
+  onActorPacketServer(packet: Z64O_ActorPacket) {
     this.parent.sendPacketToPlayersInScene(packet);
   }
 }
@@ -188,7 +188,7 @@ export class ActorHookingManagerClient {
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.bombsLocal.set(actor.actorUUID, actor);
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(
+        new Z64O_SpawnActorPacket(
           actorData,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -200,7 +200,7 @@ export class ActorHookingManagerClient {
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.chusLocal.set(actor.actorUUID, actor);
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(
+        new Z64O_SpawnActorPacket(
           actorData,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -211,7 +211,7 @@ export class ActorHookingManagerClient {
       actor.actorUUID = this.ModLoader.utils.getUUID();
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(
+        new Z64O_SpawnActorPacket(
           actorData,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -223,7 +223,7 @@ export class ActorHookingManagerClient {
       let actorData: ActorPacketData = new ActorPacketData_Impl(actor);
       this.NLLocal.set(actor.actorUUID, actor);
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_SpawnActorPacket(
+        new Z64O_SpawnActorPacket(
           actorData,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -243,7 +243,7 @@ export class ActorHookingManagerClient {
     if (this.transitionHookTicks.has(actor.actorUUID)) {
       this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(
+        new Z64O_ActorDeadPacket(
           actor.actorUUID,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -255,7 +255,7 @@ export class ActorHookingManagerClient {
     if (this.actorHookTicks.has(actor.actorUUID)) {
       this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(
+        new Z64O_ActorDeadPacket(
           actor.actorUUID,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -266,7 +266,7 @@ export class ActorHookingManagerClient {
     } else if (actor.actorID === BOMB_ID) {
       if (this.bombsLocal.has(actor.actorUUID)) {
         this.ModLoader.clientSide.sendPacket(
-          new Ooto_ActorDeadPacket(
+          new Z64O_ActorDeadPacket(
             actor.actorUUID,
             this.core.OOT!.global.scene,
             this.core.OOT!.global.room,
@@ -277,7 +277,7 @@ export class ActorHookingManagerClient {
       }
     } else if (actor.actorID === BOMBCHU_ID) {
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(
+        new Z64O_ActorDeadPacket(
           actor.actorUUID,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -287,7 +287,7 @@ export class ActorHookingManagerClient {
       this.chusLocal.delete(actor.actorUUID);
     } else if (actor.actorID === NL_ID) {
       this.ModLoader.clientSide.sendPacket(
-        new Ooto_ActorDeadPacket(
+        new Z64O_ActorDeadPacket(
           actor.actorUUID,
           this.core.OOT!.global.scene,
           this.core.OOT!.global.room,
@@ -324,8 +324,8 @@ export class ActorHookingManagerClient {
     actor.rdramWrite32(offset, behavior_result + 0x80000000);
   }
 
-  @NetworkHandler('Ooto_ActorPacket')
-  onActorPacket(packet: Ooto_ActorPacket) {
+  @NetworkHandler('Z64O_ActorPacket')
+  onActorPacket(packet: Z64O_ActorPacket) {
     if (packet.player.data.world !== this.ModLoader.me.data.world) return;
     // Specifically deal with doors first.
     if (this.transitionHookTicks.has(packet.actorData.actor.actorUUID)) {
@@ -445,8 +445,8 @@ export class ActorHookingManagerClient {
     }
   }
 
-  @NetworkHandler('Ooto_ActorDeadPacket')
-  onActorDead(packet: Ooto_ActorDeadPacket) {
+  @NetworkHandler('Z64O_ActorDeadPacket')
+  onActorDead(packet: Z64O_ActorDeadPacket) {
     if (packet.player.data.world !== this.ModLoader.me.data.world) return;
     if (this.bombsRemote.has(packet.actorUUID)) {
       this.bombsRemote.delete(packet.actorUUID);
@@ -457,8 +457,8 @@ export class ActorHookingManagerClient {
     }
   }
 
-  @NetworkHandler('Ooto_SpawnActorPacket')
-  onActorSpawnRequest(packet: Ooto_SpawnActorPacket) {
+  @NetworkHandler('Z64O_SpawnActorPacket')
+  onActorSpawnRequest(packet: Z64O_SpawnActorPacket) {
     if (
       packet.scene !== this.core.OOT!.global.scene ||
       packet.room !== this.core.OOT!.global.room ||
@@ -655,7 +655,7 @@ export class ActorHookingManagerClient {
         this.arrowProcess.actor = this.knockedArrow;
         actorData.hooks = this.arrowProcess.fakeTick().actorData.hooks;
         this.ModLoader.clientSide.sendPacket(
-          new Ooto_SpawnActorPacket(
+          new Z64O_SpawnActorPacket(
             actorData,
             this.core.OOT!.global.scene,
             this.core.OOT!.global.room,

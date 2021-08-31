@@ -2,7 +2,7 @@ import { JSONTemplate } from 'modloader64_api/JSONTemplate';
 import { IActor } from 'Z64Lib/API/Common/IActor';
 import IMemory from 'modloader64_api/IMemory';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { Ooto_ActorPacket } from '../network/OotOPackets';
+import { Z64O_ActorPacket } from '../../common/network/Z64OPackets';
 import { IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
 
 export class HookInfo {
@@ -103,7 +103,7 @@ export class ActorHookProcessor extends JSONTemplate {
     if (this.lastFrameCache !== j) {
       this.lastFrameCache = j;
       if (this.last_inbound_frame === 0) {
-        let p = new Ooto_ActorPacket(
+        let p = new Z64O_ActorPacket(
           k,
           this.core.global.scene,
           this.core.global.room,
@@ -117,11 +117,11 @@ export class ActorHookProcessor extends JSONTemplate {
     }
   }
 
-  fakeTick(): Ooto_ActorPacket {
+  fakeTick(): Z64O_ActorPacket {
     let k = this.toJSON();
     let j = JSON.stringify(k);
     this.lastFrameCache = j;
-    let p = new Ooto_ActorPacket(
+    let p = new Z64O_ActorPacket(
       k,
       this.core.global.scene,
       this.core.global.room,

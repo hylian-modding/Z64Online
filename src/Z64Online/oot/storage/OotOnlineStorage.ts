@@ -15,15 +15,15 @@ export class OotOnlineStorage extends OotOnlineStorageBase {
 
 export interface IOOTSyncSaveServer extends IOOTSyncSave {
   isOotR: boolean;
-  hasFastBunHood: boolean;
-  isMultiworld: boolean;
   isVanilla: boolean;
+  hasFastBunHood?: boolean;
+  isMultiworld?: boolean;
 }
 
 class OOTSyncSaveServer implements IOOTSyncSaveServer {
   isOotR: boolean = false;
-  hasFastBunHood: boolean = false;
-  isMultiworld: boolean = false;
+  hasFastBunHood?: boolean = false;
+  isMultiworld?: boolean = false;
   isVanilla: boolean = false;
   inventory!: IOOTInventorySync;
   dungeon_items: Buffer = Buffer.alloc(0x14);

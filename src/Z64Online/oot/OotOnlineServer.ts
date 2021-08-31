@@ -12,7 +12,7 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/OoT/OOTAPI";
 import { ActorHookingManagerServer } from "./actor_systems/ActorHookingSystem";
-import { Ooto_ScenePacket, Ooto_BottleUpdatePacket, Ooto_DownloadRequestPacket, Ooto_DownloadResponsePacket, OotO_RomFlagsPacket, OotO_UpdateSaveDataPacket, OotO_UpdateKeyringPacket, Ooto_ClientSceneContextUpdate } from "./network/OotOPackets";
+import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate } from "../common/network/Z64OPackets";
 import { OOT_PuppetOverlordServer } from "./puppet/OOT_PuppetOverlord";
 import { PvPServer } from "./pvp/PvPModule";
 import { OotOSaveData } from "./save/OotoSaveData";
@@ -81,17 +81,17 @@ export default class OotOnlineServer {
 
     @Preinit()
     preinit() {
-        this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server");
-        this.ModLoader.config.setData("OotO_WorldEvents_Server", "Z64OEventsActive", []);
-        this.ModLoader.config.setData("OotO_WorldEvents_Server", "Z64OAssetsURL", []);
-        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET, (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OEventsActive"]);
-        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET, (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OAssetsURL"]);
+        this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server");
+        this.ModLoader.config.setData("Z64O_WorldEvents_Server", "Z64OEventsActive", []);
+        this.ModLoader.config.setData("Z64O_WorldEvents_Server", "Z64OAssetsURL", []);
+        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET, (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OEventsActive"]);
+        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET, (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OAssetsURL"]);
     }
 
     @EventHandler(EventsServer.ON_LOBBY_DATA)
     onLobbyData(ld: LobbyData) {
-        ld.data["Z64OEventsActive"] = (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OEventsActive"];
-        ld.data["Z64OAssetsURL"] = (this.ModLoader.config.registerConfigCategory("OotO_WorldEvents_Server") as any)["Z64OAssetsURL"];
+        ld.data["Z64OEventsActive"] = (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OEventsActive"];
+        ld.data["Z64OAssetsURL"] = (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OAssetsURL"];
     }
 
     @EventHandler(EventsServer.ON_LOBBY_JOIN)
@@ -120,8 +120,8 @@ export default class OotOnlineServer {
         delete storage.networkPlayerInstances[evt.player.uuid];
     }
 
-    @ServerNetworkHandler('Ooto_ScenePacket')
-    onSceneChange_server(packet: Ooto_ScenePacket) {
+    @ServerNetworkHandler('Z64O_ScenePacket')
+    onSceneChange_server(packet: Z64O_ScenePacket) {
         try {
             let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
                 packet.lobby,
@@ -147,8 +147,8 @@ export default class OotOnlineServer {
     // Subscreen Syncing
     //------------------------------
 
-    @ServerNetworkHandler('Ooto_BottleUpdatePacket')
-    onBottle_server(packet: Ooto_BottleUpdatePacket) {
+    @ServerNetworkHandler('Z64O_BottleUpdatePacket')
+    onBottle_server(packet: Z64O_BottleUpdatePacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -175,8 +175,8 @@ export default class OotOnlineServer {
     }
 
     // Client is logging in and wants to know how to proceed.
-    @ServerNetworkHandler('Ooto_DownloadRequestPacket')
-    onDownloadPacket_server(packet: Ooto_DownloadRequestPacket) {
+    @ServerNetworkHandler('Z64O_DownloadRequestPacket')
+    onDownloadPacket_server(packet: Z64O_DownloadRequestPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -191,7 +191,7 @@ export default class OotOnlineServer {
         let world = storage.worlds[packet.player.data.world];
         if (world.saveGameSetup) {
             // Game is running, get data.
-            let resp = new Ooto_DownloadResponsePacket(packet.lobby, false);
+            let resp = new Z64O_DownloadResponsePacket(packet.lobby, false);
             resp.save = Buffer.from(JSON.stringify(world.save));
             resp.keys = world.keys;
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
@@ -203,13 +203,13 @@ export default class OotOnlineServer {
                 world.save[key] = obj;
             });
             world.saveGameSetup = true;
-            let resp = new Ooto_DownloadResponsePacket(packet.lobby, true);
+            let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
     }
 
-    @ServerNetworkHandler('OotO_RomFlagsPacket')
-    onRomFlags_server(packet: OotO_RomFlagsPacket) {
+    @ServerNetworkHandler('Z64O_RomFlagsPacket')
+    onRomFlags_server(packet: Z64O_RomFlagsPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -223,7 +223,7 @@ export default class OotOnlineServer {
         }
         let world = storage.worlds[packet.player.data.world];
         world.save.isVanilla = packet.isVanilla;
-        world.save.isOotR = packet.isOotR;
+        world.save.isOotR = packet.isRando;
         world.save.hasFastBunHood = packet.hasFastBunHood;
         world.save.isMultiworld = packet.isMultiworld;
     }
@@ -232,8 +232,8 @@ export default class OotOnlineServer {
     // Flag Syncing
     //------------------------------
 
-    @ServerNetworkHandler('OotO_UpdateSaveDataPacket')
-    onSceneFlagSync_server(packet: OotO_UpdateSaveDataPacket) {
+    @ServerNetworkHandler('Z64O_UpdateSaveDataPacket')
+    onSceneFlagSync_server(packet: Z64O_UpdateSaveDataPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -248,11 +248,11 @@ export default class OotOnlineServer {
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new OotO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
+        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
     }
 
-    @ServerNetworkHandler('OotO_UpdateKeyringPacket')
-    onKeySync_Server(packet: OotO_UpdateKeyringPacket) {
+    @ServerNetworkHandler('Z64O_UpdateKeyringPacket')
+    onKeySync_Server(packet: Z64O_UpdateKeyringPacket) {
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -266,11 +266,11 @@ export default class OotOnlineServer {
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new OotO_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
+        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
     }
 
-    @ServerNetworkHandler('Ooto_ClientSceneContextUpdate')
-    onSceneContextSync_server(packet: Ooto_ClientSceneContextUpdate) {
+    @ServerNetworkHandler('Z64O_ClientSceneContextUpdate')
+    onSceneContextSync_server(packet: Z64O_ClientSceneContextUpdate) {
         this.sendPacketToPlayersInScene(packet);
     }
 

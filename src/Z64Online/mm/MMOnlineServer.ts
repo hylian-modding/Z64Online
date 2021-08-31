@@ -11,7 +11,7 @@ import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
-import { MMO_ScenePacket, MMO_BottleUpdatePacket, MMO_DownloadRequestPacket, MMO_DownloadResponsePacket, MMO_RomFlagsPacket, MMO_UpdateSaveDataPacket, MMO_UpdateKeyringPacket, MMO_ClientSceneContextUpdate } from "./network/MMOPackets";
+import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate } from "../common/network/Z64OPackets";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
 import { MMOSaveData } from "./save/MMOSaveData";
@@ -80,17 +80,17 @@ export default class MMOnlineServer {
 
     @Preinit()
     preinit() {
-        this.ModLoader.config.registerConfigCategory("MMO_WorldEvents_Server");
-        this.ModLoader.config.setData("MMO_WorldEvents_Server", "Z64OEventsActive", []);
-        this.ModLoader.config.setData("MMO_WorldEvents_Server", "Z64OAssetsURL", []);
-        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET, (this.ModLoader.config.registerConfigCategory("MMO_WorldEvents_Server") as any)["Z64OEventsActive"]);
-        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET, (this.ModLoader.config.registerConfigCategory("MMO_WorldEvents_Server") as any)["Z64OAssetsURL"]);
+        this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server");
+        this.ModLoader.config.setData("Z64O_WorldEvents_Server", "Z64OEventsActive", []);
+        this.ModLoader.config.setData("Z64O_WorldEvents_Server", "Z64OAssetsURL", []);
+        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_EVENT_DATA_GET, (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OEventsActive"]);
+        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.SERVER_ASSET_DATA_GET, (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OAssetsURL"]);
     }
 
     @EventHandler(EventsServer.ON_LOBBY_DATA)
     onLobbyData(ld: LobbyData) {
-        ld.data["Z64OEventsActive"] = (this.ModLoader.config.registerConfigCategory("MMO_WorldEvents_Server") as any)["Z64OEventsActive"];
-        ld.data["Z64OAssetsURL"] = (this.ModLoader.config.registerConfigCategory("MMO_WorldEvents_Server") as any)["Z64OAssetsURL"];
+        ld.data["Z64OEventsActive"] = (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OEventsActive"];
+        ld.data["Z64OAssetsURL"] = (this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents_Server") as any)["Z64OAssetsURL"];
     }
 
     @EventHandler(EventsServer.ON_LOBBY_JOIN)
@@ -119,8 +119,8 @@ export default class MMOnlineServer {
         delete storage.networkPlayerInstances[evt.player.uuid];
     }
 
-    @ServerNetworkHandler('MMO_ScenePacket')
-    onSceneChange_server(packet: MMO_ScenePacket) {
+    @ServerNetworkHandler('Z64O_ScenePacket')
+    onSceneChange_server(packet: Z64O_ScenePacket) {
         try {
             let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
                 packet.lobby,
@@ -146,8 +146,8 @@ export default class MMOnlineServer {
     // Subscreen Syncing
     //------------------------------
 
-    @ServerNetworkHandler('MMO_BottleUpdatePacket')
-    onBottle_server(packet: MMO_BottleUpdatePacket) {
+    @ServerNetworkHandler('Z64O_BottleUpdatePacket')
+    onBottle_server(packet: Z64O_BottleUpdatePacket) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -180,8 +180,8 @@ export default class MMOnlineServer {
     }
 
     // Client is logging in and wants to know how to proceed.
-    @ServerNetworkHandler('MMO_DownloadRequestPacket')
-    onDownloadPacket_server(packet: MMO_DownloadRequestPacket) {
+    @ServerNetworkHandler('Z64O_DownloadRequestPacket')
+    onDownloadPacket_server(packet: Z64O_DownloadRequestPacket) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -196,7 +196,7 @@ export default class MMOnlineServer {
         let world = storage.worlds[packet.player.data.world];
         if (world.saveGameSetup) {
             // Game is running, get data.
-            let resp = new MMO_DownloadResponsePacket(packet.lobby, false);
+            let resp = new Z64O_DownloadResponsePacket(packet.lobby, false);
             resp.save = Buffer.from(JSON.stringify(world.save));
             resp.keys = world.keys;
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
@@ -208,13 +208,13 @@ export default class MMOnlineServer {
                 world.save[key] = obj;
             });
             world.saveGameSetup = true;
-            let resp = new MMO_DownloadResponsePacket(packet.lobby, true);
+            let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
             this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
     }
 
-    @ServerNetworkHandler('MMO_RomFlagsPacket')
-    onRomFlags_server(packet: MMO_RomFlagsPacket) {
+    @ServerNetworkHandler('Z64O_RomFlagsPacket')
+    onRomFlags_server(packet: Z64O_RomFlagsPacket) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -228,15 +228,15 @@ export default class MMOnlineServer {
         }
         let world = storage.worlds[packet.player.data.world];
         world.save.isVanilla = packet.isVanilla;
-        world.save.isMMR = packet.isMMR;
+        world.save.isMMR = packet.isRando;
     }
 
     //------------------------------
     // Flag Syncing
     //------------------------------
 
-    @ServerNetworkHandler('MMO_UpdateSaveDataPacket')
-    onSceneFlagSync_server(packet: MMO_UpdateSaveDataPacket) {
+    @ServerNetworkHandler('Z64O_UpdateSaveDataPacket')
+    onSceneFlagSync_server(packet: Z64O_UpdateSaveDataPacket) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -251,11 +251,11 @@ export default class MMOnlineServer {
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new MMO_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
+        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
     }
 
-    @ServerNetworkHandler('MMO_UpdateKeyringPacket')
-    onKeySync_Server(packet: MMO_UpdateKeyringPacket) {
+    @ServerNetworkHandler('Z64O_UpdateKeyringPacket')
+    onKeySync_Server(packet: Z64O_UpdateKeyringPacket) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -269,11 +269,11 @@ export default class MMOnlineServer {
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new MMO_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
+        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
     }
 
-    @ServerNetworkHandler('MMO_ClientSceneContextUpdate')
-    onSceneContextSync_server(packet: MMO_ClientSceneContextUpdate) {
+    @ServerNetworkHandler('Z64O_ClientSceneContextUpdate')
+    onSceneContextSync_server(packet: Z64O_ClientSceneContextUpdate) {
         this.sendPacketToPlayersInScene(packet);
     }
 

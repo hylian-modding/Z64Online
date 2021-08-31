@@ -3,7 +3,7 @@ import { PuppetOverlordClient, PuppetOverlordServer } from "@Z64Online/common/pu
 import { Core, IZ64GameMain, Scene } from "@Z64Online/common/types/Types";
 import { HorseData } from "@Z64Online/oot/puppet/HorseData";
 import { Puppet } from "@Z64Online/oot/puppet/Puppet";
-import { Ooto_PuppetPacket, Ooto_ScenePacket, Ooto_SceneRequestPacket } from "@Z64Online/oot/network/OotOPackets";
+import { Z64O_PuppetPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket } from "@Z64Online/common/network/Z64OPackets";
 import { PuppetQuery, Z64OnlineAPI_PuppetStubCreated, Z64OnlineAPI_PuppetStubDestroyed, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { EventsClient, EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
@@ -54,9 +54,9 @@ export class OOT_PuppetOverlordServer extends PuppetOverlordServer {
         }
     }
 
-    @ServerNetworkHandler('Ooto_PuppetPacket')
+    @ServerNetworkHandler('Z64O_PuppetPacket')
     onPuppetData_server(packet: IPacketHeader) {
-        let p: Ooto_PuppetPacket = packet as unknown as Ooto_PuppetPacket;
+        let p: Z64O_PuppetPacket = packet as unknown as Z64O_PuppetPacket;
         let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent as any
@@ -95,20 +95,20 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
                 )
             );
             this.ModLoader.logger.info('Player ' + player.nickname + ' assigned new puppet ' + this.puppets.get(player.uuid)!.id + '.');
-            this.ModLoader.clientSide.sendPacket(new Ooto_SceneRequestPacket(this.ModLoader.clientLobby));
+            this.ModLoader.clientSide.sendPacket(new Z64O_SceneRequestPacket(this.ModLoader.clientLobby));
         }
     }
 
     sendPuppetPacket() {
         this.fakeClientPuppet.data.onTick();
-        let packet = new Ooto_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
+        let packet = new Z64O_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
         if (this.Epona !== undefined) {
             packet.setHorseData(this.Epona);
         }
         this.ModLoader.clientSide.sendPacket(packet);
     }
 
-    processPuppetPacket(packet: Ooto_PuppetPacket) {
+    processPuppetPacket(packet: Z64O_PuppetPacket) {
         if (this.puppets.has(packet.player.uuid)) {
             let puppet: Puppet = this.puppets.get(packet.player.uuid)! as Puppet;
             puppet.processIncomingPuppetData(packet.data);
@@ -156,13 +156,13 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
         this.localPlayerChangingScenes(scene, this.core.OOT!.save.age);
     }
 
-    @NetworkHandler('Ooto_ScenePacket')
-    onSceneChange_client(packet: Ooto_ScenePacket) {
+    @NetworkHandler('Z64O_ScenePacket')
+    onSceneChange_client(packet: Z64O_ScenePacket) {
         this.changePuppetScene(packet.player, packet.scene);
     }
 
-    @NetworkHandler('Ooto_PuppetPacket')
-    onPuppetData_client(packet: Ooto_PuppetPacket) {
+    @NetworkHandler('Z64O_PuppetPacket')
+    onPuppetData_client(packet: Z64O_PuppetPacket) {
         if (
             this.core.OOT!.helper.isTitleScreen() ||
             this.core.OOT!.helper.isPaused() ||

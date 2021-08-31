@@ -26,12 +26,12 @@ import * as API from 'Z64Lib/API/Imports';
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
-import { MMO_UpdateSaveDataPacket, MMO_UpdateKeyringPacket, MMO_ClientSceneContextUpdate, MMO_DownloadRequestPacket, MMO_RomFlagsPacket, MMO_ScenePacket, MMO_SceneRequestPacket, MMO_BottleUpdatePacket, MMO_DownloadResponsePacket, MMO_PermFlagsPacket } from "@Z64Online/mm/network/MMOPackets";
+import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket } from "@Z64Online/common/network/Z64OPackets";
 import { MMOSaveData } from "@Z64Online/mm/save/MMOSaveData";
 import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult } from "Z64Lib/API/Common/Z64API";
 import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import { Z64_SAVE } from "Z64Lib/src/Common/types/GameAliases";
-
+import { MMO_PermFlagsPacket } from './network/MMOPackets'
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
 function RGBA32ToA5(rgba: Buffer) {
@@ -147,7 +147,7 @@ export default class MMOnlineClient {
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-            this.ModLoader.clientSide.sendPacket(new MMO_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
+            this.ModLoader.clientSide.sendPacket(new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
         }
     }
@@ -164,7 +164,7 @@ export default class MMOnlineClient {
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.MM!.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
                 this.clientStorage.keySaveHash = keyHash;
-                this.ModLoader.clientSide.sendPacket(new MMO_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
+                this.ModLoader.clientSide.sendPacket(new Z64O_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
             // and beans too why not.
             if (this.clientStorage.lastbeans !== this.core.MM!.save.inventory.magicBeansCount) {
@@ -209,7 +209,7 @@ export default class MMOnlineClient {
                 return;
             }
             this.core.MM!.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new MMO_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.MM!.global.scene, this.clientStorage.world));
+            this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.MM!.global.scene, this.clientStorage.world));
         }
     }
 
@@ -228,7 +228,7 @@ export default class MMOnlineClient {
                 this.clientStorage.bottleCache[i] = bottles[i];
                 this.ModLoader.logger.info('Bottle update.');
                 if (!onlyfillCache) {
-                    this.ModLoader.clientSide.sendPacket(new MMO_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_BottleUpdatePacket(i, bottles[i], this.ModLoader.clientLobby));
                 }
             }
         }
@@ -291,13 +291,13 @@ export default class MMOnlineClient {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
-                    this.ModLoader.clientSide.sendPacket(new MMO_DownloadRequestPacket(this.ModLoader.clientLobby, new MMOSaveData(this.core.MM!, this.ModLoader).createSave()));
-                    this.ModLoader.clientSide.sendPacket(new MMO_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isMMR, RomFlags.isVanilla));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_DownloadRequestPacket(this.ModLoader.clientLobby, new MMOSaveData(this.core.MM!, this.ModLoader).createSave()));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isMMR, RomFlags.isVanilla));
                 }
             }, 50);
         }
         this.ModLoader.clientSide.sendPacket(
-            new MMO_ScenePacket(
+            new Z64O_ScenePacket(
                 this.ModLoader.clientLobby,
                 scene,
                 this.core.MM!.save.form
@@ -318,8 +318,8 @@ export default class MMOnlineClient {
         this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
     }
 
-    @NetworkHandler('MMO_ScenePacket')
-    onSceneChange_client(packet: MMO_ScenePacket) {
+    @NetworkHandler('Z64O_ScenePacket')
+    onSceneChange_client(packet: Z64O_ScenePacket) {
         this.ModLoader.logger.info(
             'client receive: Player ' +
             packet.player.nickname +
@@ -336,11 +336,11 @@ export default class MMOnlineClient {
     }
 
     // This packet is basically 'where the hell are you?' if a player has a puppet on file but doesn't know what scene its suppose to be in.
-    @NetworkHandler('MMO_SceneRequestPacket')
-    onSceneRequest_client(packet: MMO_SceneRequestPacket) {
+    @NetworkHandler('Z64O_SceneRequestPacket')
+    onSceneRequest_client(packet: Z64O_SceneRequestPacket) {
         if (this.core.MM!.save !== undefined) {
             this.ModLoader.clientSide.sendPacketToSpecificPlayer(
-                new MMO_ScenePacket(
+                new Z64O_ScenePacket(
                     this.ModLoader.clientLobby,
                     this.core.MM!.global.scene,
                     this.core.MM!.save.form
@@ -350,8 +350,8 @@ export default class MMOnlineClient {
         }
     }
 
-    @NetworkHandler('MMO_BottleUpdatePacket')
-    onBottle_client(packet: MMO_BottleUpdatePacket) {
+    @NetworkHandler('Z64O_BottleUpdatePacket')
+    onBottle_client(packet: Z64O_BottleUpdatePacket) {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
@@ -390,8 +390,8 @@ export default class MMOnlineClient {
     }
 
     // The server is giving me data.
-    @NetworkHandler('MMO_DownloadResponsePacket')
-    onDownloadPacket_client(packet: MMO_DownloadResponsePacket) {
+    @NetworkHandler('Z64O_DownloadResponsePacket')
+    onDownloadPacket_client(packet: Z64O_DownloadResponsePacket) {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
@@ -415,8 +415,8 @@ export default class MMOnlineClient {
         }, 20);
     }
 
-    @NetworkHandler('MMO_UpdateSaveDataPacket')
-    onSaveUpdate(packet: MMO_UpdateSaveDataPacket) {
+    @NetworkHandler('Z64O_UpdateSaveDataPacket')
+    onSaveUpdate(packet: Z64O_UpdateSaveDataPacket) {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
@@ -435,8 +435,8 @@ export default class MMOnlineClient {
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
-    @NetworkHandler('MMO_UpdateKeyringPacket')
-    onKeyUpdate(packet: MMO_UpdateKeyringPacket) {
+    @NetworkHandler('Z64O_UpdateKeyringPacket')
+    onKeyUpdate(packet: Z64O_UpdateKeyringPacket) {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
@@ -454,8 +454,8 @@ export default class MMOnlineClient {
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
     }
 
-    @NetworkHandler('MMO_ClientSceneContextUpdate')
-    onSceneContextSync_client(packet: MMO_ClientSceneContextUpdate) {
+    @NetworkHandler('Z64O_ClientSceneContextUpdate')
+    onSceneContextSync_client(packet: Z64O_ClientSceneContextUpdate) {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid() ||
@@ -566,7 +566,7 @@ export default class MMOnlineClient {
     @EventHandler(MMEvents.ON_AGE_CHANGE)
     onAgeChange(age: AgeOrForm) {
         this.ModLoader.clientSide.sendPacket(
-            new MMO_ScenePacket(
+            new Z64O_ScenePacket(
                 this.ModLoader.clientLobby,
                 this.core.MM!.global.scene,
                 age
@@ -619,7 +619,7 @@ export default class MMOnlineClient {
             console.log("Photo taken");
             mergePhotoData(this.clientStorage.photoStorage, photo);
             this.clientStorage.photoStorage.compressPhoto();
-            this.ModLoader.clientSide.sendPacket(new MMO_PictoboxPacket(this.clientStorage.photoStorage, this.ModLoader.clientLobby));
+            this.ModLoader.clientSide.sendPacket(new Z64O_PictoboxPacket(this.clientStorage.photoStorage, this.ModLoader.clientLobby));
         }
     }
 
@@ -627,18 +627,18 @@ export default class MMOnlineClient {
         let skull = createSkullFromContext(this.ModLoader, this.core.MM!.save.skull);
         mergeSkullData(this.clientStorage.skullStorage, skull);
         applySkullToContext(skull, this.core.MM!.save.skull);
-        this.ModLoader.clientSide.sendPacket(new MMO_SkullPacket(this.clientStorage.skullStorage, this.ModLoader.clientLobby));
+        this.ModLoader.clientSide.sendPacket(new Z64O_SkullPacket(this.clientStorage.skullStorage, this.ModLoader.clientLobby));
     }
 
     updateStray() {
         let stray = createStrayFromContext(this.ModLoader, this.core.MM!.save.stray);
         mergeStrayData(this.clientStorage.strayStorage, stray);
         applyStrayToContext(stray, this.core.MM!.save.stray);
-        this.ModLoader.clientSide.sendPacket(new MMO_StrayFairyPacket(this.clientStorage.strayStorage, this.ModLoader.clientLobby));
+        this.ModLoader.clientSide.sendPacket(new Z64O_StrayFairyPacket(this.clientStorage.strayStorage, this.ModLoader.clientLobby));
     }
 
-    @NetworkHandler('MMO_PictoboxPacket')
-    onPictobox(packet: MMO_PictoboxPacket) {
+    @NetworkHandler('Z64O_PictoboxPacket')
+    onPictobox(packet: Z64O_PictoboxPacket) {
         if (packet.player.uuid === this.ModLoader.me.uuid) {
             return;
         }
@@ -666,8 +666,8 @@ export default class MMOnlineClient {
         this.clientStorage.pictoboxAlert.buf = sb.toBuffer();
     }
 
-    @NetworkHandler('MMO_SkullPacket')
-    onSkull(packet: MMO_SkullPacket) {
+    @NetworkHandler('Z64O_SkullPacket')
+    onSkull(packet: Z64O_SkullPacket) {
         let skull = createSkullFromContext(this.ModLoader, this.core.MM!.save.skull);
 
         mergeSkullData(this.clientStorage.skullStorage, packet.skull);
@@ -675,8 +675,8 @@ export default class MMOnlineClient {
         applySkullToContext(this.clientStorage.skullStorage, this.core.MM!.save.skull);
     }
 
-    @NetworkHandler('MMO_StrayFairyPacket')
-    onStray(packet: MMO_StrayFairyPacket) {
+    @NetworkHandler('Z64O_StrayFairyPacket')
+    onStray(packet: Z64O_StrayFairyPacket) {
         let stray = createStrayFromContext(this.ModLoader, this.core.MM!.save.stray);
 
         mergeStrayData(this.clientStorage.strayStorage, packet.stray);
