@@ -1,8 +1,8 @@
-import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
+import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
 import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
 import { getManifestForForm, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
 import { CostumeHelper } from '@Z64Online/common/events/CostumeHelper';
-import { Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_IS_RANDOMIZER, Z64_MANIFEST } from '@Z64Online/common/types/GameAliases';
+import { Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_IS_RANDOMIZER } from '@Z64Online/common/types/GameAliases';
 import { OOT_GAME } from '@Z64Online/common/types/OotAliases';
 import { AgeOrForm, Manifest, Scene } from '@Z64Online/common/types/Types';
 import { OotOnlineConfigCategory } from '@Z64Online/oot/OotOnline';
@@ -25,7 +25,6 @@ import {
   NetworkHandler
 } from 'modloader64_api/NetworkHandler';
 import { onTick, Preinit } from 'modloader64_api/PluginLifecycle';
-import path from 'path';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { Z64 } from 'Z64Lib/API/imports';
 import { Tunic } from 'Z64Lib/API/OOT/OOTAPI';
@@ -34,13 +33,14 @@ import { EquipmentManifest } from './EquipmentManifest';
 import { ModelAllocationManager } from '../utils/ModelAllocationManager';
 import { ModelReference } from '../utils/ModelContainer';
 import { ModelPlayer } from './ModelPlayer';
-import { Z64_GAME, Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
+import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from "../utils/IModelManagerShim";
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/common/network/Z64OPackets';
-import { Puppet } from '@Z64Online/oot/puppet/Puppet';
+import { Puppet_OOT } from '@Z64Online/oot/puppet/Puppet';
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
-import { ALIAS_PROXY_SIZE, PUPPET_INST_SIZE } from '../Defines';
+import { ALIAS_PROXY_SIZE } from '../Defines';
+import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -349,7 +349,7 @@ export class ModelManagerClient {
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN)
-  onPuppetPreSpawn(puppet: Puppet) {
+  onPuppetPreSpawn(puppet: Puppet_OOT) {
     /**@todo rewrite this shit after we uncrust the core. */
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
     puppet.modelPointer = player.proxyPointer;
@@ -364,9 +364,7 @@ export class ModelManagerClient {
     ref.loadModel();
 
     if (playerAge !== modelAge) return;
-    console.log("fuck 3");
     let alias = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, ALIAS_PROXY_SIZE).slice(0x5000);
-    console.log(`copying shit from ${ref.pointer.toString(16)} to ${player.proxyPointer.toString(16)}`);
     this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + 0x5000, alias);
 
     if (this.mainConfig.diagnosticMode) {
@@ -375,15 +373,12 @@ export class ModelManagerClient {
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
-  onPuppetSpawned(puppet: Puppet) {
-    console.log("fuck 1");
+  onPuppetSpawned(puppet: IPuppet) {
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
-    if (player.AgesOrForms.has(puppet.age)) {
-      console.log("fuck 2");
-      this.setPuppetModel(player, player.AgesOrForms.get(puppet.age)!, puppet.age, this.AgeOrForm);
+    if (player.AgesOrForms.has(puppet.ageOrForm)) {
+      this.setPuppetModel(player, player.AgesOrForms.get(puppet.ageOrForm)!, puppet.ageOrForm, this.AgeOrForm);
     } else {
-      console.log("shit 1");
-      this.setPuppetModel(player, this.puppetModels.get(puppet.age)!, puppet.age, this.AgeOrForm);
+      this.setPuppetModel(player, this.puppetModels.get(puppet.ageOrForm)!, puppet.ageOrForm, this.AgeOrForm);
     }
     if (this.mainConfig.diagnosticMode) {
       DumpRam();
@@ -391,13 +386,12 @@ export class ModelManagerClient {
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_DESPAWNED)
-  onPuppetDespawned(puppet: Puppet) {
+  onPuppetDespawned(puppet: Puppet_OOT) {
     this.allocationManager.getPlayer(puppet.player)!.isDead = true;
-    console.log(puppet.player.nickname + " dead");
   }
 
   @EventHandler(Z64OnlineEvents.PUPPET_AGE_CHANGED)
-  onPuppetAgeChange(puppet: Puppet) {
+  onPuppetAgeChange(puppet: Puppet_OOT) {
     this.onPuppetSpawned(puppet);
   }
 

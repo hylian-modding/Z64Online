@@ -2,8 +2,8 @@ import { onViUpdate, onTick } from "modloader64_api/PluginLifecycle";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOOTCore, OotEvents, Scene } from "Z64Lib/API/OOT/OOTAPI";
-import { Puppet } from "@Z64Online/oot/puppet/Puppet";
+import { OotEvents, Scene } from "Z64Lib/API/OOT/OOTAPI";
+import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import Vector3 from "modloader64_api/math/Vector3";
@@ -22,17 +22,7 @@ import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { Command } from "Z64Lib/API/Common/ICommandBuffer";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { Z64_GLOBAL_PTR } from "Z64Lib/src/Common/types/GameAliases";
-import { openMemoryUtils3Tab } from "@Z64Online/common/compat/MemoryUtils3";
 import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
-
-function buf2hex(buffer: Buffer) {
-    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
-}
-
-function v3toTruncatedString(v3: Vector3, fixed: number = 4): string {
-    return "(" + v3.x.toFixed(fixed).toString() + ", " + v3.y.toFixed(fixed).toString() + ", " + v3.z.toFixed(fixed).toString() + ")";
-}
 
 export class ImGuiHandler extends ImGuiHandlerCommon{
 
@@ -42,7 +32,7 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
     core: IZ64Main = {} as any;
     @ParentReference()
     parent!: IZ64OnlineHelpers;
-    puppets: Array<Puppet> = [];
+    puppets: Array<Puppet_OOT> = [];
     scene: Scene = -1;
     settings!: OotOnlineConfigCategory
     // View
@@ -57,12 +47,6 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
     teleportDest: string_ref = [""];
     cutsceneDest: string_ref = [""];
     sound_id: string_ref = [""];
-    showActorBrowser: boolean = false;
-    actorCategories: Array<string> = ["Switches", "Backgrounds", "Player", "Bomb", "NPC", "Enemy", "Prop", "Item", "Misc", "Boss", "Door", "Chest"];
-    actorNames: any;
-    curActor: number = 0;
-    raddeg: number = Math.PI / 32768
-    actor_data: Buffer = Buffer.alloc(0x13C);
     // #endif
 
     constructor() {
@@ -73,12 +57,12 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
     }
 
     @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_SPAWNED)
-    onPuppetSpawn(puppet: Puppet) {
+    onPuppetSpawn(puppet: Puppet_OOT) {
         this.puppets.push(puppet);
     }
 
     @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_DESPAWNED)
-    onPuppetDespawn(puppet: Puppet) {
+    onPuppetDespawn(puppet: Puppet_OOT) {
         let index: number = -1;
         for (let i = 0; i < this.puppets.length; i++) {
             if (puppet.id === this.puppets[i].id) {
@@ -258,9 +242,6 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
                         }
                         this.ModLoader.ImGui.endMenu();
                     }
-                    if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
-                        this.showActorBrowser = !this.showActorBrowser;
-                    }
                     if (this.ModLoader.ImGui.button("DUMP RAM")) {
                         bus.emit(Z64OnlineEvents.DEBUG_DUMP_RAM, {});
                     }
@@ -274,140 +255,6 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
             }
             this.ModLoader.ImGui.endMainMenuBar();
         }
-
-        // #ifdef IS_DEV_BUILD
-        if (this.showActorBrowser) {
-            let treeNodeDepth = 0;
-            if (this.ModLoader.ImGui.begin("Actor Browser###OotO:ActorDebug")) {
-                this.ModLoader.ImGui.columns(2, "###ActorView", true)
-
-                let offset = 0x1C30;
-                for (let i = 0; i < 12; i++) {
-                    treeNodeDepth++;
-                    let ptr = this.ModLoader.emulator.rdramRead32(Z64_GLOBAL_PTR);
-                    ptr += offset + (i * 8) + 4;
-                    if (this.ModLoader.ImGui.treeNode(this.actorCategories[i] + "###OotO:ActorDebugTree" + treeNodeDepth)) {
-                        this.ModLoader.ImGui.sameLine()
-                        this.ModLoader.ImGui.textDisabled(ptr.toString(16).toUpperCase())
-
-                        if (this.ModLoader.emulator.rdramReadPtr32(Z64_GLOBAL_PTR, offset + (i * 8)) === 0) {
-                            this.ModLoader.ImGui.treePop();
-                            continue;
-                        }
-
-                        let next = this.ModLoader.emulator.rdramReadPtr32(Z64_GLOBAL_PTR, offset + (i * 8) + 4);
-
-                        while (next !== 0) {
-                            let name = this.actorNames["0x" + this.ModLoader.emulator.rdramRead16(next).toString(16).toUpperCase()];
-                            if (name === undefined) {
-                                name = "Unknown actor";
-                            }
-
-                            if (this.ModLoader.ImGui.menuItem(name + "###OotO:ActorDebugTree" + next.toString(16), undefined, this.curActor === next)) {
-                                this.curActor = next;
-                            }
-                            next = this.ModLoader.emulator.rdramRead32(next + 0x124);
-                        }
-
-                        this.ModLoader.ImGui.treePop();
-                    }
-                }
-
-                this.ModLoader.ImGui.nextColumn()
-
-                let actor = this.core.OOT!.actorManager.createIActorFromPointer(this.curActor);
-                let actor_size = this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramRead32(this.ModLoader.emulator.rdramRead32(this.curActor + (0x13C - 4)) + 0x14) + 0xC)
-
-                if (actor_size === 0) actor_size = 0x13C
-
-                this.ModLoader.ImGui.textDisabled("UUID: " + actor.actorUUID.toUpperCase())
-                this.ModLoader.ImGui.textDisabled("Address: " + this.curActor.toString(16).toUpperCase())
-
-                this.ModLoader.ImGui.text("Actor ID: " + actor.actorID.toString(16).toUpperCase().padStart(4, "0")); this.ModLoader.ImGui.sameLine()
-                this.ModLoader.ImGui.text("Actor Type: " + actor.actorType.toString(16).toUpperCase()); this.ModLoader.ImGui.sameLine()
-                this.ModLoader.ImGui.text("Variable: " + actor.variable.toString(16).toUpperCase()); this.ModLoader.ImGui.sameLine()
-                this.ModLoader.ImGui.text("Room: " + actor.room.toString(16).toUpperCase())
-                this.ModLoader.ImGui.text("Render Flags: " + actor.renderingFlags.toString(16).toUpperCase())
-
-                this.ModLoader.ImGui.text("Health: " + actor.health.toString())
-                this.ModLoader.ImGui.text("Object Table Index: " + actor.objectTableIndex.toString(16))
-                this.ModLoader.ImGui.text("Redead Freeze: " + actor.redeadFreeze.toString(16).toUpperCase())
-                this.ModLoader.ImGui.text("Sound Effect: " + actor.soundEffect.toString(16).toUpperCase())
-
-                this.ModLoader.ImGui.text("Position: " + v3toTruncatedString(actor.position.getVec3()));
-                this.ModLoader.ImGui.text("Rotation: " + v3toTruncatedString(actor.rotation.getVec3().multiplyN(this.raddeg)));
-                this.ModLoader.ImGui.text("Sizeof: " + actor_size.toString(16).toUpperCase())
-
-                if (this.ModLoader.ImGui.treeNode("Hex" + "###" + this.curActor.toString(16))) {
-                    this.actor_data = this.ModLoader.emulator.rdramReadBuffer(this.curActor, actor_size)
-
-                    this.ModLoader.ImGui.sameLine(undefined, 12)
-                    if (this.ModLoader.ImGui.button("Copy")) {
-                        this.ModLoader.ImGui.setClipboardText(buf2hex(this.actor_data).toUpperCase())
-                    }
-
-                    let width = this.ModLoader.ImGui.getContentRegionAvail().x - 20
-                    let current_offset = 0
-
-                    this.ModLoader.ImGui.beginChildFrame(1, xy(width, 320))
-
-                    for (let i = 0; i < actor_size; i += 4) {
-                        current_offset += 8
-
-                        if (current_offset >= width - 64) {
-                            this.ModLoader.ImGui.newLine()
-                            current_offset = 8
-                        }
-
-                        for (let j = 0; j < 4; j++) {
-                            this.ModLoader.ImGui.sameLine(current_offset - j, 0)
-                            this.ModLoader.ImGui.textDisabled(buf2hex(this.actor_data.slice(i + j, i + j + 1)).toUpperCase())
-                            current_offset += 20
-                        }
-
-                        current_offset += 8
-                    }
-
-                    this.ModLoader.ImGui.endChildFrame()
-
-                    this.ModLoader.ImGui.treePop()
-                }
-
-                if (this.ModLoader.ImGui.smallButton(this.raddeg === (Math.PI / 32768) ? "Radians" : "Degrees")) {
-                    this.raddeg = this.raddeg == (Math.PI / 32768) ? (180 / 32769) : (Math.PI / 32768)
-                }
-
-                this.ModLoader.ImGui.sameLine()
-                if (this.ModLoader.ImGui.smallButton("Move to Link")) {
-                    let pos = this.core.OOT!.link.position.getRawPos();
-                    let rot = this.core.OOT!.link.rotation.getRawRot();
-                    actor.position.setRawPos(pos);
-                    actor.rotation.setRawRot(rot);
-                }
-                if (this.ModLoader.ImGui.smallButton("Move Link to Actor")) {
-                    let pos = actor.position.getRawPos();
-                    let rot = actor.rotation.getRawRot();
-                    this.core.OOT!.link.position.setRawPos(pos);
-                    this.core.OOT!.link.rotation.setRawRot(rot);
-                }
-
-                if (this.ModLoader.ImGui.smallButton("Kill Actor")) {
-                    actor.destroy();
-                }
-
-                if (this.ModLoader.ImGui.smallButton("Clone Actor")) {
-                    this.core.OOT!.commandBuffer.spawnActor(actor.actorID, actor.variable, this.core.OOT!.link.position.getVec3(), this.core.OOT!.link.rotation.getVec3());
-                }
-
-                if (this.ModLoader.isModLoaded("MemoryUtils3")){
-                    if (this.ModLoader.ImGui.smallButton("Open in MemoryUtils3")){
-                        openMemoryUtils3Tab(actor.pointer);
-                    }
-                }
-            }
-            this.ModLoader.ImGui.end();
-        }
-        // #endif
 
         if (!this.settings.nameplates) {
             return;

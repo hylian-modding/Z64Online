@@ -1,8 +1,8 @@
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { PuppetOverlordClient, PuppetOverlordServer } from "@Z64Online/common/puppet/PuppetOverlord";
 import { Core, IZ64GameMain, Scene } from "@Z64Online/common/types/Types";
-import { HorseData } from "@Z64Online/oot/puppet/HorseData";
-import { Puppet } from "@Z64Online/oot/puppet/Puppet";
+import { HorseData } from "@Z64Online/common/puppet/HorseData";
+import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet";
 import { Z64O_PuppetPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket } from "@Z64Online/common/network/Z64OPackets";
 import { PuppetQuery, Z64OnlineAPI_PuppetStubCreated, Z64OnlineAPI_PuppetStubDestroyed, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
@@ -15,8 +15,6 @@ import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { IOotUtility } from "@Z64Online/common/api/InternalAPI";
-import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { PuppetServerStub } from "./PuppetServerStub";
 import { OotOnlineStorage } from "@Z64Online/oot/storage/OotOnlineStorage";
 
@@ -86,12 +84,11 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
             let player: INetworkPlayer = this.playersAwaitingPuppets.splice(0, 1)[0];
             this.puppets.set(
                 player.uuid,
-                new Puppet(
+                new Puppet_OOT(
                     player,
                     this.core.OOT!,
-                    0x0,
                     this.ModLoader,
-                    (this.parent as any)["OOT"] as IOotUtility
+                    (this.parent as any)["OOT"]
                 )
             );
             this.ModLoader.logger.info('Player ' + player.nickname + ' assigned new puppet ' + this.puppets.get(player.uuid)!.id + '.');
@@ -100,8 +97,8 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     }
 
     sendPuppetPacket() {
-        this.fakeClientPuppet.data.onTick();
-        let packet = new Z64O_PuppetPacket(this.fakeClientPuppet.data, this.ModLoader.clientLobby);
+        this.fakeClientPuppet.data!.onTick();
+        let packet = new Z64O_PuppetPacket(this.fakeClientPuppet.data!, this.ModLoader.clientLobby);
         if (this.Epona !== undefined) {
             packet.setHorseData(this.Epona);
         }
@@ -110,7 +107,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
 
     processPuppetPacket(packet: Z64O_PuppetPacket) {
         if (this.puppets.has(packet.player.uuid)) {
-            let puppet: Puppet = this.puppets.get(packet.player.uuid)! as Puppet;
+            let puppet: Puppet_OOT = this.puppets.get(packet.player.uuid)! as Puppet_OOT;
             puppet.processIncomingPuppetData(packet.data);
             if (packet.horse_data !== undefined) {
                 puppet.processIncomingHorseData(packet.horse_data);
@@ -125,12 +122,11 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     @Postinit()
     postinit(
     ) {
-        this.fakeClientPuppet = new Puppet(
+        this.fakeClientPuppet = new Puppet_OOT(
             this.ModLoader.me,
             this.core.OOT!,
-            0x0,
             this.ModLoader,
-            (this.parent as any)["OOT"] as IOotUtility
+            (this.parent as any)["OOT"]
         );
     }
 

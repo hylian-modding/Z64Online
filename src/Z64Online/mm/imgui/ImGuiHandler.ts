@@ -3,7 +3,7 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { bus } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
-import { InputTextFlags, string_ref } from "modloader64_api/Sylvain/ImGui";
+import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Font } from "modloader64_api/Sylvain/Gfx";
@@ -12,6 +12,7 @@ import { changeKillfeedFont } from "modloader64_api/Announcements";
 import { rgba, xy } from "modloader64_api/Sylvain/vec";
 import { BUILD_DATE, VERSION_NUMBER } from "@Z64Online/common/lib/VERSION_NUMBER";
 import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
+import fse from 'fs-extra';
 
 export class ImGuiHandler_MM extends ImGuiHandlerCommon {
 
@@ -22,6 +23,13 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
     input: string_ref = [""];
     result: string_ref = [""];
     font!: Font;
+
+    constructor() {
+        super();
+        // #ifdef IS_DEV_BUILD
+        this.actorNames = JSON.parse(fse.readFileSync(path.resolve(__dirname, "ACTOR_NAMES.json")).toString());
+        // #endif
+    }
 
     @onViUpdate()
     onViUpdate() {

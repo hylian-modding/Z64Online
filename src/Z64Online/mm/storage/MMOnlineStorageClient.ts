@@ -4,8 +4,10 @@ import { syncMode } from '@Z64Online/mm//MMOnline';
 import PlayerSchedule from '@Z64Online/mm/save/MMOPlayerSchedule';
 import { Texture } from 'modloader64_api/Sylvain/Gfx';
 import { vec2, xy } from 'modloader64_api/Sylvain/vec';
+import { IZ64ClientStorage } from '@Z64Online/common/storage/Z64Storage';
+import { IOvlPayloadResult } from 'Z64Lib/API/Common/Z64API';
 
-export class MMOnlineStorageClient extends MMOnlineStorageBase {
+export class MMOnlineStorageClient extends MMOnlineStorageBase implements IZ64ClientStorage{
   world: number = 0;
   autoSaveHash = '!';
   keySaveHash = "!";
@@ -22,6 +24,7 @@ export class MMOnlineStorageClient extends MMOnlineStorageBase {
   ];
   equipmentHashes: Array<string> = [];
   overlayCache: any = {};
+  puppetOvl!: IOvlPayloadResult;
   localization: any = {};
   scene_keys: any = {};
   schedules: any = {};

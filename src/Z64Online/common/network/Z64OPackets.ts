@@ -1,24 +1,22 @@
 import {
-  Packet,
-  packetHelper,
-  UDPPacket,
+  Packet
 } from 'modloader64_api/ModLoaderDefaultImpls';
-import { PuppetData } from '../../oot/puppet/PuppetData';
 import {
   AgeOrForm,
 } from 'Z64Lib/API/Common/Z64API';
 
 import { ActorPacketData } from '../../oot/actor_systems/ActorHookBase';
-import { HorseData } from '../../oot/puppet/HorseData';
+import { HorseData } from '../puppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@Z64Online/common/save/IKeyRing';
 import { Scene } from '../types/Types';
+import { IPuppetData } from '../puppet/IPuppetData';
 
 export class Z64O_PuppetPacket extends Packet {
-  data: PuppetData;
+  data: IPuppetData;
   horse_data!: HorseData;
 
-  constructor(puppetData: PuppetData, lobby: string) {
+  constructor(puppetData: IPuppetData, lobby: string) {
     super('Z64O_PuppetPacket', 'Z64Online', lobby, true);
     this.data = puppetData;
   }

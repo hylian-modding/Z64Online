@@ -5,11 +5,11 @@ import { IPacketHeader } from "modloader64_api/NetworkHandler";
 import path from 'path';
 import { setupOot } from "../common/types/GameAliases";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { IOotUtility } from "../common/api/InternalAPI";
-import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { IZ64GameMain } from "@Z64Online/common/types/Types";
 import { IS_DEV_BUILD } from "../common/lib/IS_DEV_BUILD";
+import { IZ64Utility } from "@Z64Online/common/api/InternalAPI";
+import { IZ64ClientStorage } from "@Z64Online/common/storage/Z64Storage";
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -38,7 +38,7 @@ export class OotOnlineConfigCategory {
   autosaves: boolean = true;
 }
 
-export default class OotOnline implements IZ64GameMain, IOotUtility {
+export default class OotOnline implements IZ64GameMain, IZ64Utility {
 
   ModLoader!: IModLoaderAPI;
   @InjectCore()
@@ -54,7 +54,7 @@ export default class OotOnline implements IZ64GameMain, IOotUtility {
     }
   }
 
-  getClientStorage(): OotOnlineStorageClient | null {
+  getClientStorage(): IZ64ClientStorage {
     return this.client !== undefined ? this.client.clientStorage : null;
   }
 

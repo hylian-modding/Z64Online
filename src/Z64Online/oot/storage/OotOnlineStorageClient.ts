@@ -1,8 +1,9 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 import { InventoryItem } from 'Z64Lib/API/OOT/OOTAPI';
 import { IOvlPayloadResult } from 'Z64Lib/API/Common/Z64API';
+import { IZ64ClientStorage } from '@Z64Online/common/storage/Z64Storage';
 
-export class OotOnlineStorageClient extends OotOnlineStorageBase {
+export class OotOnlineStorageClient extends OotOnlineStorageBase implements IZ64ClientStorage {
   world: number = 0;
   autoSaveHash = '!';
   keySaveHash = "!";

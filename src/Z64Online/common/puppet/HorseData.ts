@@ -1,6 +1,6 @@
 import { IActor } from "Z64Lib/API/Common/IActor"
-import { IOOTCore } from "Z64Lib/API/OOT/OOTAPI";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
+import { IZ64Core } from "Z64Lib/API/Common/Z64API";
 
 export class HorseData{
 
@@ -9,7 +9,7 @@ export class HorseData{
     puppet!: IActor;
     private readonly copyFields: string[] = ["pos", "rot", "anim_id", "speed"];
 
-    constructor(pointer: number, parent: IPuppet, core: IOOTCore){
+    constructor(pointer: number, parent: IPuppet, core: IZ64Core){
         this.puppet = core.actorManager.createIActorFromPointer(pointer);
         this.pointer = pointer;
         this.parent = parent;

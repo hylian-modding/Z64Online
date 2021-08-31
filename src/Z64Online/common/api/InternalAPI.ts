@@ -1,6 +1,6 @@
-import { IOotOClientside } from "@Z64Online/oot/save/IOotOClientside";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
+import { IZ64Clientside } from "../storage/Z64Storage";
 
 export const enum Z64O_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
@@ -95,4 +95,4 @@ export class ExternalEventData{
     }
 }
 
-export interface IOotUtility extends IZ64OnlineHelpers, IOotOClientside{}
+export interface IZ64Utility extends IZ64OnlineHelpers, IZ64Clientside{}

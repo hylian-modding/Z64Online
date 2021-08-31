@@ -586,7 +586,10 @@ export default class MMOnlineClient {
             let file = path.resolve(__dirname, "payloads", "E0", f);
             let parse = path.parse(file);
             if (parse.ext === ".ovl") {
-                this.ModLoader.payloadManager.parseFile(file);
+                this.clientStorage.overlayCache[parse.base] = this.ModLoader.payloadManager.parseFile(file);
+                if (parse.base === "puppet_mm.ovl"){
+                    this.clientStorage.puppetOvl = this.clientStorage.overlayCache[parse.base];
+                }
             }
         });
     }

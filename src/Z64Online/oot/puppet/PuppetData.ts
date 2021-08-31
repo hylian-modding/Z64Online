@@ -1,39 +1,18 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
-import { SmartBuffer } from 'smart-buffer';
 import path from 'path';
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from '@Z64Online/common/api/Z64API';
-import { Puppet } from './Puppet';
+import { Puppet_OOT } from './Puppet';
 import { bus } from 'modloader64_api/EventHandler';
-import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
-import { IPuppetData } from '@Z64Online/common/puppet/IPuppetData';
 import { PUPPET_INST_SIZE } from '@Z64Online/common/cosmetics/Defines';
-
-interface SyncData {
-	lengths: any;
-	sources: any;
-	destinations: any;
-}
+import { PuppetDataAbstract } from '@Z64Online/common/puppet/PuppetDataAbstract';
+import { SyncData } from '../../common/puppet/SyncData';
 
 export const SYNC_DATA: SyncData = require(path.resolve(__dirname, "PuppetData_OOT.json"));
 
-export class PuppetData implements IPuppetData {
-	parent: Puppet;
-	pointer: number;
-	ModLoader: IModLoaderAPI;
-	buf: SmartBuffer;
-	ageLastFrame: AgeOrForm = AgeOrForm.ADULT;
-	age: AgeOrForm = AgeOrForm.ADULT;
-	backingShared: SharedArrayBuffer = new SharedArrayBuffer(PUPPET_INST_SIZE);
-	backingBuffer: Buffer = Buffer.from(this.backingShared);
+export class PuppetData_OOT extends PuppetDataAbstract {
 
-	private readonly copyFields: string[] = new Array<string>();
-
-	constructor(parent: Puppet, pointer: number, ModLoader: IModLoaderAPI) {
-		this.parent = parent;
-		this.pointer = pointer;
-		this.ModLoader = ModLoader;
-		this.buf = new SmartBuffer();
-		this.copyFields.push("bundle");
+	constructor(parent: Puppet_OOT, pointer: number, ModLoader: IModLoaderAPI) {
+		super(parent, pointer, ModLoader);
 	}
 
 	getEntry(key: string) {
@@ -72,7 +51,7 @@ export class PuppetData implements IPuppetData {
 			let key = keys[i];
 			if (key === "age") {
 				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
-				this.age = data.readUInt32BE(0);
+				this.ageOrForm = data.readUInt32BE(0);
 				this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
 			} else if (key === "sound") {
 				let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
@@ -91,14 +70,5 @@ export class PuppetData implements IPuppetData {
 				this.ModLoader.emulator.rdramWrite16(this.pointer + parseInt(SYNC_DATA.destinations["sound"]), pendingSound);
 			}
 		}
-	}
-
-	toJSON() {
-		const jsonObj: any = {};
-		for (let i = 0; i < this.copyFields.length; i++) {
-			jsonObj[this.copyFields[i]] = (this as any)[this.copyFields[i]];
-		}
-
-		return jsonObj;
 	}
 }
