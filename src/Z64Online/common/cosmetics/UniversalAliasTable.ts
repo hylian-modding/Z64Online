@@ -1013,9 +1013,7 @@ export class UniversalAliasTable {
         let scaffold = this.generateScaffolding();
         let sb: SmartBuffer = scaffold.sb;
 
-        sb.writeUInt32BE(0xDB060032, TEX_EYES);
         sb.writeUInt32BE(0x06000000, TEX_EYES + 4);
-        sb.writeUInt32BE(0xDB060036, TEX_MOUTH);
         sb.writeUInt32BE(0x06000000 + 0x4000, TEX_MOUTH + 4);
 
         // Step 4: Create combined display lists.

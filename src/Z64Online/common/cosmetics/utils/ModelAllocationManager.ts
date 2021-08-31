@@ -6,6 +6,7 @@ import { IModelReference } from '@Z64Online/common/api/Z64API';
 import { AgeOrForm } from '@Z64Online/common/types/Types';
 import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
 import { Z64_PLAYER_PROXY } from '@Z64Online/common/types/GameAliases';
+import { PUPPET_INST_SIZE } from '../Defines';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -179,8 +180,9 @@ export class ModelAllocationManager {
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
-    let proxy = Buffer.alloc(Z64_PLAYER_PROXY.byteLength);
-    Z64_PLAYER_PROXY.copy(proxy);
+    let proxy = Buffer.alloc((Z64_PLAYER_PROXY.byteLength - 0x5000) + PUPPET_INST_SIZE);
+    this.ModLoader.utils.clearBuffer(proxy);
+    Z64_PLAYER_PROXY.copy(proxy.slice(0x5000), PUPPET_INST_SIZE);
     let pointer: number = this.ModLoader.gfx_heap!.malloc(proxy.byteLength);
     if (pointer === 0) return undefined;
 
