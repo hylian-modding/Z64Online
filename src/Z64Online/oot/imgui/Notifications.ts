@@ -214,7 +214,7 @@ export class Notifications {
                         this.ModLoader.Gfx.addSprite(this.ModLoader.ImGui.getBackgroundDrawList(), noteTexture, xywh(0, 0, noteTexture.width, noteTexture.height), xywh(36 + msgSize.x + (i * 12), 0, 12, 32), rgba(0xFF, 0xFF, 0xFF, 0xFF), FlipFlags.None);
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.log(this.curMessage);
             }
             this.curMessage.timer++;

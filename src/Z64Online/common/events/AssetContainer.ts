@@ -45,7 +45,7 @@ export class AssetContainer {
                 this.bundle = new ContentBundle(cache, this.ModLoader);
                 this.callback();
             }
-        } catch (err) {
+        } catch (err: any) {
             this.ModLoader.logger.error(err.stack);
         }
     }

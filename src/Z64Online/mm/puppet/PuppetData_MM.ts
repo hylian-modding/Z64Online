@@ -27,7 +27,7 @@ export default class PuppetData_MM extends PuppetDataAbstract {
                 let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
                 this.ageOrForm = data.readUInt8(0);
                 // force this to be uint32_t for compatibility.
-                this.ModLoader.emulator.rdramWrite32(this.pointer + parseInt(SYNC_DATA.destinations[key]), this.ageOrForm);
+                this.ModLoader.emulator.rdramWriteBuffer(this.pointer + parseInt(SYNC_DATA.destinations[key]), data);
             } else if (key === "sound") {
                 let data = this.buf.readBuffer(SYNC_DATA.lengths[key]);
                 pendingSound = data.readUInt16BE(0);

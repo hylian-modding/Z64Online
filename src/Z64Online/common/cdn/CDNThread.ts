@@ -17,7 +17,7 @@ class CDNThread {
         try {
             fs.mkdirSync("./cdn");
             fs.mkdirSync("./cdn/files");
-        } catch (err) {
+        } catch (err: any) {
         }
         fs.readdirSync("./cdn/files").forEach((f: string) => {
             let p = path.resolve("./cdn/files", f);

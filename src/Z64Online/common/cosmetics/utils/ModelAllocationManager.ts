@@ -133,7 +133,7 @@ export class ModelAllocationManager {
     let b = modelObject.zobj;
     try {
       this.zz.repoint(b, pointer);
-    } catch (err) {
+    } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
       return undefined;
     }

@@ -616,7 +616,7 @@ export class ActorHookingManagerClient {
         }
       });
 
-    } catch (err) {
+    } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
     }
   }

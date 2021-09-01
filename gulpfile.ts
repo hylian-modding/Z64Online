@@ -215,7 +215,7 @@ gulp.task('build', function () {
         meta.date = new Date().toUTCString();
         fs.writeFileSync("./src/Z64Online/package.json", JSON.stringify(meta, null, 2));
         child_process.execSync('npx tsc');
-    } catch (err) {
+    } catch (err: any) {
         console.log(err.stack);
     }
     return gulp.src('./src/**/*.ts')
@@ -243,7 +243,7 @@ gulp.task('_build_production', function () {
             meta.date = new Date().toUTCString();
             fs.writeFileSync("./src/Z64Online/package.json", JSON.stringify(meta, null, 2));
             child_process.execSync('npx tsc')
-        } catch (err) {
+        } catch (err: any) {
             console.log(err.stack);
         }
         fse.copySync("./src", "./build/src")
@@ -276,7 +276,7 @@ gulp.task('crush', function () {
             if (files[i].indexOf("node_modules") > -1) continue;
             try {
                 fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
-            } catch (err) {
+            } catch (err: any) {
                 console.log("Failed to minify " + files[i]);
             }
             let lzma: any = require("lzma");
@@ -453,6 +453,41 @@ gulp.task('setup', function () {
         }
     }
 
+    let mergeBranches = (src: string)=>{
+        let buf = fs.readFileSync(src);
+        let offsets: Array<number> = [];
+        for (let i = 0; i < buf.byteLength; i+=8){
+            if (i + 0x4 > buf.byteLength) continue;
+            if (buf.readUInt32BE(i) === 0xDE000000){
+                offsets.push(buf.readUInt32BE(i + 0x4) & 0x00FFFFFF);
+            }
+        }
+        let op = optimize(buf, offsets, 0, 0x06, true);
+        let top = op.oldOffs2NewOffs.get(offsets[offsets.length - 1])!;
+        let dfs: Array<number> = [];
+        for (let i = 0; i < op.zobj.byteLength; i+=0x8){
+            if (op.zobj.readUInt32BE(i) === 0xDF000000){
+                dfs.push(i);
+            }
+        }
+        while (dfs.length > 1){
+            let offset = dfs.shift();
+            op.zobj.writeUInt32BE(0, offset);
+        }
+        let sb = new SmartBuffer();
+        sb.writeBuffer(op.zobj);
+        while (sb.length % 0x10 !== 0) {
+            sb.writeUInt8(0xFF);
+        }
+        sb.writeUInt8(0xFF);
+        while (sb.length % 0x10 !== 0) {
+            sb.writeUInt8(0xFF);
+        }
+        sb.writeOffset = sb.length - 0x4;
+        sb.writeUInt32BE(0x06000000 + top);
+        fs.writeFileSync(src, sb.toBuffer());
+    }
+
     let pdir = (dir: string, out: string) => {
         if (!fs.existsSync(out)) {
             fs.mkdirSync(out);
@@ -466,6 +501,9 @@ gulp.task('setup', function () {
                 jpatch(src, dest, file);
             }
         });
+        mergeBranches("./objects/mm/gear/object_blade_1.zobj");
+        mergeBranches("./objects/mm/gear/object_blade_2.zobj");
+        mergeBranches("./objects/mm/gear/object_hilt_2.zobj");
         // Combine.
         let count = 0;
         fs.readdirSync(out).forEach((n: string) => {
@@ -500,6 +538,7 @@ gulp.task('setup', function () {
             sb.writeUInt32BE(0x06000000 + df);
         }
         let cur = fp + 0x4;
+        sb.writeOffset = sb.length;
         let defines: Array<string> = [];
         fs.readdirSync(out).forEach((n: string) => {
             if (path.parse(n).ext === ".ts") {

@@ -158,7 +158,7 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
                 this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 22, 2);
                 changeKillfeedFont(this.font);
                 global.ModLoader["FONT"] = this.font;
-            } catch (err) {
+            } catch (err: any) {
                 this.ModLoader.logger.error(err);
             }
             return;
@@ -359,7 +359,7 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
                             }
                         }
                     }
-                } catch (err) { this.ModLoader.logger.error(err); }
+                } catch (err: any) { this.ModLoader.logger.error(err); }
             }
         }
     }

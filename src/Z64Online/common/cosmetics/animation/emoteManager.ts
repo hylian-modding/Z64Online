@@ -59,7 +59,7 @@ export class EmoteManager {
                     if (this.ModLoader.ImGui.smallButton("Stop")) {
                         try {
                             this.masterEmoteList[this.currentEmoteID].sound!.stop();
-                        } catch (err) { }
+                        } catch (err: any) { }
                         this.isCurrentlyPlayingEmote = false;
                         this.core.OOT!.link.redeadFreeze = 0x0;
                         this.currentEmoteFrame = -1;

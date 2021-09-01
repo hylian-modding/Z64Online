@@ -145,7 +145,7 @@ export class WorldEventRewards {
                 });
                 new StorageContainer("Z64O_Reward_Tickets").storeObject(this.rewardContainer);
                 fs.unlinkSync("./storage/holiday_event_rewards_v3.pak");
-            } catch (err) {
+            } catch (err: any) {
                 console.log(err);
             }
         }
@@ -533,7 +533,7 @@ export class WorldEventRewards {
                 }
                 this.ModLoader.ImGui.end();
             }
-        } catch (err) {
+        } catch (err: any) {
             console.log(err);
         }
     }

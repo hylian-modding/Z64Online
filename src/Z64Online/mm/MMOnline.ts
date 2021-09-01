@@ -8,7 +8,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IZ64Utility } from "@Z64Online/common/api/InternalAPI";
 import { IZ64ClientStorage } from "@Z64Online/common/storage/Z64Storage";
-import { IPacketHeader } from "../../../../../ModLoader64/API/build/NetworkHandler";
+import { IPacketHeader } from "modloader64_api/NetworkHandler";
 
 export const SCENE_ARR_SIZE = 0xD20;
 export const EVENT_ARR_SIZE = 0x8;

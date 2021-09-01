@@ -81,7 +81,11 @@ export class ModelManagerOot implements IModelManagerShim {
             ref.loadModel();
         });
         let curRef: IModelReference | undefined;
-        let link = this.doesLinkObjExist(this.parent.core.OOT!.save.age);
+        let link1 = this.doesLinkObjExist(AgeOrForm.ADULT);
+        let link2 = this.doesLinkObjExist(AgeOrForm.CHILD);
+        let link: { exists: boolean; pointer: number; } = {exists: false, pointer: 0};
+        if (link1.exists) link = link1;
+        if (link2.exists) link = link2;
         if (link.exists) {
             this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.OOT!.save.age, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!);
             let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!.pointer, ALIAS_PROXY_SIZE);
@@ -119,7 +123,7 @@ export class ModelManagerOot implements IModelManagerShim {
     unpackModels(evt: any) {
         try {
             fs.mkdirSync(this.parent.cacheDir);
-        } catch (err) { }
+        } catch (err: any) { }
         let extractIfMissing = (p: string, buf: Buffer, rom: Buffer) => {
             if (fs.existsSync(p)) return;
             fs.writeFileSync(p, decodeAsset(buf, rom));

@@ -55,7 +55,7 @@ export class EventController {
                 this.bundle = new ContentBundle(cache, this.ModLoader);
                 this.setupEventPlugin();
             }
-        } catch (err) {
+        } catch (err: any) {
             this.ModLoader.logger.error(err.stack);
         }
     }

@@ -1,6 +1,7 @@
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { CDNServer } from "@Z64Online/common/cdn/CDNServer";
+import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
@@ -57,7 +58,7 @@ export default class MMOnlineServer {
                     }
                 }
             });
-        } catch (err) { }
+        } catch (err: any) { }
     }
 
     @EventHandler(EventsServer.ON_LOBBY_CREATE)
@@ -73,7 +74,7 @@ export default class MMOnlineServer {
             }
             storage.saveManager = new MMOSaveData(this.core.MM!, this.ModLoader);
         }
-        catch (err) {
+        catch (err: any) {
             this.ModLoader.logger.error(err);
         }
     }
@@ -138,7 +139,7 @@ export default class MMOnlineServer {
                 '.'
             );
             bus.emit(Z64OnlineEvents.SERVER_PLAYER_CHANGED_SCENES, new Z64_PlayerScene(packet.player, packet.lobby, packet.scene));
-        } catch (err) {
+        } catch (err: any) {
         }
     }
 
@@ -197,19 +198,22 @@ export default class MMOnlineServer {
         if (world.saveGameSetup) {
             // Game is running, get data.
             let resp = new Z64O_DownloadResponsePacket(packet.lobby, false);
-            resp.save = Buffer.from(JSON.stringify(world.save));
-            resp.keys = world.keys;
-            this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
+            Z64Serialize.serialize(world.save).then((buf: Buffer) => {
+                resp.save = buf;
+                resp.keys = world.keys;
+                this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
+            }).catch(() => { });
         } else {
             // Game is not running, give me your data.
-            let data = JSON.parse(packet.save.toString());
-            Object.keys(data).forEach((key: string) => {
-                let obj = data[key];
-                world.save[key] = obj;
+            Z64Serialize.deserialize(packet.save).then((data: any) => {
+                Object.keys(data).forEach((key: string) => {
+                    let obj = data[key];
+                    world.save[key] = obj;
+                });
+                world.saveGameSetup = true;
+                let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
+                this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
             });
-            world.saveGameSetup = true;
-            let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
-            this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
     }
 
@@ -250,8 +254,13 @@ export default class MMOnlineServer {
             storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
+        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
+            if (bool) {
+                Z64Serialize.serialize(world.save).then((buf: Buffer) => {
+                    this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, buf, packet.player.data.world));
+                }).catch((err: string) => { });
+            }
+        });
     }
 
     @ServerNetworkHandler('Z64O_UpdateKeyringPacket')

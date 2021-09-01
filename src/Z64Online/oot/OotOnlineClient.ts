@@ -86,6 +86,8 @@ export default class OotOnlineClient {
     multiworld!: Multiworld;
     opa!: ThiccOpa;
     syncContext: number = -1;
+    syncTimer: number = 0;
+    synctimerMax: number = 60 * 20;
 
     @EventHandler(Z64OnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
@@ -172,11 +174,16 @@ export default class OotOnlineClient {
         if (this.core.OOT!.helper.isTitleScreen() || !this.core.OOT!.helper.isSceneNumberValid() || this.core.OOT!.helper.isPaused() || !this.clientStorage.first_time_sync) return;
         if (this.core.OOT!.helper.Player_InBlockingCsMode() || !this.LobbyConfig.data_syncing) return;
         let save = this.clientStorage.saveManager.createSave();
+        if (this.syncTimer > this.synctimerMax) {
+            this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("RESET"));
+            this.ModLoader.logger.debug("Forcing resync due to timeout.");
+        }
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             this.ModLoader.clientSide.sendPacket(new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+            this.syncTimer = 0;
         }
     }
 
@@ -240,10 +247,7 @@ export default class OotOnlineClient {
         let saveArgCount: number = 1;
         let name = this.core.OOT!.save.player_name;
         let saveSlot = this.ModLoader.emulator.rdramRead32(0x8011A5D0 + 0x1354);
-        let autosaveSlot = -1;
-        if (saveSlot === 0) autosaveSlot = 1;
-        if (saveSlot === 1) autosaveSlot = 0;
-        if (saveSlot === 2) autosaveSlot = 1;
+        let autosaveSlot = 2;
         this.ModLoader.emulator.rdramWrite32(0x8011A5D0 + 0x1354, autosaveSlot);
         this.core.OOT!.save.player_name = "autosave";
         if (name !== "autosave") {
@@ -365,7 +369,6 @@ export default class OotOnlineClient {
                 )
             );
         }
-        this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
     }
 
     @NetworkHandler('Z64O_ScenePacket')
@@ -573,7 +576,7 @@ export default class OotOnlineClient {
                 }
                 break;
             case "bulletBag":
-                if (this.core.OOT!.save.inventory.dekuSeeds) {
+                if (this.core.OOT!.save.inventory.dekuSeeds === 0) {
                     this.core.OOT!.save.inventory.dekuSeeds = UpgradeCountLookup(InventoryItem.FAIRY_SLINGSHOT, evt.value as number);
                 }
                 break;
@@ -656,7 +659,7 @@ export default class OotOnlineClient {
             let parse = path.parse(file);
             if (parse.ext === ".ovl") {
                 this.clientStorage.overlayCache[path.parse(file).base] = this.ModLoader.payloadManager.parseFile(file);
-                if (path.parse(file).base === "puppet_oot.ovl"){
+                if (path.parse(file).base === "puppet_oot.ovl") {
                     this.clientStorage.puppetOvl = this.clientStorage.overlayCache[path.parse(file).base];
                 }
             }
@@ -768,6 +771,7 @@ export default class OotOnlineClient {
                     //this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
+                    this.syncTimer++;
                     this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSkulltulas();

@@ -70,7 +70,7 @@ export class SoundManagerClient {
                 }
             });
             this.localSoundPaks.set(evt.id, evt.data);
-        } catch (err) { }
+        } catch (err: any) { }
     }
 
     @NetworkHandler('OotO_SoundPackRequestPacket')

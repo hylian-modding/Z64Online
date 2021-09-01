@@ -157,7 +157,7 @@ export class ModelManagerClient {
           this.allocationManager.getLocalPlayerData().AgesOrForms.set(form, alloc.ref);
         }, 2);
       }
-    } catch (err) {
+    } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
     }
   }
@@ -185,7 +185,7 @@ export class ModelManagerClient {
   onRomPatchedPre(evt: any) {
     try {
       this.setupPuppetModels(evt);
-    } catch (err) {
+    } catch (err: any) {
       // Maybe don't shallow this error?
       console.log(err);
       throw err;
@@ -284,7 +284,7 @@ export class ModelManagerClient {
     this.ModLoader.logger.info('Starting custom model setup...');
     try {
       this.child.onRomPatched(evt);
-    } catch (err) {
+    } catch (err: any) {
       this.ModLoader.logger.error(err);
       throw err;
     }
@@ -414,7 +414,7 @@ export class ModelManagerClient {
       let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
       let cat = CostumeHelper.getEquipmentCategory(rp);
       return { manifest: data, model: rp, lut: start, cat };
-    } catch (err) {
+    } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
       return undefined;
     }
@@ -439,6 +439,11 @@ export class ModelManagerClient {
   @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: Scene) {
     this.child.onSceneChange(scene);
+  }
+
+  @EventHandler(Z64.OotEvents.ON_AGE_CHANGE)
+  onAgeChange(){
+    //this.child.onSceneChange(1);
   }
 
   private handleModelChange(form: AgeOrForm, evt: Z64Online_ModelAllocation) {

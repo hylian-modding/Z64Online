@@ -80,6 +80,8 @@ export default class MMOnlineClient {
     //soundManager!: SoundManagerClient;
     //@SidedProxy(ProxySide.CLIENT, WorldEvents)
     //worldEvents!: WorldEvents;
+    syncTimer: number = 0;
+    synctimerMax: number = 60 * 20;
 
     syncContext: number = -1;
 
@@ -109,7 +111,7 @@ export default class MMOnlineClient {
                 }
                 //}
             });
-        } catch (err) { }
+        } catch (err: any) { }
     }
 
     @Preinit()
@@ -146,12 +148,17 @@ export default class MMOnlineClient {
     updateInventory() {
         if (this.core.MM!.helper.isTitleScreen() || !this.core.MM!.helper.isSceneNumberValid() || this.core.MM!.helper.isPaused() || !this.clientStorage.first_time_sync) return;
         //if (this.core.MM!.helper.Player_InBlockingCsMode() || !this.LobbyConfig.data_syncing) return;
+        if (this.syncTimer > this.synctimerMax) {
+            this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("RESET"));
+            this.ModLoader.logger.debug("Forcing resync due to timeout.");
+        }
         let save = this.clientStorage.saveManager.createSave();
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             this.ModLoader.clientSide.sendPacket(new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+            this.syncTimer = 0;
         }
     }
 
@@ -318,7 +325,6 @@ export default class MMOnlineClient {
                 )
             );
         }
-        this.clientStorage.lastPushHash = this.ModLoader.utils.hashBuffer(Buffer.from("!"));
     }
 
     @NetworkHandler('Z64O_ScenePacket')
@@ -860,6 +866,7 @@ export default class MMOnlineClient {
                     this.updateBottles();
                     this.updateSyncContext();
                     this.updatePermFlags();
+                    this.syncTimer++;
                 }
             }
         }

@@ -43,7 +43,7 @@ export class ModelManagerMM implements IModelManagerShim {
     unpackModels(evt: any) {
         try {
             fs.mkdirSync(this.parent.cacheDir);
-        } catch (err) { }
+        } catch (err: any) { }
         let extractIfMissing = (p: string, buf: Buffer, rom: Buffer) => {
             if (fs.existsSync(p)) return;
             fs.writeFileSync(p, decodeAsset(buf, rom));
@@ -145,6 +145,12 @@ export class ModelManagerMM implements IModelManagerShim {
                     this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8) + 4), link + obj.alias);
                 }
             });
+            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_HILT_1 + 0x4, this.gearRef.pointer + (gear.OBJECT_HILT_1 & 0x00FFFFFF));
+            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_BLADE_1 + 0x4, this.gearRef.pointer + (gear.OBJECT_BLADE_1 & 0x00FFFFFF));
+            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_HILT_2 + 0x4, this.gearRef.pointer + (gear.OBJECT_HILT_2 & 0x00FFFFFF));
+            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_BLADE_2 + 0x4, this.gearRef.pointer + (gear.OBJECT_BLADE_2 & 0x00FFFFFF));
+            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_EMPTY + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE & 0x00FFFFFF));
+            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_FILLING + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE_CONTENT & 0x00FFFFFF));
         }
         this.parent.ModLoader.emulator.rdramWrite8(link + 0x5016, 0x1);
         curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!;
@@ -167,17 +173,6 @@ export class ModelManagerMM implements IModelManagerShim {
 
     findLink() {
         let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);
-        let obj_list: number = Z64_OBJECT_TABLE_RAM;
-        obj_list += 0xC;
-        let offset = index * 0x44;
-        obj_list += offset;
-        obj_list += 0x4;
-        let pointer = this.parent.ModLoader.emulator.rdramRead32(obj_list);
-        return pointer;
-    }
-
-    findGK() {
-        let index = 0;
         let obj_list: number = Z64_OBJECT_TABLE_RAM;
         obj_list += 0xC;
         let offset = index * 0x44;

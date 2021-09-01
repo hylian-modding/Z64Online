@@ -17,6 +17,7 @@ import { OOT_PuppetOverlordServer } from "./puppet/OOT_PuppetOverlord";
 import { PvPServer } from "./pvp/PvPModule";
 import { OotOSaveData } from "./save/OotoSaveData";
 import { OotOnlineStorage, OotOnlineSave_Server } from "./storage/OotOnlineStorage";
+import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 
 export default class OotOnlineServer {
 
@@ -58,7 +59,7 @@ export default class OotOnlineServer {
                     }
                 }
             });
-        } catch (err) { }
+        } catch (err: any) { }
     }
 
     @EventHandler(EventsServer.ON_LOBBY_CREATE)
@@ -74,7 +75,7 @@ export default class OotOnlineServer {
             }
             storage.saveManager = new OotOSaveData(this.core.OOT!, this.ModLoader);
         }
-        catch (err) {
+        catch (err: any) {
             this.ModLoader.logger.error(err);
         }
     }
@@ -139,7 +140,7 @@ export default class OotOnlineServer {
                 '.'
             );
             bus.emit(Z64OnlineEvents.SERVER_PLAYER_CHANGED_SCENES, new Z64_PlayerScene(packet.player, packet.lobby, packet.scene));
-        } catch (err) {
+        } catch (err: any) {
         }
     }
 
@@ -192,19 +193,22 @@ export default class OotOnlineServer {
         if (world.saveGameSetup) {
             // Game is running, get data.
             let resp = new Z64O_DownloadResponsePacket(packet.lobby, false);
-            resp.save = Buffer.from(JSON.stringify(world.save));
-            resp.keys = world.keys;
-            this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
+            Z64Serialize.serialize(world.save).then((buf: Buffer) => {
+                resp.save = buf;
+                resp.keys = world.keys;
+                this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
+            }).catch(() => { });
         } else {
             // Game is not running, give me your data.
-            let data = JSON.parse(packet.save.toString());
-            Object.keys(data).forEach((key: string) => {
-                let obj = data[key];
-                world.save[key] = obj;
+            Z64Serialize.deserialize(packet.save).then((data: any) => {
+                Object.keys(data).forEach((key: string) => {
+                    let obj = data[key];
+                    world.save[key] = obj;
+                });
+                world.saveGameSetup = true;
+                let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
+                this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
             });
-            world.saveGameSetup = true;
-            let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
-            this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
     }
 
@@ -247,8 +251,13 @@ export default class OotOnlineServer {
             storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER);
-        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
+        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
+            if (bool) {
+                Z64Serialize.serialize(world.save).then((buf: Buffer) => {
+                    this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, buf, packet.player.data.world));
+                }).catch((err: string) => { });
+            }
+        });
     }
 
     @ServerNetworkHandler('Z64O_UpdateKeyringPacket')

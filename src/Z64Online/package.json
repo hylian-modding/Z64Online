@@ -1,7 +1,7 @@
 {
   "name": "Z64Online",
   "version": "3.1.0",
-  "date": "Tue, 31 Aug 2021 11:21:03 GMT",
+  "date": "Wed, 01 Sep 2021 15:16:16 GMT",
   "description": "",
   "main": "Z64Online.js",
   "author": "denoflions, Psi-Hate, Drahsid, CrookedPoe",
@@ -14,5 +14,8 @@
   "devUrl": "https://repo.modloader64.com/mods/Ooto/dev/update.json",
   "modloader64_deps": {
     "Z64Lib": "https://github.com/hylian-modding/ML64-Z64Lib.git"
+  },
+  "dependencies": {
+    "bson": "^4.5.1"
   }
 }
