@@ -82,6 +82,7 @@ export default class MMOnlineClient {
     //worldEvents!: WorldEvents;
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
+    syncPending: boolean = false;
 
     syncContext: number = -1;
 
@@ -291,9 +292,9 @@ export default class MMOnlineClient {
 
     @EventHandler(MMEvents.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
-        if (!this.clientStorage.first_time_sync) {
+        if (!this.clientStorage.first_time_sync && !this.syncPending) {
             // #ifdef IS_DEV_BUILD
-            let test = true;
+            let test = false;
             if (test) {
                 this.core.MM!.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.MM!.save.permSceneData);
             }
@@ -304,7 +305,8 @@ export default class MMOnlineClient {
                     this.ModLoader.clientSide.sendPacket(new Z64O_DownloadRequestPacket(this.ModLoader.clientLobby, new MMOSaveData(this.core.MM!, this.ModLoader).createSave()));
                     this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isMMR, RomFlags.isVanilla));
                 }
-            }, 50);
+            }, 300);
+            this.syncPending = true;
         }
         this.ModLoader.clientSide.sendPacket(
             new Z64O_ScenePacket(
@@ -401,6 +403,7 @@ export default class MMOnlineClient {
     // The server is giving me data.
     @NetworkHandler('Z64O_DownloadResponsePacket')
     onDownloadPacket_client(packet: Z64O_DownloadResponsePacket) {
+        this.syncPending = false;
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()

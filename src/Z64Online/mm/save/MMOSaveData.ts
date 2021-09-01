@@ -139,7 +139,7 @@ export class MMOSaveData implements ISaveSyncData {
   forceOverrideSave(save: Buffer, storage: IMMSyncSave, side: ProxySide) {
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-      let obj: IMMSyncSave = JSON.parse(save.toString());
+      let obj: IMMSyncSave = Z64Serialize.deserializeSync(save);
 
       storage.heart_containers = obj.heart_containers;
       storage.magic_meter_size = obj.magic_meter_size;

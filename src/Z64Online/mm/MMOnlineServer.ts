@@ -202,7 +202,7 @@ export default class MMOnlineServer {
                 resp.save = buf;
                 resp.keys = world.keys;
                 this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
-            }).catch(() => { });
+            }).catch((err: string) => { });
         } else {
             // Game is not running, give me your data.
             Z64Serialize.deserialize(packet.save).then((data: any) => {
