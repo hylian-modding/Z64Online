@@ -3,6 +3,7 @@ import zip from 'adm-zip';
 import crypto from 'crypto';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { publicKey } from './publicKey';
+import Z64Serialize from '../storage/Z64Serialize';
 
 export class ContentBundle {
 
@@ -11,7 +12,7 @@ export class ContentBundle {
 
     constructor(file: string, ModLoader: IModLoaderAPI) {
         let raw = fs.readFileSync(file);
-        let json = JSON.parse(raw.toString());
+        let json = Z64Serialize.deserializeSync(raw);
         let content = json.data;
         const public_key = publicKey;
         const verifier = crypto.createVerify('sha256');

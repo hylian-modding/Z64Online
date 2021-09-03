@@ -51,6 +51,7 @@ export abstract class ImGuiHandlerCommon {
             }
             this.ModLoader.ImGui.endMainMenuBar();
         }
+        this.ModLoader.ImGui.end();
         // #ifdef IS_DEV_BUILD
         if (this.showSpawner) {
             if (this.ModLoader.ImGui.begin("Actor Spawner###OotO:ActorSpawner")) {

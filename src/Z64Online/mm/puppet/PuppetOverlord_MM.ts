@@ -85,11 +85,6 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
         this.localPlayerChangingScenes(scene, this.core.MM!.save.form);
     }
 
-    @EventHandler(MMEvents.ON_AGE_CHANGE)
-    onAgeChange(age: AgeOrForm) {
-        this.localPlayerLoadingZone();
-    }
-
     @EventHandler(EventsClient.ON_PLAYER_JOIN)
     onPlayerJoin(player: INetworkPlayer) {
         this.registerPuppet(player);
@@ -126,16 +121,24 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
 
     @EventHandler(Z64OnlineEvents.FORCE_PUPPET_RESPAWN_IMMEDIATE)
     onForceRepop(evt: any) {
-        let puppet = this.puppets.get(evt.player.uuid);
-        if (puppet !== undefined) {
-            if (puppet.isSpawning) return;
-            if (puppet.isShoveled) {
-                puppet.despawn();
+        if (evt.hasOwnProperty("player")){
+            let puppet = this.puppets.get(evt.player.uuid);
+            if (puppet !== undefined) {
+                if (puppet.isSpawning) return;
+                if (puppet.isShoveled) {
+                    puppet.despawn();
+                }
+                if (puppet.isSpawned) {
+                    puppet.despawn();
+                    // The system will auto-respawn these in a couple of frames.
+                }
             }
-            if (puppet.isSpawned) {
-                puppet.despawn();
-                // The system will auto-respawn these in a couple of frames.
-            }
+        }else{
+            this.puppets.forEach((puppet: IPuppet)=>{
+                if (puppet.isSpawned) {
+                    puppet.despawn();
+                }
+            });
         }
     }
 

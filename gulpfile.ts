@@ -9,6 +9,7 @@ var recursive = require('recursive-readdir')
 import { optimize } from 'Z64Lib/API/zzoptimize';
 import { SmartBuffer } from 'smart-buffer';
 import zlib from 'zlib';
+import { serialize } from './src/Z64Online/node_modules/bson';
 
 class BPS {
     constructor() { }
@@ -316,8 +317,8 @@ gulp.task('packassets', function () {
     const signature = signer.sign(private_key)
 
     let data: any = { data: _file, sig: signature }
-    fse.writeFileSync(c, Buffer.from(JSON.stringify(data)))
-    fse.writeFileSync(c2, Buffer.from(JSON.stringify(data)))
+    fse.writeFileSync(c, zlib.deflateSync(serialize(data)));
+    fse.writeFileSync(c2, zlib.deflateSync(serialize(data)));
     return gulp.src('.')
 });
 

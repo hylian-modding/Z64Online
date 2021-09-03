@@ -112,63 +112,66 @@ export class ModelManagerMM implements IModelManagerShim {
     onSceneChange(scene: number): void {
         if (this.parent.managerDisabled) return;
         if (this.parent.lockManager) return;
-        this.parent.allocationManager.getLocalPlayerData().AgesOrForms.forEach((ref: IModelReference) => {
-            ref.loadModel();
-        });
-        let curRef: IModelReference | undefined;
-        let link = this.findLink();
-        this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.MM!.save.form, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!);
-        let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, defines.ALIAS_PROXY_SIZE);
-        this.parent.ModLoader.emulator.rdramWriteBuffer(link, copy);
-        let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link + 0x5017, 0x4).readUInt32BE(0);
-        let count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
-        restoreList += 0x4;
-        for (let i = 0; i < count; i++) {
-            let addr = (i * 0x8) + restoreList;
-            let alias = this.parent.ModLoader.emulator.rdramRead32(addr);
-            let combiner = this.parent.ModLoader.emulator.rdramRead32(addr + 0x4);
-            this.parent.ModLoader.emulator.rdramWrite32(link + alias, combiner);
-        }
-        if (this.gearRef !== undefined && this.gearRef.isLoaded) {
-            let deku = this.gearRef.pointer + (gear.OBJECT_MASK_NUTS_NORMAL & 0x00FFFFFF);
-            let goron = this.gearRef.pointer + (gear.OBJECT_MASK_GORON_NORMAL & 0x00FFFFFF);
-            let zora = this.gearRef.pointer + (gear.OBJECT_MASK_ZORA_NORMAL & 0x00FFFFFF);
-            let fd = this.gearRef.pointer + (gear.OBJECT_MASK_DEITY_NORMAL & 0x00FFFFFF);
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_DEKU_MASK + 0x4, deku);
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_GORON_MASK + 0x4, goron);
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_ZORA_MASK + 0x4, zora);
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_DEITY_MASK + 0x4, fd);
-            this.MaskMap.forEach((obj) => {
-                for (let i = 0; i < 5; i++) {
-                    this.parent.ModLoader.emulator.rdramWrite32(link + obj.alias + 0x4, (this.gearRef.pointer + (obj.replacement & 0x00FFFFFF)));
-                    this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8)), 0xDE010000);
-                    this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8) + 4), link + obj.alias);
-                }
+        this.parent.ModLoader.utils.setTimeoutFrames(() => {
+            this.parent.allocationManager.getLocalPlayerData().AgesOrForms.forEach((ref: IModelReference) => {
+                ref.loadModel();
             });
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_HILT_1 + 0x4, this.gearRef.pointer + (gear.OBJECT_HILT_1 & 0x00FFFFFF));
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_BLADE_1 + 0x4, this.gearRef.pointer + (gear.OBJECT_BLADE_1 & 0x00FFFFFF));
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_HILT_2 + 0x4, this.gearRef.pointer + (gear.OBJECT_HILT_2 & 0x00FFFFFF));
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_BLADE_2 + 0x4, this.gearRef.pointer + (gear.OBJECT_BLADE_2 & 0x00FFFFFF));
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_EMPTY + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE & 0x00FFFFFF));
-            this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_FILLING + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE_CONTENT & 0x00FFFFFF));
-        }
+            let curRef: IModelReference | undefined;
+            let link = this.findLink();
+            this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.MM!.save.form, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!);
+            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, defines.ALIAS_PROXY_SIZE);
+            this.parent.ModLoader.emulator.rdramWriteBuffer(link, copy);
+            let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link + 0x5017, 0x4).readUInt32BE(0);
+            let count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
+            restoreList += 0x4;
+            for (let i = 0; i < count; i++) {
+                let addr = (i * 0x8) + restoreList;
+                let alias = this.parent.ModLoader.emulator.rdramRead32(addr);
+                let combiner = this.parent.ModLoader.emulator.rdramRead32(addr + 0x4);
+                this.parent.ModLoader.emulator.rdramWrite32(link + alias, combiner);
+            }
+            if (this.gearRef !== undefined && this.gearRef.isLoaded) {
+                let deku = this.gearRef.pointer + (gear.OBJECT_MASK_NUTS_NORMAL & 0x00FFFFFF);
+                let goron = this.gearRef.pointer + (gear.OBJECT_MASK_GORON_NORMAL & 0x00FFFFFF);
+                let zora = this.gearRef.pointer + (gear.OBJECT_MASK_ZORA_NORMAL & 0x00FFFFFF);
+                let fd = this.gearRef.pointer + (gear.OBJECT_MASK_DEITY_NORMAL & 0x00FFFFFF);
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_DEKU_MASK + 0x4, deku);
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_GORON_MASK + 0x4, goron);
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_ZORA_MASK + 0x4, zora);
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_DEITY_MASK + 0x4, fd);
+                this.MaskMap.forEach((obj) => {
+                    for (let i = 0; i < 5; i++) {
+                        this.parent.ModLoader.emulator.rdramWrite32(link + obj.alias + 0x4, (this.gearRef.pointer + (obj.replacement & 0x00FFFFFF)));
+                        this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8)), 0xDE010000);
+                        this.parent.ModLoader.rom.romWrite32(obj.vrom + (obj.offset + (i * 8) + 4), link + obj.alias);
+                    }
+                });
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_HILT_1 + 0x4, this.gearRef.pointer + (gear.OBJECT_HILT_1 & 0x00FFFFFF));
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_BLADE_1 + 0x4, this.gearRef.pointer + (gear.OBJECT_BLADE_1 & 0x00FFFFFF));
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_HILT_2 + 0x4, this.gearRef.pointer + (gear.OBJECT_HILT_2 & 0x00FFFFFF));
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_SWORD_BLADE_2 + 0x4, this.gearRef.pointer + (gear.OBJECT_BLADE_2 & 0x00FFFFFF));
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_EMPTY + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE & 0x00FFFFFF));
+                this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_FILLING + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE_CONTENT & 0x00FFFFFF));
+            }
+            curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!;
+            if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
+                let newRef = this.parent.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
+                this.parent.ModLoader.utils.setTimeoutFrames(() => {
+                    let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.core.MM!.save.form);
+                    a.ref = newRef;
+                    if (this.parent.core.MM!.save.form === AgeOrForm.HUMAN) {
+                        bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+                    }
+                }, 1);
+            }
+            this.parent.ModLoader.emulator.rdramWrite8(link + 0x5016, 0x1);
+            //bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!));
+            if (this.parent.mainConfig.diagnosticMode) {
+                DumpRam();
+            }
+        }, 2);
+        let link = this.findLink();
         this.parent.ModLoader.emulator.rdramWrite8(link + 0x5016, 0x1);
-        curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!;
-        if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
-            let newRef = this.parent.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
-            this.parent.ModLoader.utils.setTimeoutFrames(() => {
-                let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.core.MM!.save.form);
-                a.ref = newRef;
-                if (this.parent.core.MM!.save.form === AgeOrForm.HUMAN) {
-                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
-                }
-            }, 1);
-        }
-        //bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!));
-
-        if (this.parent.mainConfig.diagnosticMode) {
-            DumpRam();
-        }
     }
 
     findLink() {

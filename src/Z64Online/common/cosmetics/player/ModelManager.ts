@@ -377,9 +377,9 @@ export class ModelManagerClient {
   onPuppetSpawned(puppet: IPuppet) {
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
     if (player.AgesOrForms.has(puppet.ageOrForm)) {
-      this.setPuppetModel(player, player.AgesOrForms.get(puppet.ageOrForm)!, puppet.ageOrForm, this.AgeOrForm);
+      this.setPuppetModel(player, player.AgesOrForms.get(puppet.ageOrForm)!, puppet.ageOrForm, puppet.ageOrForm);
     } else {
-      this.setPuppetModel(player, this.puppetModels.get(puppet.ageOrForm)!, puppet.ageOrForm, this.AgeOrForm);
+      this.setPuppetModel(player, this.puppetModels.get(puppet.ageOrForm)!, puppet.ageOrForm, puppet.ageOrForm);
     }
     if (this.mainConfig.diagnosticMode) {
       DumpRam();

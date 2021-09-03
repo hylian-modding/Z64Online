@@ -11,7 +11,9 @@ import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames'
 import { decodeAsset } from '../assets/decoder';
 import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
-import { TEX_EYES, TEX_MOUTH } from './Defines';
+import { DL_CURLED, DL_GORON_ROLL_1, TEX_EYES, TEX_MOUTH } from './Defines';
+import { proxy_universal } from '../assets/proxy_universal';
+import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
 
 const ERROR_CUBE_POINTER: number = 0x000053C8;
 const DF_POINTER: number = 0x00005818;
@@ -387,7 +389,7 @@ export function getManifestForForm(form: AgeOrForm) {
 }
 
 interface IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void;
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void;
 }
 
 export class Z64SkeletonHeader {
@@ -404,7 +406,7 @@ export class Z64SkeletonHeader {
 
 export class OotAdultLinkManifest implements IManifest {
 
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         // Sword Matricies.
         sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), 0x00005890);
         sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), 0x000058D0);
@@ -425,7 +427,7 @@ export class OotAdultLinkManifest implements IManifest {
 }
 
 export class OotChildLinkManifest implements IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         // Sword Matricies.
         sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), 0x00005890);
         sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), 0x000058D0);
@@ -449,7 +451,7 @@ export class OotChildLinkManifest implements IManifest {
 }
 
 export class MMHumanLinkManifest implements IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
 
         // Kokiri Sword
         sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), 0x00005890);
@@ -475,7 +477,7 @@ export class MMHumanLinkManifest implements IManifest {
 
 export class MMZoraLinkManifest implements IManifest {
 
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (MM_ZORA_LINK.hasOwnProperty(name)) {
                 let __off = MM_ZORA_LINK[name];
@@ -487,7 +489,7 @@ export class MMZoraLinkManifest implements IManifest {
 }
 
 export class MMNutsLinkManifest implements IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (MM_DEKU_LINK.hasOwnProperty(name)) {
                 let __off = MM_DEKU_LINK[name];
@@ -498,7 +500,7 @@ export class MMNutsLinkManifest implements IManifest {
 }
 
 export class MMFDLinkManifest implements IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (MM_DEITY_LINK.hasOwnProperty(name)) {
                 let __off = MM_DEITY_LINK[name];
@@ -509,18 +511,21 @@ export class MMFDLinkManifest implements IManifest {
 }
 
 export class MMGoronManifest implements IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (MM_GORON_LINK.hasOwnProperty(name)) {
                 let __off = MM_GORON_LINK[name];
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+        while (sb.length % 0x10 !== 0) {
+            sb.writeUInt8(PAD_VALUE);
+        }
     }
 }
 
 export class DummyManifest implements IManifest {
-    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>): void {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (DUMMY_LINK.hasOwnProperty(name)) {
                 let __off = MM_GORON_LINK[name];
@@ -551,7 +556,7 @@ export class UniversalAliasTable {
         this.loadBankObjects();
     }
 
-    private *createJump(sb: SmartBuffer, offset: number, r: boolean = false) {
+    *createJump(sb: SmartBuffer, offset: number, r: boolean = false) {
         let back = new SharedArrayBuffer(0x8);
         let buf = Buffer.from(back);
         buf.fill(PAD_VALUE);
@@ -1101,7 +1106,7 @@ export class UniversalAliasTable {
         }
 
         // Step 6: Call form specific function.
-        manifest.build(sb, model_data, pieces);
+        manifest.build(sb, model_data, pieces, this);
 
         // Step 7: Build skeleton.
         for (let i = 0; i < skeletons.length; i++) {
@@ -1150,5 +1155,3 @@ export class UniversalAliasTable {
         return sb.toBuffer();
     }
 }
-
-/* fs.writeFileSync("./test.zobj", new UniversalAliasTable().createTable(decodeAsset(proxy_universal, crypto.randomBytes(0x5000)), new DummyManifest())); */
