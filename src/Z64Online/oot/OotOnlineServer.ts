@@ -12,7 +12,7 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/OoT/OOTAPI";
 import { ActorHookingManagerServer } from "./actor_systems/ActorHookingSystem";
-import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate } from "../common/network/Z64OPackets";
+import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
 import { OOT_PuppetOverlordServer } from "./puppet/OOT_PuppetOverlord";
 import { PvPServer } from "./pvp/PvPModule";
 import { OotOSaveData } from "./save/OotoSaveData";
@@ -246,9 +246,12 @@ export default class OotOnlineServer {
             return;
         }
         if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
-            this.ModLoader.logger.info(`Creating world ${packet.player.data.world} for lobby ${packet.lobby}.`);
-            storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
-            storage.worlds[packet.player.data.world].save = JSON.parse(packet.save.toString());
+            if (packet.player.data.world === undefined){
+                this.ModLoader.serverSide.sendPacket(new Z64O_ErrorPacket("The server has encountered an error with your world. (world id is undefined)", packet.lobby));
+                return;
+            }else{
+                storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
+            }
         }
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {

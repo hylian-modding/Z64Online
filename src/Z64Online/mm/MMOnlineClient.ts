@@ -26,7 +26,7 @@ import * as API from 'Z64Lib/API/Imports';
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
-import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket } from "@Z64Online/common/network/Z64OPackets";
+import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "@Z64Online/common/network/Z64OPackets";
 import { MMOSaveData } from "@Z64Online/mm/save/MMOSaveData";
 import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult } from "Z64Lib/API/Common/Z64API";
 import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
@@ -830,6 +830,11 @@ export default class MMOnlineClient {
             bits.writeUInt8(this.clientStorage.permEvents.readUInt8(i), this.permFlagBits[i]);
         }
         this.ModLoader.emulator.rdramWriteBitsBuffer(0x801F0568, bits);
+    }
+
+    @NetworkHandler('Z64O_ErrorPacket')
+    onError(packet: Z64O_ErrorPacket){
+        this.ModLoader.logger.error(packet.message);
     }
 
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)

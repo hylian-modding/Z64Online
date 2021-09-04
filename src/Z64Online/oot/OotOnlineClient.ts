@@ -28,7 +28,7 @@ import RomFlags from "./compat/RomFlags";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
 import { ModelManagerClient } from "../common/cosmetics/player/ModelManager";
-import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_DownloadResponsePacket } from "../common/network/Z64OPackets";
+import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from "./OotOnline";
 import { ThiccOpa } from "./opa/ThiccOpa";
 import { OOT_PuppetOverlordClient } from "./puppet/OOT_PuppetOverlord";
@@ -475,6 +475,11 @@ export default class OotOnlineClient {
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+    }
+
+    @NetworkHandler('Z64O_ErrorPacket')
+    onError(packet: Z64O_ErrorPacket){
+        this.ModLoader.logger.error(packet.message);
     }
 
     @NetworkHandler('Z64O_UpdateKeyringPacket')

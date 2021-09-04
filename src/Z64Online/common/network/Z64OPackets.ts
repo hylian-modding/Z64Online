@@ -236,3 +236,14 @@ export class Z64O_RomFlagsPacket extends Packet {
     this.isVanilla = isVanilla;
   }
 }
+
+export class Z64O_ErrorPacket extends Packet{
+
+  message: string;
+
+  constructor(msg: string, lobby: string){
+    super('Z64O_ErrorPacket', 'Z64O', lobby, false);
+    this.message = msg;
+  }
+
+}
