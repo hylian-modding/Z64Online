@@ -18,6 +18,7 @@ import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { Z64O_ActorPacket, Z64O_SpawnActorPacket, Z64O_ActorDeadPacket } from "../../common/network/Z64OPackets";
 import { ActorHookBase, ActorHookProcessor, HookInfo, ActorPacketData, ActorPacketData_Impl, getActorBehavior } from "./ActorHookBase";
 import fs from 'fs';
+import Vector3 from "modloader64_api/math/Vector3";
 
 const BOMB_ID = 0x0010;
 const BOMBCHU_ID = 0x00da;
@@ -469,113 +470,48 @@ export class ActorHookingManagerClient {
       return;
     }
     if (packet.player.data.world !== this.ModLoader.me.data.world) return;
-    let spawn_param = 0;
-    let pos = this.core.OOT!.link.position.getRawPos();
-    switch (packet.actorData.actor.actorID) {
-      case BOMB_ID:
-        spawn_param = 0x80600160;
-        break;
-      case BOMBCHU_ID:
-        spawn_param = 0x80600170;
-        this.ModLoader.emulator.rdramWrite8(0x600172, pos[0]);
-        this.ModLoader.emulator.rdramWrite8(0x600173, pos[1]);
-
-        this.ModLoader.emulator.rdramWrite8(0x60019F, pos[4]);
-        this.ModLoader.emulator.rdramWrite8(0x6001A0, pos[5]);
-        var f: number = this.ModLoader.emulator.rdramReadF32(0x60019F);
-        f += 100.0;
-        this.ModLoader.emulator.rdramWriteF32(0x60019F, f);
-
-        this.ModLoader.emulator.rdramWrite16(0x600174, this.ModLoader.emulator.rdramRead16(0x60019F));
-        this.ModLoader.emulator.rdramWrite8(0x600176, pos[8]);
-        this.ModLoader.emulator.rdramWrite8(0x600177, pos[9]);
-        break;
-      case FW_ID:
-        this.ModLoader.emulator.rdramWrite16(0x600180, FW_ID);
-        spawn_param = 0x80600180;
-        break;
-      case DF_ID:
-        this.ModLoader.emulator.rdramWrite16(0x600180, DF_ID);
-        spawn_param = 0x80600180;
-        break;
-      case NL_ID:
-        this.ModLoader.emulator.rdramWrite16(0x600180, NL_ID);
-        spawn_param = 0x80600180;
-        //break;
-        return; // Keep this dead for now.
-      case DEKU_NUTS:
-        spawn_param = 0x806001A2;
-        this.ModLoader.emulator.rdramWrite8(0x6001A4, pos[0]);
-        this.ModLoader.emulator.rdramWrite8(0x6001A5, pos[1]);
-
-        this.ModLoader.emulator.rdramWrite8(0x6001A6, pos[4]);
-        this.ModLoader.emulator.rdramWrite8(0x6001A7, pos[5]);
-        var f: number = this.ModLoader.emulator.rdramReadF32(0x6001A6);
-        f += 100.0;
-        this.ModLoader.emulator.rdramWriteF32(0x60019F, f);
-
-        this.ModLoader.emulator.rdramWrite16(0x600174, this.ModLoader.emulator.rdramRead16(0x60019F));
-        this.ModLoader.emulator.rdramWrite8(0x6001A8, pos[8]);
-        this.ModLoader.emulator.rdramWrite8(0x6001A9, pos[9]);
-        break;
-      case ARROW:
-        spawn_param = 0x80600190;
-        break;
-    }
-    /* this.core.commandBuffer.runCommand(
-      Command.SPAWN_ACTOR,
-      spawn_param,
-      (success: boolean, result: number) => {
-        if (success) {
-          let dref: number = result & 0x00ffffff;
-          this.ModLoader.logger.info(dref.toString(16));
-          let actor: IActor = this.core.OOT!.actorManager.createIActorFromPointer(
-            dref
-          );
-          actor.actorUUID = packet.actorData.actor.actorUUID;
-          actor.position.setRawPos(packet.actorData.rawPos);
-          actor.rotation.setRawRot(packet.actorData.rawRot);
-
-          if (packet.actorData.actor.actorID === BOMB_ID) {
-            actor.rdramWrite32(0x6c, 0x0);
-            actor.rdramWrite32(0x70, 0x0);
-            actor.rdramWrite8(0x118, 0x80);
-            this.bombsRemote.set(actor.actorUUID, actor);
-          } else if (packet.actorData.actor.actorID === BOMBCHU_ID) {
-            this.chusRemote.set(actor.actorUUID, actor);
-          } else if (packet.actorData.actor.actorID === NL_ID) {
-            this.NLRemote.set(actor.actorUUID, actor);
-          } else if (packet.actorData.actor.actorID === ARROW) {
-            this.arrowProcess.actor = actor;
-            actor.position.setRawPos(packet.actorData.rawPos);
-            actor.rdramWriteBuffer(0x8, packet.actorData.rawPos);
-            actor.rdramWriteBuffer(0x38, packet.actorData.rawPos);
-            actor.rotation.setRawRot(packet.actorData.rawRot);
-            let hooks = this.arrowProcess.hookBase.hooks;
-            for (let i = 0; i < hooks.length; i++) {
-              if (hooks[i].overrideIncoming !== undefined) {
-                hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data, this.ModLoader);
-              } else {
-                if (hooks[i].isBehavior) {
-                  let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
-                  this.setActorBehavior(
-                    this.ModLoader.emulator,
-                    actor,
-                    hooks[i].offset,
-                    d
-                  );
-                } else {
-                  actor.rdramWriteBuffer(
-                    hooks[i].offset,
-                    packet.actorData.hooks[i].data
-                  );
-                }
-              }
+    this.core.OOT!.commandBuffer.spawnActor(packet.actorData.actor.actorID, packet.actorData.variable, this.core.OOT!.link.position.getVec3(), new Vector3()).then((actor: IActor) => {
+      actor.actorUUID = packet.actorData.actor.actorUUID;
+      actor.position.setRawPos(packet.actorData.rawPos);
+      actor.rotation.setRawRot(packet.actorData.rawRot);
+      if (packet.actorData.actor.actorID === BOMB_ID) {
+        actor.rdramWrite32(0x6c, 0x0);
+        actor.rdramWrite32(0x70, 0x0);
+        actor.rdramWrite8(0x118, 0x80);
+        this.bombsRemote.set(actor.actorUUID, actor);
+      } else if (packet.actorData.actor.actorID === BOMBCHU_ID) {
+        this.chusRemote.set(actor.actorUUID, actor);
+      } else if (packet.actorData.actor.actorID === NL_ID) {
+        this.NLRemote.set(actor.actorUUID, actor);
+      } else if (packet.actorData.actor.actorID === ARROW) {
+        this.arrowProcess.actor = actor;
+        actor.position.setRawPos(packet.actorData.rawPos);
+        actor.rdramWriteBuffer(0x8, packet.actorData.rawPos);
+        actor.rdramWriteBuffer(0x38, packet.actorData.rawPos);
+        actor.rotation.setRawRot(packet.actorData.rawRot);
+        let hooks = this.arrowProcess.hookBase.hooks;
+        for (let i = 0; i < hooks.length; i++) {
+          if (hooks[i].overrideIncoming !== undefined) {
+            hooks[i].overrideIncoming(actor, hooks[i].offset, packet.actorData.hooks[i].data, this.ModLoader);
+          } else {
+            if (hooks[i].isBehavior) {
+              let d = packet.actorData.hooks[i].data.readUInt32BE(0x0);
+              this.setActorBehavior(
+                this.ModLoader.emulator,
+                actor,
+                hooks[i].offset,
+                d
+              );
+            } else {
+              actor.rdramWriteBuffer(
+                hooks[i].offset,
+                packet.actorData.hooks[i].data
+              );
             }
           }
         }
       }
-    ); */
+    });
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)

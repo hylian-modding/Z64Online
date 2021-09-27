@@ -62,10 +62,10 @@ export abstract class ImGuiHandlerCommon {
                     let _core = this.core.OOT !== undefined ? this.core.OOT : this.core.MM;
                     let pos = _core!.link.position.getVec3();
                     let rot = _core!.link.rotation.getVec3();
-                    console.log(pos);
                     this.ModLoader.utils.setTimeoutFrames(() => {
                         _core!.commandBuffer.spawnActorRXY_Z(parseInt(this.spawnID[0], 16), parseInt(this.spawnParam[0], 16), parseInt(this.spawnParam2[0], 16), rot.z, pos).then((actor: IActor) => {
                             actor.position.setRawPos(_core!.link.position.getRawPos());
+                            console.log(actor.pointer.toString(16));
                         });
                     }, 1);
                 }

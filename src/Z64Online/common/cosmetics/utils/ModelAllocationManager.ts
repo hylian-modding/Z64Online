@@ -7,6 +7,7 @@ import { AgeOrForm } from '@Z64Online/common/types/Types';
 import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
 import { Z64_PLAYER_PROXY } from '@Z64Online/common/types/GameAliases';
 import { PUPPET_INST_SIZE } from '../Defines';
+import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 
 export class ModelAllocationManager {
   private ModLoader: IModLoaderAPI;
@@ -124,14 +125,12 @@ export class ModelAllocationManager {
     if (this.isModelAllocated(ref)) return ref;
     let modelObject = this.getModel(ref);
     let pointer: number = this.ModLoader.gfx_heap!.malloc(modelObject.size);
-    //let fuck = pointer;
-    //fuck -= 0x81000000;
-    //fuck += 0x16000000;
     // We're out of heap space. Abort.
     if (pointer === 0) return undefined;
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
+      this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD, b);
       this.zz.repoint(b, pointer);
     } catch (err: any) {
       this.ModLoader.logger.error(err.stack);

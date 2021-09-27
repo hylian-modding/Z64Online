@@ -44,7 +44,6 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
     sendPuppetPacket() {
         this.fakeClientPuppet.data!.onTick();
         let packet = new Z64O_PuppetPacket(this.fakeClientPuppet.data!, this.ModLoader.clientLobby);
-        //console.log(JSON.stringify(packet));
         if (this.Epona !== undefined) {
             packet.setHorseData(this.Epona);
         }
@@ -174,9 +173,7 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
             return;
         }
         if (
-            !this.core.MM!.helper.isLinkEnteringLoadingZone() &&
-            this.core.MM!.helper.isInterfaceShown() &&
-            !this.dummy()
+            !this.core.MM!.helper.isLinkEnteringLoadingZone()
         ) {
             this.processNewPlayers();
             this.processAwaitingSpawns();

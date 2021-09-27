@@ -7,6 +7,7 @@ export interface IPuppet {
     player: INetworkPlayer;
     id: string;
     data: IPuppetData | undefined;
+    modelPointer: number;
     isSpawned: boolean;
     isSpawning: boolean;
     isShoveled: boolean;

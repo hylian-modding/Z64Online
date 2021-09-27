@@ -28,6 +28,7 @@ export class ModelManagerMM implements IModelManagerShim {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
+        this.unpackModels();
     }
 
     dummy(): boolean {
@@ -40,21 +41,21 @@ export class ModelManagerMM implements IModelManagerShim {
         return true;
     }
 
-    unpackModels(evt: any) {
+    unpackModels() {
         try {
             fs.mkdirSync(this.parent.cacheDir);
         } catch (err: any) { }
-        let extractIfMissing = (p: string, buf: Buffer, rom: Buffer) => {
+        let extractIfMissing = (p: string, buf: Buffer) => {
             if (fs.existsSync(p)) return;
-            fs.writeFileSync(p, decodeAsset(buf, rom));
+            fs.writeFileSync(p, decodeAsset(buf));
         };
-        extractIfMissing(path.join(this.parent.cacheDir, "human.zobj"), object_link_human, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "zora.zobj"), object_link_zora, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "nuts.zobj"), object_link_nuts, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "fd.zobj"), object_link_deity, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "goron.zobj"), object_link_goron, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "gear.zobj"), gear.gear, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "human.zobj"), object_link_human);
+        extractIfMissing(path.join(this.parent.cacheDir, "zora.zobj"), object_link_zora);
+        extractIfMissing(path.join(this.parent.cacheDir, "nuts.zobj"), object_link_nuts);
+        extractIfMissing(path.join(this.parent.cacheDir, "fd.zobj"), object_link_deity);
+        extractIfMissing(path.join(this.parent.cacheDir, "goron.zobj"), object_link_goron);
+        extractIfMissing(path.join(this.parent.cacheDir, "gear.zobj"), gear.gear);
+        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
         setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
 
@@ -100,7 +101,6 @@ export class ModelManagerMM implements IModelManagerShim {
     }
 
     onRomPatched(evt: any): void {
-        this.unpackModels(evt);
         this.loadHumanModelMM(evt);
         this.loadZoraModelMM(evt);
         this.loadNutsModelMM(evt);

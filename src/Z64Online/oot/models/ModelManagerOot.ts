@@ -3,7 +3,7 @@ import fs from 'fs';
 import { AgeOrForm, Scene } from '@Z64Online/common/types/Types';
 import { setPlayerProxy, Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/common/types/GameAliases';
 import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
-import { bus } from 'modloader64_api/EventHandler';
+import { bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
 import { decodeAsset } from '@Z64Online/common/assets/decoder';
@@ -13,6 +13,7 @@ import { DummyManifest, UniversalAliasTable } from '@Z64Online/common/cosmetics/
 import { object_link_boy } from './zobjs/object_link_boy';
 import { object_link_child } from './zobjs/object_link_child';
 import { ALIAS_PROXY_SIZE } from '@Z64Online/common/cosmetics/Defines';
+import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 
 export class ModelManagerOot implements IModelManagerShim {
 
@@ -20,6 +21,21 @@ export class ModelManagerOot implements IModelManagerShim {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
+    }
+
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD)
+    onPreLoad(buf: Buffer){
+        /* let count = buf.readUInt32BE(0x500C);
+        let start = 0x5020;
+        let cube = buf.readUInt32BE(0x53C8 + 0x4);
+        for (let i = 0; i < count; i++){
+            let offset = (i * 0x8) + start;
+            let data = buf.readUInt32BE(offset + 0x4);
+            if (data === cube){
+                // Found a stub.
+                
+            }
+        } */
     }
 
     safetyCheck(): boolean {

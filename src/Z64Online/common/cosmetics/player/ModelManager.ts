@@ -13,7 +13,9 @@ import {
   bus,
   EventHandler,
   EventsClient,
-  PrivateEventHandler
+  PrivateEventHandler,
+  setupEventHandlers,
+  setupPrivateEventHandlers
 } from 'modloader64_api/EventHandler';
 import {
   IModLoaderAPI,
@@ -37,7 +39,6 @@ import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { IModelManagerShim } from "../utils/IModelManagerShim";
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } from '@Z64Online/common/network/Z64OPackets';
-import { Puppet_OOT } from '@Z64Online/oot/puppet/Puppet_OOT';
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
 import { ALIAS_PROXY_SIZE } from '../Defines';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
@@ -53,8 +54,8 @@ export class ModelManagerClient {
   //
   proxySyncTick!: string;
   proxyNeedsSync: boolean = false;
-  customModelFilesAdult: Map<string, IModelReference> = new Map<string, IModelReference>();
-  customModelFilesChild: Map<string, IModelReference> = new Map<string, IModelReference>();
+  customModelRefsAdult: Map<string, IModelReference> = new Map<string, IModelReference>();
+  customModelRefsChild: Map<string, IModelReference> = new Map<string, IModelReference>();
   customModelFilesEquipment: Map<string, Buffer> = new Map<string, Buffer>();
   config!: Z64_EventConfig;
   //
@@ -87,7 +88,7 @@ export class ModelManagerClient {
       ref.script = evt.script;
     }
     evt.ref = ref;
-    this.customModelFilesAdult.set(evt.name + " (Adult)", evt.ref);
+    this.customModelRefsAdult.set(evt.name + " (Adult)", evt.ref);
   }
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
@@ -103,7 +104,7 @@ export class ModelManagerClient {
       ref.script = evt.script;
     }
     evt.ref = ref;
-    this.customModelFilesChild.set(evt.name + " (Child)", evt.ref);
+    this.customModelRefsChild.set(evt.name + " (Child)", evt.ref);
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
@@ -185,6 +186,8 @@ export class ModelManagerClient {
   onRomPatchedPre(evt: any) {
     try {
       this.setupPuppetModels(evt);
+      setupPrivateEventHandlers(this.child, this.ModLoader.privateBus);
+      setupEventHandlers(this.child, this.ModLoader.publicBus);
     } catch (err: any) {
       // Maybe don't shallow this error?
       console.log(err);
@@ -280,7 +283,7 @@ export class ModelManagerClient {
     // Leave this here. We do this so people fucking with code don't decompress and recompress it a bunch of times.
     let code_file: Buffer = tools.getCodeFile(evt.rom);
     /**@todo Rewrite this shit after the world events module is ported. */
-    bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelFilesAdult, child: this.customModelFilesChild, equipment: this.customModelFilesEquipment });
+    bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelRefsAdult, child: this.customModelRefsChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
     try {
       this.child.onRomPatched(evt);
@@ -349,7 +352,7 @@ export class ModelManagerClient {
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN)
-  onPuppetPreSpawn(puppet: Puppet_OOT) {
+  onPuppetPreSpawn(puppet: IPuppet) {
     /**@todo rewrite this shit after we uncrust the core. */
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
     puppet.modelPointer = player.proxyPointer;
@@ -387,12 +390,12 @@ export class ModelManagerClient {
   }
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_DESPAWNED)
-  onPuppetDespawned(puppet: Puppet_OOT) {
+  onPuppetDespawned(puppet: IPuppet) {
     this.allocationManager.getPlayer(puppet.player)!.isDead = true;
   }
 
   @EventHandler(Z64OnlineEvents.PUPPET_AGE_CHANGED)
-  onPuppetAgeChange(puppet: Puppet_OOT) {
+  onPuppetAgeChange(puppet: IPuppet) {
     this.onPuppetSpawned(puppet);
   }
 
@@ -454,10 +457,10 @@ export class ModelManagerClient {
       this.onSceneChange(-1);
       this.proxyNeedsSync = true;
       if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
-        let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.OOT!.link.tunic);
+        /* let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.OOT!.link.tunic);
         if (r2.hash !== evt.ref.hash) {
           this.allocationManager.SetLocalPlayerModel(form, r2);
-        }
+        } */
       }
       return;
     }

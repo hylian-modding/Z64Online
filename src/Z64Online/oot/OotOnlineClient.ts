@@ -39,6 +39,7 @@ import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
+import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -62,8 +63,8 @@ export default class OotOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
-    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
-    //actorHooks!: ActorHookingManagerClient;
+    @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
+    actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
     puppets!: OOT_PuppetOverlordClient;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
@@ -247,7 +248,7 @@ export default class OotOnlineClient {
         let saveArgCount: number = 1;
         let name = this.core.OOT!.save.player_name;
         let saveSlot = this.ModLoader.emulator.rdramRead32(0x8011A5D0 + 0x1354);
-        let autosaveSlot = 2;
+        let autosaveSlot = 1;
         this.ModLoader.emulator.rdramWrite32(0x8011A5D0 + 0x1354, autosaveSlot);
         this.core.OOT!.save.player_name = "autosave";
         if (name !== "autosave") {
