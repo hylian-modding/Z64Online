@@ -1,4 +1,4 @@
-import { ActorHookBase, HookInfo } from '../actor_systems/ActorHookBase';
+import { ActorHookBase, HookInfo } from '../ActorHookBase';
 
 class Bg_Heavy_Block extends ActorHookBase {
   constructor() {

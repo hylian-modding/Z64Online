@@ -536,7 +536,7 @@ export class DummyManifest implements IManifest {
 }
 
 const BANK_OBJECTS: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
-export const CUBE: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
+const CUBE: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
 
 export class Skeleton {
     bones: Array<Bone>;

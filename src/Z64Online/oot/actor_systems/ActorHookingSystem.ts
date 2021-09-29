@@ -3,7 +3,7 @@ import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { MLPatchLib } from "@Z64Online/common/lib/ML64PatchLib";
 import path from "path";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { EventHandler, bus } from "modloader64_api/EventHandler";
+import { EventHandler, bus, EventsClient } from "modloader64_api/EventHandler";
 import IMemory from "modloader64_api/IMemory";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
@@ -71,38 +71,29 @@ export class ActorHookingManagerClient {
   core!: IZ64Main;
   @ParentReference()
   parent!: IZ64OnlineHelpers;
-  names: any;
 
   constructor() {
-    this.names = JSON.parse(
-      fs.readFileSync(__dirname + '/../gui/imgui/ACTOR_NAMES.json').toString()
-    );
   }
 
   @EventHandler(Z64OnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD)
   onActorSyncFile(evt: string) {
     let hook: ActorHookBase = require(evt);
     this.actorHookMap.set(hook.actorID, hook);
-    this.ModLoader.logger.info(
-      'Loading actor hook for actor ' +
-      this.names['0x' + hook.actorID.toString(16).toUpperCase()] +
-      '.'
-    );
   }
 
-  @Postinit()
+  @EventHandler(EventsClient.ON_HEAP_READY)
   onPostInit() {
-    //let dirs = ["actors", "enemies"];
+    this.ModLoader.utils.setTimeoutFrames(this.registerActors.bind(this), 2);
+  }
+
+  registerActors() {
     let dirs = ["actors"];
     for (let i = 0; i < dirs.length; i++) {
       let dir = path.join(__dirname, dirs[i]);
       fs.readdirSync(dir).forEach((file: string) => {
-        let parse = path.parse(file);
-        if (parse.ext === '.js') {
-          bus.emit(
-            Z64OnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD,
-            path.join(dir, file)
-          );
+        let p = path.parse(file);
+        if (p.ext === ".js" || p.ext === ".mlz") {
+          bus.emit(Z64OnlineEvents.ON_EXTERNAL_ACTOR_SYNC_LOAD, path.join(dir, file));
         }
       });
     }
@@ -173,9 +164,6 @@ export class ActorHookingManagerClient {
           return;
         }
       }
-      this.ModLoader.logger.info(
-        'Setting up hook for actor ' + this.names['0x' + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + ", " + actor.isTransitionActor + '.'
-      );
       if (actor.isTransitionActor) {
         this.transitionHookTicks.set(actor.actorUUID, new ActorHookProcessor(actor, base, this.ModLoader, this.core.OOT!));
       } else {
@@ -242,7 +230,6 @@ export class ActorHookingManagerClient {
       return;
     }
     if (this.transitionHookTicks.has(actor.actorUUID)) {
-      this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.ModLoader.clientSide.sendPacket(
         new Z64O_ActorDeadPacket(
           actor.actorUUID,
@@ -254,7 +241,6 @@ export class ActorHookingManagerClient {
       this.transitionHookTicks.delete(actor.actorUUID);
     }
     if (this.actorHookTicks.has(actor.actorUUID)) {
-      this.ModLoader.logger.info('Deleting hook for actor ' + this.names["0x" + actor.actorID.toString(16).toUpperCase()] + ': ' + actor.actorUUID + '.');
       this.ModLoader.clientSide.sendPacket(
         new Z64O_ActorDeadPacket(
           actor.actorUUID,

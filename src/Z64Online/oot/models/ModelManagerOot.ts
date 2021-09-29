@@ -21,10 +21,11 @@ export class ModelManagerOot implements IModelManagerShim {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
+        this.unpackModels();
     }
 
     @PrivateEventHandler(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD)
-    onPreLoad(buf: Buffer){
+    onPreLoad(buf: Buffer) {
         /* let count = buf.readUInt32BE(0x500C);
         let start = 0x5020;
         let cube = buf.readUInt32BE(0x53C8 + 0x4);
@@ -99,7 +100,7 @@ export class ModelManagerOot implements IModelManagerShim {
         let curRef: IModelReference | undefined;
         let link1 = this.doesLinkObjExist(AgeOrForm.ADULT);
         let link2 = this.doesLinkObjExist(AgeOrForm.CHILD);
-        let link: { exists: boolean; pointer: number; } = {exists: false, pointer: 0};
+        let link: { exists: boolean; pointer: number; } = { exists: false, pointer: 0 };
         if (link1.exists) link = link1;
         if (link2.exists) link = link2;
         if (link.exists) {
@@ -136,22 +137,21 @@ export class ModelManagerOot implements IModelManagerShim {
         this.parent.loadFormProxy(evt.rom, AgeOrForm.CHILD, path.join(this.parent.cacheDir, "child.zobj"), path.join(this.parent.cacheDir, "proxy_universal.zobj"), Z64_MANIFEST, 0x0014);
     }
 
-    unpackModels(evt: any) {
+    unpackModels() {
         try {
             fs.mkdirSync(this.parent.cacheDir);
         } catch (err: any) { }
-        let extractIfMissing = (p: string, buf: Buffer, rom: Buffer) => {
+        let extractIfMissing = (p: string, buf: Buffer) => {
             if (fs.existsSync(p)) return;
-            fs.writeFileSync(p, decodeAsset(buf, rom));
+            fs.writeFileSync(p, decodeAsset(buf));
         };
-        extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), object_link_boy, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), object_link_child, evt.rom);
-        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal, evt.rom);
+        extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), object_link_boy);
+        extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), object_link_child);
+        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
         setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
 
     onRomPatched(evt: any) {
-        this.unpackModels(evt);
         this.loadAdultModelOOT(evt);
         this.loadChildModelOOT(evt);
     }
