@@ -18,7 +18,7 @@ export default class Z64Serialize{
                     reject("Failed to deserialize data.");
                     return;
                 }
-                accept(deserialize(result));
+                accept(deserialize(result, {promoteBuffers: true, promoteValues: true}));
             });
         });
     }
