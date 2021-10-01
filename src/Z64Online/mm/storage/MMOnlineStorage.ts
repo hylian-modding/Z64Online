@@ -39,10 +39,10 @@ class OwlStatuesServer implements IOwlStatues {
 }
 
 class MMSyncSaveServer implements IMMSyncSaveServer {
+  minimap_flags: Buffer = Buffer.alloc(0x1C);
   owlStatues: IOwlStatues = new OwlStatuesServer();
-  map_visible: number = 0;
-  map_visited: number = 0;
-  owl_statues: number = 0;
+  map_visible: Buffer = Buffer.alloc(0x4);
+  map_visited: Buffer = Buffer.alloc(0x4);
   double_defense: number = 0;
   isMMR: boolean = false;
   isVanilla: boolean = false;
