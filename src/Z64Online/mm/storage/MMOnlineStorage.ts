@@ -5,7 +5,7 @@ import {
   MASK_FLAG_ARR_SIZE,
   WEEK_EVENT_ARR_SIZE,
 } from '@Z64Online/mm/MMOnline';
-import { IQuestStatus } from 'Z64Lib/API/MM/MMAPI';
+import { IOwlStatues, IQuestStatus } from 'Z64Lib/API/MM/MMAPI';
 import { Magic, ISwords, IShields } from 'Z64Lib/API/COMMON/Z64API';
 import { IKeyRing } from '../../common/save/IKeyRing';
 import { IMMInventorySync, IMMSyncSave } from '../../common/types/MMAliases';
@@ -24,7 +24,22 @@ export interface IMMSyncSaveServer extends IMMSyncSave {
   isVanilla: boolean;
 }
 
+class OwlStatuesServer implements IOwlStatues {
+  greatBayCoast: boolean = false;
+  zoraCape: boolean = false;
+  snowhead: boolean = false;
+  mountainVillage: boolean = false;
+  clockTown: boolean = false;
+  milkRoad: boolean = false;
+  woodfall: boolean = false;
+  southernSwamp: boolean = false;
+  ikanaCanyon: boolean = false;
+  stoneTower: boolean = false;
+  hiddenOwlStatue: boolean = false;
+}
+
 class MMSyncSaveServer implements IMMSyncSaveServer {
+  owlStatues: IOwlStatues = new OwlStatuesServer();
   map_visible: number = 0;
   map_visited: number = 0;
   owl_statues: number = 0;

@@ -24,7 +24,7 @@ export class MMOSaveData implements ISaveSyncData {
     let obj: any = {};
     let keys = [
       'inventory', 'map_visible', 'map_visited', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
-      'questStatus', 'checksum', 'owl_statues', 'double_defense', 'magicBeanCount'
+      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount'
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -151,6 +151,8 @@ export class MMOSaveData implements ISaveSyncData {
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
 
+      this.processBoolLoop_OVERWRITE(obj.owlStatues, storage.owlStatues);
+
 
       //storage.permSceneData = obj.permSceneData;
       //storage.weekEventFlags = obj.weekEventFlags;
@@ -196,6 +198,12 @@ export class MMOSaveData implements ISaveSyncData {
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
         this.processMixedLoop(obj.questStatus, storage.questStatus, []);
+
+        try{
+          this.processBoolLoop(obj.owlStatues, storage.owlStatues);
+        }catch(err: any){
+          console.log(err.stack);
+        }
 
         if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) {
           storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
