@@ -127,6 +127,8 @@ export class CDNClient {
             this.ModLoader.ImGui.getForegroundDrawList().addText(xy(0, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), "You are currently uploading custom content to other players...");
             const [[k, v]] = this.pendingUploads;
             this.ModLoader.ImGui.getForegroundDrawList().addText(xy(0, 14), rgba(0xFF, 0xFF, 0xFF, 0xFF), `${v.curChunk} of ${v.chunks} blocks transferred. ${this.pendingUploads.size} items pending.`);
+        }else if (this.pendingDownloads.size > 0){
+            this.ModLoader.ImGui.getForegroundDrawList().addText(xy(0, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), "You are currently downloading custom content from other players...");
         }
     }
 
@@ -138,6 +140,7 @@ export class CDNClient {
             this.pendingDownloads.delete(packet.model_id);
         }else{
             var fetchUrl = require("fetch").fetchUrl;
+
             fetchUrl(packet.url, (error: any, meta: any, body: any) => {
                 if (this.pendingDownloads.has(packet.model_id)) {
                     this.ModLoader.utils.setTimeoutFrames(() => {

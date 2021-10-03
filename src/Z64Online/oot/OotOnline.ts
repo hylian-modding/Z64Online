@@ -28,9 +28,6 @@ export class OotOnlineConfigCategory {
   mapTracker: boolean = false;
   keySync: boolean = true;
   notifications: boolean = true;
-  nameplates: boolean = true;
-  muteNetworkedSounds: boolean = false;
-  muteLocalSounds: boolean = false;
   notificationSound: boolean = true;
   syncMasks: boolean = true;
   syncBottleContents: boolean = true;

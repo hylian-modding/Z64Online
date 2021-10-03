@@ -1,4 +1,4 @@
-import { string_ref } from "modloader64_api/Sylvain/ImGui";
+import { number_ref, SliderFlags, string_ref } from "modloader64_api/Sylvain/ImGui";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IActor } from "Z64Lib/API/imports";
@@ -8,6 +8,8 @@ import { openMemoryUtils3Tab } from "../compat/MemoryUtils3";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import { changeKillfeedFont } from "modloader64_api/Announcements";
 import { getHylianFont, setHylianFontRef } from "./HyliaFont";
+import { CommonConfigInst, volume_local, volume_remote } from "../lib/Settings";
+import { Z64O_PRIVATE_EVENTS } from "../api/InternalAPI";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -59,6 +61,27 @@ export abstract class ImGuiHandlerCommon {
                         this.showActorBrowser = !this.showActorBrowser;
                     }
                     // #endif
+                    if (this.ModLoader.ImGui.beginMenu("General Settings")) {
+                        if (this.ModLoader.ImGui.menuItem("Mute custom sounds (local)", undefined, CommonConfigInst.muteLocalSounds)) {
+                            CommonConfigInst.muteLocalSounds = !CommonConfigInst.muteLocalSounds;
+                            this.ModLoader.config.save();
+                        }
+                        if (this.ModLoader.ImGui.menuItem("Mute custom sounds (remote)", undefined, CommonConfigInst.muteNetworkedSounds)) {
+                            CommonConfigInst.muteNetworkedSounds = !CommonConfigInst.muteNetworkedSounds;
+                            this.ModLoader.config.save();
+                            this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_REMOTE_VOLUME);
+                        }
+                        if (this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", volume_local, 0.1, 1.0)){
+                            CommonConfigInst.localVolume = volume_local[0];
+                            this.ModLoader.config.save();
+                            this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_LOCAL_VOLUME);
+                        }
+                        if (this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", volume_remote, 0.1, 1.0)){
+                            CommonConfigInst.networkedVolume = volume_remote[0];
+                            this.ModLoader.config.save();
+                        }
+                        this.ModLoader.ImGui.endMenu();
+                    }
                     this.ModLoader.ImGui.endMenu();
                 }
                 this.ModLoader.ImGui.endMenu();

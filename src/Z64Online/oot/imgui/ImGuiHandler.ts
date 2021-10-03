@@ -15,6 +15,7 @@ import { Command } from "Z64Lib/API/Common/ICommandBuffer";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
+import { CommonConfigInst } from "@Z64Online/common/lib/Settings";
 
 export class ImGuiHandler extends ImGuiHandlerCommon{
 
@@ -50,16 +51,8 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("Z64O")) {
                     if (this.ModLoader.ImGui.beginMenu("General Settings")) {
-                        if (this.ModLoader.ImGui.menuItem("Mute custom sounds (local)", undefined, this.settings.muteLocalSounds)) {
-                            this.settings.muteLocalSounds = !this.settings.muteLocalSounds;
-                            this.ModLoader.config.save();
-                        }
-                        if (this.ModLoader.ImGui.menuItem("Mute custom sounds (remote)", undefined, this.settings.muteNetworkedSounds)) {
-                            this.settings.muteNetworkedSounds = !this.settings.muteNetworkedSounds;
-                            this.ModLoader.config.save();
-                        }
-                        if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, this.settings.nameplates, true)) {
-                            this.settings.nameplates = !this.settings.nameplates;
+                        if (this.ModLoader.ImGui.menuItem("Show nameplates", undefined, CommonConfigInst.nameplates, true)) {
+                            CommonConfigInst.nameplates = !CommonConfigInst.nameplates;
                             this.ModLoader.config.save();
                         }
                         if (this.ModLoader.ImGui.menuItem("Show notifications", undefined, this.settings.notifications, true)) {
@@ -119,10 +112,6 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
                 this.ModLoader.ImGui.endMenu();
             }
             this.ModLoader.ImGui.endMainMenuBar();
-        }
-
-        if (!this.settings.nameplates) {
-            return;
         }
     }
 

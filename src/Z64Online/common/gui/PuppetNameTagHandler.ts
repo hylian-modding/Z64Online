@@ -11,6 +11,7 @@ import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { OotEvents } from "Z64Lib/API/Common/Z64API";
 import { Scene } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64OnlineEvents } from "../api/Z64API";
+import { CommonConfigInst } from "../lib/Settings";
 import { HYLIAN_FONT_REF } from "./HyliaFont";
 
 export default class PuppetNameTagHandler {
@@ -96,6 +97,9 @@ export default class PuppetNameTagHandler {
 
     @onViUpdate()
     onViUpdate() {
+        if (!CommonConfigInst.nameplates) {
+            return;
+        }
         for (let i = 0; i < this.puppets.length; i++) {
             if (this.puppets[i].scene === this.scene) {
                 try {

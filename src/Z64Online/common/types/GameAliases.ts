@@ -62,3 +62,7 @@ export function getChildID(): AgeOrForm{
 export function getAdultID(): AgeOrForm{
     return Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? AgeOrForm.ADULT : AgeOrForm.HUMAN
 }
+
+export function getLinkPos(core: IZ64Main): Buffer{
+    return core.OOT !== undefined ? core.OOT!.link.position.getRawPos() : core.MM!.link.position.getRawPos();
+}

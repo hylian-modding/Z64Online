@@ -5,19 +5,18 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { NetworkHandler, INetworkPlayer } from "modloader64_api/NetworkHandler";
 import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
-import { onTick, onViUpdate, Postinit } from 'modloader64_api/PluginLifecycle';
+import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
 import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { OotEvents } from "Z64Lib/API/OOT/OOTAPI";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { Z64_EventConfig } from "@Z64Online/common/WorldEvents/Z64_EventConfig";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
 import { SoundCategory_Adult, SoundCategory_Child } from "@Z64Online/oot/sounds/SoundCategory";
-import { number_ref } from "modloader64_api/Sylvain/ImGui";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
+import { CommonConfigInst, volume_local, volume_remote } from "@Z64Online/common/lib/Settings";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     id: string;
@@ -47,12 +46,9 @@ export class SoundManagerClient {
     sounds: Map<number, Array<sf.Sound>> = new Map<number, Array<sf.Sound>>();
     localSoundPaks: Map<string, any> = new Map<string, any>();
     originalData!: Buffer;
-    config!: Z64_EventConfig;
     client_config!: OotOnlineConfigCategory;
     hasAdult: boolean = false;
     hasChild: boolean = false;
-    volume_local: number_ref = [1.0];
-    volume_remote: number_ref = [1.0];
     currentID: string = "KILL";
 
     getRandomInt(min: number, max: number) {
@@ -108,7 +104,7 @@ export class SoundManagerClient {
 
     @EventHandler(Z64OnlineEvents.ON_REMOTE_PLAY_SOUND)
     onSound(remote: RemoteSoundPlayRequest) {
-        if (this.client_config.muteNetworkedSounds) return;
+        if (CommonConfigInst.muteNetworkedSounds) return;
         if (this.PlayerSounds.has(remote.player.uuid)) {
             let rawPos: Buffer = remote.pos;
             let v = new Vector3(rawPos.readFloatBE(0), rawPos.readFloatBE(4), rawPos.readFloatBE(8));
@@ -128,7 +124,7 @@ export class SoundManagerClient {
                 // Buffer 0xC
                 s.position = v;
                 s.minDistance = 250.0
-                s.volume = (Math.floor((this.volume_remote[0] * 100)));
+                s.volume = (Math.floor((volume_remote[0] * 100)));
                 s.play();
             }
         }
@@ -243,7 +239,7 @@ export class SoundManagerClient {
             }
         }
 
-        if (this.client_config.muteLocalSounds) return;
+        if (CommonConfigInst.muteLocalSounds) return;
 
         if (this.core.OOT!.link.current_sound_id > 0) {
             if (this.sounds.has(this.core.OOT!.link.current_sound_id)) {
@@ -259,27 +255,8 @@ export class SoundManagerClient {
 
         this.sounds.forEach((sound: sf.Sound[], key: number) => {
             for (let i = 0; i < sound.length; i++) {
-                sound[i].volume = (Math.floor(this.volume_local[0] * 100));
+                sound[i].volume = (Math.floor(volume_local[0] * 100));
             }
         });
     }
-
-    @onViUpdate()
-    onVi() {
-        if (this.ModLoader.ImGui.beginMainMenuBar()) {
-            if (this.ModLoader.ImGui.beginMenu("Mods")) {
-                if (this.ModLoader.ImGui.beginMenu("Z64O")) {
-                    if (this.ModLoader.ImGui.beginMenu("General Settings")) {
-                        this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", this.volume_local, 0.1, 1.0);
-                        this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", this.volume_remote, 0.1, 1.0);
-                        this.ModLoader.ImGui.endMenu();
-                    }
-                    this.ModLoader.ImGui.endMenu();
-                }
-                this.ModLoader.ImGui.endMenu();
-            }
-            this.ModLoader.ImGui.endMainMenuBar();
-        }
-    }
-
 }

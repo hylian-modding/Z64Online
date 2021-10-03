@@ -11,6 +11,7 @@ import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@Z64Online/common/save/IKeyRing';
 import { Scene } from '../types/Types';
 import { IPuppetData } from '../puppet/IPuppetData';
+import { RemoteSoundPlayRequest } from '../api/Z64API';
 
 export class Z64O_PuppetPacket extends Packet {
   data: {bundle: Buffer};
@@ -247,4 +248,28 @@ export class Z64O_ErrorPacket extends Packet{
     this.message = msg;
   }
 
+}
+
+export class Z64O_EmoteLoadPacket extends Packet {
+  id: string;
+
+  constructor(id: string, lobby: string) {
+      super('Z64O_EmoteLoadPacket', 'Z64O', lobby, true);
+      this.id = id;
+  }
+}
+
+export class Z64O_EmoteRequestPacket extends Packet {
+  constructor(lobby: string) {
+      super('Z64O_EmoteRequestPacket', 'Z64O', lobby, true);
+  }
+}
+
+export class Z64O_EmotePlayPacket extends Packet{
+  req: RemoteSoundPlayRequest;
+
+  constructor(req: RemoteSoundPlayRequest, lobby: string){
+    super('Z64O_EmotePlayPacket', 'Z64O', lobby, true);
+    this.req = req;
+  }
 }
