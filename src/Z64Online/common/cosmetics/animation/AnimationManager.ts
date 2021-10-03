@@ -31,12 +31,6 @@ export default class AnimationManager {
     onRom(evt: any) {
         let rom: Buffer = evt.rom;
         let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64_GAME);
-/*         if (!RomFlags.isOotR) {
-            if (tools.decompressDMAFileFromRom(rom, Z64_ANIM_BANK_DMA).byteLength !== Z64_ANIM_BANK_SIZE) {
-                this.disabled = true;
-            }
-        } */
-        //if (this.disabled) return;
         let bank: Buffer = tools.decompressDMAFileFromRom(rom, Z64_ANIM_BANK_DMA);
         this.vanillaBank = bank;
         this.animationBankAddress = tools.relocateFileToExtendedRom(rom, Z64_ANIM_BANK_DMA, bank, bank.byteLength, true);

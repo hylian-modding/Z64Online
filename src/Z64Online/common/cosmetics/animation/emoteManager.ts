@@ -1,11 +1,10 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { bus, EventHandler, PrivateEventHandler } from "modloader64_api/EventHandler";
+import { EventHandler, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents, Z64Emote_Emote, RemoteSoundPlayRequest } from '@Z64Online/common/api/Z64API';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { onTick, onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
 import { Sound, SoundSourceStatus } from "modloader64_api/Sound/sfml_audio";
-import zlib from 'zlib';
 import { bool_ref, WindowFlags } from "modloader64_api/Sylvain/ImGui";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
 import { Core, LinkStandingState } from "@Z64Online/common/types/Types";

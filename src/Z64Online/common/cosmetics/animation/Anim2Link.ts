@@ -25,6 +25,21 @@ export class Anim2Link {
         }
     }
 
+    static getAllNames(file: string){
+        let _l = fs.readFileSync(file).toString().split('\n');
+        let names: string[] = [];
+
+        for (let i = 0; i < _l.length; i++) {
+            let _s = _l[i].replace(/['"]+/g, '').split(' ');
+            if (_s.length < 4) {
+                if (_s[0] === "frames") {
+                    names.push(_s[2]);
+                }
+            }
+        }
+        return names;
+    }
+
     public RadianToEuler(_rad: number) {
         let _eul: number = (180 / Math.PI) * _rad;
         return _eul;
