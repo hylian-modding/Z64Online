@@ -2,10 +2,12 @@ import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IActor } from "Z64Lib/API/imports";
-import { Z64_GLOBAL_PTR } from "Z64Lib/src/Common/types/GameAliases";
 import Vector3 from "modloader64_api/math/Vector3";
 import { xy } from "modloader64_api/Sylvain/vec";
 import { openMemoryUtils3Tab } from "../compat/MemoryUtils3";
+import { Font } from "modloader64_api/Sylvain/Gfx";
+import { changeKillfeedFont } from "modloader64_api/Announcements";
+import { getHylianFont, setHylianFontRef } from "./HyliaFont";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -31,9 +33,21 @@ export abstract class ImGuiHandlerCommon {
     curActor: number = 0;
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
+    font!: Font;
     // #endif
 
     onViUpdate() {
+        if (this.font === undefined) {
+            try {
+                this.font = this.ModLoader.Gfx.createFont();
+                this.font.loadFromMemory(getHylianFont(), 22, 2);
+                changeKillfeedFont(this.font);
+                setHylianFontRef(this.font);
+            } catch (err: any) {
+                this.ModLoader.logger.error(err);
+            }
+            return;
+        }
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("Z64O")) {

@@ -6,9 +6,7 @@ import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
-import { changeKillfeedFont } from "modloader64_api/Announcements";
 import { rgba, xy } from "modloader64_api/Sylvain/vec";
 import { BUILD_DATE, VERSION_NUMBER } from "@Z64Online/common/lib/VERSION_NUMBER";
 import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
@@ -22,7 +20,6 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
     core: IZ64Main = {} as any;
     input: string_ref = [""];
     result: string_ref = [""];
-    font!: Font;
 
     constructor() {
         super();
@@ -34,17 +31,6 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
     @onViUpdate()
     onViUpdate() {
         super.onViUpdate();
-        if (this.font === undefined) {
-            try {
-                this.font = this.ModLoader.Gfx.createFont();
-                this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 22, 2);
-                changeKillfeedFont(this.font);
-                global.ModLoader["FONT"] = this.font;
-            } catch (err: any) {
-                this.ModLoader.logger.error(err);
-            }
-            return;
-        }
         // #ifdef IS_DEV_BUILD
         if (this.core.MM!.helper.isTitleScreen()) {
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "Z64Online", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));

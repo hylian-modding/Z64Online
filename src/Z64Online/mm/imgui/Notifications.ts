@@ -51,7 +51,6 @@ export class Notifications {
     @ParentReference()
     parent!: IMMOClientside;
     //---
-    font!: Font;
     messages: Array<Notif> = [];
     curMessage: Notif | undefined;
     MAX_TIMER: number = 500;

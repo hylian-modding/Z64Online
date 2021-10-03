@@ -19,6 +19,7 @@ import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
+import { HYLIAN_FONT_REF } from "@Z64Online/common/gui/HyliaFont";
 
 class Notif {
     msg: string;
@@ -53,7 +54,6 @@ export class Notifications {
     @ParentReference()
     parent!: IZ64Clientside;
     //---
-    font!: Font;
     messages: Array<Notif> = [];
     curMessage: Notif | ScarecrowNotif | undefined;
     MAX_TIMER: number = 500;
@@ -193,9 +193,6 @@ export class Notifications {
             let mem = this.ModLoader.Gfx.createTexture();
             mem.loadFromFile(path.resolve(global["module-alias"]["moduleAliases"]["@Z64Online"], "common", "assets", "mempak.png"));
             this.itemIcons.set("mempak", mem);
-            this.font = this.ModLoader.Gfx.createFont();
-            this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 16, 1);
-            global.ModLoader["FONT"] = this.font;
             this.resourcesLoaded = true;
         }
         if (!this.config.notifications) {
@@ -209,9 +206,9 @@ export class Notifications {
         if (this.curMessage !== undefined) {
             try {
                 this.ModLoader.Gfx.addSprite(this.ModLoader.ImGui.getBackgroundDrawList(), this.curMessage.icon, xywh(0, 0, this.curMessage.icon.width, this.curMessage.icon.height), xywh(0, 0, 32, 32), rgba(0xFF, 0xFF, 0xFF, 0xFF), FlipFlags.None);
-                this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), global.ModLoader["FONT"], this.curMessage.msg, xy(34, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), rgba(0, 0, 0, 0xFF), xy(1, 1));
+                this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), HYLIAN_FONT_REF, this.curMessage.msg, xy(34, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), rgba(0, 0, 0, 0xFF), xy(1, 1));
                 if (this.curMessage instanceof ScarecrowNotif) {
-                    let msgSize = this.ModLoader.Gfx.calcTextSize(global.ModLoader["FONT"], this.curMessage.msg, xy(1, 1));
+                    let msgSize = this.ModLoader.Gfx.calcTextSize(HYLIAN_FONT_REF, this.curMessage.msg, xy(1, 1));
                     for (let i = 0; i <= 7; i++) {
                         let noteTexture = this.itemIcons.get(SpriteMap.get(this.curMessage.notes[i])!)!;
                         this.ModLoader.Gfx.addSprite(this.ModLoader.ImGui.getBackgroundDrawList(), noteTexture, xywh(0, 0, noteTexture.width, noteTexture.height), xywh(36 + msgSize.x + (i * 12), 0, 12, 32), rgba(0xFF, 0xFF, 0xFF, 0xFF), FlipFlags.None);

@@ -9,14 +9,10 @@ import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import Vector3 from "modloader64_api/math/Vector3";
 import { glmatrix_matrix4, glmatrix_vec4 } from 'modloader64_api/math/glmatrix';
 import { xywh, rgba, xy } from "modloader64_api/Sylvain/vec";
-import { Font } from "modloader64_api/Sylvain/Gfx";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
 import { BUILD_DATE, VERSION_NUMBER } from "@Z64Online/common/lib/VERSION_NUMBER";
-import { changeKillfeedFont } from "modloader64_api/Announcements";
-import IMemory from "modloader64_api/IMemory";
-import { IActor } from "Z64Lib/API/Common/IActor";
 import fse from 'fs-extra';
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { Command } from "Z64Lib/API/Common/ICommandBuffer";
@@ -41,7 +37,6 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
     up: Vector3 = new Vector3()
     v: Array<number> = new Array<number>(16);
     p: Array<number> = new Array<number>(16);
-    font!: Font;
     puppetsDespawn: Array<number> = [];
     // #ifdef IS_DEV_BUILD
     teleportDest: string_ref = [""];
@@ -120,50 +115,9 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
         return m;
     };
 
-    getActorBehavior(
-        emulator: IMemory,
-        actor: IActor,
-        offset: number
-    ): number {
-        let id: number = actor.actorID;
-        let overlay_table: number = global.ModLoader['overlay_table'];
-        let overlay_entry = overlay_table + id * 32;
-        let behavior_start = overlay_entry + 0x10;
-        let pointer = emulator.dereferencePointer(behavior_start);
-        let behavior = actor.dereferencePointer(offset);
-        return behavior - pointer;
-    }
-
-    setActorBehavior(
-        emulator: IMemory,
-        actor: IActor,
-        offset: number,
-        behavior: number
-    ) {
-        let id: number = actor.actorID;
-        let overlay_table: number = global.ModLoader['overlay_table'];
-        let overlay_entry = overlay_table + id * 32;
-        let behavior_start = overlay_entry + 0x10;
-        let pointer = emulator.dereferencePointer(behavior_start);
-        let behavior_result = pointer + behavior;
-        actor.rdramWrite32(offset, behavior_result + 0x80000000);
-    }
-
     @onViUpdate()
     onViUpdate() {
         super.onViUpdate();
-        if (this.font === undefined) {
-            try {
-                this.font = this.ModLoader.Gfx.createFont();
-                this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 22, 2);
-                changeKillfeedFont(this.font);
-                global.ModLoader["FONT"] = this.font;
-            } catch (err: any) {
-                this.ModLoader.logger.error(err);
-            }
-            return;
-        }
-
         // #ifdef IS_DEV_BUILD
         if (this.core.OOT!.helper.isTitleScreen()) {
             this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, "Z64Online", xy(2, this.ModLoader.ImGui.getWindowHeight() - 100), rgba(255, 255, 255, 255), rgba(0, 0, 0, 255), xy(1, 1));
