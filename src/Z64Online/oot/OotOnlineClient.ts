@@ -40,6 +40,7 @@ import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
 import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
+import SongOfSoaringCompat from "./compat/SongOfSoaring";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -63,7 +64,7 @@ export default class OotOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
-    @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
+    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
     puppets!: OOT_PuppetOverlordClient;
@@ -83,8 +84,11 @@ export default class OotOnlineClient {
     @SidedProxy(ProxySide.CLIENT, NPCReplacer)
     npc!: NPCReplacer;
     // #endif
+    // Compat
     @SidedProxy(ProxySide.CLIENT, Multiworld)
     multiworld!: Multiworld;
+    @SidedProxy(ProxySide.CLIENT, SongOfSoaringCompat)
+    songOfSoaring!: SongOfSoaringCompat;
     opa!: ThiccOpa;
     syncContext: number = -1;
     syncTimer: number = 0;
@@ -182,7 +186,11 @@ export default class OotOnlineClient {
         if (this.clientStorage.lastPushHash !== this.clientStorage.saveManager.hash) {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-            this.ModLoader.clientSide.sendPacket(new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world));
+            let packet = new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world);
+            if (this.songOfSoaring.isModLoaded()){
+                packet.modData["SongOfSoaring"] = this.songOfSoaring.getOwlData();
+            }
+            this.ModLoader.clientSide.sendPacket(packet);
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
             this.syncTimer = 0;
         }
@@ -476,6 +484,9 @@ export default class OotOnlineClient {
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
+        Object.keys(packet.modData).forEach((key: string)=>{
+            this.songOfSoaring.apply(key, packet.modData[key]);
+        });
     }
 
     @NetworkHandler('Z64O_ErrorPacket')

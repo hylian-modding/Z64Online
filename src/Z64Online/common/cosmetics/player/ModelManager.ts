@@ -2,7 +2,7 @@ import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64O
 import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
 import { getManifestForForm, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
 import { CostumeHelper } from '@Z64Online/common/events/CostumeHelper';
-import { Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_IS_RANDOMIZER } from '@Z64Online/common/types/GameAliases';
+import { getAdultID, getAgeOrForm, getChildID, Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_IS_RANDOMIZER } from '@Z64Online/common/types/GameAliases';
 import { OOT_GAME } from '@Z64Online/common/types/OotAliases';
 import { AgeOrForm, Manifest, Scene } from '@Z64Online/common/types/Types';
 import { OotOnlineConfigCategory } from '@Z64Online/oot/OotOnline';
@@ -65,14 +65,8 @@ export class ModelManagerClient {
   mainConfig!: OotOnlineConfigCategory;
   child!: IModelManagerShim;
 
-  getLinkAgeOrForm() {
-    if (this.core.OOT !== undefined) return this.core.OOT!.save.age;
-    if (this.core.MM !== undefined) return this.core.MM!.save.form;
-    return AgeOrForm.CHILD;
-  }
-
   get AgeOrForm(): AgeOrForm {
-    return this.getLinkAgeOrForm();
+    return getAgeOrForm(this.core);
   }
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
@@ -80,7 +74,7 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     let ref: IModelReference;
     if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
-      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age)));
+      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(getAdultID())));
     } else {
       ref = this.allocationManager.registerModel(evt.model);
     }
@@ -94,9 +88,9 @@ export class ModelManagerClient {
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
   onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
     if (this.managerDisabled) return;
-    let ref = this.allocationManager.registerModel(evt.model);
+    let ref: IModelReference;
     if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
-      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age)));
+      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(getChildID())));
     } else {
       ref = this.allocationManager.registerModel(evt.model);
     }
@@ -466,7 +460,7 @@ export class ModelManagerClient {
     }
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
-      this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(AgeOrForm.ADULT)!);
+      this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(this.AgeOrForm)!);
       this.onSceneChange(-1);
       evt.ref = this.puppetModels.get(form)!;
       this.proxyNeedsSync = true;

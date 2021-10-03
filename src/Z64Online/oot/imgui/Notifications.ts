@@ -193,6 +193,9 @@ export class Notifications {
             let mem = this.ModLoader.Gfx.createTexture();
             mem.loadFromFile(path.resolve(global["module-alias"]["moduleAliases"]["@Z64Online"], "common", "assets", "mempak.png"));
             this.itemIcons.set("mempak", mem);
+            this.font = this.ModLoader.Gfx.createFont();
+            this.font.loadFromFile(path.resolve(__dirname, "HyliaSerifBeta-Regular.otf"), 16, 1);
+            global.ModLoader["FONT"] = this.font;
             this.resourcesLoaded = true;
         }
         if (!this.config.notifications) {
@@ -215,7 +218,8 @@ export class Notifications {
                     }
                 }
             } catch (err: any) {
-                console.log(this.curMessage);
+                //console.log(this.curMessage);
+                console.log(err.stack);
             }
             this.curMessage.timer++;
             if (this.curMessage.timer > this.curMessage.max) {

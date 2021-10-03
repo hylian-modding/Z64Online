@@ -238,7 +238,7 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
                         this.ModLoader.ImGui.inputText("Destination", this.teleportDest);
                         this.ModLoader.ImGui.inputText("Cutscene", this.cutsceneDest);
                         if (this.ModLoader.ImGui.button("Warp")) {
-                            this.core.OOT!.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16), () => { });
+                            this.core.OOT!.commandBuffer.runWarp(parseInt(this.teleportDest[0], 16), parseInt(this.cutsceneDest[0], 16));
                         }
                         this.ModLoader.ImGui.endMenu();
                     }

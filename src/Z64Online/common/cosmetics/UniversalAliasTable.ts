@@ -4,19 +4,15 @@ import path from 'path';
 import { IOptimized, optimize } from 'Z64Lib/API/zzoptimize';
 import crypto from 'crypto';
 import { AgeOrForm } from '../types/Types';
-import { zzplayas_to_zzconvert } from 'Z64Lib/API/OoT/ModelData/backwards_compat/zzplayas_to_zzconvert';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { decodeAsset } from '../assets/decoder';
 import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
-import { DL_CURLED, DL_GORON_ROLL_1, TEX_EYES, TEX_MOUTH } from './Defines';
-import { proxy_universal } from '../assets/proxy_universal';
-import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
+import { DF_COMMAND, DL_ERROR_CUBE, TEX_EYES, TEX_MOUTH } from './Defines';
+import { zzplayas_to_zzconvert } from 'Z64Lib/API/Common/ModelData/zzplayas_to_zzconvert';
 
-const ERROR_CUBE_POINTER: number = 0x000053C8;
-const DF_POINTER: number = 0x00005818;
 const USE_ERROR_CUBE: boolean = true;
 
 const OOT_ADULT_LINK: any = {
@@ -423,6 +419,8 @@ export class OotAdultLinkManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(AgeOrForm.ADULT, 0x501B);
     }
 }
 
@@ -447,6 +445,8 @@ export class OotChildLinkManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(AgeOrForm.CHILD, 0x501B);
     }
 }
 
@@ -472,6 +472,8 @@ export class MMHumanLinkManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(AgeOrForm.HUMAN, 0x501B);
     }
 }
 
@@ -484,6 +486,8 @@ export class MMZoraLinkManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(AgeOrForm.ZORA, 0x501B);
     }
 
 }
@@ -496,6 +500,8 @@ export class MMNutsLinkManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(AgeOrForm.DEKU, 0x501B);
     }
 }
 
@@ -507,6 +513,8 @@ export class MMFDLinkManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(AgeOrForm.FD, 0x501B);
     }
 }
 
@@ -521,6 +529,8 @@ export class MMGoronManifest implements IManifest {
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }
+
+        sb.writeUInt8(AgeOrForm.GORON, 0x501B);
     }
 }
 
@@ -532,6 +542,8 @@ export class DummyManifest implements IManifest {
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
+
+        sb.writeUInt8(0x69, 0x501B);
     }
 }
 
@@ -839,9 +851,9 @@ export class UniversalAliasTable {
         this.addHeader(sb, 1);
         for (let i = 0; i < TABLE_SIZE; i++) {
             if (USE_ERROR_CUBE) {
-                this.addEntry(sb, ERROR_CUBE_POINTER);
+                this.addEntry(sb, DL_ERROR_CUBE);
             } else {
-                this.addEntry(sb, DF_POINTER);
+                this.addEntry(sb, DF_COMMAND);
             }
         }
         let df = this.addDF(sb);
@@ -939,7 +951,11 @@ export class UniversalAliasTable {
         if (p.indexOf("UNIVERSAL_ALIAS_TABLE") > -1) return p;
         let pieces: Map<string, ZobjPiece> = new Map();
         let parse = new ZZPlayasEmbedParser();
-        p = new zzplayas_to_zzconvert().convert_adult(p);
+        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
+            p = zzplayas_to_zzconvert.processOotZobj(p);
+        }else{
+            p = zzplayas_to_zzconvert.processMMZobj(p);
+        }
         let zobj = p;
         let m = parse.parse(zobj);
         let __defines = fs.readFileSync(path.resolve(__dirname, "Defines.h")).toString().split("\n");
@@ -1068,6 +1084,7 @@ export class UniversalAliasTable {
         wrapGen(`DL_GUITAR_HAND`, `DL_LHAND`, undefined, [`DL_ZORA_GUITAR`]);
         wrapGen(`DL_CENTER_FLOWER_PROPELLER_OPEN`, `DL_FLOWER_CENTER_OPEN`, undefined, [`DL_FLOWER_PROPELLER_OPEN`]);
         wrapGen(`DL_CENTER_FLOWER_PROPELLER_CLOSED`, `DL_FLOWER_CENTER_CLOSED`, undefined, [`DL_PETAL_PROPELLER_CLOSED`]);
+
         // Step 5: Deduplicate assets and copy into new zobj.
         let temp = new SmartBuffer();
         temp.writeBuffer(zobj.slice(0, 0x5000));
@@ -1121,8 +1138,6 @@ export class UniversalAliasTable {
                 if (limb.piece1 !== undefined) {
                     sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
                     sb.writeUInt32BE(limb.piece1.newOffset + 0x06000000);
-                    /*                     sb.writeUInt32BE(0x000053C8 + 0x06000000);
-                                        sb.writeUInt32BE(0x000053C8 + 0x06000000); */
                 } else {
                     sb.writeUInt32BE(0);
                     sb.writeUInt32BE(0);
@@ -1142,6 +1157,7 @@ export class UniversalAliasTable {
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }
+
         // Step 8: Footer
         let footer = sb.writeOffset;
         sb.writeUInt32BE(0x06000000 + footer, 0x5017);

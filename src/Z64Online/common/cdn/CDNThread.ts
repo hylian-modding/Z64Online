@@ -6,14 +6,16 @@ import fs from 'fs-extra';
 import zip from 'adm-zip';
 import http, { IncomingMessage, ServerResponse } from 'http';
 import { SmartBuffer } from 'smart-buffer';
+import CDNConfig from './CDNConfig';
 
 class CDNThread {
 
     knownFiles: Map<string, string> = new Map<string, string>();
     pendingUploads: Map<string, SmartBuffer> = new Map<string, SmartBuffer>();
-    server: http.Server;
+    server!: http.Server;
+    config!: CDNConfig;
 
-    constructor() {
+    makeServer(){
         try {
             fs.mkdirSync("./cdn");
             fs.mkdirSync("./cdn/files");
@@ -37,8 +39,7 @@ class CDNThread {
                 res.end();
             });
         });
-        this.server.listen(6969);
-        parentPort!.on('message', this.onMessageFromMainThread.bind(this));
+        this.server.listen(this.config.port);
     }
 
     hasFile(id: string) {
@@ -76,7 +77,7 @@ class CDNThread {
     handleDownload(packet: CDNFileDownload_Packet) {
         let resp = new CDNFileDownload_Packet(packet.model_id);
         resp.player = packet.player;
-        resp.url = "http://127.0.0.1:6969/cdn/files/" + packet.model_id + ".zip";
+        resp.url = `${this.config.url}:${this.config.port.toString()}/cdn/files/` + packet.model_id + ".zip";
         if (!this.knownFiles.has(packet.model_id)) {
             resp.error = true;
         }
@@ -89,6 +90,10 @@ class CDNThread {
 
     onMessageFromMainThread(p: CDNData) {
         switch (p.id) {
+            case "config":
+                this.config = p.packet;
+                this.makeServer();
+                break;
             case "CDNFileRequest_Packet":
                 this.handleRequest(p.packet);
                 break;
@@ -104,6 +109,8 @@ class CDNThread {
 }
 
 const thread: CDNThread = new CDNThread();
+
+parentPort!.on('message', thread.onMessageFromMainThread.bind(thread));
 
 // Tick tock keep the thread alive.
 setInterval(() => { }, 1000);

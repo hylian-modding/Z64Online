@@ -84,7 +84,7 @@ export abstract class ImGuiHandlerCommon {
                     if (this.ModLoader.ImGui.treeNode(this.actorCategories[i] + "###OotO:ActorDebugTree" + treeNodeDepth)) {
                         //this.ModLoader.ImGui.sameLine();
                         for (let j = 0; j < actors.length; j++) {
-                            let name = this.actorNames["0x" + actors[j].actorID.toString(16).padStart(4, '0')];
+                            let name = this.actorNames["0x" + actors[j].actorID.toString(16).toUpperCase().padStart(4, '0')];
                             if (name === undefined) {
                                 name = "Unknown actor";
                             }

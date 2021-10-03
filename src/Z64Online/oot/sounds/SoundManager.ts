@@ -17,6 +17,7 @@ import { number_ref } from "modloader64_api/Sylvain/ImGui";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 
 export class OotO_SoundPackLoadPacket extends Packet {
     id: string;
@@ -90,7 +91,7 @@ export class SoundManagerClient {
         this.PlayerSounds.set(packet.player.uuid, new Map<number, sf.Sound[]>());
         if (packet.id === "KILL") return;
         CDNClient.singleton.requestFile(packet.id).then((buf: Buffer) => {
-            let sounds = JSON.parse(buf.toString());
+            let sounds = Z64Serialize.deserializeSync(buf);
             Object.keys(sounds).forEach((key: string) => {
                 this.PlayerSounds.get(packet.player.uuid)!.set(parseInt(key), []);
                 let arr: Array<Buffer> = sounds[key];
@@ -161,7 +162,7 @@ export class SoundManagerClient {
             }
         });
         this.rawSounds = evt.data;
-        let buf = Buffer.from(JSON.stringify(this.rawSounds));
+        let buf = Z64Serialize.serializeSync(this.rawSounds);
         let _id = this.ModLoader.utils.hashBuffer(buf);
         CDNClient.singleton.askCDN(buf).then((has: boolean) => {
             if (has) {

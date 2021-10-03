@@ -132,6 +132,7 @@ export class ModelAllocationManager {
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD, b);
       this.zz.repoint(b, pointer);
+      this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.POST_OBJECT_LOAD, b);
     } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
       return undefined;

@@ -120,11 +120,29 @@ export class ModelManagerMM implements IModelManagerShim {
             let link = this.findLink();
             this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.MM!.save.form, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!);
             let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!.pointer, defines.ALIAS_PROXY_SIZE);
+
+            let count = copy.readUInt32BE(0x500C);
+            let start = 0x5020;
+            let temp: Array<number> = [];
+            for (let i = 0; i < count; i++){
+                let offset = (i * 0x8) + start;
+                let data = copy.readUInt32BE(offset + 0x4);
+                let content = this.parent.ModLoader.emulator.rdramRead32(data);
+                if (content === 0xDF000000){
+                    temp.push(offset);
+                }
+            }
+            let bank = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.puppetModels.get(this.parent.core.MM!.save.form)!.pointer, defines.ALIAS_PROXY_SIZE);
+            while (temp.length > 0){
+                let offset = temp.shift()!;
+                copy.writeUInt32BE(bank.readUInt32BE(offset + 0x4), offset + 0x4);
+            }
+
             this.parent.ModLoader.emulator.rdramWriteBuffer(link, copy);
             let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link + 0x5017, 0x4).readUInt32BE(0);
-            let count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
+            let _count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
             restoreList += 0x4;
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < _count; i++) {
                 let addr = (i * 0x8) + restoreList;
                 let alias = this.parent.ModLoader.emulator.rdramRead32(addr);
                 let combiner = this.parent.ModLoader.emulator.rdramRead32(addr + 0x4);

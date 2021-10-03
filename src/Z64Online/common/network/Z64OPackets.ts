@@ -78,6 +78,7 @@ export class Z64O_DownloadRequestPacket extends Packet {
 export class Z64O_UpdateSaveDataPacket extends Packet {
 
   save: Buffer;
+  modData: any = {};
   world: number;
 
   constructor(lobby: string, save: Buffer, world: number) {

@@ -26,17 +26,10 @@ export class ModelManagerOot implements IModelManagerShim {
 
     @PrivateEventHandler(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD)
     onPreLoad(buf: Buffer) {
-        /* let count = buf.readUInt32BE(0x500C);
-        let start = 0x5020;
-        let cube = buf.readUInt32BE(0x53C8 + 0x4);
-        for (let i = 0; i < count; i++){
-            let offset = (i * 0x8) + start;
-            let data = buf.readUInt32BE(offset + 0x4);
-            if (data === cube){
-                // Found a stub.
-                
-            }
-        } */
+    }
+
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.POST_OBJECT_LOAD)
+    onPostLoad(buf: Buffer){
     }
 
     safetyCheck(): boolean {
@@ -94,6 +87,9 @@ export class ModelManagerOot implements IModelManagerShim {
     onSceneChange(scene: Scene): void {
         if (this.parent.managerDisabled) return;
         if (this.parent.lockManager) return;
+        this.parent.puppetModels.forEach((ref: IModelReference)=>{
+            ref.loadModel();
+        });
         this.parent.allocationManager.getLocalPlayerData().AgesOrForms.forEach((ref: IModelReference) => {
             ref.loadModel();
         });
@@ -104,18 +100,45 @@ export class ModelManagerOot implements IModelManagerShim {
         if (link1.exists) link = link1;
         if (link2.exists) link = link2;
         if (link.exists) {
-            this.parent.allocationManager.SetLocalPlayerModel(this.parent.core.OOT!.save.age, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!);
-            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!.pointer, ALIAS_PROXY_SIZE);
+            this.parent.allocationManager.SetLocalPlayerModel(this.parent.AgeOrForm, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.AgeOrForm)!);
+            let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.AgeOrForm)!.pointer, ALIAS_PROXY_SIZE);
+
+            let count = copy.readUInt32BE(0x500C);
+            let start = 0x5020;
+            let temp: Array<number> = [];
+            for (let i = 0; i < count; i++){
+                let offset = (i * 0x8) + start;
+                let data = copy.readUInt32BE(offset + 0x4);
+                let content = this.parent.ModLoader.emulator.rdramRead32(data);
+                if (content === 0xDF000000){
+                    temp.push(offset);
+                }
+            }
+            let bank = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.puppetModels.get(this.parent.AgeOrForm)!.pointer, ALIAS_PROXY_SIZE);
+            while (temp.length > 0){
+                let offset = temp.shift()!;
+                copy.writeUInt32BE(bank.readUInt32BE(offset + 0x4), offset + 0x4);
+            }
+
             this.parent.ModLoader.emulator.rdramWriteBuffer(link.pointer, copy);
+            let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link.pointer + 0x5017, 0x4).readUInt32BE(0);
+            let _count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
+            restoreList += 0x4;
+            for (let i = 0; i < _count; i++) {
+                let addr = (i * 0x8) + restoreList;
+                let alias = this.parent.ModLoader.emulator.rdramRead32(addr);
+                let combiner = this.parent.ModLoader.emulator.rdramRead32(addr + 0x4);
+                this.parent.ModLoader.emulator.rdramWrite32(link.pointer + alias, combiner);
+            }
             this.parent.ModLoader.emulator.rdramWrite8(link.pointer + 0x5016, 0x1);
-            curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.OOT!.save.age)!;
+            curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.AgeOrForm)!;
         }
         if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
             let newRef = this.parent.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
             this.parent.ModLoader.utils.setTimeoutFrames(() => {
-                let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.core.OOT!.save.age);
+                let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.AgeOrForm);
                 a.ref = newRef;
-                if (this.parent.core.OOT!.save.age === AgeOrForm.ADULT) {
+                if (this.parent.AgeOrForm === AgeOrForm.ADULT) {
                     bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
                 } else {
                     bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);

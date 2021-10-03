@@ -6,12 +6,14 @@ import { ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
 import { CDNFileDownload_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
+import CDNConfig, { CDNConfigTag } from './CDNConfig';
 
 export class CDNServer {
 
     thread!: Worker;
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
+    config!: CDNConfig;
 
     @ServerNetworkHandler('CDNFileRequest_Packet')
     onRequest(packet: CDNFileRequest_Packet) {
@@ -37,9 +39,12 @@ export class CDNServer {
 
     @Preinit()
     private preinit() {
+        this.config = this.ModLoader.config.registerConfigCategory(CDNConfigTag) as CDNConfig;
+        this.ModLoader.config.setData(CDNConfigTag, "url", "http://127.0.0.1");
+        this.ModLoader.config.setData(CDNConfigTag, "port", "6969");
         this.thread = new Worker(path.resolve(__dirname, "CDNThread.js"));
         this.thread.on('message', this.onMessageFromThread.bind(this));
-        this.sendMessageToThread("root", process.cwd());
+        this.sendMessageToThread("config", this.config);
     }
 
     private onMessageFromThread(to: CDNData) {

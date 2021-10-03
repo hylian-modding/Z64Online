@@ -4,7 +4,6 @@ export class OotO300BackwardsCompat {
 
     inject() {
         bus.on('PLUGIN_CONSIDERATION', (meta: any) => {
-            console.log(meta);
             if (Array.isArray(meta.core)) {
                 for (let i = 0; i < meta.core.length; i++) {
                     if (meta.core[i] === "OcarinaofTime" || meta.core[i] === "MajorasMask") {

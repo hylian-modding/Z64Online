@@ -2,6 +2,9 @@ import { OOTManifest } from "Z64Lib/API/OoT/ModelData/OOTManfest";
 import { OOT_ANIM_BANK_DMA, OOT_ANIM_BANK_SIZE } from "./OotAliases";
 import { AgeOrForm, DMAIndex, Manifest } from "./Types";
 import { MMManifest } from 'Z64Lib/API/MM/ModelData/MMManfest';
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
+import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -46,4 +49,16 @@ export function markAsRandomizer(){
 
 export function setPlayerProxy(buf: Buffer){
     Z64_PLAYER_PROXY = buf;
+}
+
+export function getAgeOrForm(core: IZ64Main): AgeOrForm{
+    return core.OOT !== undefined ? core.OOT!.save.age : core.MM!.save.form;
+}
+
+export function getChildID(): AgeOrForm{
+    return Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? AgeOrForm.CHILD : AgeOrForm.HUMAN
+}
+
+export function getAdultID(): AgeOrForm{
+    return Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? AgeOrForm.ADULT : AgeOrForm.HUMAN
 }
