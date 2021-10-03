@@ -26,7 +26,7 @@ import {
   INetworkPlayer,
   NetworkHandler
 } from 'modloader64_api/NetworkHandler';
-import { onTick, Preinit } from 'modloader64_api/PluginLifecycle';
+import { onTick, onViUpdate, Preinit } from 'modloader64_api/PluginLifecycle';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { Z64 } from 'Z64Lib/API/imports';
 import { Tunic } from 'Z64Lib/API/OOT/OOTAPI';
@@ -511,17 +511,23 @@ export class ModelManagerClient {
     this.lockManager = false;
   }
 
-  @onTick()
-  onTick() {
+  @onViUpdate()
+  onVi(){
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (!this.child.safetyCheck()) return;
     let link = this.child.findLink();
-    let status = this.ModLoader.emulator.rdramRead8(link + 0x5016);
-    if (status === 0) {
-      this.ModLoader.logger.debug("Found Link proxy with no data. Injecting...");
-      this.onSceneChange(-1);
+    if (this.ModLoader.emulator.rdramRead32(link + 0x5000) === 0x4D4F444C){
+      let status = this.ModLoader.emulator.rdramRead8(link + 0x5016);
+      if (status === 0) {
+        this.ModLoader.logger.debug("Found Link proxy with no data. Injecting...");
+        this.onSceneChange(-1);
+      }
     }
+  }
+
+  @onTick()
+  onTick() {
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       this.allocationManager.getLocalPlayerData().currentScript!.onTick();
     }

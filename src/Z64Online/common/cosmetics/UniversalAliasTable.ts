@@ -952,9 +952,9 @@ export class UniversalAliasTable {
         let pieces: Map<string, ZobjPiece> = new Map();
         let parse = new ZZPlayasEmbedParser();
         if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
-            p = zzplayas_to_zzconvert.processOotZobj(p);
+            p = zzplayas_to_zzconvert.processOotZobj(p)!;
         }else{
-            p = zzplayas_to_zzconvert.processMMZobj(p);
+            p = zzplayas_to_zzconvert.processMMZobj(p)!;
         }
         let zobj = p;
         let m = parse.parse(zobj);
