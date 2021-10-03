@@ -41,6 +41,7 @@ import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
 import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
 import SongOfSoaringCompat from "./compat/SongOfSoaring";
+import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -72,6 +73,8 @@ export default class OotOnlineClient {
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
     gui!: ImGuiHandler;
+    @SidedProxy(ProxySide.CLIENT, PuppetNameTagHandler)
+    nametags!: PuppetNameTagHandler;
     @SidedProxy(ProxySide.CLIENT, WorldEvents)
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.CLIENT, Notifications)
@@ -89,6 +92,7 @@ export default class OotOnlineClient {
     multiworld!: Multiworld;
     @SidedProxy(ProxySide.CLIENT, SongOfSoaringCompat)
     songOfSoaring!: SongOfSoaringCompat;
+    
     opa!: ThiccOpa;
     syncContext: number = -1;
     syncTimer: number = 0;
