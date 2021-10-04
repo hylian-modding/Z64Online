@@ -29,7 +29,6 @@ export class EmoteManager {
     core!: Core;
     displayingEmoteWindow: bool_ref = [false];
     currentEmoteSoundID: number = 0x0000;
-    config!: OotOnlineConfigCategory;
     emoteSounds: Map<number, Sound> = new Map();
     remoteEmoteSounds: Map<string, Map<number, Sound>> = new Map();
     loadedEmotes: Array<string> = [];
@@ -98,7 +97,6 @@ export class EmoteManager {
 
     @Postinit()
     onPost() {
-        this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
         for (let i = 0; i < this.masterEmoteList.length; i++) {
             let u = new EmoteUploadContainer(this.masterEmoteList[i].name, this.masterEmoteList[i].data, this.masterEmoteList[i].soundBuffer, this.masterEmoteList[i].soundid);
             let comp = Z64Serialize.serializeSync(u);
