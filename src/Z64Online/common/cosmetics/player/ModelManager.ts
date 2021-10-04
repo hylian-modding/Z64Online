@@ -42,6 +42,7 @@ import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } 
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
 import { ALIAS_PROXY_SIZE } from '../Defines';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
+import { BackwardsCompat } from '@Z64Online/common/compat/BackwardsCompat';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -85,8 +86,7 @@ export class ModelManagerClient {
     this.customModelRefsAdult.set(evt.name + " (Adult)", evt.ref);
   }
 
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
-  onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
+  private onCustomModelChild_Impl(evt: Z64Online_ModelAllocation){
     if (this.managerDisabled) return;
     let ref: IModelReference;
     if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
@@ -99,6 +99,16 @@ export class ModelManagerClient {
     }
     evt.ref = ref;
     this.customModelRefsChild.set(evt.name + " (Child)", evt.ref);
+  }
+
+  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
+  onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
+    this.onCustomModelChild_Impl(evt);
+  }
+
+  @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
+  onCustomModelChild_mm_backcompat(evt: Z64Online_ModelAllocation){
+    this.onCustomModelChild_Impl(evt);
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
