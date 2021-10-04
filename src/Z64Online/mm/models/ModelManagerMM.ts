@@ -127,8 +127,9 @@ export class ModelManagerMM implements IModelManagerShim {
                 this.parent.ModLoader.emulator.rdramWriteBuffer(heightModAddr + 0x98, Buffer.from(defaultAdultHeight2, 'hex'));
                 this.parent.ModLoader.emulator.rdramWriteBuffer(0x801DCA6A, Buffer.from("7058", 'hex'));
                 let ptr = this.parent.ModLoader.emulator.rdramRead32(0x801D0B8C);
-                this.parent.ModLoader.emulator.rdramWriteBuffer(ptr + 0x8880, Buffer.from('5440000814410007', 'hex'));
-                this.parent.ModLoader.emulator.rdramWriteBuffer(ptr + 0x8810, Buffer.from('5440000814410007', 'hex'));
+                console.log((ptr + 0x8880).toString(16));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(ptr + 0x8880, Buffer.from('5441000814400007', 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(ptr + 0x8810, Buffer.from('5441000814400007', 'hex'));
             }
         } catch (err) {
         }
