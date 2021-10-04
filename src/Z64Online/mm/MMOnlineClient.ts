@@ -76,6 +76,8 @@ export default class MMOnlineClient {
     gui!: ImGuiHandler_MM;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlord_MM)
     puppets!: PuppetOverlord_MM;
+    @SidedProxy(ProxySide.CLIENT, WorldEvents)
+    worldEvents!: WorldEvents;
     //@SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     //soundManager!: SoundManagerClient;
     //@SidedProxy(ProxySide.CLIENT, WorldEvents)
