@@ -66,3 +66,7 @@ export function getAdultID(): AgeOrForm{
 export function getLinkPos(core: IZ64Main): Buffer{
     return core.OOT !== undefined ? core.OOT!.link.position.getRawPos() : core.MM!.link.position.getRawPos();
 }
+
+export function isTitleScreen(core: IZ64Main): boolean{
+    return core.OOT !== undefined ? core.OOT!.helper.isTitleScreen() : core.MM!.helper.isTitleScreen();
+}

@@ -11,6 +11,7 @@ import { getHylianFont, setHylianFontRef } from "./HyliaFont";
 import { CommonConfigInst, volume_local, volume_remote } from "../lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "../api/InternalAPI";
 import { VERSION_NUMBER } from "../lib/VERSION_NUMBER";
+import { isTitleScreen } from "../types/GameAliases";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -52,8 +53,8 @@ export abstract class ImGuiHandlerCommon {
             return;
         }
         // #ifdef IS_DEV_BUILD
-        let isTitleScreen: boolean = this.core.OOT!.helper.isTitleScreen();
-        this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Z64Online ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getMainViewport().size.y - (isTitleScreen ? 60 : 45)), rgba(255, 255, 255, 255), rgba(0, 0, 0, isTitleScreen ? 255 : 20), xy(isTitleScreen ? 1 : 0.5, isTitleScreen ? 1 : 0.5));
+        let _isTitleScreen: boolean = isTitleScreen(this.core);
+        this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Z64Online ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getMainViewport().size.y - (_isTitleScreen ? 60 : 45)), rgba(255, 255, 255, 255), rgba(0, 0, 0, _isTitleScreen ? 255 : 20), xy(_isTitleScreen ? 1 : 0.5, _isTitleScreen ? 1 : 0.5));
         // #endif
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {

@@ -361,7 +361,7 @@ export class WorldEventRewards {
                                     event.get("Adult")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.adultCostume)) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, AgeOrForm.ADULT);
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getAdultID());
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -386,7 +386,7 @@ export class WorldEventRewards {
                                     event.get("Child")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.childCostume)) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, AgeOrForm.CHILD);
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getChildID());
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -545,7 +545,7 @@ export class WorldEventRewards {
             if (this.config.adultCostume !== "") {
                 let c = this.getAssetByUUID(this.config.adultCostume);
                 if (c !== undefined) {
-                    let evt = new Z64Online_ModelAllocation(c, AgeOrForm.ADULT);
+                    let evt = new Z64Online_ModelAllocation(c, getAdultID());
                     if (this.isAssetScripted(this.config.adultCostume).is) {
                         evt.script = this.isAssetScripted(this.config.adultCostume).script;
                     }
@@ -553,7 +553,7 @@ export class WorldEventRewards {
                 } else {
                     // Probably a custom costume.
                     if (this.customModelFilesAdult.has(this.config.adultCostume)) {
-                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT);
+                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), getAdultID());
                         evt.ref = this.customModelFilesAdult.get(this.config.adultCostume)!
                         bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, evt);
                     }
@@ -562,7 +562,7 @@ export class WorldEventRewards {
             if (this.config.childCostume !== "") {
                 let c = this.getAssetByUUID(this.config.childCostume);
                 if (c !== undefined) {
-                    let evt = new Z64Online_ModelAllocation(c, AgeOrForm.CHILD);
+                    let evt = new Z64Online_ModelAllocation(c, getChildID());
                     if (this.isAssetScripted(this.config.childCostume).is) {
                         evt.script = this.isAssetScripted(this.config.childCostume).script;
                     }
@@ -570,7 +570,7 @@ export class WorldEventRewards {
                 } else {
                     // Probably a custom costume.
                     if (this.customModelFilesChild.has(this.config.childCostume)) {
-                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD);
+                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), getChildID());
                         evt.ref = this.customModelFilesChild.get(this.config.childCostume)!
                         bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, evt);
                     }

@@ -476,7 +476,13 @@ export class ModelManagerClient {
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().AgesOrForms.get(form)!.hash === evt.ref.hash) return;
       this.allocationManager.SetLocalPlayerModel(form, evt.ref);
-      this.onSceneChange(-1);
+      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
+        if (!this.core.MM!.helper.isTitleScreen()){
+          this.onSceneChange(-1);
+        }
+      }else{
+        this.onSceneChange(-1);
+      }
       this.proxyNeedsSync = true;
       if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
         /* let r2 = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(evt.ref, this.core.OOT!.link.tunic);
@@ -489,7 +495,13 @@ export class ModelManagerClient {
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
       this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(this.AgeOrForm)!);
-      this.onSceneChange(-1);
+      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
+        if (!this.core.MM!.helper.isTitleScreen()){
+          this.onSceneChange(-1);
+        }
+      }else{
+        this.onSceneChange(-1);
+      }
       evt.ref = this.puppetModels.get(form)!;
       this.proxyNeedsSync = true;
     } else {
@@ -501,7 +513,13 @@ export class ModelManagerClient {
       }
       model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(form, model);
-      this.onSceneChange(-1);
+      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
+        if (!this.core.MM!.helper.isTitleScreen()){
+          this.onSceneChange(-1);
+        }
+      }else{
+        this.onSceneChange(-1);
+      }
       evt.ref = model;
       this.proxyNeedsSync = true;
     }
