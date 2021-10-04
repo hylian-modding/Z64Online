@@ -24,10 +24,17 @@
   },
   "include": [
     "src/**/*.ts",
+    "test/**/*.ts",
+    "mods/**/*.ts",
     "cores/**/*.ts",
+    "bin/paker.ts",
+    "tools/**/*.ts"
   ],
   "exclude": [
     "node_modules",
+    "API",
+    "build.ts",
     "build",
+    "cores"
   ]
 }
