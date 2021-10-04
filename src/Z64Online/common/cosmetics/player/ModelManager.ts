@@ -107,8 +107,8 @@ export class ModelManagerClient {
   }
 
   @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
-  onCustomModelChild_mm_backcompat(evt: Z64Online_ModelAllocation){
-    this.onCustomModelChild_Impl(evt);
+  onCustomModelChild_mm_backcompat(evt: string){
+    this.onCustomModelChild_Impl(new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN));
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
