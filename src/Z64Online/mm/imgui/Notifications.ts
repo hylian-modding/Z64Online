@@ -11,7 +11,7 @@ import { rgba, xy, xywh } from "modloader64_api/Sylvain/vec";
 import fs from 'fs';
 import path from 'path';
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
-import { MMOnlineConfigCategory } from "@Z64Online/mm/MMOnline"";
+import { MMOnlineConfigCategory } from "@Z64Online/mm/MMOnline";
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { IMMOClientside } from "@Z64Online/mm/save/IMMOClientside";
 import { SpriteMap } from "./SpriteMap";
