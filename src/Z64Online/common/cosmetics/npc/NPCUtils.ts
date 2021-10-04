@@ -76,12 +76,10 @@ export function FrankenNPC(og: Buffer, parts: Buffer[], size: number = 0x5000) {
         }
     }
     for (let i = 0; i < parts.length; i++) {
-        console.log(`Scanning shit ${i}`);
-        let fuck = findHierarchy(parts[i]);
-        console.log(fuck);
-        let fucking_bones = parts[i].readUInt8(fuck!.pos + 0x4);
-        let p = parts[i].readUInt32BE(fuck!.pos + 0x0) & 0x00FFFFFF;
-        for (let j = 0; j < fucking_bones; j++) {
+        let hi = findHierarchy(parts[i]);
+        let bones = parts[i].readUInt8(hi!.pos + 0x4);
+        let p = parts[i].readUInt32BE(hi!.pos + 0x0) & 0x00FFFFFF;
+        for (let j = 0; j < bones; j++) {
             let p1 = parts[i].readUInt32BE(p + (i * 4)) & 0x00FFFFFF;
             let unk1 = parts[i].readUInt32BE(p1 + 0x0);
             let unk2 = parts[i].readUInt32BE(p1 + 0x4);

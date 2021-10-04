@@ -43,6 +43,8 @@ import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageC
 import { ALIAS_PROXY_SIZE } from '../Defines';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 import { BackwardsCompat } from '@Z64Online/common/compat/BackwardsCompat';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
+import path from 'path';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -72,21 +74,23 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
   onCustomModelAdult_new(evt: Z64Online_ModelAllocation) {
-    if (this.managerDisabled) return;
-    let ref: IModelReference;
-    if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
-      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(getAdultID())));
-    } else {
-      ref = this.allocationManager.registerModel(evt.model);
+    if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
+      if (this.managerDisabled) return;
+      let ref: IModelReference;
+      if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
+        ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(getAdultID())));
+      } else {
+        ref = this.allocationManager.registerModel(evt.model);
+      }
+      if (evt.script !== undefined) {
+        ref.script = evt.script;
+      }
+      evt.ref = ref;
+      this.customModelRefsAdult.set(evt.name + " (Adult)", evt.ref);
     }
-    if (evt.script !== undefined) {
-      ref.script = evt.script;
-    }
-    evt.ref = ref;
-    this.customModelRefsAdult.set(evt.name + " (Adult)", evt.ref);
   }
 
-  private onCustomModelChild_Impl(evt: Z64Online_ModelAllocation){
+  private onCustomModelChild_Impl(evt: Z64Online_ModelAllocation) {
     if (this.managerDisabled) return;
     let ref: IModelReference;
     if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
@@ -103,12 +107,21 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
   onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
-    this.onCustomModelChild_Impl(evt);
+    if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
+      this.onCustomModelChild_Impl(evt);
+    }
   }
 
   @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
-  onCustomModelChild_mm_backcompat(evt: string){
-    this.onCustomModelChild_Impl(new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN));
+  onCustomModelChild_mm_backcompat(evt: string) {
+    if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+      if (fs.lstatSync(evt).isDirectory()) {
+        return;
+      }
+      let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN);
+      e.name = path.parse(evt).name;
+      this.onCustomModelChild_Impl(e);
+    }
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
@@ -284,9 +297,8 @@ export class ModelManagerClient {
       }
     }
     if (this.managerDisabled) return;
-    // Leave this here. We do this so people fucking with code don't decompress and recompress it a bunch of times.
+    // Leave this here. We do this so people messing with code don't decompress and recompress it a bunch of times.
     let code_file: Buffer = tools.getCodeFile(evt.rom);
-    /**@todo Rewrite this shit after the world events module is ported. */
     bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelRefsAdult, child: this.customModelRefsChild, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
     try {
@@ -357,7 +369,6 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN)
   onPuppetPreSpawn(puppet: IPuppet) {
-    /**@todo rewrite this shit after we uncrust the core. */
     let player = this.allocationManager.allocatePlayer(puppet.player, this.puppetModels)!;
     puppet.modelPointer = player.proxyPointer;
     player.playerIsSpawned = true;
@@ -449,7 +460,7 @@ export class ModelManagerClient {
   }
 
   @EventHandler(Z64.OotEvents.ON_AGE_CHANGE)
-  onAgeChange(){
+  onAgeChange() {
     //this.child.onSceneChange(1);
   }
 
@@ -491,12 +502,12 @@ export class ModelManagerClient {
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY)
   onChangeModel(evt: Z64Online_ModelAllocation) {
-    this.handleModelChange(AgeOrForm.ADULT, evt);
+    this.handleModelChange(getAdultID(), evt);
   }
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY)
   onChangeModelChild(evt: Z64Online_ModelAllocation) {
-    this.handleModelChange(AgeOrForm.CHILD, evt);
+    this.handleModelChange(getChildID(), evt);
   }
 
   @EventHandler(Z64OnlineEvents.REFRESH_EQUIPMENT)
@@ -522,12 +533,12 @@ export class ModelManagerClient {
   }
 
   @onViUpdate()
-  onVi(){
+  onVi() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (!this.child.safetyCheck()) return;
     let link = this.child.findLink();
-    if (this.ModLoader.emulator.rdramRead32(link + 0x5000) === 0x4D4F444C){
+    if (this.ModLoader.emulator.rdramRead32(link + 0x5000) === 0x4D4F444C) {
       let status = this.ModLoader.emulator.rdramRead8(link + 0x5016);
       if (status === 0) {
         this.ModLoader.logger.debug("Found Link proxy with no data. Injecting...");

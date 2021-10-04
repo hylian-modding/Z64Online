@@ -206,8 +206,8 @@ export class MLPatchLib {
                     out.writeUInt8(_og.readUInt8());
                     break;
                 case PatchCommands.COPY_u8:
-                    let lengthfuck = _patch.readUInt8();
-                    out.writeBuffer(_og.readBuffer(lengthfuck));
+                    let lengthfrick = _patch.readUInt8();
+                    out.writeBuffer(_og.readBuffer(lengthfrick));
                     break;
                 case PatchCommands.COPY_u16:
                     let length = _patch.readUInt16BE();

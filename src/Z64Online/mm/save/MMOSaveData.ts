@@ -220,9 +220,9 @@ export class MMOSaveData implements ISaveSyncData {
         let minimap_flags = storage.minimap_flags;
         let map_visible = storage.map_visible;
         let map_visited = storage.map_visited;
-        console.log(parseFlagChanges(obj.minimap_flags, minimap_flags));
-        console.log(parseFlagChanges(obj.map_visible, map_visible));
-        console.log(parseFlagChanges(obj.map_visited, map_visited));
+        parseFlagChanges(obj.minimap_flags, minimap_flags);
+        parseFlagChanges(obj.map_visible, map_visible);
+        parseFlagChanges(obj.map_visited, map_visited);
         storage.minimap_flags = minimap_flags;
         storage.map_visible = map_visible;
         storage.map_visited = map_visited;

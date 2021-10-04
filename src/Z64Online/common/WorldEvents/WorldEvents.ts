@@ -19,6 +19,7 @@ import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
 import { IModelReference, IModelScript, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@Z64Online/common/api/Z64API';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
+import { getAdultID, getChildID } from '../types/GameAliases';
 
 export interface Z64_EventReward {
     name: string;
@@ -440,7 +441,7 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Adult###OotOCustomModels_Adult")) {
                                 this.customModelFilesAdult.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.adultCostume)) {
-                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT);
+                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), getAdultID());
                                         if (key === this.config.adultCostume) {
                                             this.config.adultCostume = "";
                                         } else {
@@ -458,7 +459,7 @@ export class WorldEventRewards {
                             if (this.ModLoader.ImGui.treeNode("Child###OotOCustomModels_Child")) {
                                 this.customModelFilesChild.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.childCostume)) {
-                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD);
+                                        let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), getChildID());
                                         if (key === this.config.childCostume) {
                                             this.config.childCostume = "";
                                         } else {
