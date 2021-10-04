@@ -4,11 +4,9 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { bus } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
-import { rgba, xy } from "modloader64_api/Sylvain/vec";
 import path from 'path';
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
-import { BUILD_DATE, VERSION_NUMBER } from "@Z64Online/common/lib/VERSION_NUMBER";
 import fse from 'fs-extra';
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { Command } from "Z64Lib/API/Common/ICommandBuffer";
@@ -42,11 +40,6 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
     @onViUpdate()
     onViUpdate() {
         super.onViUpdate();
-        // #ifdef IS_DEV_BUILD
-        let isTitleScreen: boolean = this.core.OOT!.helper.isTitleScreen();
-        this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Z64Online ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getMainViewport().size.y - (isTitleScreen ? 60 : 45)), rgba(255, 255, 255, 255), rgba(0, 0, 0, isTitleScreen ? 255 : 20), xy(isTitleScreen ? 1 : 0.5, isTitleScreen ? 1 : 0.5));
-        // #endif
-
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("Z64O")) {

@@ -90,7 +90,7 @@ export class ModelManagerClient {
     }
   }
 
-  private onCustomModelChild_Impl(evt: Z64Online_ModelAllocation) {
+  private onCustomModelChild_Impl(evt: Z64Online_ModelAllocation, label: string = "(Child)", flag_o?: number, flag_v?: number) {
     if (this.managerDisabled) return;
     let ref: IModelReference;
     if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
@@ -101,8 +101,11 @@ export class ModelManagerClient {
     if (evt.script !== undefined) {
       ref.script = evt.script;
     }
+    if (flag_o !== undefined && flag_v !== undefined){
+      ref.flags[flag_o] = flag_v;
+    } 
     evt.ref = ref;
-    this.customModelRefsChild.set(evt.name + " (Child)", evt.ref);
+    this.customModelRefsChild.set(evt.name + ` ${label}`, evt.ref);
   }
 
   @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
@@ -120,7 +123,11 @@ export class ModelManagerClient {
       }
       let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN);
       e.name = path.parse(evt).name;
-      this.onCustomModelChild_Impl(e);
+      if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG){
+        this.onCustomModelChild_Impl(e, "(Adult)", 0, BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG);
+      }else{
+        this.onCustomModelChild_Impl(e);
+      }
     }
   }
 

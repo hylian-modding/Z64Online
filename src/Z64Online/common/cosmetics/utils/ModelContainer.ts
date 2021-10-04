@@ -8,6 +8,7 @@ export class ModelReference implements IModelReference {
   isDead: boolean = false;
   isLoaded: boolean = false;
   script: IModelScript | undefined;
+  flags: Buffer = Buffer.alloc(4);
   ModLoader: IModLoaderAPI;
 
   constructor(hash: string, ModLoader: IModLoaderAPI) {

@@ -151,6 +151,7 @@ export interface IModelReference {
   loadModel(): boolean;
   unregister(): boolean;
   script: IModelScript | undefined;
+  flags: Buffer;
 }
 
 export class Z64Online_ModelAllocation {

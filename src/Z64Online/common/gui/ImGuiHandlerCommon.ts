@@ -3,13 +3,14 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IActor } from "Z64Lib/API/imports";
 import Vector3 from "modloader64_api/math/Vector3";
-import { xy } from "modloader64_api/Sylvain/vec";
+import { rgba, xy } from "modloader64_api/Sylvain/vec";
 import { openMemoryUtils3Tab } from "../compat/MemoryUtils3";
 import { Font } from "modloader64_api/Sylvain/Gfx";
 import { changeKillfeedFont } from "modloader64_api/Announcements";
 import { getHylianFont, setHylianFontRef } from "./HyliaFont";
 import { CommonConfigInst, volume_local, volume_remote } from "../lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "../api/InternalAPI";
+import { VERSION_NUMBER } from "../lib/VERSION_NUMBER";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -50,6 +51,10 @@ export abstract class ImGuiHandlerCommon {
             }
             return;
         }
+        // #ifdef IS_DEV_BUILD
+        let isTitleScreen: boolean = this.core.OOT!.helper.isTitleScreen();
+        this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Z64Online ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getMainViewport().size.y - (isTitleScreen ? 60 : 45)), rgba(255, 255, 255, 255), rgba(0, 0, 0, isTitleScreen ? 255 : 20), xy(isTitleScreen ? 1 : 0.5, isTitleScreen ? 1 : 0.5));
+        // #endif
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
                 if (this.ModLoader.ImGui.beginMenu("Z64O")) {
@@ -71,12 +76,12 @@ export abstract class ImGuiHandlerCommon {
                             this.ModLoader.config.save();
                             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_REMOTE_VOLUME);
                         }
-                        if (this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", volume_local, 0.1, 1.0)){
+                        if (this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (local)", volume_local, 0.1, 1.0)) {
                             CommonConfigInst.localVolume = volume_local[0];
                             this.ModLoader.config.save();
                             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_LOCAL_VOLUME);
                         }
-                        if (this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", volume_remote, 0.1, 1.0)){
+                        if (this.ModLoader.ImGui.sliderFloat("Voice Pak Volume (remote)", volume_remote, 0.1, 1.0)) {
                             CommonConfigInst.networkedVolume = volume_remote[0];
                             this.ModLoader.config.save();
                         }

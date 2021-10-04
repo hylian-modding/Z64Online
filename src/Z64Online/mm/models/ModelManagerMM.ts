@@ -18,6 +18,7 @@ import { object_link_zora } from "./zobjs/object_link_zora";
 import { object_link_nuts } from "./zobjs/object_link_nuts";
 import { object_link_deity } from "./zobjs/object_link_deity";
 import { object_link_goron } from "./zobjs/object_link_goron";
+import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 
 export class ModelManagerMM implements IModelManagerShim {
 
@@ -109,6 +110,30 @@ export class ModelManagerMM implements IModelManagerShim {
         this.replaceMasks(evt);
     }
 
+    /** @todo this isn't static. Changes in MMR. Find pointers */
+    private heightFix(ref: IModelReference) {
+        try {
+            let defaultAdultHeight1 = "4260000042B400003F80000042DE0000428C0000429ECCCD426C0000422400004198000042100000423333334260000042880000428C00004190000041700000428C00000009123F016700081256017C000917EA016700081256017C000917EA0167000917EA016700091E0D017C000917EA016700091E0D017C00081256017C000917EA0167F9C81256017CF9C917EA0167";
+            let defaultAdultHeight2 = "4204000041EB79720400D5400400D5480400D6600400DB900400DB980400DBA00400DBA80400DAB00400DAB80400DA900400DA980400DB700400DB780400DB880400DB80";
+            let defaultChildHeight = "42200000427000003F25A5A6428E00004248000042440000421C000041D800004198000041B000004201999A420000004240000042352D2E4160000041400000425C0000FFE80DED036CFFE80D92035EFFE8137103A900081256017C000917EA0167FFE8137103A9FFE8195F03A9000917EA016700091E0D017C00081256017C000917EA0167F9C81256017CF9C917EA016700200000000041B0000041EB79720400D1280400D1700400D1B80400D1F80400D2000400D2080400D2100400DAB00400DAB80400DA900400DA980400D1D80400D1E00400D1F00400D1E8";
+            let ram = this.parent.ModLoader.emulator.rdramReadBuffer(0x0, 8 * 1024 * 1024);
+            let heightModAddr = ram.indexOf(Buffer.from('42200000427000003F25A5A6428E00004248000042440000', 'hex'));
+            if (ref.flags[0] === 0) {
+                this.parent.ModLoader.emulator.rdramWriteBuffer(heightModAddr, Buffer.from(defaultChildHeight, 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(0x801DCA6A, Buffer.from("7078", 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(0x807537A0, Buffer.from('1440000800000000', 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(0x80753730, Buffer.from('1440000800000000', 'hex'));
+            } else if (ref.flags[0] === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
+                this.parent.ModLoader.emulator.rdramWriteBuffer(heightModAddr, Buffer.from(defaultAdultHeight1, 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(heightModAddr + 0x98, Buffer.from(defaultAdultHeight2, 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(0x801DCA6A, Buffer.from("7058", 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(0x807537A0, Buffer.from('5440000814410007', 'hex'));
+                this.parent.ModLoader.emulator.rdramWriteBuffer(0x80753730, Buffer.from('5440000814410007', 'hex'));
+            }
+        } catch (err) {
+        }
+    }
+
     onSceneChange(scene: number): void {
         if (this.parent.managerDisabled) return;
         if (this.parent.lockManager) return;
@@ -124,16 +149,16 @@ export class ModelManagerMM implements IModelManagerShim {
             let count = copy.readUInt32BE(0x500C);
             let start = 0x5020;
             let temp: Array<number> = [];
-            for (let i = 0; i < count; i++){
+            for (let i = 0; i < count; i++) {
                 let offset = (i * 0x8) + start;
                 let data = copy.readUInt32BE(offset + 0x4);
                 let content = this.parent.ModLoader.emulator.rdramRead32(data);
-                if (content === 0xDF000000){
+                if (content === 0xDF000000) {
                     temp.push(offset);
                 }
             }
             let bank = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.puppetModels.get(this.parent.core.MM!.save.form)!.pointer, defines.ALIAS_PROXY_SIZE);
-            while (temp.length > 0){
+            while (temp.length > 0) {
                 let offset = temp.shift()!;
                 copy.writeUInt32BE(bank.readUInt32BE(offset + 0x4), offset + 0x4);
             }
@@ -172,6 +197,10 @@ export class ModelManagerMM implements IModelManagerShim {
                 this.parent.ModLoader.emulator.rdramWrite32(link + defines.DL_BOTTLE_FILLING + 0x4, this.gearRef.pointer + (gear.OBJECT_BOTTLE_CONTENT & 0x00FFFFFF));
             }
             curRef = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.core.MM!.save.form)!;
+            if (this.parent.core.MM!.save.form === AgeOrForm.HUMAN && !this.parent.core.MM!.helper.isTitleScreen()){
+                this.parent.ModLoader.logger.debug("Adjusting height...");
+                this.heightFix(curRef);
+            }
             if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
                 let newRef = this.parent.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
                 this.parent.ModLoader.utils.setTimeoutFrames(() => {
