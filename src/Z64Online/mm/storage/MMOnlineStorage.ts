@@ -6,7 +6,7 @@ import {
   WEEK_EVENT_ARR_SIZE,
 } from '@Z64Online/mm/MMOnline';
 import { IOwlStatues, IQuestStatus } from 'Z64Lib/API/MM/MMAPI';
-import { Magic, ISwords, IShields } from 'Z64Lib/API/COMMON/Z64API';
+import { Magic, ISwords, IShields } from 'Z64Lib/API/Common/Z64API';
 import { IKeyRing } from '../../common/save/IKeyRing';
 import { IMMInventorySync, IMMSyncSave } from '../../common/types/MMAliases';
 //import { PuppetServerStub } from '../puppet/PuppetServerStub';
