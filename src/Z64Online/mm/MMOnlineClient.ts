@@ -22,7 +22,7 @@ import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import path from "path";
 import { addToKillFeedQueue } from "modloader64_api/Announcements";
 import { GUITunnelPacket } from "modloader64_api/GUITunnel";
-import * as API from 'Z64Lib/API/Imports';
+import * as API from 'Z64Lib/API/imports';
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
