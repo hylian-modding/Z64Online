@@ -1,7 +1,7 @@
 import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
-import { Scene } from "Z64Lib/API/OOT/OOTAPI"
+import { Scene } from "Z64Lib/API/OoT/OOTAPI"
 export interface IPuppetOverlordServer {
     onPuppetData_server(packet: IPacketHeader): void;
 }

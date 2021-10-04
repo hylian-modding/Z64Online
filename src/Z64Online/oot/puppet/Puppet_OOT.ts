@@ -1,4 +1,4 @@
-import { IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
+import { IOOTCore } from 'Z64Lib/API/OoT/OOTAPI';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IZ64Clientside } from '@Z64Online/common/storage/Z64Storage';

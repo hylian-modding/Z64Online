@@ -29,7 +29,7 @@ import {
 import { onTick, onViUpdate, Preinit } from 'modloader64_api/PluginLifecycle';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { Z64 } from 'Z64Lib/API/imports';
-import { Tunic } from 'Z64Lib/API/OOT/OOTAPI';
+import { Tunic } from 'Z64Lib/API/OoT/OOTAPI';
 import { Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
 import { EquipmentManifest } from './EquipmentManifest';
 import { ModelAllocationManager } from '../utils/ModelAllocationManager';

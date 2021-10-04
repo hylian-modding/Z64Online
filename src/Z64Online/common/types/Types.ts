@@ -1,5 +1,5 @@
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { Tunic } from "Z64Lib/API/OOT/OOTAPI";
+import { Tunic } from "Z64Lib/API/OoT/OOTAPI";
 import { IOOTSaveContext, IOOTSyncSave } from "./OotAliases";
 import { OOTManifest } from 'Z64Lib/API/OoT/ModelData/OOTManfest';
 import { IManifest } from "Z64Lib/API/Utilities/Z64ManifestBuffer";

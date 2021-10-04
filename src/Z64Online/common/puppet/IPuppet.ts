@@ -1,4 +1,4 @@
-import { Scene } from "Z64Lib/API/OOT/OOTAPI";
+import { Scene } from "Z64Lib/API/OoT/OOTAPI";
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { IPuppetData } from "@Z64Online/common/puppet/IPuppetData";

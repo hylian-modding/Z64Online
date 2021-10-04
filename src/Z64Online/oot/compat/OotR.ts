@@ -1,6 +1,6 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { zeldaString } from 'Z64Lib/API/Common/ZeldaString';
-import { IOOTCore } from "Z64Lib/API/OOT/OOTAPI";
+import { IOOTCore } from "Z64Lib/API/OoT/OOTAPI";
 import { IOOTSaveContext } from "@Z64Online/common/types/OotAliases";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { EventHandler } from "modloader64_api/EventHandler";

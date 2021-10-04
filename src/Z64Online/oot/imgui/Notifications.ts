@@ -4,7 +4,7 @@ import { EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { Command } from "Z64Lib/API/Common/ICommandBuffer";
-import { IOOTCore, ScarecrowSongNoteStruct } from "Z64Lib/API/OOT/OOTAPI";
+import { IOOTCore, ScarecrowSongNoteStruct } from "Z64Lib/API/OoT/OOTAPI";
 import { SongNotes, SongFlags } from "Z64Lib/API/Common/Z64API"
 import { onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
 import { FlipFlags, Font, Texture } from "modloader64_api/Sylvain/Gfx";

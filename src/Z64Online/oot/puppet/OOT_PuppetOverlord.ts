@@ -10,7 +10,7 @@ import { EventsClient, EventHandler, EventsServer, EventServerJoined, EventServe
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { AgeOrForm} from "Z64Lib/API/Common/Z64API";
 import { IActor} from "Z64Lib/API/Common/IActor";
-import { OotEvents } from "Z64Lib/API/OOT/OOTAPI";
+import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
 import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";

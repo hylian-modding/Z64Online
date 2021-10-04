@@ -1,6 +1,6 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
+import { IOOTCore } from 'Z64Lib/API/OoT/OOTAPI';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';

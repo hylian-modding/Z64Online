@@ -7,7 +7,7 @@ import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
 import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
 import * as sf from 'modloader64_api/Sound/sfml_audio';
-import { OotEvents } from "Z64Lib/API/OOT/OOTAPI";
+import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";

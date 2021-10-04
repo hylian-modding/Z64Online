@@ -1,5 +1,5 @@
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
-import { InventoryItem } from 'Z64Lib/API/OOT/OOTAPI';
+import { InventoryItem } from 'Z64Lib/API/OoT/OOTAPI';
 import { IOvlPayloadResult } from 'Z64Lib/API/Common/Z64API';
 import { IZ64ClientStorage } from '@Z64Online/common/storage/Z64Storage';
 

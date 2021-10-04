@@ -3,7 +3,7 @@ import { IActor } from 'Z64Lib/API/Common/IActor';
 import IMemory from 'modloader64_api/IMemory';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { Z64O_ActorPacket } from '../../common/network/Z64OPackets';
-import { IOOTCore } from 'Z64Lib/API/OOT/OOTAPI';
+import { IOOTCore } from 'Z64Lib/API/OoT/OOTAPI';
 
 export class HookInfo {
   offset = 0;

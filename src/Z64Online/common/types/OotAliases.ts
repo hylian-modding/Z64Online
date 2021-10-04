@@ -1,4 +1,4 @@
-import { IInventoryCounts, IInventoryFields, ISaveContext } from "Z64Lib/API/OOT/OOTAPI";
+import { IInventoryCounts, IInventoryFields, ISaveContext } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { DMAIndex } from "./Types";
 
