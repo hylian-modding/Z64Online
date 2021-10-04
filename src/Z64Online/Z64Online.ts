@@ -4,7 +4,6 @@ import { ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
 import path from 'path';
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
-import { OotO300BackwardsCompat } from "./common/compat/BackwardsCompat";
 import { setCommonConfigInst, Z64O_Common_Config } from "./common/lib/Settings";
 
 export default class Z64Online implements IPluginServerConfig {
@@ -14,10 +13,6 @@ export default class Z64Online implements IPluginServerConfig {
     MM!: IZ64GameMain;
 
     ModLoader!: IModLoaderAPI;
-
-    constructor(){
-        new OotO300BackwardsCompat().inject();
-    }
 
     init(){
         setCommonConfigInst(this.ModLoader.config.registerConfigCategory("Z64O_Common_Config") as Z64O_Common_Config);
