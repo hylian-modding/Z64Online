@@ -4,7 +4,7 @@ import {
   ITEM_FLAG_ARR_SIZE,
   MASK_FLAG_ARR_SIZE,
   WEEK_EVENT_ARR_SIZE,
-} from '@Z64Online/mm/MMOnline"';
+} from '@Z64Online/mm/MMOnline';
 import { IOwlStatues, IQuestStatus } from 'Z64Lib/API/MM/MMAPI';
 import { Magic, ISwords, IShields } from 'Z64Lib/API/Common/Z64API';
 import { IKeyRing } from '../../common/save/IKeyRing';
