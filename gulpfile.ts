@@ -580,7 +580,7 @@ gulp.task('setup', function () {
 
 gulp.task('generate_update_file', function(){
     try {
-        let meta = JSON.parse(fs.readFileSync("./cores/Z64Online/package.json").toString());
+        let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
         fs.writeFileSync("./dist/update.json", JSON.stringify({
             version: meta.version,
             url: "https://repo.modloader64.com/mods/Z64O/dev/Z64Online.pak"
@@ -593,11 +593,11 @@ gulp.task('generate_update_file', function(){
 
 gulp.task('remove_nightly_flag', function(){
     try {
-        let meta = JSON.parse(fs.readFileSync("./cores/Z64Online/package.json").toString());
+        let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
         meta.date = "";
         meta.commit = "";
         meta.version = meta.version.split("-")[0];
-        fs.writeFileSync("./cores/Z64Online/package.json", JSON.stringify(meta, null, 2));
+        fs.writeFileSync("./src/Z64Online/package.json", JSON.stringify(meta, null, 2));
     } catch (err: any) {
         console.log(err.stack);
     }
