@@ -583,7 +583,8 @@ gulp.task('generate_update_file', function(){
         let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
         fs.writeFileSync("./dist/update.json", JSON.stringify({
             version: meta.version,
-            url: "https://repo.modloader64.com/mods/Z64O/dev/Z64Online.pak"
+            url: "https://repo.modloader64.com/mods/Z64O/update/Z64Online.pak",
+            devUrl: "https://repo.modloader64.com/mods/Z64O/dev/Z64Online.pak"
         }, null, 2));
     } catch (err: any) {
         console.log(err.stack);
