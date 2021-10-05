@@ -29,12 +29,10 @@ export class ModelManagerOot implements IModelManagerShim {
     }
 
     @PrivateEventHandler(Z64O_PRIVATE_EVENTS.POST_OBJECT_LOAD)
-    onPostLoad(buf: Buffer){
+    onPostLoad(buf: Buffer) {
     }
 
     safetyCheck(): boolean {
-        if (this.parent.core.OOT!.helper.isPaused()) return false;
-        if (this.parent.core.OOT!.helper.Player_InBlockingCsMode() || this.parent.core.OOT!.helper.isLinkEnteringLoadingZone()) return false;
         return true;
     }
 
@@ -56,8 +54,16 @@ export class ModelManagerOot implements IModelManagerShim {
                 break;
             }
         }
-        if (link_object_pointer === 0) return { exists: false, pointer: 0 };
+        if (link_object_pointer === 0) {
+            let ptr = this.parent.ModLoader.emulator.rdramRead32(0x801D8E80) - 0xBF0;
+            if (this.parent.ModLoader.emulator.rdramRead32(ptr) === 0x4D4F444C) {
+                let start = ptr - 0x5000;
+                return { exists: true, pointer: start };
+            }
+            return { exists: false, pointer: 0 };
+        }
         link_object_pointer = this.parent.ModLoader.emulator.rdramRead32(link_object_pointer);
+
         return { exists: this.parent.ModLoader.emulator.rdramReadBuffer(link_object_pointer + 0x5000, 0xB).toString() === "MODLOADER64", pointer: link_object_pointer };
     }
 
@@ -69,6 +75,15 @@ export class ModelManagerOot implements IModelManagerShim {
         obj_list += offset;
         obj_list += 0x4;
         let pointer = this.parent.ModLoader.emulator.rdramRead32(obj_list);
+
+        if (this.parent.ModLoader.emulator.rdramRead32(pointer + 0x5000) !== 0x4D4F444C) {
+            let ptr = this.parent.ModLoader.emulator.rdramRead32(0x801D8E80) - 0xBF0;
+            if (this.parent.ModLoader.emulator.rdramRead32(ptr) === 0x4D4F444C) {
+                let start = ptr - 0x5000;
+                pointer = start;
+            }
+        }
+
         return pointer;
     }
 
@@ -87,7 +102,7 @@ export class ModelManagerOot implements IModelManagerShim {
     onSceneChange(scene: Scene): void {
         if (this.parent.managerDisabled) return;
         if (this.parent.lockManager) return;
-        this.parent.puppetModels.forEach((ref: IModelReference)=>{
+        this.parent.puppetModels.forEach((ref: IModelReference) => {
             ref.loadModel();
         });
         this.parent.allocationManager.getLocalPlayerData().AgesOrForms.forEach((ref: IModelReference) => {
@@ -106,16 +121,16 @@ export class ModelManagerOot implements IModelManagerShim {
             let count = copy.readUInt32BE(0x500C);
             let start = 0x5020;
             let temp: Array<number> = [];
-            for (let i = 0; i < count; i++){
+            for (let i = 0; i < count; i++) {
                 let offset = (i * 0x8) + start;
                 let data = copy.readUInt32BE(offset + 0x4);
                 let content = this.parent.ModLoader.emulator.rdramRead32(data);
-                if (content === 0xDF000000){
+                if (content === 0xDF000000) {
                     temp.push(offset);
                 }
             }
             let bank = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.puppetModels.get(this.parent.AgeOrForm)!.pointer, ALIAS_PROXY_SIZE);
-            while (temp.length > 0){
+            while (temp.length > 0) {
                 let offset = temp.shift()!;
                 copy.writeUInt32BE(bank.readUInt32BE(offset + 0x4), offset + 0x4);
             }
