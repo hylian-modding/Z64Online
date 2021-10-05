@@ -209,7 +209,7 @@ export class ModelManagerClient {
     this.APIHandlers = new ModelAPIHandlers(this);
     setupEventHandlers(this.APIHandlers, this.ModLoader.publicBus);
 
-    for (let i = 4; i > -1; i++) {
+    for (let i = 4; i > -1; i--) {
       this.customModelRegistry.set(i, new Map());
     }
 
