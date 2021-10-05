@@ -437,7 +437,7 @@ export class ModelManagerClient {
     }
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
-      this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(this.AgeOrForm)!);
+      this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(form)!);
       if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
         if (!this.core.MM!.helper.isTitleScreen()) {
           this.onSceneChange(-1);
