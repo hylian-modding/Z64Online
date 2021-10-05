@@ -36,9 +36,9 @@ export default class OotOnlineServer {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.SERVER, PvPServer)
     pvp!: PvPServer;
+    // #endif
     @SidedProxy(ProxySide.SERVER, CDNServer)
     cdn!: CDNServer;
-    // #endif
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

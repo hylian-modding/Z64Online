@@ -13,6 +13,7 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
+import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
 import { MMOSaveData } from "./save/MMOSaveData";
@@ -26,18 +27,12 @@ export default class MMOnlineServer {
     ModLoader!: IModLoaderAPI;
     @ParentReference()
     parent!: IPlugin;
-    //@SidedProxy(ProxySide.SERVER, ActorHookingManagerServer)
-    //actorHooks!: ActorHookingManagerServer;
-    //@SidedProxy(ProxySide.SERVER, MM_PuppetOverlordServer)
-    //puppets!: MM_PuppetOverlordServer;
+    @SidedProxy(ProxySide.SERVER, PuppetOverlordServer_MM)
+    puppets!: PuppetOverlordServer_MM;
     @SidedProxy(ProxySide.SERVER, WorldEvents)
     worldEvents!: WorldEvents;
-    // #ifdef IS_DEV_BUILD
-    //@SidedProxy(ProxySide.SERVER, PvPServer)
-    //pvp!: PvPServer;
     @SidedProxy(ProxySide.SERVER, CDNServer)
     cdn!: CDNServer;
-    // #endif
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

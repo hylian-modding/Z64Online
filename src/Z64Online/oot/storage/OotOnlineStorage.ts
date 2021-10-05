@@ -3,14 +3,12 @@ import {ITunics, IBoots, IQuestStatus } from 'Z64Lib/API/OoT/OOTAPI';
 import { Magic, ISwords, IShields} from 'Z64Lib/API/Common/Z64API';
 import { IKeyRing } from '../../common/save/IKeyRing';
 import { IOOTInventorySync, IOOTSyncSave } from '../../common/types/OotAliases';
-import { PuppetServerStub } from '../puppet/PuppetServerStub';
 import { OotOnlineStorageBase } from './OotOnlineStorageBase';
 
 export class OotOnlineStorage extends OotOnlineStorageBase {
   networkPlayerInstances: any = {};
   players: any = {};
   worlds: Array<OotOnlineSave_Server> = [];
-  puppetStubs: Map<string, PuppetServerStub> = new Map();
 }
 
 export interface IOOTSyncSaveServer extends IOOTSyncSave {

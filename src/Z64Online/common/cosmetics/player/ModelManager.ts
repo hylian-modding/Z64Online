@@ -2,7 +2,7 @@ import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_EquipmentPak, Z64O
 import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
 import { getManifestForForm, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
 import { CostumeHelper } from '@Z64Online/common/events/CostumeHelper';
-import { getAdultID, getAgeOrForm, getChildID, Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_IS_RANDOMIZER } from '@Z64Online/common/types/GameAliases';
+import { getAgeOrForm, Z64_ADULT_ZOBJ_DMA, Z64_CHILD_ZOBJ_DMA, Z64_IS_RANDOMIZER } from '@Z64Online/common/types/GameAliases';
 import { OOT_GAME } from '@Z64Online/common/types/OotAliases';
 import { AgeOrForm, Manifest, Scene } from '@Z64Online/common/types/Types';
 import { OotOnlineConfigCategory } from '@Z64Online/oot/OotOnline';
@@ -42,9 +42,8 @@ import { Z64_AllocateModelPacket, Z64_EquipmentPakPacket, Z64_GiveModelPacket } 
 import { OotOnlineStorageClient } from '@Z64Online/oot/storage/OotOnlineStorageClient';
 import { ALIAS_PROXY_SIZE } from '../Defines';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
-import { BackwardsCompat } from '@Z64Online/common/compat/BackwardsCompat';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
-import path from 'path';
+import { ModelAPIHandlers } from './ModelAPIHandlers';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -57,8 +56,7 @@ export class ModelManagerClient {
   //
   proxySyncTick!: string;
   proxyNeedsSync: boolean = false;
-  customModelRefsAdult: Map<string, IModelReference> = new Map<string, IModelReference>();
-  customModelRefsChild: Map<string, IModelReference> = new Map<string, IModelReference>();
+  customModelRegistry: Map<AgeOrForm, Map<string, IModelReference>> = new Map();
   customModelFilesEquipment: Map<string, Buffer> = new Map<string, Buffer>();
   config!: Z64_EventConfig;
   //
@@ -67,68 +65,10 @@ export class ModelManagerClient {
   managerDisabled: boolean = false;
   mainConfig!: OotOnlineConfigCategory;
   child!: IModelManagerShim;
+  APIHandlers!: ModelAPIHandlers;
 
   get AgeOrForm(): AgeOrForm {
     return getAgeOrForm(this.core);
-  }
-
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_ADULT)
-  onCustomModelAdult_new(evt: Z64Online_ModelAllocation) {
-    if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-      if (this.managerDisabled) return;
-      let ref: IModelReference;
-      if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
-        ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(getAdultID())));
-      } else {
-        ref = this.allocationManager.registerModel(evt.model);
-      }
-      if (evt.script !== undefined) {
-        ref.script = evt.script;
-      }
-      evt.ref = ref;
-      this.customModelRefsAdult.set(evt.name + " (Adult)", evt.ref);
-    }
-  }
-
-  private onCustomModelChild_Impl(evt: Z64Online_ModelAllocation, label: string = "(Child)", flag_o?: number, flag_v?: number) {
-    if (this.managerDisabled) return;
-    let ref: IModelReference;
-    if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
-      ref = this.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(getChildID())));
-    } else {
-      ref = this.allocationManager.registerModel(evt.model);
-    }
-    if (evt.script !== undefined) {
-      ref.script = evt.script;
-    }
-    if (flag_o !== undefined && flag_v !== undefined){
-      ref.flags[flag_o] = flag_v;
-    } 
-    evt.ref = ref;
-    this.customModelRefsChild.set(evt.name + ` ${label}`, evt.ref);
-  }
-
-  @EventHandler(Z64OnlineEvents.CUSTOM_MODEL_LOAD_CHILD)
-  onCustomModelChild_new(evt: Z64Online_ModelAllocation) {
-    if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-      this.onCustomModelChild_Impl(evt);
-    }
-  }
-
-  @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
-  onCustomModelChild_mm_backcompat(evt: string) {
-    if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
-      if (fs.lstatSync(evt).isDirectory()) {
-        return;
-      }
-      let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN);
-      e.name = path.parse(evt).name;
-      if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG){
-        this.onCustomModelChild_Impl(e, "(Adult)", 0, BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG);
-      }else{
-        this.onCustomModelChild_Impl(e);
-      }
-    }
   }
 
   @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
@@ -176,6 +116,7 @@ export class ModelManagerClient {
         this.ModLoader.logger.info("Setting up zobj proxy.");
         let alloc = new Z64Online_ModelAllocation(model, AgeOrForm.ADULT);
         this.allocationManager.getLocalPlayerData().additionalData.set(form, manifest.inject(this.ModLoader, rom, proxy, true, obj_id));
+        this.allocationManager.getLocalPlayerData().additionalData.set("proxy", proxy);
         this.ModLoader.utils.setTimeoutFrames(() => {
           bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, alloc);
           alloc.ref.isPlayerModel = false;
@@ -265,11 +206,16 @@ export class ModelManagerClient {
 
   @Preinit()
   preinit() {
+    this.APIHandlers = new ModelAPIHandlers(this);
+    setupEventHandlers(this.APIHandlers, this.ModLoader.publicBus);
+
+    for (let i = 0; i < 5; i++) {
+      this.customModelRegistry.set(i, new Map());
+    }
+
     this.allocationManager = new ModelAllocationManager(this.ModLoader);
-    this.config = this.ModLoader.config.registerConfigCategory("OotO_WorldEvents") as Z64_EventConfig;
-    this.ModLoader.config.setData("OotO_WorldEvents", "adultCostume", "");
-    this.ModLoader.config.setData("OotO_WorldEvents", "childCostume", "");
-    this.ModLoader.config.setData("OotO_WorldEvents", "disableCostumeManager", false);
+    this.config = this.ModLoader.config.registerConfigCategory("Z64O_WorldEvents") as Z64_EventConfig;
+    this.ModLoader.config.setData("Z64O_WorldEvents", "disableCostumeManager", false);
     this.managerDisabled = this.config.disableCostumeManager;
     this.mainConfig = (this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory);
   }
@@ -288,9 +234,6 @@ export class ModelManagerClient {
   onToggleLock() {
     this.lockManager = !this.lockManager;
     this.ModLoader.logger.debug(`Costume Manager lock state ${this.lockManager}`);
-    if (!this.lockManager) {
-      this.onSceneChange(-1);
-    }
   }
 
   @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
@@ -306,7 +249,7 @@ export class ModelManagerClient {
     if (this.managerDisabled) return;
     // Leave this here. We do this so people messing with code don't decompress and recompress it a bunch of times.
     let code_file: Buffer = tools.getCodeFile(evt.rom);
-    bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { adult: this.customModelRefsAdult, child: this.customModelRefsChild, equipment: this.customModelFilesEquipment });
+    bus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { models: this.customModelRegistry, equipment: this.customModelFilesEquipment });
     this.ModLoader.logger.info('Starting custom model setup...');
     try {
       this.child.onRomPatched(evt);
@@ -476,11 +419,11 @@ export class ModelManagerClient {
     if (evt.ref !== undefined) {
       if (this.allocationManager.getLocalPlayerData().AgesOrForms.get(form)!.hash === evt.ref.hash) return;
       this.allocationManager.SetLocalPlayerModel(form, evt.ref);
-      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
-        if (!this.core.MM!.helper.isTitleScreen()){
+      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+        if (!this.core.MM!.helper.isTitleScreen()) {
           this.onSceneChange(-1);
         }
-      }else{
+      } else {
         this.onSceneChange(-1);
       }
       this.proxyNeedsSync = true;
@@ -495,11 +438,11 @@ export class ModelManagerClient {
     let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
       this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(this.AgeOrForm)!);
-      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
-        if (!this.core.MM!.helper.isTitleScreen()){
+      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+        if (!this.core.MM!.helper.isTitleScreen()) {
           this.onSceneChange(-1);
         }
-      }else{
+      } else {
         this.onSceneChange(-1);
       }
       evt.ref = this.puppetModels.get(form)!;
@@ -513,11 +456,11 @@ export class ModelManagerClient {
       }
       model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(form, model);
-      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
-        if (!this.core.MM!.helper.isTitleScreen()){
+      if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+        if (!this.core.MM!.helper.isTitleScreen()) {
           this.onSceneChange(-1);
         }
-      }else{
+      } else {
         this.onSceneChange(-1);
       }
       evt.ref = model;
@@ -525,14 +468,22 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY)
+  @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL)
   onChangeModel(evt: Z64Online_ModelAllocation) {
-    this.handleModelChange(getAdultID(), evt);
+    this.handleModelChange(evt.age, evt);
   }
 
-  @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY)
-  onChangeModelChild(evt: Z64Online_ModelAllocation) {
-    this.handleModelChange(getChildID(), evt);
+  @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CLEAR_LINK_MODEL)
+  onClear() {
+    let link = this.child.findLink();
+    if (this.ModLoader.emulator.rdramRead32(link + 0x5000) === 0x4D4F444C) {
+      this.ModLoader.emulator.rdramWriteBuffer(link, this.allocationManager.getLocalPlayerData().additionalData.get("proxy"));
+      for (let i = 0; i < 5; i++){
+        if (this.allocationManager.getLocalPlayerData().additionalData.has(i)){
+          this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get(i), this.allocationManager.getLocalPlayerData().additionalData.get("proxy"));
+        }
+      }
+    }
   }
 
   @EventHandler(Z64OnlineEvents.REFRESH_EQUIPMENT)
@@ -557,8 +508,8 @@ export class ModelManagerClient {
     this.lockManager = false;
   }
 
-  @onViUpdate()
-  onVi() {
+  @onTick()
+  onTick() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
     if (!this.child.safetyCheck()) return;
@@ -570,10 +521,6 @@ export class ModelManagerClient {
         this.onSceneChange(-1);
       }
     }
-  }
-
-  @onTick()
-  onTick() {
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       this.allocationManager.getLocalPlayerData().currentScript!.onTick();
     }
@@ -590,9 +537,9 @@ export class ModelManagerClient {
         let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         } else {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         }
       }, 1);
     }
@@ -609,9 +556,9 @@ export class ModelManagerClient {
         let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         } else {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         }
       }, 1);
     }
@@ -628,9 +575,9 @@ export class ModelManagerClient {
         let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         } else {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         }
       }, 1);
     }
@@ -647,9 +594,9 @@ export class ModelManagerClient {
         let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         } else {
-          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+          bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
         }
       }, 1);
     }

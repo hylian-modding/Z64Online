@@ -1,4 +1,4 @@
-import { IModLoaderAPI, IPluginServerConfig } from "modloader64_api/IModLoaderAPI";
+import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IZ64GameMain } from "./common/types/Types";
 import { ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
 import path from 'path';
@@ -6,7 +6,7 @@ import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { setCommonConfigInst, Z64O_Common_Config } from "./common/lib/Settings";
 
-export default class Z64Online implements IPluginServerConfig {
+export default class Z64Online implements IZ64GameMain{
     @SidedProxy(ProxySide.UNIVERSAL, path.resolve(__dirname, "oot", "OotOnline.js"), "Z64Lib", () => { return Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME })
     OOT!: IZ64GameMain;
     @SidedProxy(ProxySide.UNIVERSAL, path.resolve(__dirname, "mm", "MMOnline.js"), "Z64Lib", () => { return Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK })

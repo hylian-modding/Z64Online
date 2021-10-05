@@ -33,6 +33,8 @@ export class ModelManagerOot implements IModelManagerShim {
     }
 
     safetyCheck(): boolean {
+        if (this.parent.core.OOT!.helper.isPaused()) return false;
+        if (this.parent.core.OOT!.helper.Player_InBlockingCsMode() || this.parent.core.OOT!.helper.isLinkEnteringLoadingZone()) return false;
         return true;
     }
 
@@ -54,14 +56,6 @@ export class ModelManagerOot implements IModelManagerShim {
                 break;
             }
         }
-        if (link_object_pointer === 0) {
-            let ptr = this.parent.ModLoader.emulator.rdramRead32(0x801D8E80) - 0xBF0;
-            if (this.parent.ModLoader.emulator.rdramRead32(ptr) === 0x4D4F444C) {
-                let start = ptr - 0x5000;
-                return { exists: true, pointer: start };
-            }
-            return { exists: false, pointer: 0 };
-        }
         link_object_pointer = this.parent.ModLoader.emulator.rdramRead32(link_object_pointer);
 
         return { exists: this.parent.ModLoader.emulator.rdramReadBuffer(link_object_pointer + 0x5000, 0xB).toString() === "MODLOADER64", pointer: link_object_pointer };
@@ -75,14 +69,6 @@ export class ModelManagerOot implements IModelManagerShim {
         obj_list += offset;
         obj_list += 0x4;
         let pointer = this.parent.ModLoader.emulator.rdramRead32(obj_list);
-
-        if (this.parent.ModLoader.emulator.rdramRead32(pointer + 0x5000) !== 0x4D4F444C) {
-            let ptr = this.parent.ModLoader.emulator.rdramRead32(0x801D8E80) - 0xBF0;
-            if (this.parent.ModLoader.emulator.rdramRead32(ptr) === 0x4D4F444C) {
-                let start = ptr - 0x5000;
-                pointer = start;
-            }
-        }
 
         return pointer;
     }
@@ -117,7 +103,6 @@ export class ModelManagerOot implements IModelManagerShim {
         if (link.exists) {
             this.parent.allocationManager.SetLocalPlayerModel(this.parent.AgeOrForm, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.AgeOrForm)!);
             let copy = this.parent.ModLoader.emulator.rdramReadBuffer(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(this.parent.AgeOrForm)!.pointer, ALIAS_PROXY_SIZE);
-
             let count = copy.readUInt32BE(0x500C);
             let start = 0x5020;
             let temp: Array<number> = [];
@@ -134,7 +119,6 @@ export class ModelManagerOot implements IModelManagerShim {
                 let offset = temp.shift()!;
                 copy.writeUInt32BE(bank.readUInt32BE(offset + 0x4), offset + 0x4);
             }
-
             this.parent.ModLoader.emulator.rdramWriteBuffer(link.pointer, copy);
             let restoreList = this.parent.ModLoader.emulator.rdramReadBuffer(link.pointer + 0x5017, 0x4).readUInt32BE(0);
             let _count = this.parent.ModLoader.emulator.rdramRead32(restoreList);
@@ -153,11 +137,7 @@ export class ModelManagerOot implements IModelManagerShim {
             this.parent.ModLoader.utils.setTimeoutFrames(() => {
                 let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.AgeOrForm);
                 a.ref = newRef;
-                if (this.parent.AgeOrForm === AgeOrForm.ADULT) {
-                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY, a);
-                } else {
-                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
-                }
+                bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
             }, 1);
         }
         bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, new Z64Online_LocalModelChangeProcessEvt(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.ADULT)!, this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.CHILD)!));

@@ -25,7 +25,6 @@ export interface IOotOnlineLobbyConfig {
 }
 
 export class OotOnlineConfigCategory {
-  mapTracker: boolean = false;
   keySync: boolean = true;
   notifications: boolean = true;
   notificationSound: boolean = true;

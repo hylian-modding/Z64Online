@@ -82,11 +82,11 @@ export default class OotOnlineClient {
     // #ifdef IS_DEV_BUILD
     @SidedProxy(ProxySide.CLIENT, PvPModule)
     pvp!: PvPModule;
-    @SidedProxy(ProxySide.CLIENT, CDNClient)
-    cdn!: CDNClient;
     @SidedProxy(ProxySide.CLIENT, NPCReplacer)
     npc!: NPCReplacer;
     // #endif
+    @SidedProxy(ProxySide.CLIENT, CDNClient)
+    cdn!: CDNClient;
     // Compat
     @SidedProxy(ProxySide.CLIENT, Multiworld)
     multiworld!: Multiworld;
@@ -113,9 +113,6 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "keySync", true);
         this.ModLoader.config.setData("OotOnline", "notifications", true);
         this.ModLoader.config.setData("OotOnline", "notificationSound", true);
-        this.ModLoader.config.setData("OotOnline", "nameplates", true);
-        this.ModLoader.config.setData("OotOnline", "muteNetworkedSounds", false);
-        this.ModLoader.config.setData("OotOnline", "muteLocalSounds", false);
         this.ModLoader.config.setData("OotOnline", "syncMasks", true);
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
         this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);

@@ -4,9 +4,9 @@ import { Core, IZ64GameMain, Scene } from "@Z64Online/common/types/Types";
 import { HorseData } from "@Z64Online/common/puppet/HorseData";
 import { Puppet_OOT } from "@Z64Online/oot/puppet/Puppet_OOT";
 import { Z64O_PuppetPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket } from "@Z64Online/common/network/Z64OPackets";
-import { PuppetQuery, Z64OnlineAPI_PuppetStubCreated, Z64OnlineAPI_PuppetStubDestroyed, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
+import { PuppetQuery, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
-import { EventsClient, EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
+import { EventsClient, EventHandler} from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { AgeOrForm} from "Z64Lib/API/Common/Z64API";
 import { IActor} from "Z64Lib/API/Common/IActor";
@@ -15,57 +15,17 @@ import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { PuppetServerStub } from "./PuppetServerStub";
-import { OotOnlineStorage } from "@Z64Online/oot/storage/OotOnlineStorage";
+import { IZ64Master } from "@Z64Online/common/api/InternalAPI";
 
 export class OOT_PuppetOverlordServer extends PuppetOverlordServer {
     @ParentReference()
-    parent!: IZ64GameMain;
+    parent!: IZ64Master;
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
 
-    @EventHandler(EventsServer.ON_LOBBY_JOIN)
-    onJoin(join: EventServerJoined) {
-        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            join.lobby,
-            this.parent as any
-        ) as OotOnlineStorage;
-        if (storage === null) {
-            return;
-        }
-        storage.puppetStubs.set(join.player.uuid, new PuppetServerStub(join.lobby));
-        bus.emit(Z64OnlineEvents.PLAYER_PUPPET_STUB_CREATE, new Z64OnlineAPI_PuppetStubCreated(join.player, storage.puppetStubs.get(join.player.uuid)!));
-    }
-
-    @EventHandler(EventsServer.ON_LOBBY_LEAVE)
-    onLeave(left: EventServerLeft) {
-        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            left.lobby,
-            this.parent as any
-        ) as OotOnlineStorage;
-        if (storage === null) {
-            return;
-        }
-        if (storage.puppetStubs.has(left.player.uuid)) {
-            storage.puppetStubs.delete(left.player.uuid);
-            bus.emit(Z64OnlineEvents.PLAYER_PUPPET_STUB_DESTROY, new Z64OnlineAPI_PuppetStubDestroyed(left.player));
-        }
-    }
-
     @ServerNetworkHandler('Z64O_PuppetPacket')
     onPuppetData_server(packet: IPacketHeader) {
-        let p: Z64O_PuppetPacket = packet as unknown as Z64O_PuppetPacket;
-        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            packet.lobby,
-            this.parent as any
-        ) as OotOnlineStorage;
-        if (storage === null) {
-            return;
-        }
-        if (storage.puppetStubs.has(packet.player.uuid)) {
-            storage.puppetStubs.get(packet.player.uuid)!.writeData(p.data.bundle);
-        }
-        //this.parent.sendPacketToPlayersInScene(packet);
+        this.parent.OOT.sendPacketToPlayersInScene(packet);
     }
 }
 
@@ -213,21 +173,6 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
     onQuery(evt: PuppetQuery) {
         if (this.puppets.has(evt.player.uuid)) {
             evt.puppet = this.puppets.get(evt.player.uuid);
-        }
-    }
-
-    @EventHandler(Z64OnlineEvents.FORCE_PUPPET_RESPAWN_IMMEDIATE)
-    onForceRepop(evt: any) {
-        let puppet = this.puppets.get(evt.player.uuid);
-        if (puppet !== undefined) {
-            if (puppet.isSpawning) return;
-            if (puppet.isShoveled) {
-                puppet.despawn();
-            }
-            if (puppet.isSpawned) {
-                puppet.despawn();
-                // The system will auto-respawn these in a couple of frames.
-            }
         }
     }
 

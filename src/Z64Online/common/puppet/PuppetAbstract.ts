@@ -11,6 +11,7 @@ import { IPuppet } from "./IPuppet";
 import { IPuppetData } from "./IPuppetData";
 import { HorseData } from "./HorseData";
 import { IActor } from "Z64Lib/API/imports";
+import { PUPPET_INST_SIZE } from "../cosmetics/Defines";
 
 let CUR_PUPPET_ID: number = 0;
 
@@ -61,7 +62,9 @@ export abstract class PuppetAbstract implements IPuppet {
         if (!this.isSpawned && !this.isSpawning) {
             bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
             this.isSpawning = true;
-            this.data!.pointer = 0x0;
+/*             if (this.data!.pointer === 0){
+                this.data!.pointer = this.ModLoader.heap!.malloc(PUPPET_INST_SIZE);
+            } */
             this.parent.getClientStorage()!.puppetOvl.spawnActorRXY_Z(this.ageOrForm, this.modelPointer, 0, new Vector3(8192, -2048, 8192)).then((actor: IActor) => {
                 this.data!.pointer = actor.pointer;
                 this.doNotDespawnMe(this.data!.pointer);

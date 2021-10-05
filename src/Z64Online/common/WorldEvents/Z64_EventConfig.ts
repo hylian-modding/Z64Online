@@ -1,7 +1,6 @@
 
 export interface Z64_EventConfig {
-    adultCostume: string;
-    childCostume: string;
+    costumeLoadout: any;
     equipmentLoadout: any;
     voice: string;
     anim_bank: string;

@@ -5,60 +5,53 @@ import path from 'path';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 import { Scene, Z64Tunic } from '@Z64Online/common/types/Types';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
-import { PuppetServerStub } from '@Z64Online/oot/puppet/PuppetServerStub';
 
 @ExternalAPIProvider("Z64API", "3.1.0", path.resolve(__dirname))
 export class Z64OnlineAPIProvider {
 }
 
 export enum Z64OnlineEvents {
-  PLAYER_PUPPET_PRESPAWN = 'OotOnline:onPlayerPuppetPreSpawned',
-  PLAYER_PUPPET_SPAWNED = 'OotOnline:onPlayerPuppetSpawned',
-  PLAYER_PUPPET_DESPAWNED = 'OotOnline:onPlayerPuppetDespawned',
-  PLAYER_PUPPET_QUERY = "OotOnline:PlayerPuppetQuery",
-  PLAYER_PUPPET_STUB_CREATE = "Z64Online:PlayerPuppetStubCreate",
-  PLAYER_PUPPET_STUB_DESTROY = "Z64Online:PlayerPuppetStubDestroy",
-  SERVER_PLAYER_CHANGED_SCENES = 'OotOnline:onServerPlayerChangedScenes',
-  CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'OotOnline:onRemotePlayerChangedScenes',
-  GHOST_MODE = 'OotOnline:EnableGhostMode',
-  GAINED_HEART_CONTAINER = 'OotOnline:GainedHeartContainer',
-  GAINED_PIECE_OF_HEART = 'OotOnline:GainedPieceOfHeart',
-  MAGIC_METER_INCREASED = 'OotOnline:GainedMagicMeter',
-  ON_INVENTORY_UPDATE = 'OotOnline:OnInventoryUpdate',
-  ON_EXTERNAL_ACTOR_SYNC_LOAD = 'OotOnline:OnExternalActorSyncLoad',
-  ON_REGISTER_EMOTE = 'OotOnline:OnRegisterEmote',
-  ON_LOAD_SOUND_PACK = "OotOnline:OnLoadSoundPack",
-  POST_LOADED_SOUND_LIST = "OotOnline:PostLoadedSoundList",
-  ON_SELECT_SOUND_PACK = "OotOnline:OnSelectSoundPack",
-  ON_REMOTE_SOUND_PACK = "OotOnline:OnRemoteSoundPack",
-  ON_REMOTE_PLAY_SOUND = "OotOnline:OnRemotePlaySound",
-  ALLOCATE_MODEL_BLOCK = "OotOnline:AllocateModelBlock",
-  FORCE_LOAD_MODEL_BLOCK = "OotOnline:ForceLoadModelBlock",
-  CHANGE_CUSTOM_MODEL_ADULT_GAMEPLAY = "OotOnline:ChangeCustomModelAdultGamePlay",
-  CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY = "OotOnline:ChangeCustomModelChildGamePlay",
-  FORCE_PUPPET_RESPAWN_IMMEDIATE = "OotOnline:ForcePuppetRespawnImmediate",
-  POST_LOADED_MODELS_LIST = "OotOnline:PostLoadedModelsList",
-  LOAD_EQUIPMENT_BUFFER = "OotOnline:LoadEquipmentBuffer",
-  LOAD_EQUIPMENT_PAK = "OotOnline:LoadEquipmentPak",
-  REFRESH_EQUIPMENT = "OotOnline:RefreshEquipment",
-  SWORD_NEEDS_UPDATE = "MmOnline:UpdateSwordB",
-  CLEAR_EQUIPMENT = "OotOnline:ClearEquipment",
-  EQUIPMENT_ZOBJ_LOADED = "OotOnline:EqZobjLoad",
-  EQUIPMENT_LOAD_START = "OotOnline:EqZobjLoadStart",
-  EQUIPMENT_LOAD_END = "OotOnline:EqZobjLoadEnd",
-  DEBUG_DUMP_RAM = "OotOnline:DumpRam",
-  PUPPETS_CLEAR = "OotOnline:PuppetsClear",
-  ON_MODEL_MANAGER_READY = "OotOnline:ON_MODEL_MANAGER_READY",
-  CUSTOM_MODEL_LOAD_ADULT = "OotOnline:CUSTOM_MODEL_LOAD_ADULT",
-  CUSTOM_MODEL_LOAD_CHILD = "OotOnline:CUSTOM_MODEL_LOAD_CHILD",
-  PUPPET_AGE_CHANGED = 'OotOnline:PUPPET_AGE_CHANGED',
-  SAVE_DATA_ITEM_SET = 'OotOnline:SAVE_DATA_ITEM_SET',
-  LOCAL_MODEL_CHANGE_FINISHED = "OotOnline:LOCAL_MODEL_CHANGE_FINISHED",
-  CUSTOM_ANIMATION_BANK_REGISTER = "OotOnline:CUSTOM_ANIMATION_BANK_REGISTER",
-  FORCE_CUSTOM_ANIMATION_BANK = "OotOnline:FORCE_CUSTOM_ANIMATION_BANK",
-  CUSTOM_ANIMATION_BANK_EQUIPPED = "OotOnline:CUSTOM_ANIMATION_BANK_EQUIPPED",
-  // Objects
-  OBJECT_SPAWN = "Z64Online:ObjectSpawn"
+  PLAYER_PUPPET_PRESPAWN = 'Z64Online:onPlayerPuppetPreSpawned',
+  PLAYER_PUPPET_SPAWNED = 'Z64Online:onPlayerPuppetSpawned',
+  PLAYER_PUPPET_DESPAWNED = 'Z64Online:onPlayerPuppetDespawned',
+  PLAYER_PUPPET_QUERY = "Z64Online:PlayerPuppetQuery",
+  SERVER_PLAYER_CHANGED_SCENES = 'Z64Online:onServerPlayerChangedScenes',
+  CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'Z64Online:onRemotePlayerChangedScenes',
+  GHOST_MODE = 'Z64Online:EnableGhostMode',
+  GAINED_HEART_CONTAINER = 'Z64Online:GainedHeartContainer',
+  GAINED_PIECE_OF_HEART = 'Z64Online:GainedPieceOfHeart',
+  MAGIC_METER_INCREASED = 'Z64Online:GainedMagicMeter',
+  ON_INVENTORY_UPDATE = 'Z64Online:OnInventoryUpdate',
+  ON_EXTERNAL_ACTOR_SYNC_LOAD = 'Z64Online:OnExternalActorSyncLoad',
+  ON_REGISTER_EMOTE = 'Z64Online:OnRegisterEmote',
+  ON_LOAD_SOUND_PACK = "Z64Online:OnLoadSoundPack",
+  POST_LOADED_SOUND_LIST = "Z64Online:PostLoadedSoundList",
+  ON_SELECT_SOUND_PACK = "Z64Online:OnSelectSoundPack",
+  ON_REMOTE_SOUND_PACK = "Z64Online:OnRemoteSoundPack",
+  ON_REMOTE_PLAY_SOUND = "Z64Online:OnRemotePlaySound",
+  ALLOCATE_MODEL_BLOCK = "Z64Online:AllocateModelBlock",
+  POST_LOADED_MODELS_LIST = "Z64Online:PostLoadedModelsList",
+  LOAD_EQUIPMENT_BUFFER = "Z64Online:LoadEquipmentBuffer",
+  LOAD_EQUIPMENT_PAK = "Z64Online:LoadEquipmentPak",
+  REFRESH_EQUIPMENT = "Z64Online:RefreshEquipment",
+  SWORD_NEEDS_UPDATE = "Z64Online:UpdateSwordB",
+  CLEAR_EQUIPMENT = "Z64Online:ClearEquipment",
+  EQUIPMENT_ZOBJ_LOADED = "Z64Online:EqZobjLoad",
+  EQUIPMENT_LOAD_START = "Z64Online:EqZobjLoadStart",
+  EQUIPMENT_LOAD_END = "Z64Online:EqZobjLoadEnd",
+  DEBUG_DUMP_RAM = "Z64Online:DumpRam",
+  PUPPETS_CLEAR = "Z64Online:PuppetsClear",
+  ON_MODEL_MANAGER_READY = "Z64Online:ON_MODEL_MANAGER_READY",
+  PUPPET_AGE_CHANGED = 'Z64Online:PUPPET_AGE_CHANGED',
+  SAVE_DATA_ITEM_SET = 'Z64Online:SAVE_DATA_ITEM_SET',
+  LOCAL_MODEL_CHANGE_FINISHED = "Z64Online:LOCAL_MODEL_CHANGE_FINISHED",
+  CUSTOM_ANIMATION_BANK_REGISTER = "Z64Online:CUSTOM_ANIMATION_BANK_REGISTER",
+  FORCE_CUSTOM_ANIMATION_BANK = "Z64Online:FORCE_CUSTOM_ANIMATION_BANK",
+  CUSTOM_ANIMATION_BANK_EQUIPPED = "Z64Online:CUSTOM_ANIMATION_BANK_EQUIPPED",
+  OBJECT_SPAWN = "Z64Online:ObjectSpawn",
+
+  CHANGE_CUSTOM_MODEL = "Z64Online:CHANGE_CUSTOM_MODEL",
+  REGISTER_CUSTOM_MODEL = "Z64Online:REGISTER_CUSTOM_MODEL"
 }
 
 export class Z64_ObjectSpawn {
@@ -207,16 +200,6 @@ export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
   let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
   bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
   return evt;
-}
-
-export class Z64OnlineAPI_PuppetStubCreated {
-  player: INetworkPlayer;
-  stub: PuppetServerStub;
-
-  constructor(player: INetworkPlayer, stub: PuppetServerStub) {
-    this.player = player;
-    this.stub = stub;
-  }
 }
 
 export class Z64OnlineAPI_PuppetStubDestroyed {

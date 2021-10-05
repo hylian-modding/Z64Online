@@ -1,6 +1,6 @@
-import { PuppetOverlordClient } from "@Z64Online/common/puppet/PuppetOverlord";
+import { PuppetOverlordClient, PuppetOverlordServer } from "@Z64Online/common/puppet/PuppetOverlord";
 import { IZ64GameMain, Core, Scene, AgeOrForm } from "@Z64Online/common/types/Types";
-import { INetworkPlayer, NetworkHandler } from "modloader64_api/NetworkHandler";
+import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api//IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api//ModLoaderAPIInjector";
@@ -13,6 +13,20 @@ import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { PuppetQuery, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { MMEvents } from "Z64Lib/API/MM/MMAPI";
+import { IZ64Master } from "@Z64Online/common/api/InternalAPI";
+
+export class PuppetOverlordServer_MM extends PuppetOverlordServer{
+
+    @ParentReference()
+    parent!: IZ64Master;
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+
+    @ServerNetworkHandler('Z64O_PuppetPacket')
+    onPuppetData_server(packet: IPacketHeader) {
+        this.parent.MM.sendPacketToPlayersInScene(packet);
+    }
+}
 
 export default class PuppetOverlord_MM extends PuppetOverlordClient {
 
@@ -117,30 +131,7 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
             evt.puppet = this.puppets.get(evt.player.uuid);
         }
     }
-
-    @EventHandler(Z64OnlineEvents.FORCE_PUPPET_RESPAWN_IMMEDIATE)
-    onForceRepop(evt: any) {
-        if (evt.hasOwnProperty("player")){
-            let puppet = this.puppets.get(evt.player.uuid);
-            if (puppet !== undefined) {
-                if (puppet.isSpawning) return;
-                if (puppet.isShoveled) {
-                    puppet.despawn();
-                }
-                if (puppet.isSpawned) {
-                    puppet.despawn();
-                    // The system will auto-respawn these in a couple of frames.
-                }
-            }
-        }else{
-            this.puppets.forEach((puppet: IPuppet)=>{
-                if (puppet.isSpawned) {
-                    puppet.despawn();
-                }
-            });
-        }
-    }
-
+    
     // Networking
     @NetworkHandler('Z64O_ScenePacket')
     onSceneChange_client(packet: Z64O_ScenePacket) {

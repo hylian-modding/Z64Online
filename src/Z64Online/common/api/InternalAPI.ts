@@ -1,6 +1,7 @@
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { INetworkPlayer, IPacketHeader } from "modloader64_api/NetworkHandler";
 import { IZ64Clientside } from "../storage/Z64Storage";
+import { IZ64GameMain } from "../types/Types";
 
 export const enum Z64O_PRIVATE_EVENTS {
     ASSET_LOOKUP = "ASSET_LOOKUP",
@@ -24,7 +25,8 @@ export const enum Z64O_PRIVATE_EVENTS {
     PRE_OBJECT_LOAD = "PRE_OBJECT_LOAD",
     POST_OBJECT_LOAD = "POST_OBJECT_LOAD",
     CHANGE_LOCAL_VOLUME = "CHANGE_LOCAL_VOLUME",
-    CHANGE_REMOTE_VOLUME = "CHANGE_REMOTE_VOLUME"
+    CHANGE_REMOTE_VOLUME = "CHANGE_REMOTE_VOLUME",
+    CLEAR_LINK_MODEL = "CLEAR_LINK_MODEL"
 }
 
 export class SendToPlayer{
@@ -100,3 +102,8 @@ export class ExternalEventData{
 }
 
 export interface IZ64Utility extends IZ64OnlineHelpers, IZ64Clientside{}
+
+export interface IZ64Master{
+    OOT: IZ64Utility;
+    MM: IZ64Utility;
+}

@@ -209,7 +209,7 @@ export class ModelManagerMM implements IModelManagerShim {
                     let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.core.MM!.save.form);
                     a.ref = newRef;
                     if (this.parent.core.MM!.save.form === AgeOrForm.HUMAN) {
-                        bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL_CHILD_GAMEPLAY, a);
+                        bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
                     }
                 }, 1);
             }

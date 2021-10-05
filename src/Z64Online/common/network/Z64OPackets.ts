@@ -18,7 +18,7 @@ export class Z64O_PuppetPacket extends Packet {
   horse_data!: HorseData;
 
   constructor(puppetData: IPuppetData, lobby: string) {
-    super('Z64O_PuppetPacket', 'Z64Online', lobby, true)
+    super('Z64O_PuppetPacket', 'Z64Online', lobby, false)
     //@ts-ignore
     this.data = puppetData;
   }
