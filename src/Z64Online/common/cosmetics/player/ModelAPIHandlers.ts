@@ -22,11 +22,16 @@ export class ModelAPIHandlers {
     onCustomModel_Adult(evt: Z64Online_ModelAllocation) {
         if (this.parent.managerDisabled) return;
         let ref: IModelReference;
+        let a = evt.age;
+        if (evt.age === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG){
+            evt.age = getChildID();
+        }
         ref = this.parent.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age)));
         if (evt.script !== undefined) {
             ref.script = evt.script;
         }
         evt.ref = ref;
+        ref.flags[0] = a;
         this.parent.customModelRegistry.get(evt.age)!.set(evt.name, evt.ref);
     }
 
