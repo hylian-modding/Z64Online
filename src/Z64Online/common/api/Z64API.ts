@@ -5,6 +5,8 @@ import path from 'path';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 import { Scene, Z64Tunic } from '@Z64Online/common/types/Types';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
+import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 
 @ExternalAPIProvider("Z64API", "3.1.0", path.resolve(__dirname))
 export class Z64OnlineAPIProvider {
@@ -77,7 +79,7 @@ export class Z64Online_LocalModelChangeProcessEvt {
 }
 
 export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference {
-  let evt = new Z64Online_ModelAllocation(model, 0x69);
+  let evt = new Z64Online_ModelAllocation(model, 0x69, Z64_GAME);
   bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, evt);
   evt.ref.isPlayerModel = !noautoGC;
   return evt.ref;
@@ -153,10 +155,12 @@ export class Z64Online_ModelAllocation {
   age: AgeOrForm;
   ref!: IModelReference;
   script: IModelScript | undefined;
+  game: Z64LibSupportedGames;
 
-  constructor(model: Buffer, age: AgeOrForm) {
+  constructor(model: Buffer, age: AgeOrForm, game: Z64LibSupportedGames) {
     this.model = model;
     this.age = age;
+    this.game = game;
   }
 }
 

@@ -332,8 +332,8 @@ export class WorldEventRewards {
     clearEverything_OOT() {
         if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
             bus.emit(Z64OnlineEvents.CLEAR_EQUIPMENT, {});
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT));
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT, Z64LibSupportedGames.OCARINA_OF_TIME));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD, Z64LibSupportedGames.OCARINA_OF_TIME));
             bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
         }
     }
@@ -341,11 +341,11 @@ export class WorldEventRewards {
     clearEverything_MM() {
         if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
             bus.emit(Z64OnlineEvents.CLEAR_EQUIPMENT, {});
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.HUMAN));
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.DEKU));
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.GORON));
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ZORA));
-            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.FD));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.HUMAN, Z64LibSupportedGames.MAJORAS_MASK));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.DEKU, Z64LibSupportedGames.MAJORAS_MASK));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.GORON, Z64LibSupportedGames.MAJORAS_MASK));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ZORA, Z64LibSupportedGames.MAJORAS_MASK));
+            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.FD, Z64LibSupportedGames.MAJORAS_MASK));
             bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
         }
     }
@@ -433,7 +433,7 @@ export class WorldEventRewards {
                                     event.get("Adult")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.costumeLoadout["Adult"])) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getAdultID());
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getAdultID(), Z64_GAME);
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -458,7 +458,7 @@ export class WorldEventRewards {
                                     event.get("Child")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.costumeLoadout["Child"])) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getChildID());
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getChildID(), Z64_GAME);
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -516,14 +516,14 @@ export class WorldEventRewards {
                                 map.forEach((value: IModelReference, key: string) => {
                                     if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.costumeLoadout[label])) {
                                         if (this.config.costumeLoadout[label] !== "" && key === this.config.costumeLoadout[label]) {
-                                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), form);
+                                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), form, Z64_GAME);
                                             this.ModLoader.utils.setTimeoutFrames(() => {
                                                 bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
                                             }, 1);
                                             this.config.costumeLoadout[label] = "";
                                             this.ModLoader.config.save();
                                         } else {
-                                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), form);
+                                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), form, Z64_GAME);
                                             evt.ref = value;
                                             this.ModLoader.utils.setTimeoutFrames(() => {
                                                 bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
@@ -609,7 +609,7 @@ export class WorldEventRewards {
                 if (c !== undefined) {
                     let id = this.getFormIDByLabel(key);
                     if (id !== undefined) {
-                        let evt = new Z64Online_ModelAllocation(c, id);
+                        let evt = new Z64Online_ModelAllocation(c, id, Z64_GAME);
                         if (this.isAssetScripted(value).is) {
                             evt.script = this.isAssetScripted(value).script;
                         }
@@ -620,7 +620,7 @@ export class WorldEventRewards {
                     let id = this.getFormIDByLabel(key);
                     if (id !== undefined) {
                         if (this.customModelRegistry.get(id)!.has(value)) {
-                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), id);
+                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), id, Z64_GAME);
                             evt.ref = this.customModelRegistry.get(id)!.get(value)!;
                             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
                         }

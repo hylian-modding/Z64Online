@@ -114,7 +114,7 @@ export class ModelManagerClient {
       if (this.ALREADY_REPOINTED || manifest.repoint(this.ModLoader, rom, proxy)) {
         this.ALREADY_REPOINTED = true;
         this.ModLoader.logger.info("Setting up zobj proxy.");
-        let alloc = new Z64Online_ModelAllocation(model, AgeOrForm.ADULT);
+        let alloc = new Z64Online_ModelAllocation(model, form, Z64_GAME);
         this.allocationManager.getLocalPlayerData().additionalData.set(form, manifest.inject(this.ModLoader, rom, proxy, true, obj_id));
         this.allocationManager.getLocalPlayerData().additionalData.set("proxy", proxy);
         this.ModLoader.utils.setTimeoutFrames(() => {
@@ -534,7 +534,7 @@ export class ModelManagerClient {
       let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onDay(ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm, Z64_GAME);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
@@ -553,7 +553,7 @@ export class ModelManagerClient {
       let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onNight(ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm, Z64_GAME);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
@@ -572,7 +572,7 @@ export class ModelManagerClient {
       let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onHealthChanged(this.core.OOT!.save.heart_containers * 0x10, health, ref);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm, Z64_GAME);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
@@ -591,7 +591,7 @@ export class ModelManagerClient {
       let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(ref, tunic);
       this.ModLoader.utils.setTimeoutFrames(() => {
-        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm);
+        let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.AgeOrForm, Z64_GAME);
         a.ref = newRef;
         if (this.AgeOrForm === AgeOrForm.ADULT) {
           bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);

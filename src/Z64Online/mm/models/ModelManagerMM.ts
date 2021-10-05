@@ -206,7 +206,7 @@ export class ModelManagerMM implements IModelManagerShim {
             if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
                 let newRef = this.parent.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
                 this.parent.ModLoader.utils.setTimeoutFrames(() => {
-                    let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.core.MM!.save.form);
+                    let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.core.MM!.save.form, Z64_GAME);
                     a.ref = newRef;
                     if (this.parent.core.MM!.save.form === AgeOrForm.HUMAN) {
                         bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);

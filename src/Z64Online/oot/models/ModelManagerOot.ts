@@ -4,7 +4,7 @@ import { AgeOrForm, Scene } from '@Z64Online/common/types/Types';
 import { setPlayerProxy, Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/common/types/GameAliases';
 import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
 import { bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
+import { Z64_GAME, Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
 import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
 import { decodeAsset } from '@Z64Online/common/assets/decoder';
 import { ModelManagerClient } from '@Z64Online/common/cosmetics/player/ModelManager';
@@ -135,7 +135,7 @@ export class ModelManagerOot implements IModelManagerShim {
         if (scene > -1 && this.parent.allocationManager.getLocalPlayerData().currentScript !== undefined && curRef !== undefined) {
             let newRef = this.parent.allocationManager.getLocalPlayerData().currentScript!.onSceneChange(scene, curRef)
             this.parent.ModLoader.utils.setTimeoutFrames(() => {
-                let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.AgeOrForm);
+                let a = new Z64Online_ModelAllocation(Buffer.alloc(1), this.parent.AgeOrForm, Z64_GAME);
                 a.ref = newRef;
                 bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, a);
             }, 1);

@@ -19,7 +19,7 @@ export class ModelAPIHandlers {
     }
 
     @EventHandler(Z64OnlineEvents.REGISTER_CUSTOM_MODEL)
-    onCustomModel_Adult(evt: Z64Online_ModelAllocation) {
+    onCustomModel_All(evt: Z64Online_ModelAllocation) {
         if (this.parent.managerDisabled) return;
         let ref: IModelReference;
         let a = evt.age;
@@ -88,7 +88,7 @@ export class ModelAPIHandlers {
             if (fs.lstatSync(evt).isDirectory()) {
                 return;
             }
-            let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN);
+            let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN, Z64LibSupportedGames.MAJORAS_MASK);
             e.name = path.parse(evt).name;
             if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
                 this.onCustomModelChild_Impl(e, "(Adult)", 0, BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG);
