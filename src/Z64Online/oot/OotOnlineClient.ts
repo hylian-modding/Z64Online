@@ -18,7 +18,7 @@ import { LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { OotEvents, UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult, LinkState } from "Z64Lib/API/Common/Z64API";
+import { OotEvents, UpgradeCountLookup, AmmoUpgrade, LinkState } from "Z64Lib/API/Common/Z64API";
 import { InventoryItem, IInventory } from "Z64Lib/API/OoT/OOTAPI";
 import { Strength } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
