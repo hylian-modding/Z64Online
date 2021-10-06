@@ -6,7 +6,6 @@ import { IModelReference } from '@Z64Online/common/api/Z64API';
 import { AgeOrForm } from '@Z64Online/common/types/Types';
 import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
 import { Z64_PLAYER_PROXY } from '@Z64Online/common/types/GameAliases';
-import { PUPPET_INST_SIZE } from '../Defines';
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 
 export class ModelAllocationManager {

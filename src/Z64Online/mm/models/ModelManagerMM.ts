@@ -3,21 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import { setPlayerProxy, Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from "@Z64Online/common/types/GameAliases";
-import { proxy_universal } from "@Z64Online/common/assets/proxy_universal";
 import { DumpRam, IModelReference, registerModel, Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { bus } from "modloader64_api/EventHandler";
-import { decodeAsset } from "@Z64Online/common/assets/decoder";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 import { IModelManagerShim } from "@Z64Online/common/cosmetics/utils/IModelManagerShim";
 import * as defines from "@Z64Online/common/cosmetics/Defines";
 import { DummyManifest, UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 import * as gear from './zobjs/gear';
-import { object_link_human } from "./zobjs/object_link_human";
-import { object_link_zora } from "./zobjs/object_link_zora";
-import { object_link_nuts } from "./zobjs/object_link_nuts";
-import { object_link_deity } from "./zobjs/object_link_deity";
-import { object_link_goron } from "./zobjs/object_link_goron";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 
 export class ModelManagerMM implements IModelManagerShim {
@@ -32,31 +25,14 @@ export class ModelManagerMM implements IModelManagerShim {
         this.unpackModels();
     }
 
-    dummy(): boolean {
-        return false;
-    }
-
     safetyCheck(): boolean {
         if (this.parent.core.MM!.helper.isPaused()) return false;
-        if (this.dummy() || this.parent.core.MM!.helper.isLinkEnteringLoadingZone()) return false;
+        if (this.parent.core.MM!.helper.isTitleScreen()) return false;
+        if (this.parent.core.MM!.helper.isLinkEnteringLoadingZone()) return false;
         return true;
     }
 
     unpackModels() {
-        try {
-            fs.mkdirSync(this.parent.cacheDir);
-        } catch (err: any) { }
-        let extractIfMissing = (p: string, buf: Buffer) => {
-            if (fs.existsSync(p)) return;
-            fs.writeFileSync(p, decodeAsset(buf));
-        };
-        extractIfMissing(path.join(this.parent.cacheDir, "human.zobj"), object_link_human);
-        extractIfMissing(path.join(this.parent.cacheDir, "zora.zobj"), object_link_zora);
-        extractIfMissing(path.join(this.parent.cacheDir, "nuts.zobj"), object_link_nuts);
-        extractIfMissing(path.join(this.parent.cacheDir, "fd.zobj"), object_link_deity);
-        extractIfMissing(path.join(this.parent.cacheDir, "goron.zobj"), object_link_goron);
-        extractIfMissing(path.join(this.parent.cacheDir, "gear.zobj"), gear.gear);
-        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
         setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
 

@@ -5,13 +5,9 @@ import { setPlayerProxy, Z64_MANIFEST, Z64_OBJECT_TABLE_RAM } from '@Z64Online/c
 import { DumpRam, IModelReference, Z64OnlineEvents, Z64Online_LocalModelChangeProcessEvt, Z64Online_ModelAllocation } from '@Z64Online/common/api/Z64API';
 import { bus, PrivateEventHandler } from 'modloader64_api/EventHandler';
 import { Z64_GAME, Z64_PLAYER } from 'Z64Lib/src/Common/types/GameAliases';
-import { proxy_universal } from '@Z64Online/common/assets/proxy_universal';
-import { decodeAsset } from '@Z64Online/common/assets/decoder';
 import { ModelManagerClient } from '@Z64Online/common/cosmetics/player/ModelManager';
 import { IModelManagerShim } from '@Z64Online/common/cosmetics/utils/IModelManagerShim';
 import { DummyManifest, UniversalAliasTable } from '@Z64Online/common/cosmetics/UniversalAliasTable';
-import { object_link_boy } from './zobjs/object_link_boy';
-import { object_link_child } from './zobjs/object_link_child';
 import { ALIAS_PROXY_SIZE } from '@Z64Online/common/cosmetics/Defines';
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 
@@ -156,16 +152,6 @@ export class ModelManagerOot implements IModelManagerShim {
     }
 
     unpackModels() {
-        try {
-            fs.mkdirSync(this.parent.cacheDir);
-        } catch (err: any) { }
-        let extractIfMissing = (p: string, buf: Buffer) => {
-            if (fs.existsSync(p)) return;
-            fs.writeFileSync(p, decodeAsset(buf));
-        };
-        extractIfMissing(path.join(this.parent.cacheDir, "adult.zobj"), object_link_boy);
-        extractIfMissing(path.join(this.parent.cacheDir, "child.zobj"), object_link_child);
-        extractIfMissing(path.join(this.parent.cacheDir, "proxy_universal.zobj"), proxy_universal);
         setPlayerProxy(new UniversalAliasTable().createTable(fs.readFileSync(path.join(this.parent.cacheDir, "proxy_universal.zobj")), new DummyManifest()));
     }
 

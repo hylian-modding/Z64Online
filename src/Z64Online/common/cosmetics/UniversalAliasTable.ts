@@ -10,10 +10,10 @@ import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames'
 import { decodeAsset } from '../assets/decoder';
 import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
-import { DF_COMMAND, DL_ERROR_CUBE, TEX_EYES, TEX_MOUTH } from './Defines';
+import { DF_COMMAND, DL_DF, DL_ERROR_CUBE, TEX_EYES, TEX_MOUTH } from './Defines';
 import { zzplayas_to_zzconvert } from 'Z64Lib/API/Common/ModelData/zzplayas_to_zzconvert';
 
-const USE_ERROR_CUBE: boolean = true;
+const USE_ERROR_CUBE: boolean = false;
 
 const OOT_ADULT_LINK: any = {
     "Cube": 0x000053C8,
@@ -356,31 +356,39 @@ export class Bone {
     }
 }
 
+export function getManifestForFormOot(form: AgeOrForm) {
+    switch (form) {
+        case AgeOrForm.ADULT:
+            return new OotAdultLinkManifest();
+        case AgeOrForm.CHILD:
+            return new OotChildLinkManifest();
+        default:
+            return new DummyManifest();
+    }
+}
+
+export function getManifestForFormMM(form: AgeOrForm) {
+    switch (form) {
+        case AgeOrForm.HUMAN:
+            return new MMHumanLinkManifest();
+        case AgeOrForm.ZORA:
+            return new MMZoraLinkManifest();
+        case AgeOrForm.DEKU:
+            return new MMNutsLinkManifest();
+        case AgeOrForm.FD:
+            return new MMFDLinkManifest();
+        case AgeOrForm.GORON:
+            return new MMGoronManifest();
+        default:
+            return new DummyManifest();
+    }
+}
+
 export function getManifestForForm(form: AgeOrForm) {
     if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-        switch (form) {
-            case AgeOrForm.ADULT:
-                return new OotAdultLinkManifest();
-            case AgeOrForm.CHILD:
-                return new OotChildLinkManifest();
-            default:
-                return new DummyManifest();
-        }
+        return getManifestForFormOot(form);
     } else {
-        switch (form) {
-            case AgeOrForm.HUMAN:
-                return new MMHumanLinkManifest();
-            case AgeOrForm.ZORA:
-                return new MMZoraLinkManifest();
-            case AgeOrForm.DEKU:
-                return new MMNutsLinkManifest();
-            case AgeOrForm.FD:
-                return new MMFDLinkManifest();
-            case AgeOrForm.GORON:
-                return new MMGoronManifest();
-            default:
-                return new DummyManifest();
-        }
+        return getManifestForFormMM(form);
     }
 }
 
@@ -811,16 +819,13 @@ export class UniversalAliasTable {
         if (BANK_OBJECTS.size === 0) {
             console.log("Loading Bank objects...");
             let objs: Array<Buffer> = [];
-            if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-                objs.push(fs.readFileSync("./cache/adult.zobj"));
-                objs.push(fs.readFileSync("./cache/child.zobj"));
-            } else {
-                objs.push(fs.readFileSync("./cache/human.zobj"));
-                objs.push(fs.readFileSync("./cache/nuts.zobj"));
-                objs.push(fs.readFileSync("./cache/goron.zobj"));
-                objs.push(fs.readFileSync("./cache/zora.zobj"));
-                objs.push(fs.readFileSync("./cache/fd.zobj"));
-            }
+            objs.push(fs.readFileSync("./cache/adult.zobj"));
+            objs.push(fs.readFileSync("./cache/child.zobj"));
+            objs.push(fs.readFileSync("./cache/human.zobj"));
+            objs.push(fs.readFileSync("./cache/nuts.zobj"));
+            objs.push(fs.readFileSync("./cache/goron.zobj"));
+            objs.push(fs.readFileSync("./cache/zora.zobj"));
+            objs.push(fs.readFileSync("./cache/fd.zobj"));
             for (let i = 0; i < objs.length; i++) {
                 let parse = new ZZPlayasEmbedParser();
                 let zobj = objs[i];
@@ -947,13 +952,14 @@ export class UniversalAliasTable {
         return b.toBuffer();
     }
 
-    createTable(p: Buffer, manifest: IManifest, nostub: boolean = false) {
+    createTable(p: Buffer, manifest: IManifest, nostub: boolean = false, gameOverride?: Z64LibSupportedGames) {
         if (p.indexOf("UNIVERSAL_ALIAS_TABLE") > -1) return p;
         let pieces: Map<string, ZobjPiece> = new Map();
         let parse = new ZZPlayasEmbedParser();
-        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
+        if (gameOverride === undefined) gameOverride = Z64_GAME;
+        if (gameOverride === Z64LibSupportedGames.OCARINA_OF_TIME) {
             p = zzplayas_to_zzconvert.processOotZobj(p)!;
-        }else{
+        } else {
             p = zzplayas_to_zzconvert.processMMZobj(p)!;
         }
         let zobj = p;

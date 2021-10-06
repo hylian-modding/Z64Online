@@ -22,6 +22,7 @@ import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 import { getAdultID, getChildID } from '../types/GameAliases';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
+import { Z64 } from 'Z64Lib/API/imports';
 
 export interface Z64_EventReward {
     name: string;
@@ -600,7 +601,7 @@ export class WorldEventRewards {
         }
     }
 
-    @Postinit()
+    @EventHandler(Z64.OotEvents.ON_SAVE_LOADED)
     onPost() {
         this.ModLoader.utils.setTimeoutFrames(() => {
             Object.keys(this.config.costumeLoadout).forEach((key: string) => {
@@ -660,7 +661,7 @@ export class WorldEventRewards {
                     }
                 }
             }
-        }, 10);
+        }, Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK ? 100 : 1);
     }
 
     @PrivateEventHandler(Z64O_PRIVATE_EVENTS.ASSET_LOOKUP)
