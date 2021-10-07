@@ -1,6 +1,7 @@
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { CDNServer } from "@Z64Online/common/cdn/CDNServer";
+import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { InjectCore } from "modloader64_api/CoreInjection";
@@ -13,6 +14,7 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
+import { Z64O_PermFlagsPacket } from "./network/MMOPackets";
 import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
@@ -277,6 +279,20 @@ export default class MMOnlineServer {
         let world = storage.worlds[packet.player.data.world];
         storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new Z64O_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
+    }
+
+    @ServerNetworkHandler('Z64O_PermFlagsPacket')
+    onPermFlags(packet: Z64O_PermFlagsPacket){
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        parseFlagChanges(packet.flags, storage.permFlags);
+        parseFlagChanges(packet.eventFlags, storage.permEvents);
+        this.ModLoader.serverSide.sendPacket(new Z64O_PermFlagsPacket(storage.permFlags, storage.permEvents, packet.lobby));
     }
 
     @ServerNetworkHandler('Z64O_ClientSceneContextUpdate')

@@ -4,12 +4,12 @@ import {
   UDPPacket,
 } from 'modloader64_api/ModLoaderDefaultImpls';
 
-export class MMO_PermFlagsPacket extends Packet{
+export class Z64O_PermFlagsPacket extends Packet{
   flags: Buffer;
   eventFlags: Buffer;
 
   constructor(flags: Buffer, eventFlags: Buffer, lobby: string){
-    super('MMO_PermFlagsPacket', 'MMOnline', lobby, false);
+    super('Z64O_PermFlagsPacket', 'Z64Online', lobby, false);
     this.flags = flags;
     this.eventFlags = eventFlags;
   }

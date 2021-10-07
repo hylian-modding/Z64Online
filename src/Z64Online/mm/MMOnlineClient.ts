@@ -1,6 +1,6 @@
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
-import { Init, onTick, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
+import { Init, onTick, onViUpdate, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
 import { ModelManagerMM } from "./models/ModelManagerMM";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import { bus, EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
@@ -27,13 +27,13 @@ import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
 import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "@Z64Online/common/network/Z64OPackets";
-import { MMOSaveData } from "@Z64Online/mm/save/MMOSaveData";
 import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult } from "Z64Lib/API/Common/Z64API";
 import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
-import { Z64_SAVE } from "Z64Lib/src/Common/types/GameAliases";
-import { MMO_PermFlagsPacket } from './network/MMOPackets'
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
+import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
+import { Z64O_PermFlagsPacket } from "./network/MMOPackets";
+import { MMOSaveData } from "./save/MMOSaveData";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -146,6 +146,18 @@ export default class MMOnlineClient {
         this.ModLoader.utils.setIntervalFrames(() => {
             this.inventoryUpdateTick();
         }, 20);
+
+        //Flag setup
+        for (let name in EventFlags) {
+            if (typeof (name) === 'string') {
+                let value = parseInt(EventFlags[name]);
+                //if(name.includes()) return; //For blacklisting certain flags if necessary
+                if (name.startsWith("PERM")) {
+                    this.permFlagBits.push(value);
+                    this.permFlagNames.set(this.permFlagBits.indexOf(value), flags.flags[value]);
+                }
+            }
+        }
     }
 
     updateInventory() {
@@ -459,7 +471,7 @@ export default class MMOnlineClient {
             return;
         }
         if (packet.world !== this.clientStorage.world) {
-            console.log("onKeyUpdate Failure 0")
+            console.log("onKeyUpdate Failure 1")
             return;
         }
         this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
@@ -601,7 +613,7 @@ export default class MMOnlineClient {
             let parse = path.parse(file);
             if (parse.ext === ".ovl") {
                 this.clientStorage.overlayCache[parse.base] = this.ModLoader.payloadManager.parseFile(file);
-                if (parse.base === "puppet_mm.ovl"){
+                if (parse.base === "puppet_mm.ovl") {
                     this.clientStorage.puppetOvl = this.clientStorage.overlayCache[parse.base];
                 }
             }
@@ -629,109 +641,6 @@ export default class MMOnlineClient {
     private updateSyncContext() {
         this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.MM!.link.current_sound_id);
     }
-
-    /* updatePictobox() {
-        let photo = createPhotoFromContext(this.ModLoader, this.core.MM!.save.photo);
-        if (photo.hash !== this.clientStorage.photoStorage.hash) {
-            console.log("Photo taken");
-            mergePhotoData(this.clientStorage.photoStorage, photo);
-            this.clientStorage.photoStorage.compressPhoto();
-            this.ModLoader.clientSide.sendPacket(new Z64O_PictoboxPacket(this.clientStorage.photoStorage, this.ModLoader.clientLobby));
-        }
-    }
-
-    updateSkulltula() {
-        let skull = createSkullFromContext(this.ModLoader, this.core.MM!.save.skull);
-        mergeSkullData(this.clientStorage.skullStorage, skull);
-        applySkullToContext(skull, this.core.MM!.save.skull);
-        this.ModLoader.clientSide.sendPacket(new Z64O_SkullPacket(this.clientStorage.skullStorage, this.ModLoader.clientLobby));
-    }
-
-    updateStray() {
-        let stray = createStrayFromContext(this.ModLoader, this.core.MM!.save.stray);
-        mergeStrayData(this.clientStorage.strayStorage, stray);
-        applyStrayToContext(stray, this.core.MM!.save.stray);
-        this.ModLoader.clientSide.sendPacket(new Z64O_StrayFairyPacket(this.clientStorage.strayStorage, this.ModLoader.clientLobby));
-    }
-
-    @NetworkHandler('Z64O_PictoboxPacket')
-    onPictobox(packet: Z64O_PictoboxPacket) {
-        if (packet.player.uuid === this.ModLoader.me.uuid) {
-            return;
-        }
-        let photo = new PhotoSave();
-        photo.fromPhoto(packet.photo);
-        photo.decompressPhoto();
-        mergePhotoData(this.clientStorage.photoStorage, photo);
-        applyPhotoToContext(photo, this.core.MM!.save.photo);
-        let sb = new SmartBuffer();
-        let buf = Buffer.alloc(photo.pictograph_photoChunk.byteLength + 0x10);
-        photo.pictograph_photoChunk.copy(buf);
-        for (let i = 0; i < 0x2bc0; i += 5) {
-            let data = buf.readBigUInt64BE(i) >> 24n;
-
-            for (let k = 0n; k < 8n; ++k) {
-                let pixel = (data >> (5n * (7n - k))) & 0x1Fn;
-                let i8f = Number(pixel) / 31.0 * 255.0;
-
-                sb.writeUInt8(Math.floor(i8f * 1.0));
-                sb.writeUInt8(Math.floor(i8f * 0.65));
-                sb.writeUInt8(Math.floor(i8f * 0.65));
-                sb.writeUInt8(0xFF);
-            }
-        }
-        this.clientStorage.pictoboxAlert.buf = sb.toBuffer();
-    }
-
-    @NetworkHandler('Z64O_SkullPacket')
-    onSkull(packet: Z64O_SkullPacket) {
-        let skull = createSkullFromContext(this.ModLoader, this.core.MM!.save.skull);
-
-        mergeSkullData(this.clientStorage.skullStorage, packet.skull);
-        mergeSkullData(this.clientStorage.skullStorage, skull);
-        applySkullToContext(this.clientStorage.skullStorage, this.core.MM!.save.skull);
-    }
-
-    @NetworkHandler('Z64O_StrayFairyPacket')
-    onStray(packet: Z64O_StrayFairyPacket) {
-        let stray = createStrayFromContext(this.ModLoader, this.core.MM!.save.stray);
-
-        mergeStrayData(this.clientStorage.strayStorage, packet.stray);
-        mergeStrayData(this.clientStorage.strayStorage, stray);
-        applyStrayToContext(this.clientStorage.strayStorage, this.core.MM!.save.stray);
-    }
-
-    bitmapFromPictograph() {
-        let bitmap = new BMP_Image(160, 112, BitDepth.BPP_8, 32);
-        for (let i = 0; i < 32; i++) {
-            let colors = Buffer.alloc(4);
-            colors[1] = Math.round(i * 250 / 31);
-            colors[2] = Math.round(i * 160 / 31);
-            colors[3] = Math.round(i * 160 / 31);
-            bitmap.colorTable.writeUInt32LE(colors.readUInt32BE(0), i * 4)
-        }
-        for (let i = 0; i < 160 * 112; i++) {
-            let bits = (() => {
-                return {
-                    byte: Math.floor(i * 5 / 8),
-                    bitOffset: (i * 5) % 8
-                }
-            })();
-            let pixel: number;
-            let pictograph = this.core.MM!.save.photo.pictograph_photoChunk;
-            try {
-                pixel = ((pictograph!.readUInt16BE(bits.byte) & (31 << (16 - bits.bitOffset - 5))) >> (16 - bits.bitOffset - 5));
-            } catch {
-                pixel = ((pictograph!.readUInt8(bits.byte) & (31 << (8 - bits.bitOffset - 5))) >> (8 - bits.bitOffset - 5));
-            }
-            bitmap.pixelData.writeUInt8(pixel, i);
-        }
-        let filename = `pictograph_${Date.now().toString()}.bmp`;
-        fs.writeFile(path.resolve("./screenshots", filename), bitmap.file, (err) => {
-            if (err) this.ModLoader.logger.error(`${err}`);
-            this.ModLoader.logger.info(`Saved file to ./screenshots/${filename}`);
-        });
-    } */
 
 
     updatePermFlags() {
@@ -802,7 +711,7 @@ export default class MMOnlineClient {
                 this.ModLoader.logger.info(this.permFlagNames.get(bit)!);
             }
         });
-        this.ModLoader.clientSide.sendPacket(new MMO_PermFlagsPacket(this.clientStorage.permFlags, this.clientStorage.permEvents, this.ModLoader.clientLobby));
+        this.ModLoader.clientSide.sendPacket(new Z64O_PermFlagsPacket(this.clientStorage.permFlags, this.clientStorage.permEvents, this.ModLoader.clientLobby));
     }
 
     mmrSyncCheck() {
@@ -820,8 +729,8 @@ export default class MMOnlineClient {
         this.ModLoader.logger.info("Fairy Sync: " + this.clientStorage.isSkulltulaSync);
     }
 
-    @NetworkHandler('MMO_PermFlagsPacket')
-    onPermFlags(packet: MMO_PermFlagsPacket) {
+    @NetworkHandler('Z64O_PermFlagsPacket')
+    onPermFlags(packet: Z64O_PermFlagsPacket) {
         parseFlagChanges(packet.flags, this.clientStorage.permFlags);
         let save = this.core.MM!.save.permFlags;
         parseFlagChanges(this.clientStorage.permFlags, save);
@@ -835,7 +744,7 @@ export default class MMOnlineClient {
     }
 
     @NetworkHandler('Z64O_ErrorPacket')
-    onError(packet: Z64O_ErrorPacket){
+    onError(packet: Z64O_ErrorPacket) {
         this.ModLoader.logger.error(packet.message);
     }
 
@@ -853,6 +762,7 @@ export default class MMOnlineClient {
         } else {
             this.ModLoader.logger.debug("This is an MMR Rom.");
             this.clientStorage.isMMR = true;
+            //this.mmrSyncCheck();
         }
     }
 
