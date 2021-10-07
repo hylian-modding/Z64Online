@@ -10,6 +10,8 @@ import { ISaveSyncData } from "@Z64Online/common/save/ISaveSyncData";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { rejects } from "assert";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
+import { MMOnlineStorageClient } from "../storage/MMOnlineStorageClient";
+import { Z64O_PermFlagsPacket } from "../network/MMOPackets";
 
 export class MMOSaveData implements ISaveSyncData {
   core!: IMMCore;
@@ -27,7 +29,6 @@ export class MMOSaveData implements ISaveSyncData {
       'inventory', 'map_visible', 'map_visited', 'minimap_flags', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
       'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount'
     ];
-
     obj = JSON.parse(JSON.stringify(this.core.save));
     //obj['permSceneData'] = this.core.save.permSceneData;
     //obj['infTable'] = this.core.save.infTable;
@@ -156,15 +157,9 @@ export class MMOSaveData implements ISaveSyncData {
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
 
-
       //Upgrades
       this.processMixedLoop_OVERWRITE(obj.double_defense, storage.double_defense, []);
       this.processBoolLoop_OVERWRITE(obj.owlStatues, storage.owlStatues);
-
-
-      //storage.permSceneData = obj.permSceneData;
-      //storage.weekEventFlags = obj.weekEventFlags;
-      //storage.infTable = obj.infTable;
 
       if (side === ProxySide.CLIENT) {
         this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
@@ -186,7 +181,6 @@ export class MMOSaveData implements ISaveSyncData {
           console.log("mergeSave failure")
           return;
         }
-
         if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
           storage.heart_containers = obj.heart_containers;
           bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
@@ -207,11 +201,9 @@ export class MMOSaveData implements ISaveSyncData {
         this.processMixedLoop(obj.shields, storage.shields, []);
         this.processMixedLoop(obj.questStatus, storage.questStatus, []);
 
-        try {
-          this.processBoolLoop(obj.owlStatues, storage.owlStatues);
-        } catch (err: any) {
-          console.log(err.stack);
-        }
+
+        this.processBoolLoop(obj.owlStatues, storage.owlStatues);
+
 
         //Upgrades
         this.processMixedLoop(obj.double_defense, storage.double_defense, []);
@@ -257,61 +249,6 @@ export class MMOSaveData implements ISaveSyncData {
           storage.questStatus.heartPieceCount = 0;
         }
 
-
-        //let permSceneData = storage.permSceneData;
-        //let weekEventFlags = storage.weekEventFlags;
-        //let infTable = storage.infTable;
-
-        /* for (let i = 0; i < obj.permSceneData.byteLength; i += 0x1C) {
-          let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
-          let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
-          for (let j = 0; j < struct.chests.byteLength; j++) {
-            if (struct.chests[j] !== cur.chests[j]) {
-              cur.chests[j] |= struct.chests[j];
-            }
-          }
-          for (let j = 0; j < struct.collectible.byteLength; j++) {
-            if (struct.collectible[j] !== cur.collectible[j]) {
-              cur.collectible[j] |= struct.collectible[j];
-            }
-          }
-          for (let j = 0; j < struct.room_clear.byteLength; j++) {
-            if (struct.room_clear[j] !== cur.room_clear[j]) {
-              cur.room_clear[j] |= struct.room_clear[j];
-            }
-          }
-          for (let j = 0; j < struct.switches.byteLength; j++) {
-            if (struct.switches[j] !== cur.switches[j]) {
-              cur.switches[j] |= struct.switches[j];
-            }
-          }
-          for (let j = 0; j < struct.visited_floors.byteLength; j++) {
-            if (struct.visited_floors[j] !== cur.visited_floors[j]) {
-              cur.visited_floors[j] |= struct.visited_floors[j];
-            }
-          }
-          for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
-            if (struct.visited_rooms[j] !== cur.visited_rooms[j]) {
-              cur.visited_rooms[j] |= struct.visited_rooms[j];
-            }
-          }
-          for (let j = 0; j < struct.unused.byteLength; j++) {
-            if (struct.unused[j] !== cur.unused[j]) {
-              cur.unused[j] |= struct.unused[j];
-            }
-          }
-        }
-        for (let i = 0; i < obj.infTable.byteLength; i++) {
-          let value = obj.infTable.readUInt8(i);
-          if (infTable[i] !== value) {
-            infTable[i] |= value;
-          }
-        }
-        
-        storage.permSceneData = permSceneData;
-        storage.weekEventFlags = weekEventFlags;
-        storage.infTable = infTable; */
-
         if (side === ProxySide.CLIENT) {
           //let cur = this.core.save.dungeonItemManager.getRawBuffer();
           //parseFlagChanges(obj.dungeon_items, cur);
@@ -322,6 +259,7 @@ export class MMOSaveData implements ISaveSyncData {
         }
         accept(true);
       }).catch((err: string) => {
+        console.log(err);
         reject(false);
       });
     });
