@@ -9,7 +9,7 @@ export default class SongOfSoaringCompat{
     ModLoader!: IModLoaderAPI;
 
     isModLoaded(){
-        return this.ModLoader.isModLoaded("SongOfSoaring");
+        return this.ModLoader.isModLoaded("Song Of Soaring");
     }
 
     getOwlData(){
