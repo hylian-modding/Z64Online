@@ -95,7 +95,7 @@ export default class PuppetNameTagHandler {
         return m;
     }
 
-    @onViUpdate()
+    //@onViUpdate()
     onViUpdate() {
         if (!CommonConfigInst.nameplates) {
             return;
