@@ -347,7 +347,7 @@ export default class OotOnlineClient {
     onSceneChange(scene: number) {
         if (!this.clientStorage.first_time_sync) {
             // #ifdef IS_DEV_BUILD
-            let test = true;
+            let test = false;
             if (test) {
                 this.core.OOT!.save.permSceneData = this.ModLoader.utils.clearBuffer(this.core.OOT!.save.permSceneData);
             }
