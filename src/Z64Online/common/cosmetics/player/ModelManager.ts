@@ -270,21 +270,19 @@ export class ModelManagerClient {
 
   @NetworkHandler('Z64OnlineLib_AllocateModelPacket')
   onModelAllocate_client(packet: Z64_AllocateModelPacket) {
-    this.ModLoader.utils.setTimeoutFrames(() => {
-      CDNClient.singleton.requestFile(packet.hash).then((buf: Buffer) => {
-        let player: ModelPlayer;
-        if (this.allocationManager.doesPlayerExist(packet.player)) {
-          player = this.allocationManager.getPlayer(packet.player)!;
-        } else {
-          player = this.allocationManager.createPlayer(packet.player, this.puppetModels)!;
-        }
-        let model = this.allocationManager.registerModel(buf)!;
-        player.AgesOrForms.set(packet.age, model);
-        if (this.allocationManager.isPlayerAllocated(player)) {
-          this.setPuppetModel(player, model, packet.age, packet.ageThePlayerActuallyIs);
-        }
-      });
-    }, 1);
+    CDNClient.singleton.requestFile(packet.hash).then((buf: Buffer) => {
+      let player: ModelPlayer;
+      if (this.allocationManager.doesPlayerExist(packet.player)) {
+        player = this.allocationManager.getPlayer(packet.player)!;
+      } else {
+        player = this.allocationManager.createPlayer(packet.player, this.puppetModels)!;
+      }
+      let model = this.allocationManager.registerModel(buf)!;
+      player.AgesOrForms.set(packet.age, model);
+      if (this.allocationManager.isPlayerAllocated(player)) {
+        this.setPuppetModel(player, model, packet.age, packet.ageThePlayerActuallyIs);
+      }
+    });
   }
 
   @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
@@ -325,7 +323,6 @@ export class ModelManagerClient {
     this.ModLoader.logger.debug(`Puppet ${puppet.id} prespawn clear`);
   }
 
-  /**@todo Rewrite this entire function once MM is in. */
   private setPuppetModel(player: ModelPlayer, ref: IModelReference, modelAge: AgeOrForm, playerAge: AgeOrForm) {
     player.AgesOrForms.forEach((ref: IModelReference) => {
       ref.loadModel();
@@ -333,6 +330,7 @@ export class ModelManagerClient {
     ref.loadModel();
 
     if (playerAge !== modelAge) return;
+    this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer, player.proxyData);
     let alias = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, ALIAS_PROXY_SIZE).slice(0x5000);
     this.ModLoader.emulator.rdramWriteBuffer(player.proxyPointer + 0x5000, alias);
     this.ModLoader.logger.debug(`Player ${player.uuid} model set to ${ref.pointer.toString(16)}`);
@@ -401,6 +399,7 @@ export class ModelManagerClient {
   onPuppetsClear(evt: any) {
     this.ModLoader.utils.setTimeoutFrames(() => {
       this.allocationManager.deallocateAllPlayers();
+      this.allocationManager.doGC();
     }, 1);
   }
 
@@ -478,8 +477,8 @@ export class ModelManagerClient {
     let link = this.child.findLink();
     if (this.ModLoader.emulator.rdramRead32(link + 0x5000) === 0x4D4F444C) {
       this.ModLoader.emulator.rdramWriteBuffer(link, this.allocationManager.getLocalPlayerData().additionalData.get("proxy"));
-      for (let i = 0; i < 5; i++){
-        if (this.allocationManager.getLocalPlayerData().additionalData.has(i)){
+      for (let i = 0; i < 5; i++) {
+        if (this.allocationManager.getLocalPlayerData().additionalData.has(i)) {
           this.ModLoader.rom.romWriteBuffer(this.allocationManager.getLocalPlayerData().additionalData.get(i), this.allocationManager.getLocalPlayerData().additionalData.get("proxy"));
         }
       }
