@@ -80,8 +80,6 @@ export default class MMOnlineClient {
     worldEvents!: WorldEvents;
     //@SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     //soundManager!: SoundManagerClient;
-    //@SidedProxy(ProxySide.CLIENT, WorldEvents)
-    //worldEvents!: WorldEvents;
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
