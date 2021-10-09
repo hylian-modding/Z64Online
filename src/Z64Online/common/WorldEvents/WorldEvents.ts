@@ -620,10 +620,12 @@ export class WorldEventRewards {
                     // Probably a custom costume.
                     let id = this.getFormIDByLabel(key);
                     if (id !== undefined) {
-                        if (this.customModelRegistry.get(id)!.has(value)) {
-                            let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), id, Z64_GAME);
-                            evt.ref = this.customModelRegistry.get(id)!.get(value)!;
-                            bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
+                        if (this.customModelRegistry.has(id)){
+                            if (this.customModelRegistry.get(id)!.has(value)) {
+                                let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), id, Z64_GAME);
+                                evt.ref = this.customModelRegistry.get(id)!.get(value)!;
+                                bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
+                            }
                         }
                     }
                 }
