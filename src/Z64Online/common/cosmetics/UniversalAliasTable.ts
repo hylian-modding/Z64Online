@@ -984,7 +984,9 @@ export class UniversalAliasTable {
                 pieces.set(key, piece);
             }
         });
-        pieces.set("Cube", CUBE.get("Cube")!)
+        if (USE_ERROR_CUBE){
+            pieces.set("Cube", CUBE.get("Cube")!)
+        }
 
         // Step 2: Scan Skeleton.
         let skeletons: Array<Skeleton> = [];
@@ -1075,7 +1077,7 @@ export class UniversalAliasTable {
         wrapGen(`DL_LFIST_HAMMER`, `DL_HAMMER`, undefined, [`DL_LFIST`]);
         wrapGen(`DL_RFIST_SWORD4`, `DL_SWORD4`, undefined, [`DL_RFIST`]);
         wrapGen(`DL_RFIST_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_RFIST`]);
-        wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_1`, undefined, [`DL_RHAND`]);
+        wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_FAIRY`, undefined, [`DL_RHAND`]);
         wrapGen(`DL_RHAND_OCARINA_TIME`, `DL_OCARINA_2`, undefined, [`DL_RHAND`]);
         wrapGen(`DL_RFIST_BOW`, `DL_BOW`, undefined, [`DL_RFIST`]);
         wrapGen(`DL_FPS_RHAND_BOW`, `DL_BOW`, undefined, [`DL_RHAND`]);
