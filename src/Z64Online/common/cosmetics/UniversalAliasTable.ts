@@ -555,7 +555,8 @@ export class DummyManifest implements IManifest {
     }
 }
 
-const BANK_OBJECTS: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
+export const BANK_OBJECTS: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
+export const BANK_REPLACEMENTS: Map<string, ZobjPiece> = new Map();
 const CUBE: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
 
 export class Skeleton {
@@ -981,10 +982,14 @@ export class UniversalAliasTable {
             if (BANK_OBJECTS.has(piece.hash) && !nostub) {
                 pieces.set(key, new ZobjPiece(new SmartBuffer().writeUInt32BE(0xDF000000).writeUInt32BE(0x00000000).toBuffer(), 0x0));
             } else {
-                pieces.set(key, piece);
+                if (BANK_REPLACEMENTS.has(piece.hash)) {
+                    pieces.set(key, BANK_REPLACEMENTS.get(piece.hash)!);
+                } else {
+                    pieces.set(key, piece);
+                }
             }
         });
-        if (USE_ERROR_CUBE){
+        if (USE_ERROR_CUBE) {
             pieces.set("Cube", CUBE.get("Cube")!)
         }
 
