@@ -1,6 +1,5 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { zeldaString } from 'Z64Lib/API/Common/ZeldaString';
-import { IOOTCore } from "Z64Lib/API/OoT/OOTAPI";
 import { IOOTSaveContext } from "@Z64Online/common/types/OotAliases";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { EventHandler } from "modloader64_api/EventHandler";
@@ -12,6 +11,12 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
+import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
+import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
+import { optimize } from "Z64Lib/API/zzoptimize";
+import { BANK_OBJECTS, BANK_REPLACEMENTS, UniversalAliasTable, ZobjPiece } from "@Z64Online/common/cosmetics/UniversalAliasTable";
+import fs from 'fs';
+import { SmartBuffer } from 'smart-buffer';
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -117,6 +122,52 @@ export class TriforceHuntHelper {
         if (RomFlags.isOotR) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, ModLoader.emulator.rdramRead16(0x8011AE96) + 1);
         }
+    }
+
+}
+
+export class OotRCosmeticHelper {
+
+    static extractMirrorShield(ModLoader: IModLoaderAPI, evt: { rom: Buffer }) {
+        // Construct this just to make sure all bank objects have been processed.
+        let u = new UniversalAliasTable();
+
+        // Step 1: Extract the mirror shield from OotR.
+        let tools = new Z64RomTools(ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
+        let adult = tools.decompressDMAFileFromRom(evt.rom, 502);
+        let op = optimize(adult, [0x241C0]);
+        let p = new ZobjPiece(op.zobj, op.oldOffs2NewOffs.get(0x241C0)!);
+        let sb = new SmartBuffer().writeBuffer(p.piece);
+
+        // Step 2: Extract all the FA commands from the shield.
+        sb.readOffset = p.offset;
+        let fas: Array<Buffer> = [];
+        while (sb.remaining() > 0){
+            let buf = sb.readBuffer(8);
+            let cmd = buf.readUInt8(0);
+            if (cmd === 0xFA){
+                fas.push(buf);
+            }
+        }
+
+        // Step 3: Clone the bank shield and copy the FA commands into it in order.
+        let bank_shield = BANK_OBJECTS.get("6ac449b469edebdbdb660fa373f782b2")!;
+        let sb2 = new SmartBuffer().writeBuffer(bank_shield.piece);
+        sb2.readOffset = bank_shield.offset;
+        sb2.writeOffset = bank_shield.offset;
+        while (sb2.remaining() > 0){
+            sb2.writeOffset = sb2.readOffset;
+            let buf = sb2.readBuffer(8);
+            let cmd = buf.readUInt8(0);
+            if (cmd === 0xFA){
+                let buf2 = fas.shift()!;
+                sb2.writeBuffer(buf2);
+            }
+        }
+        p.piece = sb2.toBuffer();
+        p.offset = bank_shield.offset;
+        BANK_REPLACEMENTS.set("6ac449b469edebdbdb660fa373f782b2", p);
+        ModLoader.logger.info("Loaded OotR mirror shield colors.");
     }
 
 }

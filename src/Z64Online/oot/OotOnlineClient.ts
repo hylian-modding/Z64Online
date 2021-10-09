@@ -23,7 +23,7 @@ import { InventoryItem, IInventory } from "Z64Lib/API/OoT/OOTAPI";
 import { Strength } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { Multiworld, MultiWorld_ItemPacket } from "./compat/OotR";
+import { Multiworld, MultiWorld_ItemPacket, OotRCosmeticHelper } from "./compat/OotR";
 import RomFlags from "./compat/RomFlags";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
@@ -701,6 +701,11 @@ export default class OotOnlineClient {
             this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
             RomFlags.isOotR = true;
             markAsRandomizer();
+            try{
+                OotRCosmeticHelper.extractMirrorShield(this.ModLoader, evt);
+            }catch(err: any){
+                if (err) this.ModLoader.logger.error(err.stack);
+            }
             if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OotR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
                 RomFlags.hasFastBunHood = true;
             } else if (ver.readUInt32BE(0) >= 0x50253) {
