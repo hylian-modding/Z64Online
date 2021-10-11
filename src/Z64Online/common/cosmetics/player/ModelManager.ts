@@ -406,6 +406,7 @@ export class ModelManagerClient {
   @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: Scene) {
     this.child.onSceneChange(scene);
+    bus.emit(Z64OnlineEvents.LOCAL_MODEL_REFRESH, scene);
   }
 
   @EventHandler(Z64.OotEvents.ON_AGE_CHANGE)
@@ -465,6 +466,7 @@ export class ModelManagerClient {
       evt.ref = model;
       this.proxyNeedsSync = true;
     }
+    bus.emit(Z64OnlineEvents.LOCAL_MODEL_CHANGE_FINISHED, evt);
   }
 
   @EventHandler(Z64OnlineEvents.CHANGE_CUSTOM_MODEL)
