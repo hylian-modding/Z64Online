@@ -53,7 +53,8 @@ export enum Z64OnlineEvents {
   CUSTOM_ANIMATION_BANK_EQUIPPED = "Z64Online:CUSTOM_ANIMATION_BANK_EQUIPPED",
   OBJECT_SPAWN = "Z64Online:ObjectSpawn",
   CHANGE_CUSTOM_MODEL = "Z64Online:CHANGE_CUSTOM_MODEL",
-  REGISTER_CUSTOM_MODEL = "Z64Online:REGISTER_CUSTOM_MODEL"
+  REGISTER_CUSTOM_MODEL = "Z64Online:REGISTER_CUSTOM_MODEL",
+  GET_BANK_MODELS = "Z64Online:GET_BANK_MODELS"
 }
 
 export class Z64_ObjectSpawn {
@@ -212,4 +213,8 @@ export class Z64OnlineAPI_PuppetStubDestroyed {
   constructor(player: INetworkPlayer) {
     this.player = player;
   }
+}
+
+export class Z64OnlineAPI_BankModelRequest {
+  puppetModels: Map<AgeOrForm, IModelReference> = new Map<AgeOrForm, IModelReference>();
 }

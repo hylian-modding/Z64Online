@@ -1,4 +1,4 @@
-import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
+import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { getChildID } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
@@ -17,6 +17,13 @@ export class ModelAPIHandlers {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
+    }
+
+    @EventHandler(Z64OnlineEvents.GET_BANK_MODELS)
+    onGetBaseModels(evt: Z64OnlineAPI_BankModelRequest){
+        this.parent.puppetModels.forEach((model: IModelReference, key: AgeOrForm)=>{
+            evt.puppetModels.set(key, model);
+        });
     }
 
     @EventHandler(Z64OnlineEvents.REGISTER_CUSTOM_MODEL)
