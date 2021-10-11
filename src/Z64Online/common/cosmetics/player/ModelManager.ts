@@ -264,6 +264,7 @@ export class ModelManagerClient {
 
     this.ModLoader.logger.info('Done.');
     this.ModLoader.utils.setTimeoutFrames(() => {
+      bus.emit(Z64OnlineEvents.ON_MODEL_MANAGER_READY, {});
       this.ModLoader.clientSide.sendPacket(new Z64_GiveModelPacket(this.ModLoader.clientLobby, this.ModLoader.me));
     }, 100);
   }
