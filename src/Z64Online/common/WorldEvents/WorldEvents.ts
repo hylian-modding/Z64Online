@@ -640,27 +640,27 @@ export class WorldEventRewards {
                 }
             }
             let keys = Object.keys(this.config.equipmentLoadout);
-            /* if (keys.length > 0) {
+            if (keys.length > 0) {
                 for (let i = 0; i < keys.length; i++) {
                     let key = keys[i];
                     let value = this.config.equipmentLoadout[key];
                     if (value === '') continue;
                     let c = this.getAssetByUUID(value);
                     if (c !== undefined) {
-                        bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, c));
-                        bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
+                        /* bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, c));
+                        bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {}); */
                     } else {
                         // Probably custom gear.
                         if (this.customModelsFilesEquipment.has(key)) {
                             let item = this.customModelsFilesEquipment.get(key)!.find(i => { return i.name === value });
                             if (item !== undefined) {
-                                bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, new Z64Online_EquipmentPak(key, item.data));
+                                bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER, item);
                                 bus.emit(Z64OnlineEvents.REFRESH_EQUIPMENT, {});
                             }
                         }
                     }
                 }
-            } */
+            }
         }, Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK ? 100 : 1);
     }
 
