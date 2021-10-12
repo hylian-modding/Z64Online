@@ -5,7 +5,6 @@ import path from 'path';
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { setCommonConfigInst, Z64O_Common_Config } from "./common/lib/Settings";
-import CosmeticTests from "./common/cosmetics/tests/CosmeticTests";
 
 export default class Z64Online implements IZ64GameMain{
     @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, "common", "assets", "bootstrap.js"))
@@ -16,7 +15,7 @@ export default class Z64Online implements IZ64GameMain{
     @SidedProxy(ProxySide.UNIVERSAL, path.resolve(__dirname, "mm", "MMOnline.js"), "Z64Lib", () => { return Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK })
     MM!: IZ64GameMain;
     @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, "common", "Tests.js"), "Z64Lib")
-    tests!: CosmeticTests;
+    tests!: any;
 
     ModLoader!: IModLoaderAPI;
 
