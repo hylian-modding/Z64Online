@@ -1,3 +1,5 @@
+// This is only staying around for backwards compatiblity.
+// For modern stuff see Z64OEquipmentManifest.ts
 export class CostumeHelper {
     static getCostumeName(costume: Buffer): string {
         let str = "";

@@ -167,11 +167,14 @@ export class Z64Online_ModelAllocation {
 
 export class Z64Online_EquipmentPak {
   name: string;
+  category: string;
   data: Buffer;
+  ref!: IModelReference;
   remove: boolean = false;
 
-  constructor(name: string, data: Buffer) {
+  constructor(name: string, category: string, data: Buffer) {
     this.name = name;
+    this.category = category;
     this.data = data;
   }
 }

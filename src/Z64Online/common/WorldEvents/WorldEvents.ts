@@ -75,14 +75,12 @@ export class WorldEventRewards {
     @EventHandler(Z64OnlineEvents.POST_LOADED_MODELS_LIST)
     onModelPost(evt: any) {
         this.customModelRegistry = evt.models;
-        let eqMap: Map<string, Buffer> = evt.equipment;
-        eqMap.forEach((value: Buffer) => {
-            let name = CostumeHelper.getCostumeName(value);
-            let cat = CostumeHelper.getEquipmentCategory(value);
-            if (!this.customModelsFilesEquipment.has(cat)) {
-                this.customModelsFilesEquipment.set(cat, []);
+        let eqMap: Map<string, Z64Online_EquipmentPak> = evt.equipment;
+        eqMap.forEach((value: Z64Online_EquipmentPak) => {
+            if (!this.customModelsFilesEquipment.has(value.category)) {
+                this.customModelsFilesEquipment.set(value.category, []);
             }
-            this.customModelsFilesEquipment.get(cat)!.push(new Z64Online_EquipmentPak(name, value));
+            this.customModelsFilesEquipment.get(value.category)!.push(value);
         });
     }
 
@@ -479,7 +477,7 @@ export class WorldEventRewards {
                                 }
                                 this.ModLoader.ImGui.treePop();
                             }
-                            if (this.ModLoader.ImGui.treeNode("Equipment###" + key + "Equipment")) {
+                            /* if (this.ModLoader.ImGui.treeNode("Equipment###" + key + "Equipment")) {
                                 if (this.rewardTicketsForEquipment.has(key)) {
                                     this.rewardTicketsForEquipment.get(key)!.forEach((value: RewardTicket[], key2: string) => {
                                         if (this.ModLoader.ImGui.treeNode(key2 + "###" + key + key2)) {
@@ -505,7 +503,7 @@ export class WorldEventRewards {
                                     });
                                 }
                                 this.ModLoader.ImGui.treePop();
-                            }
+                            } */
                             this.ModLoader.ImGui.treePop();
                         }
                     });
@@ -542,7 +540,7 @@ export class WorldEventRewards {
                                 if (this.ModLoader.ImGui.treeNode(key + "###" + "OotOCustomModels_Equipment_" + key)) {
                                     for (let i = 0; i < value.length; i++) {
                                         if (this.ModLoader.ImGui.menuItem(value[i].name, undefined, this.config.equipmentLoadout[key] === value[i].name)) {
-                                            let evt = new Z64Online_EquipmentPak(key, value[i].data);
+                                            let evt = value[i];
                                             if (this.config.equipmentLoadout[key] === value[i].name) {
                                                 this.config.equipmentLoadout[key] = "";
                                                 evt.remove = true;
@@ -620,7 +618,7 @@ export class WorldEventRewards {
                     // Probably a custom costume.
                     let id = this.getFormIDByLabel(key);
                     if (id !== undefined) {
-                        if (this.customModelRegistry.has(id)){
+                        if (this.customModelRegistry.has(id)) {
                             if (this.customModelRegistry.get(id)!.has(value)) {
                                 let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), id, Z64_GAME);
                                 evt.ref = this.customModelRegistry.get(id)!.get(value)!;
@@ -642,7 +640,7 @@ export class WorldEventRewards {
                 }
             }
             let keys = Object.keys(this.config.equipmentLoadout);
-            if (keys.length > 0) {
+            /* if (keys.length > 0) {
                 for (let i = 0; i < keys.length; i++) {
                     let key = keys[i];
                     let value = this.config.equipmentLoadout[key];
@@ -662,7 +660,7 @@ export class WorldEventRewards {
                         }
                     }
                 }
-            }
+            } */
         }, Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK ? 100 : 1);
     }
 

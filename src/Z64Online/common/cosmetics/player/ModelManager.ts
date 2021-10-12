@@ -44,6 +44,8 @@ import { ALIAS_PROXY_SIZE } from '../Defines';
 import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { ModelAPIHandlers } from './ModelAPIHandlers';
+import { FormToMap } from '../maps/FormToMap';
+import Z64OEquipmentManifest from '../equipment/Z64OEquipmentManifest';
 
 export class ModelManagerClient {
   @ModLoaderAPIInject()
@@ -57,7 +59,7 @@ export class ModelManagerClient {
   proxySyncTick!: string;
   proxyNeedsSync: boolean = false;
   customModelRegistry: Map<AgeOrForm, Map<string, IModelReference>> = new Map();
-  customModelFilesEquipment: Map<string, Buffer> = new Map<string, Buffer>();
+  customModelFilesEquipment: Map<string, Z64Online_EquipmentPak> = new Map<string, Z64Online_EquipmentPak>();
   config!: Z64_EventConfig;
   //
   puppetModels: Map<AgeOrForm, IModelReference> = new Map<AgeOrForm, IModelReference>();
@@ -69,24 +71,6 @@ export class ModelManagerClient {
 
   get AgeOrForm(): AgeOrForm {
     return getAgeOrForm(this.core);
-  }
-
-  @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
-  onLoadEq(eq: Z64Online_EquipmentPak) {
-    if (this.managerDisabled) return;
-    let copy = this.ModLoader.utils.cloneBuffer(eq.data);
-    let ref = this.allocationManager.registerModel(copy);
-    ref = this.allocationManager.allocateModel(ref)!;
-    this.allocationManager.getLocalPlayerData().equipment.set(CostumeHelper.getEquipmentCategory(copy), ref);
-    if (eq.remove) {
-      this.allocationManager.getLocalPlayerData().equipment.delete(CostumeHelper.getEquipmentCategory(copy));
-    }
-  }
-
-  @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_PAK)
-  onLoadEQExternal(eq: Z64Online_EquipmentPak) {
-    if (this.managerDisabled) return;
-    this.customModelFilesEquipment.set(eq.name, eq.data);
   }
 
   @EventHandler(Z64OnlineEvents.CLEAR_EQUIPMENT)
@@ -286,7 +270,7 @@ export class ModelManagerClient {
     });
   }
 
-  @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
+  /* @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')
   onModelAllocate_Equipment(packet: Z64_EquipmentPakPacket) {
     this.ModLoader.utils.setTimeoutFrames(() => {
       let player = this.allocationManager.createPlayer(packet.player, this.puppetModels)!;
@@ -304,7 +288,7 @@ export class ModelManagerClient {
         });
       });
     }, 1);
-  }
+  } */
 
   @EventHandler(EventsClient.ON_PLAYER_LEAVE)
   onPlayerLeft(player: INetworkPlayer) {
@@ -363,35 +347,22 @@ export class ModelManagerClient {
     this.onPuppetSpawned(puppet);
   }
 
-  private getEquipmentManifest(ref: IModelReference) {
-    try {
-      let rp = this.ModLoader.emulator.rdramReadBuffer(ref.pointer, this.allocationManager.getModelSize(ref));
-      let eq = Buffer.from('45515549504D414E4946455354000000', 'hex');
-      let index = rp.indexOf(eq);
-      let str = "";
-      let curByte: number = 0;
-      let curIndex: number = index + 0x10;
-      while (curByte !== 0xFF) {
-        str += rp.slice(curIndex, curIndex + 1).toString();
-        curByte = rp.slice(curIndex, curIndex + 1).readUInt8(0);
-        curIndex++;
-      }
-      str = str.substr(0, str.length - 1);
-      let data: EquipmentManifest = JSON.parse(str);
-      let start = rp.indexOf(Buffer.from('4D4F444C4F414445523634', 'hex')) + 0x10;
-      let cat = CostumeHelper.getEquipmentCategory(rp);
-      return { manifest: data, model: rp, lut: start, cat };
-    } catch (err: any) {
-      this.ModLoader.logger.error(err.stack);
-      return undefined;
-    }
-  }
-
   private dealWithEquipmentPaks(age: AgeOrForm) {
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_START, {});
     this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference) => {
       value.loadModel();
-      /** TODO: Rewrite this shit. */
+      let map = FormToMap.GetMapFromForm(age);
+      let eqmap = Z64OEquipmentManifest.getEquipmentMap(this.allocationManager.getModel(value).zobj);
+      let link = this.child.findLink();
+      Object.keys(eqmap).forEach((key: string)=>{
+        let local: number = eqmap[key];
+        let remote: number = map[key];
+        if (local !== undefined && remote !== undefined){
+          let p = link + remote + 0x4;
+          let e = value.pointer + local;
+          this.ModLoader.emulator.rdramWrite32(p, e);
+        }
+      });
     });
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_END, {});
   }
@@ -407,6 +378,7 @@ export class ModelManagerClient {
   @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
   onSceneChange(scene: Scene) {
     this.child.onSceneChange(scene);
+    this.dealWithEquipmentPaks(getAgeOrForm(this.core));
     bus.emit(Z64OnlineEvents.LOCAL_MODEL_REFRESH, scene);
   }
 
@@ -486,15 +458,6 @@ export class ModelManagerClient {
         }
       }
     }
-  }
-
-  @EventHandler(Z64OnlineEvents.REFRESH_EQUIPMENT)
-  onRefresh() {
-    if (this.managerDisabled) return;
-    this.ModLoader.utils.setTimeoutFrames(() => {
-      this.onSceneChange(-1);
-      this.proxyNeedsSync = true;
-    }, 1);
   }
 
   @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)

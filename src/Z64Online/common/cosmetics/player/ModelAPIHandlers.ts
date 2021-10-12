@@ -1,4 +1,4 @@
-import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest } from "@Z64Online/common/api/Z64API";
+import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { getChildID } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
@@ -10,6 +10,7 @@ import { UniversalAliasTable, getManifestForForm } from "../UniversalAliasTable"
 import { ModelManagerClient } from "./ModelManager";
 import fs from 'fs';
 import { OOT_to_MM } from "./OOT_to_MM";
+import Z64OEquipmentManifest from "../equipment/Z64OEquipmentManifest";
 
 export class ModelAPIHandlers {
 
@@ -19,9 +20,37 @@ export class ModelAPIHandlers {
         this.parent = parent;
     }
 
+    @EventHandler(Z64OnlineEvents.REFRESH_EQUIPMENT)
+    onRefresh() {
+        if (this.parent.managerDisabled) return;
+        this.parent.ModLoader.utils.setTimeoutFrames(() => {
+            this.parent.onSceneChange(-1);
+            this.parent.proxyNeedsSync = true;
+        }, 1);
+    }
+
+    @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
+    onLoadEq(eq: Z64Online_EquipmentPak) {
+        if (this.parent.managerDisabled) return;
+        this.parent.allocationManager.getLocalPlayerData().equipment.set(eq.category, eq.ref);
+        if (eq.remove) {
+            this.parent.allocationManager.getLocalPlayerData().equipment.delete(eq.category);
+            eq.remove = false;
+        }
+    }
+
+    @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_PAK)
+    onLoadEQExternal(eq: Z64Online_EquipmentPak) {
+        if (this.parent.managerDisabled) return;
+        eq = Z64OEquipmentManifest.processEquipmentPak(eq);
+        let ref = this.parent.allocationManager.registerModel(eq.data);
+        eq.ref = ref;
+        this.parent.customModelFilesEquipment.set(eq.name, eq);
+    }
+
     @EventHandler(Z64OnlineEvents.GET_BANK_MODELS)
-    onGetBaseModels(evt: Z64OnlineAPI_BankModelRequest){
-        this.parent.puppetModels.forEach((model: IModelReference, key: AgeOrForm)=>{
+    onGetBaseModels(evt: Z64OnlineAPI_BankModelRequest) {
+        this.parent.puppetModels.forEach((model: IModelReference, key: AgeOrForm) => {
             evt.puppetModels.set(key, model);
         });
     }

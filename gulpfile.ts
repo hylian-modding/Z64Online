@@ -605,4 +605,20 @@ gulp.task('remove_nightly_flag', function(){
     return gulp.src('./src/**/*.ts')
 });
 
+gulp.task('oot', function(){
+    let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
+    m["ModLoader64"]["rom"] = "Legend of Zelda, The - Ocarina of Time (U) (V1.0) [!].z64";
+    m["ModLoader64"]["patch"] = "Oot_Vanillamizer.bps";
+    fs.writeFileSync("./modloader64-config.json", JSON.stringify(m, null, 2));
+    return gulp.src('./src/**/*.ts');
+});
+
+gulp.task('mm', function(){
+    let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
+    m["ModLoader64"]["rom"] = "Legend of Zelda, The - Majora's Mask (USA).z64";
+    m["ModLoader64"]["patch"] = "MM_Vanillamizer.bps";
+    fs.writeFileSync("./modloader64-config.json", JSON.stringify(m, null, 2));
+    return gulp.src('./src/**/*.ts');
+});
+
 gulp.task('default', gulp.series(['build', 'postinstall']))
