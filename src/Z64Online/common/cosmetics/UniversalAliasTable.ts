@@ -12,6 +12,7 @@ import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
 import { DF_COMMAND, DL_DF, DL_ERROR_CUBE, TEX_EYES, TEX_MOUTH } from './Defines';
 import { zzplayas_to_zzconvert } from 'Z64Lib/API/Common/ModelData/zzplayas_to_zzconvert';
+import Z64OManifestParser from './Z64OManifestParser';
 
 const USE_ERROR_CUBE: boolean = false;
 
@@ -956,15 +957,19 @@ export class UniversalAliasTable {
     createTable(p: Buffer, manifest: IManifest, nostub: boolean = false, gameOverride?: Z64LibSupportedGames) {
         if (p.indexOf("UNIVERSAL_ALIAS_TABLE") > -1) return p;
         let pieces: Map<string, ZobjPiece> = new Map();
-        let parse = new ZZPlayasEmbedParser();
-        if (gameOverride === undefined) gameOverride = Z64_GAME;
-        if (gameOverride === Z64LibSupportedGames.OCARINA_OF_TIME) {
-            p = zzplayas_to_zzconvert.processOotZobj(p)!;
-        } else {
-            p = zzplayas_to_zzconvert.processMMZobj(p)!;
+        if (Z64OManifestParser.isOldZZPlayas(p)) {
+            if (gameOverride === undefined) gameOverride = Z64_GAME;
+            if (gameOverride === Z64LibSupportedGames.OCARINA_OF_TIME) {
+                p = zzplayas_to_zzconvert.processOotZobj(p)!;
+            } else {
+                p = zzplayas_to_zzconvert.processMMZobj(p)!;
+            }
+            p = Z64OManifestParser.convertZZConvertToZ64O(p);
+        } else if (Z64OManifestParser.isOldZZConvert(p)) {
+            p = Z64OManifestParser.convertZZConvertToZ64O(p);
         }
-        let zobj = p;
-        let m = parse.parse(zobj);
+        let m: any = Z64OManifestParser.parse(p);
+        let zobj: Buffer = p;
         let __defines = fs.readFileSync(path.resolve(__dirname, "Defines.h")).toString().split("\n");
         let defines: Map<string, number> = new Map();
         for (let i = 0; i < __defines.length; i++) {
