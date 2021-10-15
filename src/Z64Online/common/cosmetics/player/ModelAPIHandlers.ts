@@ -1,4 +1,4 @@
-import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak, Z64_ModelEditEvt } from "@Z64Online/common/api/Z64API";
+import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { getChildID } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
