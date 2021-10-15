@@ -24,6 +24,8 @@ export default class Z64OEquipmentManifest {
         let cat = CostumeHelper.getEquipmentCategory(buf);
         if (Z64OManifestParser.isOldZZConvert(buf)) {
             buf = Z64OManifestParser.convertZZConvertToZ64O(buf);
+        }else if (Z64OManifestParser.isOldZZPlayas(buf)){
+            
         }
         let evt = new Z64Online_EquipmentPak(name, cat, buf);
         return evt;

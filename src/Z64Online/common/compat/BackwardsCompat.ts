@@ -5,5 +5,6 @@ export class BackwardsCompat{
 
     static OLD_OOT_ADULT_EVT: string = "OotOnline:CUSTOM_MODEL_LOAD_ADULT";
     static OLD_OOT_CHILD_EVT: string = "OotOnline:CUSTOM_MODEL_LOAD_CHILD";
+    static OLD_OOT_EQUIP_EVT: string = "OotOnline:LoadEquipmentPak";
 
 }

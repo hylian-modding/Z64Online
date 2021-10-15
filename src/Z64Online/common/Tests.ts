@@ -6,7 +6,7 @@ export default class Z64OTests{
     @Init()
     init(){
         CosmeticTests.onGoronTest();
-        CosmeticTests.onEquipmentTest();
+        //CosmeticTests.onEquipmentTest();
     }
 
 }

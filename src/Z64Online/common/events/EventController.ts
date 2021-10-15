@@ -66,7 +66,7 @@ export class EventController {
         let meta: EventMeta = JSON.parse(fs.readFileSync(path.resolve(temp, "package.json")).toString());
         if (this.ModLoader.isClient) {
             let plugin: any = require(path.resolve(temp, meta.main));
-            this.client = new plugin[path.parse(meta.main).name]();
+            this.client = new plugin["default"]();
             setupMLInjects(this.client, this.ModLoader);
             setupCoreInject(this.client, this.core);
             setupEventHandlers(this.client, bus);
@@ -78,7 +78,7 @@ export class EventController {
         }
         if (this.ModLoader.isServer) {
             let plugin: any = require(path.resolve(temp, meta.server));
-            this.server = new plugin[path.parse(meta.server).name]();
+            this.server = new plugin["default"]();
             setupMLInjects(this.server, this.ModLoader);
             setupCoreInject(this.server, this.core);
             setupEventHandlers(this.server, bus);

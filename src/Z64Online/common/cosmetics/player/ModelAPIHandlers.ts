@@ -1,4 +1,4 @@
-import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak } from "@Z64Online/common/api/Z64API";
+import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak, Z64_ModelEditEvt } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { getChildID } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
@@ -43,6 +43,7 @@ export class ModelAPIHandlers {
     onLoadEQExternal(eq: Z64Online_EquipmentPak) {
         if (this.parent.managerDisabled) return;
         eq = Z64OEquipmentManifest.processEquipmentPak(eq);
+        console.log(eq);
         let ref = this.parent.allocationManager.registerModel(eq.data);
         eq.ref = ref;
         this.parent.customModelFilesEquipment.set(eq.name, eq);
@@ -96,6 +97,7 @@ export class ModelAPIHandlers {
 
     @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
     onCustomModelChild_mm_backcompat(evt: string) {
+        console.log(evt);
         if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
             if (fs.lstatSync(evt).isDirectory()) {
                 return;
@@ -104,9 +106,14 @@ export class ModelAPIHandlers {
             e.name = path.parse(evt).name;
             if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
                 e.age = 0x68;
-                bus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, e);
             }
+            bus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, e);
         }
+    }
+
+    @EventHandler(BackwardsCompat.OLD_OOT_EQUIP_EVT)
+    onCustomEquipment_oot_backcompat(evt: any){
+        //this.onLoadEQExternal(evt);
     }
 
 }
