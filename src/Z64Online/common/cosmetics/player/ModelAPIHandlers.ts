@@ -60,7 +60,7 @@ export class ModelAPIHandlers {
         });
     }
 
-    static processModel(evt: Z64Online_ModelAllocation, ModLoader: IModLoaderAPI){
+    static processModel(evt: Z64Online_ModelAllocation, ModLoader: IModLoaderAPI) {
         if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK && evt.game === Z64LibSupportedGames.OCARINA_OF_TIME) {
             // An Oot model tried to load. Lets try to convert it.
             OOT_to_MM.convert(evt);
@@ -152,17 +152,33 @@ export class ModelAPIHandlers {
         bus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, evt);
     }
 
-    @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
-    onCustomModelChild_mm_backcompat(evt: string) {
+    private handleOldCrap(evt: string, game: Z64LibSupportedGames, form: AgeOrForm) {
         if (fs.lstatSync(evt).isDirectory()) {
             return;
         }
-        let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN, Z64LibSupportedGames.MAJORAS_MASK);
+        let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), form, game);
         e.name = path.parse(evt).name;
-        if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
-            e.age = 0x68;
+        if (game === Z64LibSupportedGames.MAJORAS_MASK) {
+            if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
+                e.age = 0x68;
+            }
         }
         bus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, e);
+    }
+
+    @EventHandler(BackwardsCompat.EVEN_OLDER_OOT_ADULT_EVT)
+    onCustomModelAdult_backcompat2(evt: string) {
+        this.handleOldCrap(evt, Z64LibSupportedGames.OCARINA_OF_TIME, AgeOrForm.ADULT);
+    }
+
+    @EventHandler(BackwardsCompat.EVEN_OLDER_OOT_CHILD_EVT)
+    onCustomModelChild_backcompat2(evt: string) {
+        this.handleOldCrap(evt, Z64LibSupportedGames.OCARINA_OF_TIME, AgeOrForm.CHILD);
+    }
+
+    @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
+    onCustomModelChild_mm_backcompat(evt: string) {
+        this.handleOldCrap(evt, Z64LibSupportedGames.MAJORAS_MASK, AgeOrForm.HUMAN);
     }
 
     @EventHandler(BackwardsCompat.OLD_OOT_EQUIP_EVT)
