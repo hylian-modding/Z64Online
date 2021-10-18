@@ -1,4 +1,5 @@
 import { Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
+import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { getManifestForFormOot, UniversalAliasTable } from "../UniversalAliasTable";
@@ -22,7 +23,7 @@ export class OOT_to_MM {
         }
 
         if (a === AgeOrForm.ADULT) {
-            evt.age = 0x68;
+            evt.age = BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG;
         } else {
             evt.age = AgeOrForm.HUMAN;
         }

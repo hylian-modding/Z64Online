@@ -11,6 +11,7 @@ import { ModelManagerClient } from "./ModelManager";
 import fs from 'fs';
 import { OOT_to_MM } from "./OOT_to_MM";
 import Z64OEquipmentManifest from "../equipment/Z64OEquipmentManifest";
+import { MM_to_OOT } from "./MM_to_OOT";
 
 export class ModelAPIHandlers {
 
@@ -63,6 +64,9 @@ export class ModelAPIHandlers {
             // An Oot model tried to load. Lets try to convert it.
             OOT_to_MM.convert(evt);
             evt.name += " (OoT)";
+        }else if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME && evt.game === Z64LibSupportedGames.MAJORAS_MASK){
+            MM_to_OOT.convert(evt);
+            evt.name += " (MM)";
         }
         let ref: IModelReference;
         let a = evt.age;
@@ -97,18 +101,15 @@ export class ModelAPIHandlers {
 
     @EventHandler(BackwardsCompat.OLD_MM_MODEL_EVT)
     onCustomModelChild_mm_backcompat(evt: string) {
-        console.log(evt);
-        if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
-            if (fs.lstatSync(evt).isDirectory()) {
-                return;
-            }
-            let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN, Z64LibSupportedGames.MAJORAS_MASK);
-            e.name = path.parse(evt).name;
-            if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
-                e.age = 0x68;
-            }
-            bus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, e);
+        if (fs.lstatSync(evt).isDirectory()) {
+            return;
         }
+        let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), AgeOrForm.HUMAN, Z64LibSupportedGames.MAJORAS_MASK);
+        e.name = path.parse(evt).name;
+        if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
+            e.age = 0x68;
+        }
+        bus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, e);
     }
 
     @EventHandler(BackwardsCompat.OLD_OOT_EQUIP_EVT)
