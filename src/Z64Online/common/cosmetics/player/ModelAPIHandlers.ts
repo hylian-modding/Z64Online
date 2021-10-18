@@ -1,4 +1,4 @@
-import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak } from "@Z64Online/common/api/Z64API";
+import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak, registerModel } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { getChildID } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
@@ -14,6 +14,7 @@ import Z64OEquipmentManifest from "../equipment/Z64OEquipmentManifest";
 import { MM_to_OOT } from "./MM_to_OOT";
 import Z64OManifestParser from "../Z64OManifestParser";
 import * as defines from "../Defines";
+import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 
 export class ModelAPIHandlers {
 
@@ -59,9 +60,7 @@ export class ModelAPIHandlers {
         });
     }
 
-    @EventHandler(Z64OnlineEvents.REGISTER_CUSTOM_MODEL)
-    onCustomModel_All(evt: Z64Online_ModelAllocation) {
-        if (this.parent.managerDisabled) return;
+    static processModel(evt: Z64Online_ModelAllocation, ModLoader: IModLoaderAPI){
         if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK && evt.game === Z64LibSupportedGames.OCARINA_OF_TIME) {
             // An Oot model tried to load. Lets try to convert it.
             OOT_to_MM.convert(evt);
@@ -76,8 +75,8 @@ export class ModelAPIHandlers {
             evt.age = getChildID();
         }
         if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE_V1.0") === -1) {
-            ref = this.parent.allocationManager.registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age), undefined, undefined, undefined, (model: Buffer) => {
-                let mtx = Z64OManifestParser.pullMTXFromOldPlayas(this.parent.ModLoader, evt.model, evt.game);
+            ref = registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age), undefined, undefined, undefined, (model: Buffer) => {
+                let mtx = Z64OManifestParser.pullMTXFromOldPlayas(ModLoader, evt.model, evt.game);
                 if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
                     if (mtx.length > 0) {
                         if (mtx.length >= 1) {
@@ -123,13 +122,20 @@ export class ModelAPIHandlers {
                 }
             }));
         } else {
-            ref = this.parent.allocationManager.registerModel(evt.model);
+            ref = registerModel(evt.model);
         }
         if (evt.script !== undefined) {
             ref.script = evt.script;
         }
         evt.ref = ref;
         ref.flags[0] = a;
+        return ref;
+    }
+
+    @EventHandler(Z64OnlineEvents.REGISTER_CUSTOM_MODEL)
+    onCustomModel_All(evt: Z64Online_ModelAllocation) {
+        if (this.parent.managerDisabled) return;
+        ModelAPIHandlers.processModel(evt, this.parent.ModLoader);
         this.parent.customModelRegistry.get(evt.age)!.set(evt.name, evt.ref);
     }
 

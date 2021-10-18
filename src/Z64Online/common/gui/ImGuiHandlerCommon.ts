@@ -12,6 +12,8 @@ import { CommonConfigInst, volume_local, volume_remote } from "../lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "../api/InternalAPI";
 import { VERSION_NUMBER } from "../lib/VERSION_NUMBER";
 import { isTitleScreen } from "../types/GameAliases";
+import DListCrawler from "./DListCrawler";
+import { ZobjTester } from "./ZobjTester";
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -38,6 +40,8 @@ export abstract class ImGuiHandlerCommon {
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
     font!: Font;
+    crawler!: DListCrawler;
+    tester!: ZobjTester;
     // #endif
 
     onViUpdate() {
@@ -47,6 +51,8 @@ export abstract class ImGuiHandlerCommon {
                 this.font.loadFromMemory(getHylianFont(), 22, 2);
                 changeKillfeedFont(this.font);
                 setHylianFontRef(this.font);
+                this.crawler = new DListCrawler(this.ModLoader);
+                this.tester = new ZobjTester(this.ModLoader, this.core);
             } catch (err: any) {
                 this.ModLoader.logger.error(err);
             }
@@ -65,6 +71,12 @@ export abstract class ImGuiHandlerCommon {
                     }
                     if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
                         this.showActorBrowser = !this.showActorBrowser;
+                    }
+                    if (this.ModLoader.ImGui.menuItem("DList Crawler")){
+                        this.crawler.isOpen = !this.crawler.isOpen;
+                    }
+                    if (this.ModLoader.ImGui.menuItem("ZOBJ Tester")){
+                        this.tester.isOpen = !this.tester.isOpen;
                     }
                     // #endif
                     if (this.ModLoader.ImGui.beginMenu("General Settings")) {
@@ -96,6 +108,12 @@ export abstract class ImGuiHandlerCommon {
         }
         this.ModLoader.ImGui.end();
         // #ifdef IS_DEV_BUILD
+        if (this.crawler !== undefined){
+            this.crawler.onVi();
+        }
+        if (this.tester !== undefined){
+            this.tester.onVi();
+        }
         if (this.showSpawner) {
             if (this.ModLoader.ImGui.begin("Actor Spawner###OotO:ActorSpawner")) {
                 this.ModLoader.ImGui.inputText("ID", this.spawnID);

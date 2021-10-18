@@ -408,7 +408,6 @@ export class ModelManagerClient {
       }
       return;
     }
-    let copy = this.ModLoader.utils.cloneBuffer(evt.model);
     if (evt.model.byteLength === 1) {
       this.allocationManager.SetLocalPlayerModel(form, this.puppetModels.get(form)!);
       if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
@@ -422,11 +421,7 @@ export class ModelManagerClient {
       this.proxyNeedsSync = true;
     } else {
       let model: IModelReference;
-      if (copy.indexOf("UNIVERSAL_ALIAS_TABLE") === -1) {
-        model = this.allocationManager.registerModel(new UniversalAliasTable().createTable(copy, getManifestForForm(form)))!;
-      } else {
-        model = this.allocationManager.registerModel(copy)!;
-      }
+      model = ModelAPIHandlers.processModel(evt, this.ModLoader);
       model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(form, model);
       if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
