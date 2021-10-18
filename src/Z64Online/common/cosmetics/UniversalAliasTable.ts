@@ -28,6 +28,8 @@ const TABLE_SIZE: number = 256;
 const MAX_BONE_SIZE: number = 0xFF;
 const PAD_VALUE: number = 0xFF;
 
+export type AliasTableConversionCallback = (model: Buffer) => void;
+
 export class ZobjPiece {
     piece: Buffer;
     hash: string;
@@ -403,16 +405,7 @@ export class UniversalAliasTable {
 
     private *createMtxPushPop(name: string, sb: SmartBuffer, dlist: Buffer) {
         let b = new SmartBuffer();
-        let tag = sb.writeOffset;
         let off = sb.writeOffset;
-        b.writeString(name);
-        off += b.writeOffset;
-        while (b.length % 0x10 !== 0) {
-            b.writeUInt8(PAD_VALUE);
-            off += 0x1;
-        }
-        b.writeUInt32BE(0x00000000);
-        b.writeUInt32BE(0x06000000 + tag);
         b.writeUInt32BE(0xDA380000);
         let r = b.writeOffset;
         b.writeUInt32BE(0xDEADBEEF);
@@ -655,7 +648,7 @@ export class UniversalAliasTable {
         return b.toBuffer();
     }
 
-    createTable(p: Buffer, manifest: IManifest, nostub: boolean = false, gameOverride?: Z64LibSupportedGames) {
+    createTable(p: Buffer, manifest: IManifest, nostub: boolean = false, gameOverride?: Z64LibSupportedGames, stripGear?: boolean, cb?: AliasTableConversionCallback) {
         if (p.indexOf("UNIVERSAL_ALIAS_TABLE") > -1) return p;
         let pieces: Map<string, ZobjPiece> = new Map();
         if (Z64OManifestParser.isOldZZPlayas(p)) {
@@ -688,10 +681,14 @@ export class UniversalAliasTable {
             if (BANK_OBJECTS.has(piece.hash) && !nostub) {
                 pieces.set(key, new ZobjPiece(new SmartBuffer().writeUInt32BE(0xDF000000).writeUInt32BE(0x00000000).toBuffer(), 0x0));
             } else {
-                if (BANK_REPLACEMENTS.has(piece.hash)) {
-                    pieces.set(key, BANK_REPLACEMENTS.get(piece.hash)!);
+                if (stripGear !== undefined && stripGear && (!key.includes("Limb") && !key.includes("Fist"))) {
+                    pieces.set(key, new ZobjPiece(new SmartBuffer().writeUInt32BE(0xDF000000).writeUInt32BE(0x00000000).toBuffer(), 0x0));
                 } else {
-                    pieces.set(key, piece);
+                    if (BANK_REPLACEMENTS.has(piece.hash)) {
+                        pieces.set(key, BANK_REPLACEMENTS.get(piece.hash)!);
+                    } else {
+                        pieces.set(key, piece);
+                    }
                 }
             }
         });
@@ -753,7 +750,9 @@ export class UniversalAliasTable {
         let scaffold = this.generateScaffolding();
         let sb: SmartBuffer = scaffold.sb;
 
+        sb.writeUInt32BE(0, TEX_EYES);
         sb.writeUInt32BE(0x06000000, TEX_EYES + 4);
+        sb.writeUInt32BE(0, TEX_MOUTH);
         sb.writeUInt32BE(0x06000000 + 0x4000, TEX_MOUTH + 4);
 
         // Step 4: Create combined display lists.
@@ -763,7 +762,7 @@ export class UniversalAliasTable {
             if (mtx1 !== undefined) {
                 off = this.addMtxPushPop(sb, name, defines.get(mtx1)!, this.createJump(sb, defines.get(dl1)!, true).next().value! as Buffer);
             } else {
-                off = this.addDebugLabel(sb, name);
+                off = sb.writeOffset;
                 this.addEntry(sb, defines.get(dl1)!, true);
             }
             for (let i = 0; i < dl2.length; i++) {
@@ -888,6 +887,10 @@ export class UniversalAliasTable {
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }
-        return sb.toBuffer();
+        let out = sb.toBuffer();
+        if (cb !== undefined){
+            cb(out);
+        }
+        return out;
     }
 }
