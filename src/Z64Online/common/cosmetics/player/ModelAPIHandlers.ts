@@ -1,7 +1,7 @@
 import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak, registerModel } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { getAgeOrForm, getChildID } from "@Z64Online/common/types/GameAliases";
-import { bus, EventHandler } from "modloader64_api/EventHandler";
+import { bus, EventHandler, PrivateEventHandler } from "modloader64_api/EventHandler";
 import path from "path";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
@@ -16,6 +16,8 @@ import Z64OManifestParser from "../Z64OManifestParser";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { number_ref } from "modloader64_api/Sylvain/ImGui";
 import { MatrixTranslate } from "../utils/MatrixTranslate";
+import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
+import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 
 export class ModelAPIHandlers {
 
@@ -23,6 +25,9 @@ export class ModelAPIHandlers {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
+        // Idk why the decorators aren't working in this class, so bind it manually.
+        this.parent.ModLoader.privateBus.on(Z64O_PRIVATE_EVENTS.CHANGE_MODEL_INTERNAL, this.onCustomModel_internal.bind(this));
+        this.parent.ModLoader.privateBus.on(Z64O_PRIVATE_EVENTS.PREPROCESS_ZOBJ, this.onCustomModel_preprocess.bind(this));
     }
 
     @EventHandler(Z64OnlineEvents.GET_CURRENT_MODEL)
@@ -72,7 +77,8 @@ export class ModelAPIHandlers {
         });
     }
 
-    static processModel(evt: Z64Online_ModelAllocation, ModLoader: IModLoaderAPI) {
+    static processModel(evt: Z64Online_ModelAllocation, ModLoader: IModLoaderAPI, cache?: boolean) {
+        if (evt.model.byteLength <= 1) return;
         let mtx = Z64OManifestParser.pullMTXFromOldPlayas(ModLoader, evt.model, evt.game);
         if (mtx.length > 0 && Z64OManifestParser.hasMTXData(evt.model)) {
             let addn: Buffer[] = [];
@@ -116,17 +122,33 @@ export class ModelAPIHandlers {
         if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK && evt.age === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
             evt.age = getChildID();
         }
+        let model: Buffer;
         if (evt.model.indexOf("UNIVERSAL_ALIAS_TABLE_V1.0") === -1) {
-            ref = registerModel(new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age)));
+            model = new UniversalAliasTable().createTable(evt.model, getManifestForForm(evt.age));
         } else {
-            ref = registerModel(evt.model);
+            model = evt.model;
         }
+        ref = registerModel(model);
         if (evt.script !== undefined) {
             ref.script = evt.script;
         }
         evt.ref = ref;
         ref.flags[0] = a;
+        if (cache !== undefined && cache){
+            CDNClient.singleton.registerWithCache(model);
+        }
         return ref;
+    }
+
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.PREPROCESS_ZOBJ)
+    onCustomModel_preprocess(evt: Z64Online_ModelAllocation){
+        ModelAPIHandlers.processModel(evt, this.parent.ModLoader, true);
+    }
+
+    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.CHANGE_MODEL_INTERNAL)
+    onCustomModel_internal(evt: Z64Online_ModelAllocation){
+        ModelAPIHandlers.processModel(evt, this.parent.ModLoader, true);
+        bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
     }
 
     @EventHandler(Z64OnlineEvents.REGISTER_CUSTOM_MODEL)

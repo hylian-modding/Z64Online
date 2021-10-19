@@ -13,6 +13,7 @@ import {
   bus,
   EventHandler,
   EventsClient,
+  markPrototypeProcessed,
   PrivateEventHandler,
   setupEventHandlers,
   setupPrivateEventHandlers
@@ -137,6 +138,7 @@ export class ModelManagerClient {
       this.setupPuppetModels(evt);
       setupPrivateEventHandlers(this.child, this.ModLoader.privateBus);
       setupEventHandlers(this.child, this.ModLoader.publicBus);
+      markPrototypeProcessed(this.child);
     } catch (err: any) {
       // Maybe don't shallow this error?
       console.log(err);
@@ -421,7 +423,7 @@ export class ModelManagerClient {
       this.proxyNeedsSync = true;
     } else {
       let model: IModelReference;
-      model = ModelAPIHandlers.processModel(evt, this.ModLoader);
+      model = ModelAPIHandlers.processModel(evt, this.ModLoader)!;
       model.script = evt.script;
       this.allocationManager.SetLocalPlayerModel(form, model);
       if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {

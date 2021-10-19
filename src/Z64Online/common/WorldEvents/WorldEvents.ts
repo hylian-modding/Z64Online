@@ -1,6 +1,5 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
-import { IOOTCore } from 'Z64Lib/API/OoT/OOTAPI';
 import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
@@ -15,7 +14,6 @@ import { EventController } from '../events/EventController';
 import { ExternalEventData, OOTO_PRIVATE_ASSET_HAS_CHECK, OOTO_PRIVATE_ASSET_LOOKUP_OBJ, OOTO_PRIVATE_COIN_LOOKUP_OBJ, Z64O_PRIVATE_EVENTS, RewardTicket } from '@Z64Online/common/api/InternalAPI';
 import { AssetContainer } from '../events/AssetContainer';
 import zlib from 'zlib';
-import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
 import { IModelReference, IModelScript, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@Z64Online/common/api/Z64API';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
@@ -23,6 +21,7 @@ import { getAdultID, getChildID } from '../types/GameAliases';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { Z64 } from 'Z64Lib/API/imports';
+import { BackwardsCompat } from '../compat/BackwardsCompat';
 
 export interface Z64_EventReward {
     name: string;
@@ -218,6 +217,7 @@ export class WorldEventRewards {
                 this.rewardTicketsForEquipment.get(ticket.event)!.get(category)!.push(ticket);
             }
         }
+
         let r = path.resolve("./storage/Z64O_Reward_Tickets.pak");
         if (fs.existsSync(r)) {
             this.ModLoader.logger.debug(`Backed up event rewards to ${backup}`);
@@ -232,16 +232,6 @@ export class WorldEventRewards {
                 this.ModLoader.logger.debug("Loading locally saved assets...");
                 this.assets = new AssetContainer(this.ModLoader, this.core, () => {
                     this.loadTickets();
-                    this.assets.bundle.files.forEach((buf: Buffer, key: string) => {
-                        CDNClient.singleton.registerWithCache(buf);
-                    });
-                    this.compressedTicketCache.forEach((r: ScriptedReward) => {
-                        Object.keys(r).forEach((key: string) => {
-                            if (Buffer.isBuffer(r[key])) {
-                                CDNClient.singleton.registerWithCache(r[key]);
-                            }
-                        });
-                    });
                 });
                 // Generate a junk url to trick the system into loading this anyway.
                 this.assets.url = "https://" + this.ModLoader.utils.getUUID() + ".fake/" + this.config.assetcache;
@@ -396,6 +386,25 @@ export class WorldEventRewards {
                     return AgeOrForm.FD;
             }
         }
+        return AgeOrForm.ADULT;
+    }
+
+    gameTagToID(tag: string) {
+        if (tag === "OotO") return Z64LibSupportedGames.OCARINA_OF_TIME;
+        if (tag === "MMO") return Z64LibSupportedGames.MAJORAS_MASK;
+        return Z64_GAME;
+    }
+
+    getAdultIDByTag(tag: string) {
+        if (tag === "OotO") return AgeOrForm.ADULT;
+        if (tag === "MMO") return BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG;
+        return getAdultID();
+    }
+
+    getChildIDByTag(tag: string) {
+        if (tag === "OotO") return AgeOrForm.CHILD;
+        if (tag === "MMO") return AgeOrForm.HUMAN;
+        return getChildID();
     }
 
     @onViUpdate()
@@ -432,7 +441,7 @@ export class WorldEventRewards {
                                     event.get("Adult")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.costumeLoadout["Adult"])) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getAdultID(), Z64_GAME);
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, this.getAdultIDByTag(ticket.game), this.gameTagToID(ticket.game));
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -444,7 +453,7 @@ export class WorldEventRewards {
                                                 this.config.costumeLoadout["Adult"] = ticket.uuid;
                                             }
                                             this.ModLoader.utils.setTimeoutFrames(() => {
-                                                bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
+                                                this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_MODEL_INTERNAL, evt);
                                             }, 1);
                                             this.ModLoader.config.save();
                                         }
@@ -457,7 +466,7 @@ export class WorldEventRewards {
                                     event.get("Child")!.forEach((ticket: RewardTicket) => {
                                         let name = path.parse(ticket.name).name;
                                         if (this.ModLoader.ImGui.menuItem(name, undefined, ticket.uuid === this.config.costumeLoadout["Child"])) {
-                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, getChildID(), Z64_GAME);
+                                            let evt = new Z64Online_ModelAllocation(this.getAssetByUUID(ticket.uuid)!, this.getChildIDByTag(ticket.game), this.gameTagToID(ticket.game));
                                             if (this.isAssetScripted(ticket.uuid).is) {
                                                 evt.script = this.isAssetScripted(ticket.uuid).script;
                                             }
@@ -469,7 +478,7 @@ export class WorldEventRewards {
                                                 this.config.costumeLoadout["Child"] = ticket.uuid;
                                             }
                                             this.ModLoader.utils.setTimeoutFrames(() => {
-                                                bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
+                                                this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_MODEL_INTERNAL, evt);
                                             }, 1);
                                             this.ModLoader.config.save();
                                         }
