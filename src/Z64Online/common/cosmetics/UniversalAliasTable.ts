@@ -29,7 +29,7 @@ const TABLE_SIZE: number = 256;
 const MAX_BONE_SIZE: number = 0xFF;
 const PAD_VALUE: number = 0xFF;
 
-export type AliasTableConversionCallback = (model: Buffer) => void;
+export type AliasTableConversionCallback = (model: SmartBuffer) => void;
 
 export class ZobjPiece {
     piece: Buffer;
@@ -920,10 +920,9 @@ export class UniversalAliasTable {
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }
-        let out = sb.toBuffer();
         if (cb !== undefined) {
-            cb(out);
+            cb(sb);
         }
-        return out;
+        return sb.toBuffer();
     }
 }

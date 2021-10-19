@@ -1,5 +1,6 @@
 import { Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
+import { SmartBuffer } from "smart-buffer";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { getManifestForFormOot, UniversalAliasTable } from "../UniversalAliasTable";
@@ -10,12 +11,21 @@ export class OOT_to_MM {
 
     static convert(evt: Z64Online_ModelAllocation) {
         console.log(`Attempting to convert OOT model ${evt.name} to MM...`);
-        let target: Buffer = Buffer.from("FC127E05", 'hex');
-        let replacement: Buffer = Buffer.from("0000000000000000", 'hex');
         let a = evt.model.readUInt8(0x500B);
 
         evt.model = Z64OManifestParser.removeMTXData(evt.model);
-        let u = new UniversalAliasTable().createTable(evt.model, getManifestForFormOot(evt.age), false, Z64LibSupportedGames.OCARINA_OF_TIME, true);
+        let colorhax: number = 0;
+        let u = new UniversalAliasTable().createTable(evt.model, getManifestForFormOot(evt.age), false, Z64LibSupportedGames.OCARINA_OF_TIME, true, (sb: SmartBuffer) => {
+            colorhax = sb.writeOffset;
+            sb.writeUInt32BE(0xE7000000);
+            sb.writeUInt32BE(0x00000000);
+            sb.writeUInt32BE(0xFB000000);
+            sb.writeUInt32BE(0x1E691BFF);
+            sb.writeUInt32BE(0x00000000);
+            sb.writeUInt32BE(0x00000000);
+            sb.writeUInt32BE(0xDF000000);
+            sb.writeUInt32BE(0x00000000);
+        });
 
         /**
          * These get translated wrong. Correct them.
@@ -34,10 +44,18 @@ export class OOT_to_MM {
 
         evt.model = u;
 
-        for (let i = 0; i < evt.model.byteLength; i += 8) {
-            if (evt.model.slice(i, i + 4).equals(target)) {
-                console.log(`Replacing FC command at ${i.toString(16)} with NOP.`);
-                replacement.copy(evt.model, i);
+        let limbtable = 0x5BF0;
+
+        for (let i = 0; i < 21; i++) {
+            let offset = evt.model.readUInt32BE(limbtable + (i * 4)) & 0x00FFFFFF;
+            let dlist = evt.model.readUInt32BE(offset + 8);
+            if (dlist > 0) {
+                dlist = dlist & 0x00FFFFFF;
+                let cmd = evt.model.readUInt32BE(dlist);
+                if (cmd === 0xE7000000) {
+                    evt.model.writeUInt32BE(0xDE000000, dlist);
+                    evt.model.writeUInt32BE(0x06000000 + colorhax, dlist + 4);
+                }
             }
         }
 
