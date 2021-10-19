@@ -184,22 +184,22 @@ export class ZobjTester {
                 this.ModLoader.ImGui.labelText("", "Matrix Editor");
                 if (this.ModLoader.ImGui.listBox("Matrix Select", this.currentMtx, this.mtxLabels)) {
                 }
-                if (this.ModLoader.ImGui.sliderFloats("XR", this.MTX[this.currentMtx[0]].XR, 0, 1000)) {
+                if (this.ModLoader.ImGui.sliderFloats("XR", this.MTX[this.currentMtx[0]].XR, -1000, 1000)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.sliderFloats("YR", this.MTX[this.currentMtx[0]].YR, 0, 1000)) {
+                if (this.ModLoader.ImGui.sliderFloats("YR", this.MTX[this.currentMtx[0]].YR, -1000, 1000)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.sliderFloats("ZR", this.MTX[this.currentMtx[0]].ZR, 0, 1000)) {
+                if (this.ModLoader.ImGui.sliderFloats("ZR", this.MTX[this.currentMtx[0]].ZR, -1000, 1000)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.sliderFloats("XT", this.MTX[this.currentMtx[0]].XT, 0, 1000)) {
+                if (this.ModLoader.ImGui.sliderFloats("XT", this.MTX[this.currentMtx[0]].XT, -1000, 1000)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.sliderFloats("YT", this.MTX[this.currentMtx[0]].YT, 0, 1000)) {
+                if (this.ModLoader.ImGui.sliderFloats("YT", this.MTX[this.currentMtx[0]].YT, -1000, 1000)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.sliderFloats("ZT", this.MTX[this.currentMtx[0]].ZT, 0, 1000)) {
+                if (this.ModLoader.ImGui.sliderFloats("ZT", this.MTX[this.currentMtx[0]].ZT, -1000, 1000)) {
                     this.updateMtx();
                 }
                 if (this.ModLoader.ImGui.sliderInt("Scale", this.MTX[this.currentMtx[0]].XS, 0, 2)) {
