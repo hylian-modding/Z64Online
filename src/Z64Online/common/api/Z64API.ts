@@ -7,6 +7,7 @@ import { Scene, Z64Tunic } from '@Z64Online/common/types/Types';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
+import { number_ref } from 'modloader64_api/Sylvain/ImGui';
 
 @ExternalAPIProvider("Z64API", "3.1.0", path.resolve(__dirname))
 export class Z64OnlineAPIProvider {
@@ -54,7 +55,21 @@ export enum Z64OnlineEvents {
   OBJECT_SPAWN = "Z64Online:ObjectSpawn",
   CHANGE_CUSTOM_MODEL = "Z64Online:CHANGE_CUSTOM_MODEL",
   REGISTER_CUSTOM_MODEL = "Z64Online:REGISTER_CUSTOM_MODEL",
-  GET_BANK_MODELS = "Z64Online:GET_BANK_MODELS"
+  GET_BANK_MODELS = "Z64Online:GET_BANK_MODELS",
+  GET_LINK_OBJECT = "Z64Online:GET_LINK_OBJECT",
+  GET_CURRENT_MODEL = "Z64Online:GET_CURRENT_MODEL"
+}
+
+export function getLinkObject(): number {
+  let evt: number_ref = [0];
+  bus.emit(Z64OnlineEvents.GET_LINK_OBJECT, evt);
+  return evt[0];
+}
+
+export function getCurrentModel(): Buffer{
+  let evt = {buf: Buffer.alloc(1)};
+  bus.emit(Z64OnlineEvents.GET_CURRENT_MODEL, evt);
+  return evt.buf;
 }
 
 export class Z64_ObjectSpawn {

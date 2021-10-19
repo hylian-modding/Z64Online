@@ -1,6 +1,6 @@
 import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak, registerModel } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
-import { getChildID } from "@Z64Online/common/types/GameAliases";
+import { getAgeOrForm, getChildID } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler } from "modloader64_api/EventHandler";
 import path from "path";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
@@ -15,6 +15,7 @@ import { MM_to_OOT } from "./MM_to_OOT";
 import Z64OManifestParser from "../Z64OManifestParser";
 import * as defines from "../Defines";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
+import { number_ref } from "modloader64_api/Sylvain/ImGui";
 
 export class ModelAPIHandlers {
 
@@ -22,6 +23,17 @@ export class ModelAPIHandlers {
 
     constructor(parent: ModelManagerClient) {
         this.parent = parent;
+    }
+
+    @EventHandler(Z64OnlineEvents.GET_CURRENT_MODEL)
+    onGetModel(evt: { buf: Buffer }) {
+        let ref = this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(getAgeOrForm(this.parent.core))!;
+        evt.buf = this.parent.allocationManager.getModel(ref).zobj;
+    }
+
+    @EventHandler(Z64OnlineEvents.GET_LINK_OBJECT)
+    onGetLink(evt: number_ref) {
+        evt[0] = this.parent.child.findLink();
     }
 
     @EventHandler(Z64OnlineEvents.REFRESH_EQUIPMENT)
