@@ -21,6 +21,7 @@ import { MM_GORON_LINK } from './maps/MM_GORON_LINK';
 import { MM_ZORA_LINK } from './maps/MM_ZORA_LINK';
 import { MM_DEITY_LINK } from './maps/MM_DEITY_LINK';
 import { DUMMY_LINK } from './maps/DUMMY_LINK';
+import * as defines from './Defines';
 
 const USE_ERROR_CUBE: boolean = false;
 
@@ -115,15 +116,22 @@ export class Z64SkeletonHeader {
 export class OotAdultLinkManifest implements IManifest {
 
     build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
-        // Sword Matricies.
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), 0x00005890);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), 0x000058D0);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), 0x00005910);
 
-        // Shield Matricies
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 935, 94, 29, 1)), 0x00005950);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 935, 94, 29, 1)), 0x00005990);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 935, 94, 29, 1)), 0x000059D0);
+        if (u.mtx_data.length > 0) {
+            for (let i = 0; i < u.mtx_data.length; i++) {
+                sb.writeBuffer(u.mtx_data[i], (defines.MATRIX_SWORD1_BACK + (i * 0x40)));
+            }
+        } else {
+            // Sword Matricies.
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), defines.MATRIX_SWORD1_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), defines.MATRIX_SWORD2_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -715, -310, 78, 1)), defines.MATRIX_SWORD3_BACK);
+
+            // Shield Matricies
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 935, 94, 29, 1)), defines.MATRIX_SHIELD1_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 935, 94, 29, 1)), defines.MATRIX_SHIELD2_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 935, 94, 29, 1)), defines.MATRIX_SHIELD3_BACK);
+        }
 
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (OOT_ADULT_LINK.hasOwnProperty(name)) {
@@ -138,18 +146,25 @@ export class OotAdultLinkManifest implements IManifest {
 
 export class OotChildLinkManifest implements IManifest {
     build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
-        // Sword Matricies.
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), 0x00005890);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), 0x000058D0);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), 0x00005910);
 
-        // Shield Matricies
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 545, 0, 80, 1)), 0x00005950);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, 0, 0, 0, 1)), 0x00005990);
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 545, 0, 80, 1)), 0x000059D0);
+        if (u.mtx_data.length > 0) {
+            for (let i = 0; i < u.mtx_data.length; i++) {
+                sb.writeBuffer(u.mtx_data[i], (defines.MATRIX_SWORD1_BACK + (i * 0x40)));
+            }
+        } else {
+            // Sword Matricies.
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), defines.MATRIX_SWORD1_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), defines.MATRIX_SWORD2_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -440, -211, 0, 1)), defines.MATRIX_SWORD3_BACK);
 
-        // Odd
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(90, 90, 0, 0, 0, -90, 1)), 0x00005A10);
+            // Shield Matricies
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 545, 0, 80, 1)), defines.MATRIX_SHIELD1_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, 0, 0, 0, 1)), defines.MATRIX_SHIELD2_BACK);
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 180, 545, 0, 80, 1)), defines.MATRIX_SHIELD3_BACK);
+
+            // Odd
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(90, 90, 0, 0, 0, -90, 1)), defines.MATRIX_SHIELD1_ITEM);
+        }
 
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (OOT_CHILD_LINK.hasOwnProperty(name)) {
@@ -165,18 +180,23 @@ export class OotChildLinkManifest implements IManifest {
 export class MMHumanLinkManifest implements IManifest {
     build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
 
-        // Kokiri Sword
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), 0x00005890);
-        // Razor Sword
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -480, -240, -14, 1)), 0x000058D0);
-        // Gilded Sword
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), 0x00005910);
+        if (u.mtx_data.length > 0) {
+            for (let i = 0; i < u.mtx_data.length; i++) {
+                sb.writeBuffer(u.mtx_data[i], (defines.MATRIX_SWORD1_BACK + (i * 0x40)));
+            }
+        } else {
+            // Kokiri Sword
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), defines.MATRIX_SWORD1_BACK);
+            // Razor Sword
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -480, -240, -14, 1)), defines.MATRIX_SWORD2_BACK);
+            // Gilded Sword
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 0, -578, -221, -32, 1)), defines.MATRIX_SWORD3_BACK);
 
-        // Shield 2
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 182, 552, 0, 0, 1)), 0x00005990);
-        // Shield 3
-        sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 182, 552, 0, -50, 1)), 0x000059D0);
-
+            // Shield 2
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 182, 552, 0, 0, 1)), defines.MATRIX_SHIELD2_BACK);
+            // Shield 3
+            sb.writeBuffer(MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(0, 0, 182, 552, 0, -50, 1)), defines.MATRIX_SHIELD3_BACK);
+        }
 
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (MM_HUMAN_LINK.hasOwnProperty(name)) {
@@ -648,8 +668,14 @@ export class UniversalAliasTable {
         return b.toBuffer();
     }
 
+    mtx_data: Buffer[] = [];
+
     createTable(p: Buffer, manifest: IManifest, nostub: boolean = false, gameOverride?: Z64LibSupportedGames, stripGear?: boolean, cb?: AliasTableConversionCallback) {
         if (p.indexOf("UNIVERSAL_ALIAS_TABLE") > -1) return p;
+        if (Z64OManifestParser.hasMTXData(p)) {
+            this.mtx_data.length = 0;
+            this.mtx_data.push(...Z64OManifestParser.parseMTXData(p));
+        }
         let pieces: Map<string, ZobjPiece> = new Map();
         if (Z64OManifestParser.isOldZZPlayas(p)) {
             if (gameOverride === undefined) gameOverride = Z64_GAME;
@@ -888,7 +914,7 @@ export class UniversalAliasTable {
             sb.writeUInt8(PAD_VALUE);
         }
         let out = sb.toBuffer();
-        if (cb !== undefined){
+        if (cb !== undefined) {
             cb(out);
         }
         return out;

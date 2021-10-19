@@ -10,6 +10,7 @@ import { getAgeOrForm } from "../types/GameAliases";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import * as defines from '../cosmetics/Defines';
 import { MatrixTranslate } from "../cosmetics/utils/MatrixTranslate";
+import Z64OManifestParser from "../cosmetics/Z64OManifestParser";
 
 class zobj {
     name: string;
@@ -65,7 +66,6 @@ export class ZobjTester {
         new MTX_Group(),
         new MTX_Group(),
     ];
-
 
     constructor(ModLoader: IModLoaderAPI, core: IZ64Main) {
         this.ModLoader = ModLoader;
@@ -204,6 +204,25 @@ export class ZobjTester {
                 }
                 if (this.ModLoader.ImGui.sliderInt("Scale", this.MTX[this.currentMtx[0]].XS, 0, 2)) {
                     this.updateMtx();
+                }
+                if (this.ModLoader.ImGui.smallButton("Export")){
+                    let zobj = fs.readFileSync(this.zobjs[this.current[0]]._path);
+                    zobj = Z64OManifestParser.removeMTXData(zobj);
+                    let all_mtx: Buffer[] = [];
+                    for (let i = 0; i < this.MTX.length; i++){
+                        let mtx = MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(this.MTX[i].XR[0], this.MTX[i].YR[0], this.MTX[i].ZR[0], this.MTX[i].XT[0], this.MTX[i].YT[0], this.MTX[i].ZT[0], this.MTX[i].XS[0]));
+                        all_mtx.push(mtx);
+                    }
+                    zobj = Z64OManifestParser.writeMTXData(zobj, all_mtx);
+                    let tag = "_MTX_" + Date.now().toString(16).toUpperCase();
+                    let name = path.parse(this.zobjs[this.current[0]]._path).name;
+                    name += tag;
+                    name += ".zobj";
+                    let dir = path.parse(this.zobjs[this.current[0]]._path).dir;
+                    let p = path.resolve(dir, name);
+                    fs.writeFileSync(p, zobj);
+                    this.zobjs.length = 0;
+                    this.current[0] = 0;
                 }
             }
         }

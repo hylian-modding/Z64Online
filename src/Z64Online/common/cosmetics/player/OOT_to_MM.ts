@@ -4,6 +4,7 @@ import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { getManifestForFormOot, UniversalAliasTable } from "../UniversalAliasTable";
 import { MatrixTranslate } from "../utils/MatrixTranslate";
+import Z64OManifestParser from "../Z64OManifestParser";
 
 export class OOT_to_MM {
 
@@ -13,6 +14,7 @@ export class OOT_to_MM {
         let replacement: Buffer = Buffer.from("0000000000000000", 'hex');
         let a = evt.model.readUInt8(0x500B);
 
+        evt.model = Z64OManifestParser.removeMTXData(evt.model);
         let u = new UniversalAliasTable().createTable(evt.model, getManifestForFormOot(evt.age), false, Z64LibSupportedGames.OCARINA_OF_TIME, true);
 
         /**

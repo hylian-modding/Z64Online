@@ -35,4 +35,12 @@ export default class Z64Serialize{
         });
     }
 
+    static FixArray(fakeArray: any){
+        let arr: Array<any> = [];
+        Object.keys(fakeArray).forEach((key: string)=>{
+            arr.push(fakeArray[key]);
+        });
+        return arr;
+    }
+
 }

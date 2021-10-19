@@ -4,11 +4,14 @@ import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { UniversalAliasTable, getManifestForFormMM } from "../UniversalAliasTable";
 import { MatrixTranslate } from "../utils/MatrixTranslate";
+import Z64OManifestParser from "../Z64OManifestParser";
 
 export class MM_to_OOT {
 
     static convert(evt: Z64Online_ModelAllocation) {
         console.log(`Attempting to convert MM model ${evt.name} to OOT...`);
+        
+        evt.model = Z64OManifestParser.removeMTXData(evt.model);
         let u = new UniversalAliasTable().createTable(evt.model, getManifestForFormMM(evt.age), false, Z64LibSupportedGames.MAJORAS_MASK, true);
 
         // Sword Matricies.
