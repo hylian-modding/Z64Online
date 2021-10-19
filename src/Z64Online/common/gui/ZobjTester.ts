@@ -148,6 +148,7 @@ export class ZobjTester {
         if (this.ModLoader.ImGui.begin("ZOBJ TESTER Z64O")) {
             this.ModLoader.ImGui.columns(2);
             if (this.zobjs.length === 0) {
+                this.ModLoader.ImGui.text(`Put zobjs in ${path.resolve(global.ModLoader.startdir, "zobjs")} to get started.`);
                 let d = path.resolve(global.ModLoader.startdir, "zobjs");
                 if (!fs.existsSync(d)) {
                     fs.mkdirSync(d);
