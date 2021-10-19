@@ -536,13 +536,16 @@ export class UniversalAliasTable {
         if (BANK_OBJECTS.size === 0) {
             console.log("Loading Bank objects...");
             let objs: Array<string> = [];
-            objs.push("./cache/adult.zobj");
-            objs.push("./cache/child.zobj");
-            objs.push("./cache/human.zobj");
-            objs.push("./cache/nuts.zobj");
-            objs.push("./cache/goron.zobj");
-            objs.push("./cache/zora.zobj");
-            objs.push("./cache/fd.zobj");
+            if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
+                objs.push("./cache/adult.zobj");
+                objs.push("./cache/child.zobj");
+            } else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+                objs.push("./cache/human.zobj");
+                objs.push("./cache/nuts.zobj");
+                objs.push("./cache/goron.zobj");
+                objs.push("./cache/zora.zobj");
+                objs.push("./cache/fd.zobj");
+            }
             for (let i = 0; i < objs.length; i++) {
                 let parse = new ZZPlayasEmbedParser();
                 let zobj = fs.readFileSync(path.resolve(objs[i]));

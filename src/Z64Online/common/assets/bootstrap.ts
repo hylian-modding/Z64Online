@@ -8,12 +8,14 @@ import { object_link_boy } from '@Z64Online/oot/models/zobjs/object_link_boy';
 import { object_link_child } from '@Z64Online/oot/models/zobjs/object_link_child';
 import fs from 'fs';
 import path from 'path';
+import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
+import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { decodeAsset } from './decoder';
 import { proxy_universal } from './proxy_universal';
 
 export default class AssetBootstrap {
 
-    constructor(){
+    constructor() {
         this.extract();
     }
 
@@ -25,15 +27,18 @@ export default class AssetBootstrap {
             if (fs.existsSync(p)) return;
             fs.writeFileSync(p, decodeAsset(buf));
         };
-        extractIfMissing(path.join("./cache", "human.zobj"), object_link_human);
-        extractIfMissing(path.join("./cache", "zora.zobj"), object_link_zora);
-        extractIfMissing(path.join("./cache", "nuts.zobj"), object_link_nuts);
-        extractIfMissing(path.join("./cache", "fd.zobj"), object_link_deity);
-        extractIfMissing(path.join("./cache", "goron.zobj"), object_link_goron);
-        extractIfMissing(path.join("./cache", "gear.zobj"), gear);
+        if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+            extractIfMissing(path.join("./cache", "human.zobj"), object_link_human);
+            extractIfMissing(path.join("./cache", "zora.zobj"), object_link_zora);
+            extractIfMissing(path.join("./cache", "nuts.zobj"), object_link_nuts);
+            extractIfMissing(path.join("./cache", "fd.zobj"), object_link_deity);
+            extractIfMissing(path.join("./cache", "goron.zobj"), object_link_goron);
+            extractIfMissing(path.join("./cache", "gear.zobj"), gear);
+        } else if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
+            extractIfMissing(path.join("./cache", "adult.zobj"), object_link_boy);
+            extractIfMissing(path.join("./cache", "child.zobj"), object_link_child);
+        }
         extractIfMissing(path.join("./cache", "proxy_universal.zobj"), proxy_universal);
-        extractIfMissing(path.join("./cache", "adult.zobj"), object_link_boy);
-        extractIfMissing(path.join("./cache", "child.zobj"), object_link_child);
     }
 
 }
