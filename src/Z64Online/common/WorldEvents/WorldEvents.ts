@@ -613,15 +613,16 @@ export class WorldEventRewards {
         this.ModLoader.utils.setTimeoutFrames(() => {
             Object.keys(this.config.costumeLoadout).forEach((key: string) => {
                 let value = this.config.costumeLoadout[key];
-                let c = this.getAssetByUUID(this.config.costumeLoadout[value]);
-                if (c !== undefined) {
+                if (value !== "" && this.allRewardTickets.has(value)) {
+                    let ticket = this.allRewardTickets.get(value)!;
+                    let c = this.getAssetByUUID(ticket.uuid)!;
                     let id = this.getFormIDByLabel(key);
                     if (id !== undefined) {
-                        let evt = new Z64Online_ModelAllocation(c, id, Z64_GAME);
+                        let evt = new Z64Online_ModelAllocation(c, id, this.gameTagToID(ticket.game));
                         if (this.isAssetScripted(value).is) {
                             evt.script = this.isAssetScripted(value).script;
                         }
-                        bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
+                        this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.CHANGE_MODEL_INTERNAL, evt);
                     }
                 } else {
                     // Probably a custom costume.
