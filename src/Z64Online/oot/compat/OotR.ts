@@ -14,7 +14,7 @@ import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { optimize } from "Z64Lib/API/zzoptimize";
-import { BANK_OBJECTS, BANK_REPLACEMENTS, UniversalAliasTable, ZobjPiece } from "@Z64Online/common/cosmetics/UniversalAliasTable";
+import { BANK_LOOKUP, BANK_OBJECTS, BANK_REPLACEMENTS, UniversalAliasTable, ZobjPiece } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 import fs from 'fs';
 import { SmartBuffer } from 'smart-buffer';
 
@@ -151,7 +151,8 @@ export class OotRCosmeticHelper {
         }
 
         // Step 3: Clone the bank shield and copy the FA commands into it in order.
-        let bank_shield = BANK_OBJECTS.get("6ac449b469edebdbdb660fa373f782b2")!;
+        let hash = BANK_LOOKUP.get("adult")!.get("Shield.3")!;
+        let bank_shield = BANK_OBJECTS.get(hash)!;
         let sb2 = new SmartBuffer().writeBuffer(bank_shield.piece);
         sb2.readOffset = bank_shield.offset;
         sb2.writeOffset = bank_shield.offset;
@@ -166,7 +167,7 @@ export class OotRCosmeticHelper {
         }
         p.piece = sb2.toBuffer();
         p.offset = bank_shield.offset;
-        BANK_REPLACEMENTS.set("6ac449b469edebdbdb660fa373f782b2", p);
+        BANK_REPLACEMENTS.set(hash, p);
         ModLoader.logger.info("Loaded OotR mirror shield colors.");
     }
 

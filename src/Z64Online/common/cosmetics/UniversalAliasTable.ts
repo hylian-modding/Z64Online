@@ -279,8 +279,9 @@ export class DummyManifest implements IManifest {
     }
 }
 
-export const BANK_OBJECTS: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
+export const BANK_OBJECTS: Map<string, ZobjPiece> = new Map();
 export const BANK_REPLACEMENTS: Map<string, ZobjPiece> = new Map();
+export const BANK_LOOKUP: Map<string, Map<string, string>> = new Map();
 const CUBE: Map<string, ZobjPiece> = new Map<string, ZobjPiece>();
 
 export class Skeleton {
@@ -534,22 +535,25 @@ export class UniversalAliasTable {
     private loadBankObjects() {
         if (BANK_OBJECTS.size === 0) {
             console.log("Loading Bank objects...");
-            let objs: Array<Buffer> = [];
-            objs.push(fs.readFileSync("./cache/adult.zobj"));
-            objs.push(fs.readFileSync("./cache/child.zobj"));
-            objs.push(fs.readFileSync("./cache/human.zobj"));
-            objs.push(fs.readFileSync("./cache/nuts.zobj"));
-            objs.push(fs.readFileSync("./cache/goron.zobj"));
-            objs.push(fs.readFileSync("./cache/zora.zobj"));
-            objs.push(fs.readFileSync("./cache/fd.zobj"));
+            let objs: Array<string> = [];
+            objs.push("./cache/adult.zobj");
+            objs.push("./cache/child.zobj");
+            objs.push("./cache/human.zobj");
+            objs.push("./cache/nuts.zobj");
+            objs.push("./cache/goron.zobj");
+            objs.push("./cache/zora.zobj");
+            objs.push("./cache/fd.zobj");
             for (let i = 0; i < objs.length; i++) {
                 let parse = new ZZPlayasEmbedParser();
-                let zobj = objs[i];
+                let zobj = fs.readFileSync(path.resolve(objs[i]));
+                let name = path.parse(objs[i]).name;
+                BANK_LOOKUP.set(name, new Map());
                 let parse_zobj = parse.parse(zobj);
                 Object.keys(parse_zobj).forEach((key: string) => {
                     let o = optimize(zobj, [parse_zobj[key]]);
                     let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_zobj[key])!);
                     BANK_OBJECTS.set(piece.hash, piece);
+                    BANK_LOOKUP.get(name)!.set(key, piece.hash);
                 });
             }
         }
