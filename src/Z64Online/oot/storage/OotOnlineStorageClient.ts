@@ -24,4 +24,5 @@ export class OotOnlineStorageClient extends OotOnlineStorageBase implements IZ64
   first_time_sync = false;
   playerModelCache: any = {};
   lastKnownSaveName: string = "Link";
+  canAutoSaveNow: boolean = false;
 }

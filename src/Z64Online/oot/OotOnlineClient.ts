@@ -92,7 +92,7 @@ export default class OotOnlineClient {
     multiworld!: Multiworld;
     @SidedProxy(ProxySide.CLIENT, SongOfSoaringCompat)
     songOfSoaring!: SongOfSoaringCompat;
-    
+
     opa!: ThiccOpa;
     syncContext: number = -1;
     syncTimer: number = 0;
@@ -188,7 +188,7 @@ export default class OotOnlineClient {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             let packet = new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world);
-            if (this.songOfSoaring.isModLoaded()){
+            if (this.songOfSoaring.isModLoaded()) {
                 packet.modData["SongOfSoaring"] = this.songOfSoaring.getOwlData();
             }
             this.ModLoader.clientSide.sendPacket(packet);
@@ -244,9 +244,13 @@ export default class OotOnlineClient {
             }
             this.core.OOT!.global.writeSaveDataForCurrentScene(save_scene_data);
             this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.OOT!.global.scene, this.clientStorage.world));
-            if (this.config.autosaves) {
+            if (this.config.autosaves && this.clientStorage.canAutoSaveNow) {
                 this.ModLoader.utils.setTimeoutFrames(() => {
                     this.notificationManager.onAutoSave(this.autosaveIntoSlot2());
+                    this.clientStorage.canAutoSaveNow = false;
+                    setTimeout(() => {
+                        this.clientStorage.canAutoSaveNow = true;
+                    }, 1000 * 60);
                 }, 20 * 3);
             }
         }
@@ -469,6 +473,9 @@ export default class OotOnlineClient {
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.clientStorage.first_time_sync = true;
             this.updateBottles(true);
+            setTimeout(() => {
+                this.clientStorage.canAutoSaveNow = true;
+            }, 1000 * 60);
         }, 20);
     }
 
@@ -485,13 +492,13 @@ export default class OotOnlineClient {
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
-        Object.keys(packet.modData).forEach((key: string)=>{
+        Object.keys(packet.modData).forEach((key: string) => {
             this.songOfSoaring.apply(key, packet.modData[key]);
         });
     }
 
     @NetworkHandler('Z64O_ErrorPacket')
-    onError(packet: Z64O_ErrorPacket){
+    onError(packet: Z64O_ErrorPacket) {
         this.ModLoader.logger.error(packet.message);
     }
 
@@ -701,9 +708,9 @@ export default class OotOnlineClient {
             this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
             RomFlags.isOotR = true;
             markAsRandomizer();
-            try{
+            try {
                 OotRCosmeticHelper.extractMirrorShield(this.ModLoader, evt);
-            }catch(err: any){
+            } catch (err: any) {
                 if (err) this.ModLoader.logger.error(err.stack);
             }
             if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OotR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
