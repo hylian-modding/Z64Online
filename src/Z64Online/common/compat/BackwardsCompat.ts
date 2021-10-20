@@ -10,4 +10,6 @@ export class BackwardsCompat {
     static EVEN_OLDER_OOT_ADULT_EVT: string = "OotOnline:ApplyCustomModelAdult";
     static EVEN_OLDER_OOT_CHILD_EVT: string = "OotOnline:ApplyCustomModelChild";
 
+    static OLD_OOT_SOUND_PAK_EVT: string = "OotOnline:OnLoadSoundPack";
+
 }

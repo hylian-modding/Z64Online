@@ -4,7 +4,7 @@ import { InjectCore } from 'modloader64_api/CoreInjection';
 import { ProxySide, SidedProxy } from 'modloader64_api/SidedProxy/SidedProxy';
 import { onViUpdate, Postinit, Preinit } from 'modloader64_api/PluginLifecycle';
 import { bus, EventHandler, PrivateEventHandler } from 'modloader64_api/EventHandler';
-import { bool_ref } from 'modloader64_api/Sylvain/ImGui';
+import { bool_ref, Dir } from 'modloader64_api/Sylvain/ImGui';
 import { CostumeHelper } from '../events/CostumeHelper';
 import { Z64_EventConfig } from './Z64_EventConfig';
 import fs from 'fs';
@@ -22,6 +22,7 @@ import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { Z64 } from 'Z64Lib/API/imports';
 import { BackwardsCompat } from '../compat/BackwardsCompat';
+import { rgba } from 'modloader64_api/Sylvain/vec';
 
 export interface Z64_EventReward {
     name: string;
@@ -52,6 +53,7 @@ export class WorldEventRewards {
     ModLoader!: IModLoaderAPI;
     @InjectCore()
     core!: IZ64Main;
+    allowManagerUsage: boolean = false;
     rewardsWindowStatus: bool_ref = [false];
     customModelRegistry: Map<AgeOrForm, Map<string, IModelReference>> = new Map();
     customModelsFilesEquipment: Map<string, Z64Online_EquipmentPak[]> = new Map<string, Z64Online_EquipmentPak[]>();
@@ -261,7 +263,7 @@ export class WorldEventRewards {
         }
         this.ModLoader.config.setData("Z64O_WorldEvents", "costumeLoadout", c);
         this.ModLoader.config.setData("Z64O_WorldEvents", "equipmentLoadout", {});
-        this.ModLoader.config.setData("Z64O_WorldEvents", "voice", "");
+        this.ModLoader.config.setData("Z64O_WorldEvents", "voices", []);
         this.ModLoader.config.setData("Z64O_WorldEvents", "anim_bank", "");
         this.ModLoader.config.setData("Z64O_WorldEvents", "assetcache", "");
     }
@@ -323,7 +325,7 @@ export class WorldEventRewards {
             bus.emit(Z64OnlineEvents.CLEAR_EQUIPMENT, {});
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT, Z64LibSupportedGames.OCARINA_OF_TIME));
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD, Z64LibSupportedGames.OCARINA_OF_TIME));
-            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
+            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, []);
         }
     }
 
@@ -335,7 +337,7 @@ export class WorldEventRewards {
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.GORON, Z64LibSupportedGames.MAJORAS_MASK));
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ZORA, Z64LibSupportedGames.MAJORAS_MASK));
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.FD, Z64LibSupportedGames.MAJORAS_MASK));
-            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
+            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, []);
         }
     }
 
@@ -424,10 +426,17 @@ export class WorldEventRewards {
             }
             if (this.rewardsWindowStatus[0]) {
                 if (this.ModLoader.ImGui.begin("Costume Manager###OotO:EventRewards", this.rewardsWindowStatus)) {
+                    if (!this.allowManagerUsage) {
+                        this.ModLoader.ImGui.text("Load a save to enable this feature.");
+                        this.ModLoader.ImGui.end();
+                        return;
+                    }
+                    this.ModLoader.ImGui.columns(this.customSoundGroups.size > 0 ? 2 : 1);
+                    this.ModLoader.ImGui.text("Costume Management");
                     if (this.ModLoader.ImGui.smallButton("Remove all costumes")) {
                         this.config.costumeLoadout = {};
                         this.config.equipmentLoadout = {};
-                        this.config.voice = "";
+                        this.config.voices = [];
                         this.ModLoader.utils.setTimeoutFrames(() => {
                             this.clearEverything_OOT();
                             this.clearEverything_MM();
@@ -568,21 +577,6 @@ export class WorldEventRewards {
                             });
                             this.ModLoader.ImGui.treePop();
                         }
-                        if (this.ModLoader.ImGui.treeNode("Voice###OotOCustomVoice")) {
-                            this.customSoundGroups.forEach((value: any, key: string) => {
-                                if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.voice)) {
-                                    if (key === this.config.voice) {
-                                        this.config.voice = "";
-                                        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, undefined);
-                                    } else {
-                                        this.config.voice = key;
-                                        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, key);
-                                    }
-                                    this.ModLoader.config.save();
-                                }
-                            });
-                            this.ModLoader.ImGui.treePop();
-                        }
                         if (this.ModLoader.ImGui.treeNode("Animation Banks###OotOCustomAnims")) {
                             this.anims.forEach((value: Buffer, key: string) => {
                                 if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.anim_bank)) {
@@ -600,11 +594,72 @@ export class WorldEventRewards {
                         }
                         this.ModLoader.ImGui.treePop();
                     }
+                    if (this.customSoundGroups.size > 0) {
+                        this.ModLoader.ImGui.nextColumn();
+                        this.ModLoader.ImGui.text("Voice Management");
+                        this.ModLoader.ImGui.newLine();
+                        this.ModLoader.ImGui.text("Equipped");
+                        if (this.config.voices.length > 0) {
+                            for (let i = 0; i < this.config.voices.length; i++) {
+                                this.drawSoundEntry(this.config.voices[i]);
+                            }
+                        } else {
+                            this.ModLoader.ImGui.text("No voices equipped.");
+                        }
+                        this.ModLoader.ImGui.newLine();
+                        this.ModLoader.ImGui.text("Available");
+                        this.customSoundGroups.forEach((value: any, key: string) => {
+                            if (this.config.voices.indexOf(key) === -1) {
+                                this.drawSoundSelections(key);
+                            }
+                        });
+                    }
                 }
                 this.ModLoader.ImGui.end();
             }
         } catch (err: any) {
             console.log(err);
+        }
+    }
+
+    drawSoundEntry(id: string) {
+        if (this.ModLoader.ImGui.arrowButton(`Z64O::Sound::UP::${id}`, Dir.Up)) this.handleSoundArrow(id, Dir.Up);
+        this.ModLoader.ImGui.sameLine();
+        if (this.ModLoader.ImGui.arrowButton(`Z64O::Sound::DOWN::${id}`, Dir.Down)) this.handleSoundArrow(id, Dir.Down);
+        this.ModLoader.ImGui.sameLine();
+        if (this.ModLoader.ImGui.smallButton(`X###Z64O::Sound::X::${id}`)) {
+            if (this.config.voices.indexOf(id) > -1) {
+                this.config.voices.splice(this.config.voices.indexOf(id), 1);
+                bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
+            }
+        }
+        this.ModLoader.ImGui.sameLine();
+        this.ModLoader.ImGui.text(id);
+    }
+
+    handleSoundArrow(id: string, dir: Dir) {
+        let index = this.config.voices.indexOf(id);
+        // Can't go up if we're at the top.
+        if (index === 0 && dir === Dir.Up) {
+            return;
+        }
+        // Can't go down if we're at the bottom.
+        if (index === (this.config.voices.length - 1) && dir === Dir.Down) {
+            return;
+        }
+        let c: number = 1;
+        if (dir === Dir.Up) c /= -1;
+        c += index;
+        let itemAtIndex = this.config.voices[c];
+        this.config.voices[c] = id;
+        this.config.voices[index] = itemAtIndex;
+        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
+    }
+
+    drawSoundSelections(id: string) {
+        if (this.ModLoader.ImGui.smallButton(`${id}###Z64O::Sound::ENABLE::${id}`)) {
+            this.config.voices.push(id);
+            bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
         }
     }
 
@@ -639,9 +694,20 @@ export class WorldEventRewards {
                 }
             });
 
-            if (this.config.voice !== "") {
-                if (this.customSoundGroups.has(this.config.voice)) {
-                    bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voice);
+            if (this.config.voices.length > 0) {
+                let missing_sounds: string[] = [];
+                for (let i = 0; i < this.config.voices.length; i++) {
+                    if (this.customSoundGroups.has(this.config.voices[i])) {
+                        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices[i]);
+                    } else {
+                        this.ModLoader.logger.warn(`${this.config.voices[i]} voice is selected but missing.`);
+                        missing_sounds.push(this.config.voices[i]);
+                    }
+                }
+                for (let i = 0; i < missing_sounds.length; i++) {
+                    if (this.config.voices.indexOf(missing_sounds[i]) > -1) {
+                        this.config.voices.splice(this.config.voices.indexOf(missing_sounds[i]), 1);
+                    }
                 }
             }
             if (this.config.anim_bank !== "") {
@@ -671,6 +737,7 @@ export class WorldEventRewards {
                     }
                 }
             }
+            this.allowManagerUsage = true;
         }, Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK ? 100 : 1);
     }
 

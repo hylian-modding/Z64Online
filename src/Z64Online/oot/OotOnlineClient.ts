@@ -34,7 +34,6 @@ import { ThiccOpa } from "./opa/ThiccOpa";
 import { OOT_PuppetOverlordClient } from "./puppet/OOT_PuppetOverlord";
 import { PvPModule } from "./pvp/PvPModule";
 import { OotOSaveData } from "./save/OotoSaveData";
-import { SoundManagerClient } from "./sounds/SoundManager";
 import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
@@ -42,6 +41,7 @@ import { ModelManagerOot } from "./models/ModelManagerOot";
 import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
 import SongOfSoaringCompat from "./compat/SongOfSoaring";
 import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
+import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 

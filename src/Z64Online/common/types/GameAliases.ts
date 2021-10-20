@@ -5,6 +5,7 @@ import { MMManifest } from 'Z64Lib/API/MM/ModelData/MMManfest';
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
+import { IViewStruct } from "Z64Lib/API/Common/Z64API";
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -19,7 +20,7 @@ export let Z64_MANIFEST: Manifest;
 export let Z64_OBJECT_TABLE_RAM: number = 0;
 export let Z64_PLAYER_PROXY: Buffer;
 
-export function setupOot(){
+export function setupOot() {
     Z64_ANIM_BANK_DMA = OOT_ANIM_BANK_DMA;
     Z64_ANIM_BANK_SIZE = OOT_ANIM_BANK_SIZE;
     Z64_CHILD = AgeOrForm.CHILD;
@@ -31,7 +32,7 @@ export function setupOot(){
     Z64_OBJECT_TABLE_RAM = 0x801D9C44;
 }
 
-export function setupMM(){
+export function setupMM() {
     Z64_ANIM_BANK_DMA = -1;
     Z64_ANIM_BANK_SIZE = -1;
     Z64_CHILD = AgeOrForm.HUMAN;
@@ -43,30 +44,42 @@ export function setupMM(){
     Z64_OBJECT_TABLE_RAM = 0x803FE8A8;
 }
 
-export function markAsRandomizer(){
+export function markAsRandomizer() {
     Z64_IS_RANDOMIZER = true;
 }
 
-export function setPlayerProxy(buf: Buffer){
+export function setPlayerProxy(buf: Buffer) {
     Z64_PLAYER_PROXY = buf;
 }
 
-export function getAgeOrForm(core: IZ64Main): AgeOrForm{
+export function getAgeOrForm(core: IZ64Main): AgeOrForm {
     return core.OOT !== undefined ? core.OOT!.save.age : core.MM!.save.form;
 }
 
-export function getChildID(): AgeOrForm{
+export function getChildID(): AgeOrForm {
     return Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? AgeOrForm.CHILD : AgeOrForm.HUMAN
 }
 
-export function getAdultID(): AgeOrForm{
+export function getAdultID(): AgeOrForm {
     return Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? AgeOrForm.ADULT : AgeOrForm.HUMAN
 }
 
-export function getLinkPos(core: IZ64Main): Buffer{
+export function getLinkPos(core: IZ64Main): Buffer {
     return core.OOT !== undefined ? core.OOT!.link.position.getRawPos() : core.MM!.link.position.getRawPos();
 }
 
-export function isTitleScreen(core: IZ64Main): boolean{
+export function getLinkSoundID(core: IZ64Main): number{
+    return core.OOT !== undefined ? core.OOT!.link.current_sound_id : core.MM!.link.current_sound_id;
+}
+
+export function isTitleScreen(core: IZ64Main): boolean {
     return core.OOT !== undefined ? core.OOT!.helper.isTitleScreen() : core.MM!.helper.isTitleScreen();
+}
+
+export function getViewStruct(core: IZ64Main): IViewStruct {
+    return core.OOT !== undefined ? core.OOT!.global.viewStruct : core.MM!.global.viewStruct;
+}
+
+export function isPaused(core: IZ64Main): boolean {
+    return core.OOT !== undefined ? core.OOT!.helper.isPaused() : core.MM!.helper.isPaused();
 }

@@ -34,6 +34,8 @@ export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
 import { Z64O_PermFlagsPacket } from "./network/MMOPackets";
 import { MMOSaveData } from "./save/MMOSaveData";
+import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
+import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -79,7 +81,7 @@ export default class MMOnlineClient {
     @SidedProxy(ProxySide.CLIENT, WorldEvents)
     worldEvents!: WorldEvents;
     //@SidedProxy(ProxySide.CLIENT, SoundManagerClient)
-    //soundManager!: SoundManagerClient;
+    //sound!: SoundManagerClient;
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
@@ -760,6 +762,7 @@ export default class MMOnlineClient {
         } else {
             this.ModLoader.logger.debug("This is an MMR Rom.");
             this.clientStorage.isMMR = true;
+            markAsRandomizer();
             //this.mmrSyncCheck();
         }
     }
