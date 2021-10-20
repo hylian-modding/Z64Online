@@ -27,7 +27,6 @@ export class ModelAPIHandlers {
         this.parent = parent;
         // Idk why the decorators aren't working in this class, so bind it manually.
         this.parent.ModLoader.privateBus.on(Z64O_PRIVATE_EVENTS.CHANGE_MODEL_INTERNAL, this.onCustomModel_internal.bind(this));
-        this.parent.ModLoader.privateBus.on(Z64O_PRIVATE_EVENTS.PREPROCESS_ZOBJ, this.onCustomModel_preprocess.bind(this));
     }
 
     @EventHandler(Z64OnlineEvents.GET_CURRENT_MODEL)
@@ -140,7 +139,7 @@ export class ModelAPIHandlers {
         return ref;
     }
 
-    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.PREPROCESS_ZOBJ)
+    @EventHandler(Z64OnlineEvents.PREPROCESS_ZOBJ)
     onCustomModel_preprocess(evt: Z64Online_ModelAllocation){
         ModelAPIHandlers.processModel(evt, this.parent.ModLoader, true);
     }

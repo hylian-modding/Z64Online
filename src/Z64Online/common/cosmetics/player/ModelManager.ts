@@ -549,6 +549,7 @@ export class ModelManagerClient {
   onTunic(tunic: Tunic) {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
+    if (Z64_GAME !== OOT_GAME) return;
     if (this.allocationManager.getLocalPlayerData().currentScript !== undefined) {
       let ref: IModelReference = this.allocationManager.getLocalPlayerData().AgesOrForms.get(this.AgeOrForm)!;
       let newRef = this.allocationManager.getLocalPlayerData().currentScript!.onTunicChanged(ref, tunic);
