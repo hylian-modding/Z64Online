@@ -1,7 +1,7 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import fs from 'fs';
 import path from 'path';
-import { number_ref } from "modloader64_api/Sylvain/ImGui";
+import { bool_ref, number_ref } from "modloader64_api/Sylvain/ImGui";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { bus } from "modloader64_api/EventHandler";
@@ -66,6 +66,7 @@ export class ZobjTester {
         new MTX_Group(),
         new MTX_Group(),
     ];
+    forceAdultSizedInMM: bool_ref = [false];
 
     constructor(ModLoader: IModLoaderAPI, core: IZ64Main) {
         this.ModLoader = ModLoader;
@@ -178,8 +179,11 @@ export class ZobjTester {
                     this.isOOT = !this.isOOT;
                     this.isMM = !this.isMM;
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.checkbox("Force Adult Size in MM", this.forceAdultSizedInMM)) {
+                }
                 if (this.ModLoader.ImGui.smallButton("Load Model")) {
-                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK));
+                    bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), this.forceAdultSizedInMM[0] ? 0x68 : getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK));
                 }
                 this.ModLoader.ImGui.nextColumn();
                 this.ModLoader.ImGui.labelText("", "Matrix Editor");
@@ -206,11 +210,11 @@ export class ZobjTester {
                 if (this.ModLoader.ImGui.sliderInt("Scale", this.MTX[this.currentMtx[0]].XS, 0, 2)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.smallButton("Export")){
+                if (this.ModLoader.ImGui.smallButton("Export")) {
                     let zobj = fs.readFileSync(this.zobjs[this.current[0]]._path);
                     zobj = Z64OManifestParser.removeMTXData(zobj);
                     let all_mtx: Buffer[] = [];
-                    for (let i = 0; i < this.MTX.length; i++){
+                    for (let i = 0; i < this.MTX.length; i++) {
                         let mtx = MatrixTranslate.guMtxF2L(MatrixTranslate.guRTSF(this.MTX[i].XR[0], this.MTX[i].YR[0], this.MTX[i].ZR[0], this.MTX[i].XT[0], this.MTX[i].YT[0], this.MTX[i].ZT[0], this.MTX[i].XS[0]));
                         all_mtx.push(mtx);
                     }
