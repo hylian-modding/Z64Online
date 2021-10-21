@@ -238,7 +238,7 @@ export class ZobjTester {
                     this.updateMtx();
                 }
 
-                if (this.ModLoader.ImGui.sliderFloats("Scale", this.MTX[this.currentMtx[0]].XS, -9999, 9999)) {
+                if (this.ModLoader.ImGui.sliderFloats("Scale", this.MTX[this.currentMtx[0]].XS, 0, 10)) {
                     this.updateMtx();
                 }
                 this.ModLoader.ImGui.sameLine();
