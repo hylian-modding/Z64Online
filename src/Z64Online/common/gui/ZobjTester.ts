@@ -207,7 +207,7 @@ export class ZobjTester {
                 if (this.ModLoader.ImGui.sliderFloats("ZT", this.MTX[this.currentMtx[0]].ZT, -9999, 9999)) {
                     this.updateMtx();
                 }
-                if (this.ModLoader.ImGui.sliderInt("Scale", this.MTX[this.currentMtx[0]].XS, 0, 2)) {
+                if (this.ModLoader.ImGui.sliderFloats("Scale", this.MTX[this.currentMtx[0]].XS, -9999, 9999)) {
                     this.updateMtx();
                 }
                 if (this.ModLoader.ImGui.smallButton("Export")) {
