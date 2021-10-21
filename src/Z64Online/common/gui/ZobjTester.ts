@@ -189,27 +189,63 @@ export class ZobjTester {
                 this.ModLoader.ImGui.labelText("", "Matrix Editor");
                 if (this.ModLoader.ImGui.listBox("Matrix Select", this.currentMtx, this.mtxLabels)) {
                 }
+
                 if (this.ModLoader.ImGui.sliderFloats("XR", this.MTX[this.currentMtx[0]].XR, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###XR_IN`, this.MTX[this.currentMtx[0]].XR)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.sliderFloats("YR", this.MTX[this.currentMtx[0]].YR, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###YR_IN`, this.MTX[this.currentMtx[0]].YR)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.sliderFloats("ZR", this.MTX[this.currentMtx[0]].ZR, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###ZR_IN`, this.MTX[this.currentMtx[0]].ZR)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.sliderFloats("XT", this.MTX[this.currentMtx[0]].XT, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###XT_IN`, this.MTX[this.currentMtx[0]].XT)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.sliderFloats("YT", this.MTX[this.currentMtx[0]].YT, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###YT_IN`, this.MTX[this.currentMtx[0]].YT)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.sliderFloats("ZT", this.MTX[this.currentMtx[0]].ZT, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###ZT_IN`, this.MTX[this.currentMtx[0]].ZT)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.sliderFloats("Scale", this.MTX[this.currentMtx[0]].XS, -9999, 9999)) {
                     this.updateMtx();
                 }
+                this.ModLoader.ImGui.sameLine();
+                if (this.ModLoader.ImGui.inputFloat(`   ###XS_IN`, this.MTX[this.currentMtx[0]].XS)) {
+                    this.updateMtx();
+                }
+
                 if (this.ModLoader.ImGui.smallButton("Export")) {
                     let zobj = fs.readFileSync(this.zobjs[this.current[0]]._path);
                     zobj = Z64OManifestParser.removeMTXData(zobj);
