@@ -1,3 +1,4 @@
+// !ML64_PROD_IGNORE
 import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
 
 export class CDNFileRequest_Packet extends Packet {

@@ -1,4 +1,4 @@
-import { number_ref, SliderFlags, string_ref } from "modloader64_api/Sylvain/ImGui";
+import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IActor } from "Z64Lib/API/imports";
@@ -39,10 +39,10 @@ export abstract class ImGuiHandlerCommon {
     curActor: number = 0;
     raddeg: number = Math.PI / 32768
     actor_data: Buffer = Buffer.alloc(0x13C);
-    font!: Font;
     crawler!: DListCrawler;
     tester!: ZobjTester;
     // #endif
+    font!: Font;
 
     onViUpdate() {
         if (this.font === undefined) {
@@ -51,8 +51,10 @@ export abstract class ImGuiHandlerCommon {
                 this.font.loadFromMemory(getHylianFont(), 22, 2);
                 changeKillfeedFont(this.font);
                 setHylianFontRef(this.font);
+                 // #ifdef IS_DEV_BUILD
                 this.crawler = new DListCrawler(this.ModLoader);
                 this.tester = new ZobjTester(this.ModLoader, this.core);
+                // #endif
             } catch (err: any) {
                 this.ModLoader.logger.error(err);
             }

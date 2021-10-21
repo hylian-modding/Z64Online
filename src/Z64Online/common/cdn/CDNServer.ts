@@ -42,7 +42,7 @@ export class CDNServer {
         this.config = this.ModLoader.config.registerConfigCategory(CDNConfigTag) as CDNConfig;
         this.ModLoader.config.setData(CDNConfigTag, "url", "http://127.0.0.1");
         this.ModLoader.config.setData(CDNConfigTag, "port", "6969");
-        this.thread = new Worker(path.resolve(__dirname, "CDNThread.js"));
+        this.thread = new Worker(path.resolve(__dirname, "CDNThreadEntryPoint.js"));
         this.thread.on('message', this.onMessageFromThread.bind(this));
         this.sendMessageToThread("config", this.config);
     }

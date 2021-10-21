@@ -53,7 +53,7 @@ gulp.task('_build_production', function () {
             let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
             meta.date = new Date().toUTCString();
             fs.writeFileSync("./src/Z64Online/package.json", JSON.stringify(meta, null, 2));
-            child_process.execSync('npx tsc')
+            child_process.execSync('npx tsc', { stdio: 'inherit' });
         } catch (err: any) {
             console.log(err.stack);
         }
@@ -85,21 +85,30 @@ gulp.task('crush', function () {
             files[i] = path.resolve(`./${files[i]}`)
             if (path.parse(files[i]).ext !== ".js") continue;
             if (files[i].indexOf("node_modules") > -1) continue;
-            try {
+            let d = fs.readFileSync(files[i]);
+            let size = d.byteLength;
+            let check = d.toString();
+            if (check.includes("!ML64_PROD_IGNORE")) {
+                console.log(`${path.relative("./build", files[i])} skipped.`);
                 fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
-            } catch (err: any) {
-                console.log("Failed to minify " + files[i]);
+                continue;
             }
+            fs.writeFileSync(files[i], child_process.execSync(`minify \"${files[i]}\"`).toString());
             let lzma: any = require("lzma");
             let data = Buffer.from(lzma.compress(fs.readFileSync(files[i])));
             fs.writeFileSync(path.resolve(path.parse(files[i]).dir, path.parse(files[i]).name + ".mlz"), data.toString('base64'));
+            let comp = fs.readFileSync(files[i]).byteLength;
+            let diff = size - comp;
+            if (diff > 0) {
+                console.log(`${path.relative("./build", files[i])} ${diff} bytes saved.`);
+            } else {
+                console.log(`${path.relative("./build", files[i])} ${diff} bytes lost!.`);
+            }
             fs.removeSync(files[i]);
         }
     })
     return gulp.src('./src/**/*.ts')
 });
-
-gulp.task("build_production", gulp.series(['_build_production', 'clean_up_crap', 'crush']));
 
 gulp.task('packassets', function () {
     let c = path.resolve('./cache/Z64O_Assets.content')
@@ -132,7 +141,7 @@ gulp.task('packassets', function () {
     return gulp.src('.')
 });
 
-gulp.task('generate_update_file', function(){
+gulp.task('generate_update_file', function () {
     try {
         let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
         fs.writeFileSync("./dist/update.json", JSON.stringify({
@@ -146,7 +155,7 @@ gulp.task('generate_update_file', function(){
     return gulp.src('./src/**/*.ts')
 });
 
-gulp.task('remove_nightly_flag', function(){
+gulp.task('remove_nightly_flag', function () {
     try {
         let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
         meta.date = "";
@@ -159,7 +168,7 @@ gulp.task('remove_nightly_flag', function(){
     return gulp.src('./src/**/*.ts')
 });
 
-gulp.task('oot', function(){
+gulp.task('oot', function () {
     let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
     m["ModLoader64"]["rom"] = "Legend of Zelda, The - Ocarina of Time (U) (V1.0) [!].z64";
     m["ModLoader64"]["patch"] = "Oot_Vanillamizer.bps";
@@ -167,12 +176,14 @@ gulp.task('oot', function(){
     return gulp.src('./src/**/*.ts');
 });
 
-gulp.task('mm', function(){
+gulp.task('mm', function () {
     let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
     m["ModLoader64"]["rom"] = "Legend of Zelda, The - Majora's Mask (USA).z64";
     m["ModLoader64"]["patch"] = "MM_Vanillamizer.bps";
     fs.writeFileSync("./modloader64-config.json", JSON.stringify(m, null, 2));
     return gulp.src('./src/**/*.ts');
 });
+
+gulp.task("build_production", gulp.series(['remove_nightly_flag', '_build_production', 'clean_up_crap', 'crush']));
 
 gulp.task('default', gulp.series(['build']));

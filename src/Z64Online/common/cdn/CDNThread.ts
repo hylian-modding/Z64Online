@@ -1,3 +1,4 @@
+// !ML64_PROD_IGNORE
 import { parentPort } from 'worker_threads';
 import { CDNData } from './ICDNData';
 import path from 'path';
