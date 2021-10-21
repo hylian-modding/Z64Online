@@ -188,6 +188,11 @@ export class SoundManagerClient {
         for (let i = 0; i < ids.length; i++) {
             let id = ids[i];
             let evt = { id: id, data: this.localSoundPaks.get(id)! };
+            if (!this.localSoundPaks.has(id)){
+                this.ModLoader.logger.error("Something has gone very wrong with sound pak loading.");
+                this.ModLoader.logger.error(`ID ${id} does not exist.`);
+                continue;
+            }
             Object.keys(evt.data).forEach((key: string) => {
                 let id = parseInt(key);
                 if (SoundCategory_Child.indexOf(id) > -1) this.hasChild = true;
