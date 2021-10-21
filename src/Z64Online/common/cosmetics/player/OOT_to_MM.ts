@@ -39,7 +39,6 @@ export class OOT_to_MM {
                         let hax = fn();
                         sb.writeUInt32BE(0xDE000000, dlist);
                         sb.writeUInt32BE(0x06000000 + hax, dlist + 4);
-                        console.log(`Hijacking limb at ${dlist.toString(16)}`);
                     } else {
                         while (cmd !== 0xDF000000) {
                             if (cmd === 0xDE000000) {
@@ -52,7 +51,6 @@ export class OOT_to_MM {
                                     sb.writeUInt32BE(0xDE000000, hax + 0x10);
                                     sb.writeUInt32BE(off, hax + 0x14);
                                     sb.writeUInt32BE(0x06000000 + hax, dlist + 4);
-                                    console.log(`Hijacking material DE at ${dlist.toString(16)}`);
                                 }
                             }
                             dlist += 0x8;
@@ -78,7 +76,6 @@ export class OOT_to_MM {
                             sb.writeUInt32BE(0xDE000000, hax + 0x10);
                             sb.writeUInt32BE(off, hax + 0x14);
                             sb.writeUInt32BE(0x06000000 + hax, _p + 4);
-                            console.log(`Hijacking material DE at ${_p.toString(16)}`);
                         }
                     }
                     _p += 0x8;
