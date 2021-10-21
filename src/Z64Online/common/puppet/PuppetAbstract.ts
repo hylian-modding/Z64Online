@@ -62,10 +62,11 @@ export abstract class PuppetAbstract implements IPuppet {
         if (!this.isSpawned && !this.isSpawning) {
             bus.emit(Z64OnlineEvents.PLAYER_PUPPET_PRESPAWN, this);
             this.isSpawning = true;
-/*             if (this.data!.pointer === 0){
+            if (this.data!.pointer === 0) {
                 this.data!.pointer = this.ModLoader.heap!.malloc(PUPPET_INST_SIZE);
-            } */
-            this.parent.getClientStorage()!.puppetOvl.spawnActorRXY_Z(this.ageOrForm, this.modelPointer, 0, new Vector3(8192, -2048, 8192)).then((actor: IActor) => {
+            }
+            this.ModLoader.emulator.rdramWriteBuffer(this.data!.pointer, Buffer.alloc(PUPPET_INST_SIZE, 0));
+            this.parent.getClientStorage()!.puppetOvl.spawnActorRXY_Z(this.ageOrForm, this.modelPointer, 0, new Vector3(8192, -2048, 8192), this.data!.pointer).then((actor: IActor) => {
                 this.data!.pointer = actor.pointer;
                 this.doNotDespawnMe(this.data!.pointer);
                 this.home = this.ModLoader.math.rdramReadV3(this.data!.pointer + 0x24);
@@ -77,7 +78,7 @@ export abstract class PuppetAbstract implements IPuppet {
         }
     }
 
-    processIncomingPuppetData(data: {bundle: Buffer}) {
+    processIncomingPuppetData(data: { bundle: Buffer }) {
         if (this.isSpawned && !this.isShoveled) {
             this.data!.ageOrFormLastFrame = this.ageOrForm;
             this.data!.processBundle(data.bundle);
@@ -111,7 +112,6 @@ export abstract class PuppetAbstract implements IPuppet {
                 }
                 this.ModLoader.emulator.rdramWrite32(this.data!.pointer + 0x130, 0x0);
                 this.ModLoader.emulator.rdramWrite32(this.data!.pointer + 0x134, 0x0);
-                this.data!.pointer = 0;
             }
             this.isSpawned = false;
             this.isShoveled = false;

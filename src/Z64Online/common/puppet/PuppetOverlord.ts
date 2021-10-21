@@ -52,7 +52,7 @@ export abstract class PuppetOverlordClient implements IPuppetOverlordClient {
     if (this.puppets.has(player.uuid)) {
       let ipuppet: IPuppet = this.puppets.get(player.uuid)!;
       ipuppet.despawn();
-/*       this.ModLoader.heap!.free(ipuppet.data!.pointer); */
+      this.ModLoader.heap!.free(ipuppet.data!.pointer);
       this.puppets.delete(player.uuid);
     }
     if (this.playersAwaitingPuppets.length > 0) {
