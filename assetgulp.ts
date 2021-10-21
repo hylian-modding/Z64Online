@@ -252,6 +252,8 @@ gulp.task('setup', function () {
     fs.writeFileSync("./objects/mm/forms/object_link_zora.zobj", bps.applyBps(fs.readFileSync("./decomp/mm/baserom/object_link_zora"), fs.readFileSync("./patches/mm/object_link_zora.bps")));
     fs.writeFileSync("./objects/mm/forms/object_link_deity.zobj", bps.applyBps(fs.readFileSync("./decomp/mm/baserom/object_link_boy"), fs.readFileSync("./patches/mm/object_link_boy.bps")));
 
+    fs.writeFileSync("./objects/mm/forms/object_link_human.zobj", bps.applyBps(fs.readFileSync("./objects/mm/forms/object_link_human.zobj"), fs.readFileSync("./patches/mm/fps_arm_fix.bps")));
+
     fs.readdirSync("./objects/oot/ages").forEach((f: string) => {
         let file = path.resolve("./objects/oot/ages", f);
         encode(file);
