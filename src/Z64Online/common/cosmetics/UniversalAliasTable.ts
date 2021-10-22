@@ -288,11 +288,13 @@ export class Skeleton {
     bones: Array<Bone>;
     num: number;
     num2: number;
+    originalPointer: number;
 
-    constructor(num: number, limbs: Array<Bone>, num2: number) {
+    constructor(num: number, limbs: Array<Bone>, num2: number, originalPointer: number) {
         this.num = num;
         this.bones = limbs;
         this.num2 = num2;
+        this.originalPointer = originalPointer;
     }
 }
 
@@ -708,21 +710,33 @@ export class UniversalAliasTable {
 
         // Step 1: Find Bank objects and stub them.
         // If dlist isn't from the bank store it.
+        let new_pipeline_riggedmesh: number = -1;
         Object.keys(m).forEach((key: string) => {
-            let o = optimize(zobj, [m[key]]);
-            let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(m[key])!);
-            if (BANK_OBJECTS.has(piece.hash) && !nostub) {
-                pieces.set(key, new ZobjPiece(new SmartBuffer().writeUInt32BE(0xDF000000).writeUInt32BE(0x00000000).toBuffer(), 0x0));
-            } else {
-                if (stripGear !== undefined && stripGear && (!key.includes("Limb") && !key.includes("Fist"))) {
+            if (key === "skeleton.riggedmesh"){
+                new_pipeline_riggedmesh = m[key];
+                console.log("z64convert pipeline detected.");
+            }
+            try{
+                if (key.includes("riggedmesh.")){
+                    key = key.replace("riggedmesh.", "");
+                }
+                let o = optimize(zobj, [m[key]]);
+                let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(m[key])!);
+                if (BANK_OBJECTS.has(piece.hash) && !nostub) {
                     pieces.set(key, new ZobjPiece(new SmartBuffer().writeUInt32BE(0xDF000000).writeUInt32BE(0x00000000).toBuffer(), 0x0));
                 } else {
-                    if (BANK_REPLACEMENTS.has(piece.hash)) {
-                        pieces.set(key, BANK_REPLACEMENTS.get(piece.hash)!);
+                    if (stripGear !== undefined && stripGear && (!key.includes("Limb") && !key.includes("Fist"))) {
+                        pieces.set(key, new ZobjPiece(new SmartBuffer().writeUInt32BE(0xDF000000).writeUInt32BE(0x00000000).toBuffer(), 0x0));
                     } else {
-                        pieces.set(key, piece);
+                        if (BANK_REPLACEMENTS.has(piece.hash)) {
+                            pieces.set(key, BANK_REPLACEMENTS.get(piece.hash)!);
+                        } else {
+                            pieces.set(key, piece);
+                        }
                     }
                 }
+            }catch(err){
+                return;
             }
         });
         if (USE_ERROR_CUBE) {
@@ -763,7 +777,7 @@ export class UniversalAliasTable {
                 }
                 skeleton.push(limb);
             }
-            skeletons.push(new Skeleton(__bones, skeleton, bones));
+            skeletons.push(new Skeleton(__bones, skeleton, bones, f!.pos));
         }
         if (skeletons[0].num !== 21 && skeletons.length > 1) {
             let index = 0;
@@ -777,6 +791,21 @@ export class UniversalAliasTable {
             let sk2 = skeletons[0];
             skeletons[index] = sk2;
             skeletons[0] = sk1;
+        }
+
+        if (new_pipeline_riggedmesh > 0 && skeletons[0].originalPointer !== new_pipeline_riggedmesh){
+            console.log("Resorting skeletons...");
+            let riggedmesh_index: number = 0;
+            for (let i = 0; i < skeletons.length; i++){
+                if (skeletons[i].originalPointer === new_pipeline_riggedmesh){
+                    riggedmesh_index = i;
+                }
+            }
+            let riggedmesh: Skeleton = skeletons.splice(riggedmesh_index, 1).shift()!;
+            let temp = skeletons;
+            skeletons = [];
+            skeletons.push(riggedmesh);
+            skeletons.push(...temp);
         }
 
         // Step 3: Create scaffolding for new Zobj.

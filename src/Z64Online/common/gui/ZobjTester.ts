@@ -1,3 +1,4 @@
+// #ifdef IS_DEV_BUILD
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import fs from 'fs';
 import path from 'path';
@@ -272,3 +273,4 @@ export class ZobjTester {
     }
 
 }
+// #endif

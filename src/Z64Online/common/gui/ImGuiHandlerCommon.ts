@@ -12,8 +12,10 @@ import { CommonConfigInst, volume_local, volume_remote } from "../lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "../api/InternalAPI";
 import { VERSION_NUMBER } from "../lib/VERSION_NUMBER";
 import { isTitleScreen } from "../types/GameAliases";
+// #ifdef IS_DEV_BUILD
 import DListCrawler from "./DListCrawler";
 import { ZobjTester } from "./ZobjTester";
+// #endif
 
 function buf2hex(buffer: Buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -46,18 +48,14 @@ export abstract class ImGuiHandlerCommon {
 
     onViUpdate() {
         if (this.font === undefined) {
-            try {
-                this.font = this.ModLoader.Gfx.createFont();
-                this.font.loadFromMemory(getHylianFont(), 22, 2);
-                changeKillfeedFont(this.font);
-                setHylianFontRef(this.font);
-                 // #ifdef IS_DEV_BUILD
-                this.crawler = new DListCrawler(this.ModLoader);
-                this.tester = new ZobjTester(this.ModLoader, this.core);
-                // #endif
-            } catch (err: any) {
-                this.ModLoader.logger.error(err);
-            }
+            this.font = this.ModLoader.Gfx.createFont();
+            this.font.loadFromMemory(getHylianFont(), 22, 2);
+            changeKillfeedFont(this.font);
+            setHylianFontRef(this.font);
+            // #ifdef IS_DEV_BUILD
+            this.crawler = new DListCrawler(this.ModLoader);
+            this.tester = new ZobjTester(this.ModLoader, this.core);
+            // #endif
             return;
         }
         // #ifdef IS_DEV_BUILD
@@ -74,10 +72,10 @@ export abstract class ImGuiHandlerCommon {
                     if (this.ModLoader.ImGui.menuItem("Actor Browser")) {
                         this.showActorBrowser = !this.showActorBrowser;
                     }
-                    if (this.ModLoader.ImGui.menuItem("DList Crawler")){
+                    if (this.ModLoader.ImGui.menuItem("DList Crawler")) {
                         this.crawler.isOpen = !this.crawler.isOpen;
                     }
-                    if (this.ModLoader.ImGui.menuItem("ZOBJ Tester")){
+                    if (this.ModLoader.ImGui.menuItem("ZOBJ Tester")) {
                         this.tester.isOpen = !this.tester.isOpen;
                     }
                     // #endif
@@ -110,10 +108,10 @@ export abstract class ImGuiHandlerCommon {
         }
         this.ModLoader.ImGui.end();
         // #ifdef IS_DEV_BUILD
-        if (this.crawler !== undefined){
+        if (this.crawler !== undefined) {
             this.crawler.onVi();
         }
-        if (this.tester !== undefined){
+        if (this.tester !== undefined) {
             this.tester.onVi();
         }
         if (this.showSpawner) {

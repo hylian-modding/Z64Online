@@ -1,3 +1,4 @@
+// #ifdef IS_DEV_BUILD
 /**
  * This class is intended to draw an ImGui menu that crawls a display list one command at a time and NOPs.
  * I wrote this for debugging stuff with the model porting.
@@ -143,3 +144,4 @@ export default class DListCrawler {
     }
 
 }
+// #endif
