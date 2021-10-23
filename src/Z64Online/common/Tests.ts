@@ -1,14 +1,31 @@
+// #ifdef IS_DEV_BUILD
+
+import { InjectCore } from "modloader64_api/CoreInjection";
+import { EventHandler } from "modloader64_api/EventHandler";
+import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
+import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { Init } from "modloader64_api/PluginLifecycle";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { Z64 } from "Z64Lib/API/imports";
 import CosmeticTests from "./cosmetics/tests/CosmeticTests";
 
 export default class Z64OTests{
 
+    @ModLoaderAPIInject()
+    ModLoader!: IModLoaderAPI;
+    @InjectCore()
+    core!: IZ64Main;
+
     @Init()
     init(){
-        // #ifdef IS_DEV_BUILD
-        CosmeticTests.onGoronTest();
         //CosmeticTests.onEquipmentTest();
-        // #endif
+    }
+
+    @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
+    onSceneChange(scene: number){
+        CosmeticTests.onNaviTestSpawn(this.ModLoader, this.core);
     }
 
 }
+
+// #endif
