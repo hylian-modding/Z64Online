@@ -35,7 +35,6 @@ export class EmoteManager {
 
     @EventHandler(Z64OnlineEvents.ON_REGISTER_EMOTE)
     onRegisterEmote(emote: Z64Emote_Emote) {
-        console.log(emote);
         let s: Sound | undefined;
         let id: number | undefined;
         let e = new anim_binary_container(emote.name, emote.buf, s, emote.sound, id);

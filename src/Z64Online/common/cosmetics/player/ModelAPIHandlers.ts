@@ -63,7 +63,6 @@ export class ModelAPIHandlers {
     onLoadEQExternal(eq: Z64Online_EquipmentPak) {
         if (this.parent.managerDisabled) return;
         eq = Z64OEquipmentManifest.processEquipmentPak(eq);
-        console.log(eq);
         let ref = this.parent.allocationManager.registerModel(eq.data);
         eq.ref = ref;
         this.parent.customModelFilesEquipment.set(eq.name, eq);

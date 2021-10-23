@@ -312,8 +312,6 @@ export class SoundManagerClient {
         if (CommonConfigInst.muteLocalSounds) return;
 
         if (getLinkSoundID(this.core) > 0) {
-            console.log(getLinkSoundID(this.core));
-            console.log(this.sounds.has(getLinkSoundID(this.core)));
             if (this.sounds.has(getLinkSoundID(this.core))) {
                 let random = this.getRandomInt(0, this.sounds.get(getLinkSoundID(this.core))!.length - 1);
                 let sound: sf.Sound = this.sounds.get(getLinkSoundID(this.core))![random];
