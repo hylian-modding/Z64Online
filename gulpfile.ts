@@ -176,6 +176,14 @@ gulp.task('oot', function () {
     return gulp.src('./src/**/*.ts');
 });
 
+gulp.task('roman', function () {
+    let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
+    m["ModLoader64"]["rom"] = "Legend of Zelda, The - Ocarina of Time (U) (V1.0) [!].z64";
+    m["ModLoader64"]["patch"] = "Roman Color Test OOT.bps";
+    fs.writeFileSync("./modloader64-config.json", JSON.stringify(m, null, 2));
+    return gulp.src('./src/**/*.ts');
+});
+
 gulp.task('mm', function () {
     let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
     m["ModLoader64"]["rom"] = "Legend of Zelda, The - Majora's Mask (USA).z64";

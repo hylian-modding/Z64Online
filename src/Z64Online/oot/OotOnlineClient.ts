@@ -23,7 +23,7 @@ import { InventoryItem, IInventory } from "Z64Lib/API/OoT/OOTAPI";
 import { Strength } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { Multiworld, MultiWorld_ItemPacket, OotRCosmeticHelper } from "./compat/OotR";
+import { Multiworld, MultiWorld_ItemPacket, OotRCosmeticHelper, RomansCosmeticHelper } from "./compat/OotR";
 import RomFlags from "./compat/RomFlags";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
@@ -687,6 +687,7 @@ export default class OotOnlineClient {
                 if (path.parse(file).base === "puppet_oot.ovl") {
                     this.clientStorage.puppetOvl = this.clientStorage.overlayCache[path.parse(file).base];
                 }
+                this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOADED_OVL, { result: this.clientStorage.overlayCache[path.parse(file).base], name: path.parse(file).base });
             }
         });
     }
@@ -710,6 +711,7 @@ export default class OotOnlineClient {
             markAsRandomizer();
             try {
                 OotRCosmeticHelper.extractMirrorShield(this.ModLoader, evt);
+                RomansCosmeticHelper.extractAllRomanCosmetics(this.ModLoader, evt);
             } catch (err: any) {
                 if (err) this.ModLoader.logger.error(err.stack);
             }
