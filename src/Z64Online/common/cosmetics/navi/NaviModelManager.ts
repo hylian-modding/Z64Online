@@ -16,10 +16,12 @@ import FairyHax from "./FairyHax";
 export default class NaviModelManager {
 
     currentNaviModel: IModelReference | undefined;
+    private naviHaxInstancePointer: number = -1;
     private naviHaxCodePointer: number = -1;
     private naviFnParamsPointer: number = -1;
     private naviFnHook: number = -1;
-    private readonly naviFnParamsCount: number = 2;
+    private readonly naviFnParamsCount: number = 3;
+    private naviHaxInstanceSize = -1;
 
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI;
@@ -34,9 +36,16 @@ export default class NaviModelManager {
         this.ModLoader.emulator.rdramWriteBuffer(this.naviHaxCodePointer, hax);
         let cb = getCommandBuffer(this.core);
         cb.relocateOverlay(this.naviHaxCodePointer, this.naviHaxCodePointer + (hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)), 0x80800000).then(() => {
+            this.ModLoader.logger.debug(`NaviHax code successfully injected at ${this.naviHaxCodePointer.toString(16)}`);
             this.naviFnParamsPointer = this.ModLoader.heap!.malloc(0x10);
-            this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x0, 0xDEADBEEF);
+            this.naviHaxInstanceSize = hax.readUInt32BE(hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4) + 0xC);
+            while (this.naviHaxInstanceSize % 0x10 !== 0) {
+                this.naviHaxInstanceSize++;
+            }
+            this.naviHaxInstancePointer = this.ModLoader.heap!.malloc(this.naviHaxInstanceSize);
+            this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x0, this.naviHaxInstancePointer);
             this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x4, this.ModLoader.emulator.rdramRead32(Z64_GLOBAL_PTR));
+            this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x8, 0xDEADBEEF);
             this.naviFnHook = this.naviHaxCodePointer + (hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)) - 0x10;
             this.naviFnHook = this.ModLoader.emulator.rdramRead32(this.naviFnHook);
         }).catch((err: any) => {
@@ -44,13 +53,24 @@ export default class NaviModelManager {
         });
     }
 
+    private clearInstance(inst: number, size: number){
+        this.ModLoader.emulator.rdramWriteBuffer(inst, this.ModLoader.utils.clearBuffer(this.ModLoader.emulator.rdramReadBuffer(inst, size)));
+    }
+
     private injectCode() {
-        this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer, this.currentNaviModel!.pointer + 0x20);
-        getCommandBuffer(this.core).arbitraryFunctionCall(this.naviFnHook, this.naviFnParamsPointer, this.naviFnParamsCount);
+        this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 8, this.currentNaviModel!.pointer);
+        let param1 = this.ModLoader.emulator.rdramRead32(this.naviFnParamsPointer + 0);
+        let param2 = this.ModLoader.emulator.rdramRead32(this.naviFnParamsPointer + 4);
+        let param3 = this.ModLoader.emulator.rdramRead32(this.naviFnParamsPointer + 8);
+        this.ModLoader.logger.debug(`Attempting to invoke Navihax function at ${this.naviFnHook.toString(16)} with parameters ${param1.toString(16)}, ${param2.toString(16)}, ${param3.toString(16)}`);
+        this.clearInstance(this.naviHaxInstancePointer, this.naviHaxInstanceSize);
+        getCommandBuffer(this.core).arbitraryFunctionCall(this.naviFnHook, this.naviFnParamsPointer, this.naviFnParamsCount).then(() => {
+            this.ModLoader.logger.debug(`Navihax Context ${this.naviHaxInstancePointer.toString(16)}`);
+        });
     }
 
     @EventHandler(Z64O_CosmeticEvents.LOAD_CUSTOM_NAVI)
-    onLoad(evt: Z64Online_ModelAllocation){
+    onLoad(evt: Z64Online_ModelAllocation) {
         let u = new UniversalAliasTable();
         let sb = u.generateMinimizedScaffolding(1, 0).sb;
         evt.model = Z64OManifestParser.convertZZConvertToZ64O(evt.model);
@@ -74,6 +94,10 @@ export default class NaviModelManager {
         if (this.naviFnParamsPointer > 0) {
             this.ModLoader.heap!.free(this.naviFnParamsPointer);
             this.naviFnParamsPointer = -1;
+        }
+        if (this.naviHaxInstancePointer > 0) {
+            this.ModLoader.heap!.free(this.naviHaxInstancePointer);
+            this.naviHaxInstancePointer = -1;
         }
         if (this.currentNaviModel !== undefined) {
             this.currentNaviModel.isDead = true;
