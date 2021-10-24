@@ -55,7 +55,6 @@ export default class NaviModelManager {
             this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x4, this.ModLoader.emulator.rdramRead32(Z64_GLOBAL_PTR));
             this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x8, 0xDEADBEEF);
             this.naviFnHook = this.naviHaxCodePointer + (hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)) - 0x10;
-            Z64O_Logger.debug(`${((hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)) - 0x10 + 0x4).toString(16)}`);
             this.naviFnHook = this.ModLoader.emulator.rdramRead32(this.naviFnHook);
             Z64O_Logger.debug(`Hook function: ${this.naviFnHook.toString(16)}`);
             Z64O_Logger.debug(`Navi context: ${this.naviHaxInstancePointer.toString(16)}. Size: ${this.naviHaxInstanceSize.toString(16)}`);
