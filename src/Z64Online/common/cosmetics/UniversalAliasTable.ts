@@ -712,12 +712,12 @@ export class UniversalAliasTable {
         // If dlist isn't from the bank store it.
         let new_pipeline_riggedmesh: number = -1;
         Object.keys(m).forEach((key: string) => {
-            if (key === "skeleton.riggedmesh"){
+            if (key === "skeleton.riggedmesh") {
                 new_pipeline_riggedmesh = m[key];
                 console.log("z64convert pipeline detected.");
             }
-            try{
-                if (key.includes("riggedmesh.")){
+            try {
+                if (key.includes("riggedmesh.")) {
                     key = key.replace("riggedmesh.", "");
                 }
                 let o = optimize(zobj, [m[key]]);
@@ -735,7 +735,7 @@ export class UniversalAliasTable {
                         }
                     }
                 }
-            }catch(err){
+            } catch (err) {
                 return;
             }
         });
@@ -747,7 +747,7 @@ export class UniversalAliasTable {
         let skeletons: Array<Skeleton> = [];
 
         let lastSkeleton: number = 0;
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 0xFF; i++) {
             let skeleton: Array<Bone> = [];
             let skel2: number = 0;
             let skel3: number = 0;
@@ -793,11 +793,11 @@ export class UniversalAliasTable {
             skeletons[0] = sk1;
         }
 
-        if (new_pipeline_riggedmesh > 0 && skeletons[0].originalPointer !== new_pipeline_riggedmesh){
+        if (new_pipeline_riggedmesh > 0 && skeletons[0].originalPointer !== new_pipeline_riggedmesh) {
             console.log("Resorting skeletons...");
             let riggedmesh_index: number = 0;
-            for (let i = 0; i < skeletons.length; i++){
-                if (skeletons[i].originalPointer === new_pipeline_riggedmesh){
+            for (let i = 0; i < skeletons.length; i++) {
+                if (skeletons[i].originalPointer === new_pipeline_riggedmesh) {
                     riggedmesh_index = i;
                 }
             }
@@ -806,6 +806,12 @@ export class UniversalAliasTable {
             skeletons = [];
             skeletons.push(riggedmesh);
             skeletons.push(...temp);
+        }
+
+        if (skeletons.length > 4) {
+            while (skeletons.length > 4) {
+                skeletons.pop();
+            }
         }
 
         // Step 3: Create scaffolding for new Zobj.
