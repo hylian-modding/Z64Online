@@ -1,32 +1,39 @@
 #include "NaviHax.h"
 #include <libzelda64.h>
 
-static void init(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer pointer)
+static void destroy(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer pointer)
 {
-    thisx->model = pointer;
-    Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
-    thisx->draw = player->naviActor->draw;
-    player->naviActor->draw = &draw;
-    haxPointer = thisx;
-
-    En_Header* header = ((En_Header*) thisx->model);
-
-    if (header->pointer > 0){
-        En_Skel* skel = ((En_Skel*) header->pointer);
-        if (skel->pointer > 0){
-            thisx->hasSkeleton = true;
-            SkelAnime_Init(globalCtx, &thisx->skelanime, skel->pointer, 0, &thisx->jointTable, &thisx->morphTable, skel->total);
-        }
-    }
-}
-
-static void destroy(En_NaviHax* thisx, GlobalContext* globalCtx)
-{
-    thisx->model = 0;
     Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
     player->naviActor->draw = thisx->draw;
-    thisx->draw = 0;
-    haxPointer = 0;
+    thisx->status = DEAD;
+}
+
+static void init(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer pointer)
+{
+    if (pointer == 0){
+        destroy(thisx, globalCtx, pointer);
+        return;
+    }
+    thisx->model = pointer;
+    Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
+    if (player->naviActor > 0){
+        thisx->draw = player->naviActor->draw;
+        player->naviActor->draw = &draw;
+        haxPointer = thisx;
+
+        En_Header* header = ((En_Header*) thisx->model);
+
+        if (header->pointer > 0){
+           En_Skel* skel = ((En_Skel*) header->pointer);
+          if (skel->pointer > 0){
+             thisx->hasSkeleton = true;
+                SkelAnime_Init(globalCtx, &thisx->skelanime, skel->pointer, 0, &thisx->jointTable, &thisx->morphTable, skel->total);
+            }
+        }
+        thisx->status = OK;
+    }else{
+        thisx->status = ERRORED;
+    }
 }
 
 s32 SkelAnime_Update(SkelAnime* skelAnime) {

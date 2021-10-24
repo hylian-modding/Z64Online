@@ -5,6 +5,7 @@ import path from 'path';
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { setCommonConfigInst, Z64O_Common_Config } from "./common/lib/Settings";
+import { Z64O_Logger } from "./common/lib/Logger";
 
 export default class Z64Online implements IZ64GameMain {
     @SidedProxy(ProxySide.CLIENT, path.resolve(__dirname, "common", "assets", "bootstrap.js"))
@@ -21,6 +22,10 @@ export default class Z64Online implements IZ64GameMain {
     // #endif
 
     ModLoader!: IModLoaderAPI;
+
+    preinit(){
+        Z64O_Logger.setModLoaderInstance(this.ModLoader);
+    }
 
     init() {
         setCommonConfigInst(this.ModLoader.config.registerConfigCategory("Z64O_Common_Config") as Z64O_Common_Config);

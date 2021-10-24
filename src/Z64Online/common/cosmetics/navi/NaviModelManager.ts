@@ -1,4 +1,5 @@
 import { IModelReference, registerModel, Z64Online_ModelAllocation, Z64O_CosmeticEvents } from "@Z64Online/common/api/Z64API";
+import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
 import { getCommandBuffer } from "@Z64Online/common/types/GameAliases";
 import { Scene } from "@Z64Online/common/types/Types";
 import { InjectCore } from "modloader64_api/CoreInjection";
@@ -12,6 +13,13 @@ import { Z64_GAME, Z64_GLOBAL_PTR } from "Z64Lib/src/Common/types/GameAliases";
 import { UniversalAliasTable } from "../UniversalAliasTable";
 import Z64OManifestParser from "../Z64OManifestParser";
 import FairyHax from "./FairyHax";
+
+const enum NaviHaxStatus {
+    UNINITIALIZED,
+    OK,
+    ERRORED,
+    DEAD
+}
 
 export default class NaviModelManager {
 
@@ -36,9 +44,9 @@ export default class NaviModelManager {
         this.ModLoader.emulator.rdramWriteBuffer(this.naviHaxCodePointer, hax);
         let cb = getCommandBuffer(this.core);
         cb.relocateOverlay(this.naviHaxCodePointer, this.naviHaxCodePointer + (hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)), 0x80800000).then(() => {
-            this.ModLoader.logger.debug(`NaviHax code successfully injected at ${this.naviHaxCodePointer.toString(16)}`);
+            Z64O_Logger.debug(`Navi code successfully injected at ${this.naviHaxCodePointer.toString(16)}`);
             this.naviFnParamsPointer = this.ModLoader.heap!.malloc(0x10);
-            this.naviHaxInstanceSize = hax.readUInt32BE(hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4) + 0xC);
+            this.naviHaxInstanceSize = hax.readUInt32BE(hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4) - 0x10 - 0x4);
             while (this.naviHaxInstanceSize % 0x10 !== 0) {
                 this.naviHaxInstanceSize++;
             }
@@ -47,25 +55,39 @@ export default class NaviModelManager {
             this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x4, this.ModLoader.emulator.rdramRead32(Z64_GLOBAL_PTR));
             this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 0x8, 0xDEADBEEF);
             this.naviFnHook = this.naviHaxCodePointer + (hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)) - 0x10;
+            Z64O_Logger.debug(`${((hax.byteLength - hax.readUInt32BE(hax.byteLength - 0x4)) - 0x10 + 0x4).toString(16)}`);
             this.naviFnHook = this.ModLoader.emulator.rdramRead32(this.naviFnHook);
+            Z64O_Logger.debug(`Hook function: ${this.naviFnHook.toString(16)}`);
+            Z64O_Logger.debug(`Navi context: ${this.naviHaxInstancePointer.toString(16)}. Size: ${this.naviHaxInstanceSize.toString(16)}`);
         }).catch((err: any) => {
             this.ModLoader.logger.error(err);
         });
     }
 
-    private clearInstance(inst: number, size: number){
+    private clearInstance(inst: number, size: number) {
         this.ModLoader.emulator.rdramWriteBuffer(inst, this.ModLoader.utils.clearBuffer(this.ModLoader.emulator.rdramReadBuffer(inst, size)));
     }
 
     private injectCode() {
         this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 8, this.currentNaviModel!.pointer);
-        let param1 = this.ModLoader.emulator.rdramRead32(this.naviFnParamsPointer + 0);
-        let param2 = this.ModLoader.emulator.rdramRead32(this.naviFnParamsPointer + 4);
-        let param3 = this.ModLoader.emulator.rdramRead32(this.naviFnParamsPointer + 8);
-        this.ModLoader.logger.debug(`Attempting to invoke Navihax function at ${this.naviFnHook.toString(16)} with parameters ${param1.toString(16)}, ${param2.toString(16)}, ${param3.toString(16)}`);
         this.clearInstance(this.naviHaxInstancePointer, this.naviHaxInstanceSize);
         getCommandBuffer(this.core).arbitraryFunctionCall(this.naviFnHook, this.naviFnParamsPointer, this.naviFnParamsCount).then(() => {
-            this.ModLoader.logger.debug(`Navihax Context ${this.naviHaxInstancePointer.toString(16)}`);
+            let status = this.ModLoader.emulator.rdramRead32(this.naviHaxInstancePointer);
+            if (status === NaviHaxStatus.ERRORED) {
+                Z64O_Logger.debug("Navi error code 2: Navi does not exist.");
+            } else if (status === NaviHaxStatus.OK) {
+                Z64O_Logger.debug("Navi hooked successfully.");
+            }
+        });
+    }
+
+    private unhookCode() {
+        this.ModLoader.emulator.rdramWrite32(this.naviFnParamsPointer + 8, 0);
+        getCommandBuffer(this.core).arbitraryFunctionCall(this.naviFnHook, this.naviFnParamsPointer, this.naviFnParamsCount).then(() => {
+            let status = this.ModLoader.emulator.rdramRead32(this.naviHaxInstancePointer);
+            if (status === NaviHaxStatus.DEAD) {
+                Z64O_Logger.debug("Navi unhooked successfully.");
+            }
         });
     }
 
