@@ -8,6 +8,16 @@ static void destroy(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer po
     thisx->status = DEAD;
 }
 
+/** Why doesn't this work in MM? */
+static Player* GET_LINK(GlobalContext* globalCtx){
+#ifdef GAME_OOT
+    Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
+    return player;
+#elif defined GAME_MM
+    return ((Player*)0x803FFDB0);
+#endif
+}
+
 static void init(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer pointer)
 {
     if (pointer == 0){
@@ -15,7 +25,7 @@ static void init(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer point
         return;
     }
     thisx->model = pointer;
-    Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
+    Player* player = GET_LINK(globalCtx);
     if (player->naviActor > 0){
         thisx->draw = player->naviActor->draw;
         player->naviActor->draw = &draw;
