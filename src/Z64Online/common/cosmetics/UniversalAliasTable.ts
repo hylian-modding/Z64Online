@@ -615,7 +615,7 @@ export class UniversalAliasTable {
         while (length % 2 !== 0) {
             length++;
         }
-        sb.writeUInt32BE(length >> 2, top + 0xC);
+        sb.writeUInt32BE(length, top + 0xC);
         sb.writeUInt32BE(0, top + 0x1C);
         for (let i = 0; i < length; i++) {
             this.addEntry(sb, 0xDEADBEEF);

@@ -42,6 +42,7 @@ import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
 import SongOfSoaringCompat from "./compat/SongOfSoaring";
 import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
 import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
+import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -63,6 +64,8 @@ export default class OotOnlineClient {
     emotes!: EmoteManager;
     @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
     modelManager!: ModelManagerClient;
+    @SidedProxy(ProxySide.CLIENT, NaviModelManager)
+    naviManager!: NaviModelManager;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
     //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)

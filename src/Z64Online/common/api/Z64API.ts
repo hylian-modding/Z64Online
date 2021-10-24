@@ -61,6 +61,10 @@ export enum Z64OnlineEvents {
   PREPROCESS_ZOBJ = "Z64Online:PREPROCESS_ZOBJ"
 }
 
+export const enum Z64O_CosmeticEvents{
+  LOAD_CUSTOM_NAVI = "Z64Online:LOAD_CUSTOM_NAVI"
+}
+
 export function getLinkObject(): number {
   let evt: number_ref = [0];
   bus.emit(Z64OnlineEvents.GET_LINK_OBJECT, evt);

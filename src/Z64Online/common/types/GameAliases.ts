@@ -6,6 +6,7 @@ import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { IViewStruct } from "Z64Lib/API/Common/Z64API";
+import { ICommandBuffer } from "Z64Lib/API/imports";
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -82,4 +83,8 @@ export function getViewStruct(core: IZ64Main): IViewStruct {
 
 export function isPaused(core: IZ64Main): boolean {
     return core.OOT !== undefined ? core.OOT!.helper.isPaused() : core.MM!.helper.isPaused();
+}
+
+export function getCommandBuffer(core: IZ64Main): ICommandBuffer{
+    return core.OOT !== undefined ? core.OOT!.commandBuffer : core.MM!.commandBuffer;
 }
