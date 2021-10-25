@@ -22,6 +22,7 @@ import { MM_ZORA_LINK } from './maps/MM_ZORA_LINK';
 import { MM_DEITY_LINK } from './maps/MM_DEITY_LINK';
 import { DUMMY_LINK } from './maps/DUMMY_LINK';
 import * as defines from './Defines';
+import { NEW_PIPELINE_REMAP } from './maps/New_Pipeline';
 
 const USE_ERROR_CUBE: boolean = false;
 
@@ -720,6 +721,9 @@ export class UniversalAliasTable {
             try {
                 if (key.includes("riggedmesh.")) {
                     repkey = key.replace("riggedmesh.", "");
+                }
+                if (NEW_PIPELINE_REMAP.hasOwnProperty(repkey)){
+                    repkey = NEW_PIPELINE_REMAP[repkey];
                 }
                 let o = optimize(zobj, [m[key]]);
                 let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(m[key])!);
