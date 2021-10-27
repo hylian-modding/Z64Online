@@ -1,5 +1,6 @@
 import fs from 'fs';
 import Vector3 from 'modloader64_api/math/Vector3';
+import { SmartBuffer } from 'smart-buffer';
 
 export class Anim2Link {
     SourceFile: string;
@@ -25,7 +26,7 @@ export class Anim2Link {
         }
     }
 
-    static getAllNames(file: string){
+    static getAllNames(file: string) {
         let _l = fs.readFileSync(file).toString().split('\n');
         let names: string[] = [];
 
@@ -59,12 +60,6 @@ export class Anim2Link {
         }
 
         return bytes;
-    }
-
-    public OverwriteByteArray(src: Buffer, pos: number, data: Buffer) {
-        for (let i = 0; i < data.byteLength; i++) {
-            src[pos + i] = data[i];
-        }
     }
 
     public RotationFromString(_r: string[]) {
@@ -120,59 +115,54 @@ export class Anim2Link {
         return ByteArrayPos;
     }
 
+    private cloneBuffer(buf: Buffer){
+        let copy = Buffer.alloc(buf.byteLength);
+        buf.copy(copy);
+        return copy;
+    }
+
     public GetRaw() {
         let _line = fs.readFileSync(this.SourceFile).toString().split('\n');
-        let _linepos: number = this.SourceLine;
-        let _fc: number = this.FrameCount;
         let frames: Array<Buffer> = [];
         // Initialize New Byte Array (Link's Frame Length * Frame Count)
-        let _out: Buffer = Buffer.alloc(_fc * 0x86);
+        let _out: SmartBuffer = new SmartBuffer();
 
-        // Start Parsing; Initiailize Line Buffer
-        let _buf: number = _linepos + 1;
-
-        // For Each Frame
-        for (let i = 0; i < _fc; i++) {
-            // Initiailize New Frame Array and Write Buffer Position
-            let _frame: Buffer = Buffer.alloc(0x86);
-            let _writepos = 0;
-
-            // Parse 1 Translation and 21 Rotations
-            for (let j = _buf; j < _buf + 22; j++) {
-                // Split Current Line
-                let _s: string[] = _line[j].split(' ');
-
-                // If Translation
-                if (_s[0] == "l") {
-                    let _l = this.TranslationFromString(_s);
-                    this.OverwriteByteArray(_frame, _writepos, _l);
-                }
-
-                // If Rotation
-                if (_s[0] == "r") {
-                    let _r = this.RotationFromString(_s);
-                    this.OverwriteByteArray(_frame, _writepos, _r);
-                }
-
-                _writepos += 6;
+        let _frame: SmartBuffer = new SmartBuffer();
+        for (let i = 0; i < _line.length; i++) {
+            let _s: string[] = _line[i].split(' ');
+            console.log(_s);
+            if (_s[0] == "loc" && _frame.length === 0) {
+                // This is the start.
+                console.log(`${i} start`);
+                let _l = this.TranslationFromString(_s);
+                console.log(`l ${_l.toString('hex')}`);
+                _frame.writeBuffer(_l);
+            } else if (_s[0] == "loc" && _frame.length > 0) {
+                // This is the end
+                console.log(`${i} end`);
+                _frame.writeBuffer(Buffer.from([0x00, 0x00]));
+                frames.push(this.cloneBuffer(_frame.toBuffer()));
+                _frame.clear();
+                i--;
+            }else if (_s[0] == "rot"){
+                let _r = this.RotationFromString(_s);
+                _frame.writeBuffer(_r);
+                console.log("r");
             }
-
-            // Write Expression Bytes (Hardcoded to Automatic for now)
-            this.OverwriteByteArray(_frame, _writepos, Buffer.from([0x00, 0x00]));
-            _writepos += 2;
-            frames.push(_frame);
-
-            // Reset and Advance Parse Buffer
-            _buf += 22;
         }
+        frames.push(this.cloneBuffer(_frame.toBuffer()));
+        _frame.clear();
+
+        console.log(frames[0]);
 
         let _outbuf = 0;
         for (let i = 0; i < frames.length; i++) {
-            this.OverwriteByteArray(_out, _outbuf, frames[i]);
+            _out.writeBuffer(frames[i]);
             _outbuf += frames[i].length;
         }
 
-        return _out;
+        console.log(`Frame size: ${frames[0].byteLength.toString(16)}`);
+        return _out.toBuffer();
     }
 
 

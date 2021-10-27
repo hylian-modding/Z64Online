@@ -19,7 +19,11 @@ function pad(buf: Buffer) {
     return b
 }
 
-gulp.task('build', function () {
+gulp.task('update_assembly', function(){
+    return gulp.src('./src/**/*.ts')
+});
+
+gulp.task('build_dev', function () {
     try {
         let meta = JSON.parse(fs.readFileSync("./src/Z64Online/package.json").toString());
         meta.date = new Date().toUTCString();
@@ -33,6 +37,8 @@ gulp.task('build', function () {
     }
     return gulp.src('./src/**/*.ts')
 });
+
+gulp.task('build', gulp.series(['update_assembly', 'build_dev']));
 
 gulp.task('_build_production', function () {
     var uprocess = require('uprocess')

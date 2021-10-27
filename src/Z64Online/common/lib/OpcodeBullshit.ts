@@ -3,6 +3,10 @@ export function JAL_ENCODE(data: number): number {
     return 0x0C000000 | ((data >> 2) & 0x3FFFFFF)
 }
 
+export function J_ENCODE(data: number): number {
+    return 0x08000000 | ((data >> 2) & 0x3FFFFFF)
+}
+
 // returns the address that the instruction in data would JAL to
 export function JAL_DECODE (data: Buffer): number {
     return ((data.readUInt32BE(0) & 0x3FFFFFF) << 2)

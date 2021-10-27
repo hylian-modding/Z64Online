@@ -52,3 +52,14 @@ src/zzLTFUITN_Emote.zip
 oot.json
 mm.json
 zobjs/
+*.elf
+*.ld
+*.o
+overlay/HaxBase
+overlay/NaviHax/bin
+overlay/NaviHax/bin_oot
+overlay/NaviHax/bin_mm
+overlay/EponaHax/bin
+overlay/EponaHax/bin_oot
+overlay/EponaHax/bin_mm
+

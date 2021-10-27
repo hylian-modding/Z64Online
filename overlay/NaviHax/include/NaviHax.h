@@ -2,6 +2,7 @@
 #define __OVL_EN_NAVIHAX__
 
 #include <libzelda64.h>
+#include "HaxInject.h"
 
 #define ModelPointer uint32_t
 #define FuncPointer uint32_t
@@ -24,27 +25,27 @@ typedef struct{
 } En_Header;
 
 typedef struct{
-    uint32_t pointer;
-    uint8_t total;
-    uint32_t visible;
-    uint8_t pad[7];
-} En_Skel;
-
-typedef struct{
     uint32_t status;
     ModelPointer model;
+    FuncPointer update;
     FuncPointer draw;
-    boolean hasSkeleton;
-    SkelAnime skelanime;
-    Vec3s jointTable[PLAYER_LIMB_BUF_COUNT];
-    Vec3s morphTable[PLAYER_LIMB_BUF_COUNT];
 } En_NaviHax;
 
 static En_NaviHax* haxPointer = 0;
 
-static void init(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer pointer);
-static void destroy(En_NaviHax* thisx, GlobalContext* globalCtx, ModelPointer pointer);
+static void init(void* thisx, GlobalContext* globalCtx);
+static void destroy(void* thisx, GlobalContext* globalCtx);
 static void update(void* thisx, GlobalContext* globalCtx);
 static void draw(void* thisx, GlobalContext* globalCtx);
+
+/** Why doesn't this work in MM? */
+static Player* GET_LINK(GlobalContext* globalCtx){
+#ifdef GAME_OOT
+    Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
+    return player;
+#elif defined GAME_MM
+    return ((Player*)0x803FFDB0);
+#endif
+}
 
 #endif /* __OVL_EN_NAVIHAX__ */
