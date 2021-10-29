@@ -88,3 +88,7 @@ export function isPaused(core: IZ64Main): boolean {
 export function getCommandBuffer(core: IZ64Main): ICommandBuffer{
     return core.OOT !== undefined ? core.OOT!.commandBuffer : core.MM!.commandBuffer;
 }
+
+export function isInterfaceShown(core: IZ64Main){
+    return core.OOT !== undefined ? core.OOT!.helper.isInterfaceShown() : core.MM!.helper.isInterfaceShown();
+}

@@ -11,7 +11,7 @@ import { getHylianFont, setHylianFontRef } from "./HyliaFont";
 import { CommonConfigInst, volume_local, volume_remote } from "../lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "../api/InternalAPI";
 import { VERSION_NUMBER } from "../lib/VERSION_NUMBER";
-import { isTitleScreen } from "../types/GameAliases";
+import { isInterfaceShown } from "../types/GameAliases";
 // #ifdef IS_DEV_BUILD
 import DListCrawler from "./DListCrawler";
 import { ZobjTester } from "./ZobjTester";
@@ -59,8 +59,9 @@ export abstract class ImGuiHandlerCommon {
             return;
         }
         // #ifdef IS_DEV_BUILD
-        let _isTitleScreen: boolean = isTitleScreen(this.core);
-        this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Z64Online ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getMainViewport().size.y - (_isTitleScreen ? 60 : 45)), rgba(255, 255, 255, 255), rgba(0, 0, 0, _isTitleScreen ? 255 : 20), xy(_isTitleScreen ? 1 : 0.5, _isTitleScreen ? 1 : 0.5));
+        if (isInterfaceShown(this.core)){
+            this.ModLoader.Gfx.addText(this.ModLoader.ImGui.getBackgroundDrawList(), this.font, `Z64Online ${VERSION_NUMBER}`, xy(2, this.ModLoader.ImGui.getMainViewport().size.y - 45), rgba(255, 255, 255, 255), rgba(0, 0, 0, 20), xy(0.5, 0.5));
+        }
         // #endif
         if (this.ModLoader.ImGui.beginMainMenuBar()) {
             if (this.ModLoader.ImGui.beginMenu("Mods")) {
