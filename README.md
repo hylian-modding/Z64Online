@@ -1,5 +1,5 @@
 # Ocarina of Time Online
-This is an online mod for [ModLoader64](https://github.com/hylian-modding/ModLoader64).
+This is an online mod for [ModLoader64](https://modloader64.com/).
 
 ## Features
 * Seeing other players.
