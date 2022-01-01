@@ -1,7 +1,5 @@
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
-import { CDNServer } from "@Z64Online/common/cdn/CDNServer";
-import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, IPlugin } from "modloader64_api/IModLoaderAPI";
@@ -11,13 +9,11 @@ import { Preinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/OoT/OOTAPI";
-import { ActorHookingManagerServer } from "./actor_systems/ActorHookingSystem";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
-import { OOT_PuppetOverlordServer } from "./puppet/OOT_PuppetOverlord";
-import { PvPServer } from "./pvp/PvPModule";
 import { OotOSaveData } from "./save/OotoSaveData";
 import { OotOnlineStorage, OotOnlineSave_Server } from "./storage/OotOnlineStorage";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
+import { OotOnline_ServerModules } from "./OotOnline_ServerModules";
 
 export default class OotOnlineServer {
 
@@ -27,18 +23,8 @@ export default class OotOnlineServer {
     ModLoader!: IModLoaderAPI;
     @ParentReference()
     parent!: IPlugin;
-    @SidedProxy(ProxySide.SERVER, ActorHookingManagerServer)
-    actorHooks!: ActorHookingManagerServer;
-    @SidedProxy(ProxySide.SERVER, OOT_PuppetOverlordServer)
-    puppets!: OOT_PuppetOverlordServer;
-    @SidedProxy(ProxySide.SERVER, WorldEvents)
-    worldEvents!: WorldEvents;
-    // #ifdef IS_DEV_BUILD
-    @SidedProxy(ProxySide.SERVER, PvPServer)
-    pvp!: PvPServer;
-    // #endif
-    @SidedProxy(ProxySide.SERVER, CDNServer)
-    cdn!: CDNServer;
+    @SidedProxy(ProxySide.SERVER, OotOnline_ServerModules)
+    modules!: OotOnline_ServerModules;
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

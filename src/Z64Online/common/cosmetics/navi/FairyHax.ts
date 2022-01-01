@@ -1,6 +1,5 @@
+import { FairyHax_oot, FairyHax_mm } from "@Z64Online/overlay/NaviHax";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
-import { FairyHax_mm } from "./FairyHax_mm";
-import { FairyHax_oot } from "./FairyHax_oot";
 
 export default class FairyHax {
 

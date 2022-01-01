@@ -1,14 +1,8 @@
-#ifndef __OVL_EN_NAVIHAX__
-#define __OVL_EN_NAVIHAX__
+#ifndef __NAVI_HAX_H__
+#define __NAVI_HAX_H__
 
 #include <libzelda64.h>
-#include "HaxInject.h"
-
-#define ModelPointer uint32_t
-#define FuncPointer uint32_t
-#define boolean uint8_t
-#define true 1;
-#define false 0;
+#include "GetLink.h"
 
 enum NAVIHAX_STATUS{
     UNINITIALIZED,
@@ -24,28 +18,4 @@ typedef struct{
     uint32_t model;
 } En_Header;
 
-typedef struct{
-    uint32_t status;
-    ModelPointer model;
-    FuncPointer update;
-    FuncPointer draw;
-} En_NaviHax;
-
-static En_NaviHax* haxPointer = 0;
-
-static void init(void* thisx, GlobalContext* globalCtx);
-static void destroy(void* thisx, GlobalContext* globalCtx);
-static void update(void* thisx, GlobalContext* globalCtx);
-static void draw(void* thisx, GlobalContext* globalCtx);
-
-/** Why doesn't this work in MM? */
-static Player* GET_LINK(GlobalContext* globalCtx){
-#ifdef GAME_OOT
-    Player* player = globalCtx->actorCtx.actorLists[ACTORLIST_CATEGORY_PLAYER].head;
-    return player;
-#elif defined GAME_MM
-    return ((Player*)0x803FFDB0);
-#endif
-}
-
-#endif /* __OVL_EN_NAVIHAX__ */
+#endif /* __NAVI_HAX_H__ */

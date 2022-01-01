@@ -2,6 +2,7 @@ import fs from 'fs';
 import { optimize } from 'Z64Lib/API/zzoptimize';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
 import { Bone, ZobjPiece, UniversalAliasTable } from '../UniversalAliasTable';
+import { getRandomInt } from '../../lib/getRandomInt';
 
 function findHierarchy(buf: Buffer) {
     for (let i = 0; i < buf.byteLength; i += 4) {
@@ -42,12 +43,6 @@ enum HierarchyType {
 enum HierarchyFormat {
     NORMAL = 0,
     FLEX = 1
-}
-
-export function getRandomInt(min: number, max: number): number {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /** I Blame Poe for this function's existence. */

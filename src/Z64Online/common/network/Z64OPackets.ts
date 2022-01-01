@@ -5,7 +5,6 @@ import {
   AgeOrForm,
 } from 'Z64Lib/API/Common/Z64API';
 
-import { ActorPacketData } from '../../oot/actor_systems/ActorHookBase';
 import { HorseData } from '../puppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@Z64Online/common/save/IKeyRing';
@@ -132,24 +131,6 @@ export class Z64O_ClientSceneContextUpdate extends Packet {
   }
 }
 
-export class Z64O_ActorPacket extends Packet {
-  actorData: ActorPacketData;
-  scene: Scene;
-  room: number;
-
-  constructor(
-    data: ActorPacketData,
-    scene: Scene,
-    room: number,
-    lobby: string
-  ) {
-    super('Z64O_ActorPacket', 'Z64Online', lobby, true);
-    this.actorData = data;
-    this.scene = scene;
-    this.room = room;
-  }
-}
-
 export class Z64O_ActorDeadPacket extends Packet {
   actorUUID: string;
   scene: Scene;
@@ -158,23 +139,6 @@ export class Z64O_ActorDeadPacket extends Packet {
   constructor(aid: string, scene: number, room: number, lobby: string) {
     super('Z64O_ActorDeadPacket', 'Z64Online', lobby, true);
     this.actorUUID = aid;
-    this.scene = scene;
-    this.room = room;
-  }
-}
-
-export class Z64O_SpawnActorPacket extends Packet {
-  actorData: ActorPacketData;
-  room: number;
-  scene: Scene;
-  constructor(
-    data: ActorPacketData,
-    scene: Scene,
-    room: number,
-    lobby: string
-  ) {
-    super('Z64O_SpawnActorPacket', 'Z64Online', lobby, true);
-    this.actorData = data;
     this.scene = scene;
     this.room = room;
   }

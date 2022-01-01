@@ -1,5 +1,5 @@
 import { IModelReference, registerModel, Z64Online_ModelAllocation, Z64O_CosmeticEvents } from "@Z64Online/common/api/Z64API";
-import ArbitratyHook from "@Z64Online/common/lib/ArbitraryActorHook";
+import ArbitraryHook from "@Z64Online/common/lib/ArbitraryHook";
 import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
 import { Scene } from "@Z64Online/common/types/Types";
 import { InjectCore } from "modloader64_api/CoreInjection";
@@ -30,7 +30,7 @@ export default class NaviModelManager {
     @InjectCore()
     core!: IZ64Main;
     models: Map<string, IModelReference> = new Map();
-    hook: ArbitratyHook | undefined;
+    hook: ArbitraryHook | undefined;
 
     @EventHandler(Z64O_CosmeticEvents.LOAD_CUSTOM_NAVI)
     onLoad(evt: Z64Online_ModelAllocation) {
@@ -64,12 +64,12 @@ export default class NaviModelManager {
     onSceneChanged(scene: Scene) {
         if (this.currentNaviModel !== undefined) {
             if (this.hook === undefined) {
-                this.hook = new ArbitratyHook("Navi", this.ModLoader, this.core, FairyHax.getFairyHax(Z64_GAME)!);
+                this.hook = new ArbitraryHook("Navi", this.ModLoader, this.core, FairyHax.getFairyHax(Z64_GAME)!);
                 this.hook.inject();
             }
             this.currentNaviModel.loadModel();
             this.ModLoader.utils.setTimeoutFrames(() => {
-                this.hook!.runCreate(this.currentNaviModel!.pointer, (instance: number) => {
+                this.hook!.runCreate(this.currentNaviModel!.pointer, () => {
                     Z64O_Logger.debug(`Navi successfully hooked.`);
                 });
             }, 20);

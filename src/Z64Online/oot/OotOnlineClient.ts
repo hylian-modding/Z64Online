@@ -43,6 +43,8 @@ import SongOfSoaringCompat from "./compat/SongOfSoaring";
 import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
 import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
+import EponaModelManager from "@Z64Online/common/cosmetics/epona/EponaModelManager";
+import OotOnline_ClientModules from "./OotOnline_ClientModules";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -60,41 +62,8 @@ export default class OotOnlineClient {
     clientStorage: OotOnlineStorageClient = new OotOnlineStorageClient();
     config!: OotOnlineConfigCategory;
 
-    @SidedProxy(ProxySide.CLIENT, EmoteManager)
-    emotes!: EmoteManager;
-    @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
-    modelManager!: ModelManagerClient;
-    @SidedProxy(ProxySide.CLIENT, NaviModelManager)
-    naviManager!: NaviModelManager;
-    @SidedProxy(ProxySide.CLIENT, AnimationManager)
-    animManager!: AnimationManager;
-    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
-    actorHooks!: ActorHookingManagerClient;
-    @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
-    puppets!: OOT_PuppetOverlordClient;
-    @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
-    sound!: SoundManagerClient;
-    @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
-    gui!: ImGuiHandler;
-    @SidedProxy(ProxySide.CLIENT, PuppetNameTagHandler)
-    nametags!: PuppetNameTagHandler;
-    @SidedProxy(ProxySide.CLIENT, WorldEvents)
-    worldEvents!: WorldEvents;
-    @SidedProxy(ProxySide.CLIENT, Notifications)
-    notificationManager!: Notifications;
-    // #ifdef IS_DEV_BUILD
-    @SidedProxy(ProxySide.CLIENT, PvPModule)
-    pvp!: PvPModule;
-    @SidedProxy(ProxySide.CLIENT, NPCReplacer)
-    npc!: NPCReplacer;
-    // #endif
-    @SidedProxy(ProxySide.CLIENT, CDNClient)
-    cdn!: CDNClient;
-    // Compat
-    @SidedProxy(ProxySide.CLIENT, Multiworld)
-    multiworld!: Multiworld;
-    @SidedProxy(ProxySide.CLIENT, SongOfSoaringCompat)
-    songOfSoaring!: SongOfSoaringCompat;
+    @SidedProxy(ProxySide.UNIVERSAL, OotOnline_ClientModules)
+    modules!: OotOnline_ClientModules
 
     opa!: ThiccOpa;
     syncContext: number = -1;
@@ -120,14 +89,14 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
         this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
         this.ModLoader.config.setData("OotOnline", "autosaves", true);
-        this.gui.settings = this.config;
-        this.modelManager.child = new ModelManagerOot(this.modelManager);
+        this.modules.gui.settings = this.config;
+        this.modules.modelManager.child = new ModelManagerOot(this.modules.modelManager);
     }
 
     @Init()
     init(): void {
-        if (this.modelManager !== undefined) {
-            this.modelManager.clientStorage = this.clientStorage;
+        if (this.modules.modelManager !== undefined) {
+            this.modules.modelManager.clientStorage = this.clientStorage;
         }
     }
 
@@ -171,10 +140,10 @@ export default class OotOnlineClient {
         this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
 
         if (RomFlags.isOotR) {
-            if (this.multiworld.isRomMultiworld()) {
+            if (this.modules.multiworld.isRomMultiworld()) {
                 RomFlags.isMultiworld = true;
-                this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.multiworld.contextPointer, 0x0) + 0x4);
-                this.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
+                this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.modules.multiworld.contextPointer, 0x0) + 0x4);
+                this.modules.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
             }
         }
     }
@@ -191,8 +160,8 @@ export default class OotOnlineClient {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             let packet = new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world);
-            if (this.songOfSoaring.isModLoaded()) {
-                packet.modData["SongOfSoaring"] = this.songOfSoaring.getOwlData();
+            if (this.modules.songOfSoaring.isModLoaded()) {
+                packet.modData["SongOfSoaring"] = this.modules.songOfSoaring.getOwlData();
             }
             this.ModLoader.clientSide.sendPacket(packet);
             this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -249,7 +218,7 @@ export default class OotOnlineClient {
             this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.OOT!.global.scene, this.clientStorage.world));
             if (this.config.autosaves && this.clientStorage.canAutoSaveNow) {
                 this.ModLoader.utils.setTimeoutFrames(() => {
-                    this.notificationManager.onAutoSave(this.autosaveIntoSlot2());
+                    this.modules.notificationManager.onAutoSave(this.autosaveIntoSlot2());
                     this.clientStorage.canAutoSaveNow = false;
                     setTimeout(() => {
                         this.clientStorage.canAutoSaveNow = true;
@@ -496,7 +465,7 @@ export default class OotOnlineClient {
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
         Object.keys(packet.modData).forEach((key: string) => {
-            this.songOfSoaring.apply(key, packet.modData[key]);
+            this.modules.songOfSoaring.apply(key, packet.modData[key]);
         });
     }
 
@@ -774,17 +743,17 @@ export default class OotOnlineClient {
     }
 
     private updateMultiworld() {
-        let item = this.multiworld!.getOutgoingItem();
+        let item = this.modules.multiworld!.getOutgoingItem();
         if (item !== undefined) {
-            if (!this.multiworld.doesPlayerNameExist(item.dest)) {
-                this.multiworld.setPlayerName(`World ${item.dest}`, item.dest);
+            if (!this.modules.multiworld.doesPlayerNameExist(item.dest)) {
+                this.modules.multiworld.setPlayerName(`World ${item.dest}`, item.dest);
             }
             this.ModLoader.clientSide.sendPacket(new MultiWorld_ItemPacket(this.ModLoader.clientLobby, item));
         }
-        if (this.multiworld.itemsInQueue.length === 0) return;
+        if (this.modules.multiworld.itemsInQueue.length === 0) return;
         if (this.core.OOT!.link.state === LinkState.STANDING && !this.core.OOT!.helper.isLinkEnteringLoadingZone() && !this.core.OOT!.helper.Player_InBlockingCsMode()) {
-            let item = this.multiworld.itemsInQueue.shift()!;
-            this.multiworld.processIncomingItem(item.item, this.core.OOT!.save);
+            let item = this.modules.multiworld.itemsInQueue.shift()!;
+            this.modules.multiworld.processIncomingItem(item.item, this.core.OOT!.save);
         }
     }
 

@@ -32,10 +32,10 @@ LDFLAGS = -L$(LIBZ64_PATH) -T libzelda64.ld --emit-relocs
 
 default: entry dirs $(PROGRAM)
 
-$(OOT_BIN_PATH)/%.c.o: %.c
+$(OOT_BIN_PATH)/%.c.o: %.c dirs
 	$(CC) -c $(CFLAGS) -DGAME_OOT -DGAME_VERSION_1_0 -o $@ $<
 
-$(MM_BIN_PATH)/%.c.o: %.c
+$(MM_BIN_PATH)/%.c.o: %.c dirs
 	$(CC) -c $(CFLAGS) -DGAME_MM -DGAME_VERSION_1_0 -D_FINALROM -o $@ $<
 
 $(OOT_BIN_PATH)/$(PROGRAM).oot: $(OOT_O_FILES)

@@ -5,8 +5,9 @@ import { MMManifest } from 'Z64Lib/API/MM/ModelData/MMManfest';
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
-import { IViewStruct } from "Z64Lib/API/Common/Z64API";
+import { IViewStruct, IZ64Core } from "Z64Lib/API/Common/Z64API";
 import { ICommandBuffer } from "Z64Lib/API/imports";
+import Vector3 from "modloader64_api/math/Vector3";
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -69,7 +70,7 @@ export function getLinkPos(core: IZ64Main): Buffer {
     return core.OOT !== undefined ? core.OOT!.link.position.getRawPos() : core.MM!.link.position.getRawPos();
 }
 
-export function getLinkSoundID(core: IZ64Main): number{
+export function getLinkSoundID(core: IZ64Main): number {
     return core.OOT !== undefined ? core.OOT!.link.current_sound_id : core.MM!.link.current_sound_id;
 }
 
@@ -85,10 +86,23 @@ export function isPaused(core: IZ64Main): boolean {
     return core.OOT !== undefined ? core.OOT!.helper.isPaused() : core.MM!.helper.isPaused();
 }
 
-export function getCommandBuffer(core: IZ64Main): ICommandBuffer{
+export function getCommandBuffer(core: IZ64Main): ICommandBuffer {
     return core.OOT !== undefined ? core.OOT!.commandBuffer : core.MM!.commandBuffer;
 }
 
-export function isInterfaceShown(core: IZ64Main){
+export function isInterfaceShown(core: IZ64Main) {
     return core.OOT !== undefined ? core.OOT!.helper.isInterfaceShown() : core.MM!.helper.isInterfaceShown();
+}
+
+export function getLinkLocation(core: IZ64Main): { pos: Vector3, rot: Vector3 } {
+    let _core: IZ64Core = core.OOT !== undefined ? core.OOT : core.MM!;
+    return { pos: _core.link.position.getVec3(), rot: _core.link.rotation.getVec3() };
+}
+
+export function getCurrentSceneID(core: IZ64Main){
+    return core.OOT !== undefined ? core.OOT!.global.scene : core.MM!.global.scene;
+}
+
+export function getCurrentRoomID(core: IZ64Main){
+    return core.OOT !== undefined ? core.OOT!.global.room : core.MM!.global.room;
 }

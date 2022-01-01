@@ -19,7 +19,47 @@ function pad(buf: Buffer) {
     return b
 }
 
-gulp.task('update_assembly', function(){
+gulp.task('update_assembly', function () {
+    let og = process.cwd();
+    fs.readdirSync("./overlay").forEach((d: string) => {
+        let dir = path.resolve("./overlay", d);
+        if (fs.lstatSync(dir).isDirectory()) {
+            let make = path.resolve(dir, "Makefile");
+            if (fs.existsSync(make)) {
+                process.chdir(dir);
+                child_process.execSync("make clean && make -j6", { stdio: 'inherit' });
+                process.chdir("./bin");
+                child_process.execSync("bintots -d .");
+                process.chdir(dir);
+                fs.renameSync("./bin/bin.ts", `./bin/${path.parse(dir).name}.ts`);
+                process.chdir(og);
+                fs.copyFileSync(path.resolve(dir, `./bin/${path.parse(dir).name}.ts`), path.resolve("./src/Z64Online/overlay", `${path.parse(dir).name}.ts`));
+            }
+        }
+    });
+    fs.unlinkSync("./src/Z64Online/overlay/HaxBase.ts");
+    return gulp.src('./src/**/*.ts')
+});
+
+gulp.task("update_control", function(){
+    let og = process.cwd();
+    fs.readdirSync("./overlay").forEach((d: string) => {
+        if (d !== "EnemyControl") return;
+        let dir = path.resolve("./overlay", d);
+        if (fs.lstatSync(dir).isDirectory()) {
+            let make = path.resolve(dir, "Makefile");
+            if (fs.existsSync(make)) {
+                process.chdir(dir);
+                child_process.execSync("make clean && make -j6", { stdio: 'inherit' });
+                process.chdir("./bin");
+                child_process.execSync("bintots -d .");
+                process.chdir(dir);
+                fs.renameSync("./bin/bin.ts", `./bin/${path.parse(dir).name}.ts`);
+                process.chdir(og);
+                fs.copyFileSync(path.resolve(dir, `./bin/${path.parse(dir).name}.ts`), path.resolve("./src/Z64Online/overlay", `${path.parse(dir).name}.ts`));
+            }
+        }
+    });
     return gulp.src('./src/**/*.ts')
 });
 
@@ -31,14 +71,14 @@ gulp.task('build_dev', function () {
         meta.version = meta.version.split("-")[0];
         meta.version = meta.version + `-nightly@${meta.commit}`;
         fs.writeFileSync("./src/Z64Online/package.json", JSON.stringify(meta, null, 2));
-        child_process.execSync('npx tsc');
     } catch (err: any) {
         console.log(err.stack);
     }
+    child_process.execSync('npx tsc', {stdio: 'inherit'});
     return gulp.src('./src/**/*.ts')
 });
 
-gulp.task('build', gulp.series(['update_assembly', 'build_dev']));
+gulp.task('build', gulp.series(['build_dev']));
 
 gulp.task('_build_production', function () {
     var uprocess = require('uprocess')

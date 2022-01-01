@@ -6,7 +6,6 @@ import { EventHandler } from "modloader64_api/EventHandler";
 import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
-import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
@@ -18,6 +17,7 @@ import { BANK_LOOKUP, BANK_OBJECTS, BANK_REPLACEMENTS, UniversalAliasTable, Zobj
 import fs from 'fs';
 import { SmartBuffer } from 'smart-buffer';
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
+import { GameParent } from "@Z64Online/common/api/GameParent";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -32,7 +32,7 @@ export class MultiWorld_ItemPacket extends Packet {
 export class Multiworld {
     @ModLoaderAPIInject()
     ModLoader!: IModLoaderAPI
-    @ParentReference()
+    @GameParent()
     parent!: IZ64Clientside;
     @InjectCore()
     core!: IZ64Main;
