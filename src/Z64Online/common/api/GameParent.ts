@@ -16,6 +16,7 @@ export function GameParent() {
 }
 
 export function setupGameParentReference(instance: any, parent: IZ64GameMain) {
+    if (instance === undefined) return;
     let p = Object.getPrototypeOf(instance);
     if (p.hasOwnProperty('Z64O')) {
         if (p.Z64O.hasOwnProperty('GameParent')) {
