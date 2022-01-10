@@ -8,7 +8,7 @@ export const MM_ZORA_LINK: any = {
     "Bottle.Filling": 0x00005280,
     "Shield": 0x000053B0,
     "Fin.L": 0x00005388,
-    "Fin.Swim.L": 0x00005398,
+    "Fin.Swim.L": 0x00005390,
     "Fin.R": 0x00005398,
     "Fin.Swim.R": 0x000053A0,
     "Hand.Guitar.L": 0x000053A8,
