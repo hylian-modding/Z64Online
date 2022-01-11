@@ -12,6 +12,8 @@ import * as defines from "@Z64Online/common/cosmetics/Defines";
 import { DummyManifest, UniversalAliasTable } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 import * as gear from './zobjs/gear';
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
+import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
+import { IZ64Offsets, Z64Offsets } from "Z64Lib/API/Common/ModelData/IZ64Offsets";
 
 export class ModelManagerMM implements IModelManagerShim {
 
@@ -209,7 +211,54 @@ export class ModelManagerMM implements IModelManagerShim {
         if (this.parent.core.MM!.save.form === AgeOrForm.GORON){
             fs.writeFileSync("./goron.zobj", this.parent.allocationManager.getModel(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.GORON)!).zobj);
         }
+        /*
+        // Hacky gpk model replacement stuff 
+        let gpk = this.findGameplayKeep();
+
+        let GK_LFIN = 0x6FE20;              // Zora Boomerang L
+        let GK_RFIN = 0x6FF68;              // Zora Boomerang R
+        let GK_HILT_KOKIRI = 0x21A8         // Kokiri Sword Handle
+        let GK_HILT_RAZOR = 0x1D00          // Razor Sword Handle
+        let GK_BLADE_KOKIRI = 0x28C0        // Kokiri Sword Blade
+        let GK_BLADE_RAZOR = 0x2168         // Razor Sword Blade
+        let GK_DEKU_STICK = 0x32B0          // DekuStick
+        let GK_BOTTLE = 0x03E0              // Bottle
+        let GK_BOTTLE_CONTENT = 0x0320      // Bottle.Content
+
+        this.gpkInjectHack(gpk, GK_LFIN, defines.DL_LFIN, link);
+        this.gpkInjectHack(gpk, GK_RFIN, defines.DL_RFIN, link);
+        this.gpkInjectHack(gpk, GK_HILT_KOKIRI, defines.DL_SWORD_HILT_1, link);
+        this.gpkInjectHack(gpk, GK_HILT_RAZOR, defines.DL_SWORD_BLADE_2, link);
+        this.gpkInjectHack(gpk, GK_BLADE_KOKIRI, defines.DL_SWORD_BLADE_1, link);
+        this.gpkInjectHack(gpk, GK_BLADE_RAZOR, defines.DL_SWORD_BLADE_2, link);
+        this.gpkInjectHack(gpk, GK_DEKU_STICK, defines.DL_DEKU_STICK, link);
+        this.gpkInjectHack(gpk, GK_BOTTLE, defines.DL_BOTTLE, link);
+        this.gpkInjectHack(gpk, GK_BOTTLE_CONTENT, defines.DL_BOTTLE_FILLING, link);
+        */
     }
+
+    /* gpkInjectHack(gpk: number, gpkDLAddr: number, alias: number, modelPtr: number) {
+        let DE01 = 0xDE010000;
+        let gpkBranch = (gpk + gpkDLAddr)
+        let proxyBranchAddr = (modelPtr + alias)
+        this.parent.ModLoader.emulator.rdramWrite32(gpkBranch, DE01);
+        this.parent.ModLoader.emulator.rdramWrite32(gpkBranch + 4, proxyBranchAddr);
+        this.parent.ModLoader.emulator.rdramWrite32(gpkBranch, DE01);
+        this.parent.ModLoader.emulator.rdramWrite32(gpkBranch + 4, proxyBranchAddr);
+        console.log(`gpk: ${gpk.toString(16)} | gpkBranch: ${(gpkBranch).toString(16)} | proxy pointer: ${proxyBranchAddr.toString(16)} | alias: ${alias}`)
+    }
+
+    findGameplayKeep() {
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
+        let obj_id = 0x00010000;
+        for (let i = 4; i < 0x514; i += 4) {
+            let value = this.parent.ModLoader.emulator.rdramRead32(obj_list + i);
+            if (value === obj_id) {
+                return this.parent.ModLoader.emulator.rdramRead32(obj_list + i + 4);
+            }
+        }
+        return -1;
+    } */
 
     findLink() {
         let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);

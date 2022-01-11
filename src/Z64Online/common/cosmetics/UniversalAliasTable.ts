@@ -885,6 +885,7 @@ export class UniversalAliasTable {
         wrapGen(`DL_GUITAR_HAND`, `DL_LHAND`, undefined, [`DL_ZORA_GUITAR`]);
         wrapGen(`DL_CENTER_FLOWER_PROPELLER_OPEN`, `DL_FLOWER_CENTER_OPEN`, undefined, [`DL_FLOWER_PROPELLER_OPEN`]);
         wrapGen(`DL_CENTER_FLOWER_PROPELLER_CLOSED`, `DL_FLOWER_CENTER_CLOSED`, undefined, [`DL_PETAL_PROPELLER_CLOSED`]);
+        wrapGen(`DL_LHAND_SWORD_DEITY`, `DL_SWORD_DEITY`, undefined, [`DL_LHAND`]);
 
         // Step 5: Deduplicate assets and copy into new zobj.
         let temp = new SmartBuffer();
