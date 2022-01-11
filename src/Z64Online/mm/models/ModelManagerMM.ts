@@ -207,10 +207,6 @@ export class ModelManagerMM implements IModelManagerShim {
         let link = this.findLink();
         this.parent.ModLoader.emulator.rdramWrite8(link + 0x5016, 0x1);
 
-        // temp
-        if (this.parent.core.MM!.save.form === AgeOrForm.GORON){
-            fs.writeFileSync("./goron.zobj", this.parent.allocationManager.getModel(this.parent.allocationManager.getLocalPlayerData().AgesOrForms.get(AgeOrForm.GORON)!).zobj);
-        }
         /*
         // Hacky gpk model replacement stuff 
         let gpk = this.findGameplayKeep();
