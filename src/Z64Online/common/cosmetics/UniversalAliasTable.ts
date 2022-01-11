@@ -456,8 +456,15 @@ export class UniversalAliasTable {
         b.writeUInt32BE(0x06005AD0, 0x110);
         b.writeUInt32BE(0x06005BBC, 0x114);
         yield b;
+        let b2 = Buffer.from("FF000001060131300000404002024040FF0000020601467400020000060146600601466CFF0000FF80FF9B00FF80640000FFC80000FF", 'hex');
+        b2.writeUInt32BE(0x06005BF8, 0x04);
+        b2.writeUInt32BE(0x06005C08, 0x14);
+        b2.writeUInt32BE(0x06005C14, 0x1C);
+        b2.writeUInt32BE(0x06005C1E, 0x20);
+        yield b2;
         let s = new SmartBuffer();
         s.writeBuffer(b);
+        s.writeBuffer(b2);
         while (s.length % 0x10 !== 0) {
             s.writeUInt8(PAD_VALUE);
         }
@@ -532,6 +539,7 @@ export class UniversalAliasTable {
     addGoronMagic(sb: SmartBuffer) {
         let GORON_MAGIC_GENERATOR = this.createGoronMagic(sb);
         let _GORON_MAGIC = GORON_MAGIC_GENERATOR.next()!.value as Buffer;
+        GORON_MAGIC_GENERATOR.next();
         GORON_MAGIC_GENERATOR.next();
     }
 

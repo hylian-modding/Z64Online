@@ -28,7 +28,7 @@ export class OOT_to_MM {
                 sb.writeUInt32BE(0x00000000);
                 return colorhax;
             };
-            let limbtable = 0x5BF0;
+            let limbtable = 0x5C30;
             for (let i = 0; i < 21; i++) {
                 let offset = sb.readUInt32BE(limbtable + (i * 4)) & 0x00FFFFFF;
                 let dlist = sb.readUInt32BE(offset + 8);

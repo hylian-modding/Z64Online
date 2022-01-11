@@ -270,5 +270,7 @@ export const MATRIX_SHIELD1_ITEM = 0x00005A10;
 export const MATRIX_BUNNYHOOD0 = 0x00005A50;
 export const MATRIX_BUNNYHOOD1 = 0x00005A90;
 export const GORON_MAGIC_0 = 0x00005BDC;
+export const GORON_MAGIC_1 = 0x00005BF0;
+
 export const PUPPET_INST_SIZE = 0x500;
 export const ALIAS_PROXY_SIZE = 0x6BE0;
