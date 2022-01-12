@@ -868,7 +868,7 @@ export class UniversalAliasTable {
         }
         wrapGen('DL_LFIST_SWORD3_BROKEN', 'DL_SWORD_HILT_3', undefined, ['DL_SWORD_BLADE_3_BROKEN', 'DL_LFIST']);
         wrapGen(`DL_LFIST_HAMMER`, `DL_HAMMER`, undefined, [`DL_LFIST`]);
-        wrapGen(`DL_RFIST_SWORD4`, `DL_SWORD4`, undefined, [`DL_RFIST`]);
+        wrapGen(`DL_LFIST_SWORD4`, `DL_SWORD4`, undefined, [`DL_LFIST`]);
         wrapGen(`DL_RFIST_HOOKSHOT`, `DL_HOOKSHOT`, undefined, [`DL_RFIST`]);
         wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_FAIRY`, undefined, [`DL_RHAND`]);
         wrapGen(`DL_RHAND_OCARINA_TIME`, `DL_OCARINA_2`, undefined, [`DL_RHAND`]);
