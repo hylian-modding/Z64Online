@@ -8,6 +8,7 @@ import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames"
 import { IViewStruct, IZ64Core } from "Z64Lib/API/Common/Z64API";
 import { ICommandBuffer } from "Z64Lib/API/imports";
 import Vector3 from "modloader64_api/math/Vector3";
+import { MM_ANIM_BANK_DMA, MM_ANIM_BANK_SIZE } from "./MMAliases";
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -35,8 +36,8 @@ export function setupOot() {
 }
 
 export function setupMM() {
-    Z64_ANIM_BANK_DMA = -1;
-    Z64_ANIM_BANK_SIZE = -1;
+    Z64_ANIM_BANK_DMA = MM_ANIM_BANK_DMA;
+    Z64_ANIM_BANK_SIZE = MM_ANIM_BANK_SIZE;
     Z64_CHILD = AgeOrForm.HUMAN;
     Z64_ADULT = AgeOrForm.HUMAN;
     Z64_TITLE_SCREEN_FORM = AgeOrForm.HUMAN;

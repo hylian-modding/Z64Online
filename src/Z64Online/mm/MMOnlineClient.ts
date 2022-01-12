@@ -37,6 +37,7 @@ import { MMOSaveData } from "./save/MMOSaveData";
 import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
+import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -77,6 +78,8 @@ export default class MMOnlineClient {
     modelManager!: ModelManagerClient;
     @SidedProxy(ProxySide.CLIENT, NaviModelManager)
     naviManager!: NaviModelManager;
+    @SidedProxy(ProxySide.CLIENT, AnimationManager)
+    animManager!: AnimationManager;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler_MM)
     gui!: ImGuiHandler_MM;
     @SidedProxy(ProxySide.CLIENT, PuppetOverlord_MM)
