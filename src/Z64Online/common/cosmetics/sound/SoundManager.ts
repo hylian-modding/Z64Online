@@ -5,7 +5,7 @@ import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { NetworkHandler, INetworkPlayer } from "modloader64_api/NetworkHandler";
 import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
-import { onTick, Postinit } from 'modloader64_api/PluginLifecycle';
+import { onPostTick, onTick, Postinit } from 'modloader64_api/PluginLifecycle';
 import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
@@ -135,6 +135,11 @@ export class SoundManagerClient {
 
     set isMuted(bool: boolean){
         this.ModLoader.emulator.rdramWrite32(this.arb.instancePointer + 0x4, bool ? 1 : 0);
+    }
+
+    @onPostTick()
+    onPostTick(){
+        this.sound_id = 0;
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
