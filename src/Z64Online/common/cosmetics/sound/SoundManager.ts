@@ -20,7 +20,7 @@ import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { Z64_GAME, Z64_IS_RANDOMIZER } from "Z64Lib/src/Common/types/GameAliases";
 import { OOT_GAME } from "@Z64Online/common/types/OotAliases";
 import { MM_GAME } from "@Z64Online/common/types/MMAliases";
-import { getLinkPos, getLinkSoundID, getViewStruct, isPaused, isTitleScreen } from "@Z64Online/common/types/GameAliases";
+import { getAgeOrForm, getLinkPos, getLinkSoundID, getViewStruct, isPaused, isTitleScreen } from "@Z64Online/common/types/GameAliases";
 import ArbitraryHook from "@Z64Online/common/lib/ArbitraryHook";
 import { SoundHax_mm, SoundHax_oot } from "@Z64Online/overlay/SoundHax";
 import { SmartBuffer } from "smart-buffer";
@@ -289,6 +289,7 @@ export class SoundManagerClient {
             this.rawSounds = evt.data;
             let buf = Z64Serialize.serializeSync(this.rawSounds);
             let _id = this.ModLoader.utils.hashBuffer(buf);
+            this.onAgeChange(getAgeOrForm(this.core));
             CDNClient.singleton.askCDN(buf).then((has: boolean) => {
                 if (has) {
                     this.currentIDs.push(_id);
@@ -339,7 +340,6 @@ export class SoundManagerClient {
             this.handleFormChange(age, AgeOrForm.ZORA, this.hasZora);
             this.handleFormChange(age, AgeOrForm.FD, this.hasDeity);
         }
-        this.ModLoader.emulator.invalidateCachedCode();
     }
 
     @onTick()
