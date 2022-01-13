@@ -281,7 +281,6 @@ export class SoundManagerClient {
             this.rawSounds = evt.data;
             let buf = Z64Serialize.serializeSync(this.rawSounds);
             let _id = this.ModLoader.utils.hashBuffer(buf);
-            this.isMuted = true;
             CDNClient.singleton.askCDN(buf).then((has: boolean) => {
                 if (has) {
                     this.currentIDs.push(_id);
@@ -317,6 +316,7 @@ export class SoundManagerClient {
     }
 
     handleFormChange(age: AgeOrForm, targetage: AgeOrForm, bool: boolean) {
+        this.isMuted = bool;
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
