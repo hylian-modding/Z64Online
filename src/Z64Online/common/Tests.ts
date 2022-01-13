@@ -8,7 +8,6 @@ import { Init } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { Z64 } from "Z64Lib/API/imports";
 import CosmeticTests from "./tests/CosmeticTests";
-import GeneralTests from "./tests/GeneralTests";
 
 export default class Z64OTests{
 

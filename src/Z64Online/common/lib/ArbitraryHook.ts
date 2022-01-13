@@ -42,6 +42,7 @@ export default class ArbitraryHook {
             if (size > 0) {
                 this.instancePointer = this.ModLoader.heap!.malloc(size);
             }
+            this.ModLoader.emulator.invalidateCachedCode();
         }).catch((err: any) => {
             this.ModLoader.logger.error(err);
         });

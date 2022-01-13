@@ -131,20 +131,20 @@ export class Anim2Link {
         for (let i = 0; i < _line.length; i++) {
             let _s: string[] = _line[i].split(' ');
             console.log(_s);
-            if (_s[0] == "loc" && _frame.length === 0) {
+            if ((_s[0] == "loc" || _s[0] === "l") && _frame.length === 0) {
                 // This is the start.
                 console.log(`${i} start`);
                 let _l = this.TranslationFromString(_s);
                 console.log(`l ${_l.toString('hex')}`);
                 _frame.writeBuffer(_l);
-            } else if (_s[0] == "loc" && _frame.length > 0) {
+            } else if ((_s[0] == "loc" || _s[0] === "l") && _frame.length > 0) {
                 // This is the end
                 console.log(`${i} end`);
                 _frame.writeBuffer(Buffer.from([0x00, 0x00]));
                 frames.push(this.cloneBuffer(_frame.toBuffer()));
                 _frame.clear();
                 i--;
-            }else if (_s[0] == "rot"){
+            }else if ((_s[0] == "rot" || _s[0] === "r")){
                 let _r = this.RotationFromString(_s);
                 _frame.writeBuffer(_r);
                 console.log("r");
