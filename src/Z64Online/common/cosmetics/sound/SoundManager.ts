@@ -53,7 +53,7 @@ export class SoundManagerClient {
     soundCache: Map<string, sf.Sound> = new Map();
 
     hasAdult: boolean = false;
-    nopOOT: Buffer = Buffer.from('3C048060A4850088', 'hex');
+    nopOOT: Buffer = Buffer.from('00000000', 'hex');
     hasChild: boolean = false;
     hasHuman: boolean = false;
     nopMM: Buffer = Buffer.from('240501A100000000', 'hex');

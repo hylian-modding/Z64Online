@@ -86,8 +86,9 @@ export default class MMOnlineClient {
     puppets!: PuppetOverlord_MM;
     @SidedProxy(ProxySide.CLIENT, WorldEvents)
     worldEvents!: WorldEvents;
-    //@SidedProxy(ProxySide.CLIENT, SoundManagerClient)
-    //sound!: SoundManagerClient;
+    @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
+    sound!: SoundManagerClient;
+    
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
