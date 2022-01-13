@@ -185,6 +185,7 @@ export class SoundManagerClient {
             CDNClient.singleton.requestFile(packet.ids[i]).then((buf: Buffer) => {
                 let sounds = Z64Serialize.deserializeSync(buf);
                 Object.keys(sounds).forEach((key: string) => {
+                    if (sounds[key].length === 0) return;
                     this.PlayerSounds.get(packet.player.uuid)!.set(parseInt(key), []);
                     let arr: Array<Buffer> = sounds[key];
                     for (let i = 0; i < arr.length; i++) {
