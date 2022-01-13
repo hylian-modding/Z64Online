@@ -34,7 +34,7 @@ export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
 import { Z64O_PermFlagsPacket } from "./network/MMOPackets";
 import { MMOSaveData } from "./save/MMOSaveData";
-import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
+import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
@@ -646,7 +646,7 @@ export default class MMOnlineClient {
     }
 
     private updateSyncContext() {
-        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.MM!.link.current_sound_id);
+        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, SoundAccessSingleton.sound_id);
     }
 
 

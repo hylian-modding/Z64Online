@@ -9,6 +9,7 @@ import { IViewStruct, IZ64Core } from "Z64Lib/API/Common/Z64API";
 import { ICommandBuffer } from "Z64Lib/API/imports";
 import Vector3 from "modloader64_api/math/Vector3";
 import { MM_ANIM_BANK_DMA, MM_ANIM_BANK_SIZE } from "./MMAliases";
+import { SoundAccessSingleton } from "../cosmetics/sound/SoundManager";
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -72,7 +73,7 @@ export function getLinkPos(core: IZ64Main): Buffer {
 }
 
 export function getLinkSoundID(core: IZ64Main): number {
-    return core.OOT !== undefined ? core.OOT!.link.current_sound_id : core.MM!.link.current_sound_id;
+    return SoundAccessSingleton.sound_id;
 }
 
 export function isTitleScreen(core: IZ64Main): boolean {

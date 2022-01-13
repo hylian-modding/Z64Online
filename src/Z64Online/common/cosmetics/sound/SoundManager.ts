@@ -20,7 +20,30 @@ import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { Z64_GAME, Z64_IS_RANDOMIZER } from "Z64Lib/src/Common/types/GameAliases";
 import { OOT_GAME } from "@Z64Online/common/types/OotAliases";
 import { MM_GAME } from "@Z64Online/common/types/MMAliases";
-import { getLinkPos, getLinkSoundID, getViewStruct, isPaused } from "@Z64Online/common/types/GameAliases";
+import { getLinkPos, getLinkSoundID, getViewStruct, isPaused, isTitleScreen } from "@Z64Online/common/types/GameAliases";
+import ArbitraryHook from "@Z64Online/common/lib/ArbitraryHook";
+import { SoundHax_mm, SoundHax_oot } from "@Z64Online/overlay/SoundHax";
+import { SmartBuffer } from "smart-buffer";
+import { J_ENCODE } from "@Z64Online/common/lib/OpcodeBullshit";
+import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
+import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
+
+export class SoundAccess{
+    private sm: SoundManagerClient;
+    constructor(sm: SoundManagerClient){
+        this.sm = sm;
+    }
+
+    get sound_id(): number{
+        return this.sm.sound_id;
+    }
+
+    set sound_id(value: number){
+        this.sm.sound_id = value;
+    }
+}
+
+export let SoundAccessSingleton: SoundAccess;
 
 export class OotO_SoundPackLoadPacket extends Packet {
     ids: string[];
@@ -53,33 +76,28 @@ export class SoundManagerClient {
     soundCache: Map<string, sf.Sound> = new Map();
 
     hasAdult: boolean = false;
-    nopOOT: Buffer = Buffer.from('00000000', 'hex');
     hasChild: boolean = false;
     hasHuman: boolean = false;
-    nopMM: Buffer = Buffer.from('240501A100000000', 'hex');
     hasDeku: boolean = false;
     hasGoron: boolean = false;
     hasZora: boolean = false;
     hasDeity: boolean = false;
 
-    backup: Buffer | undefined;
+    arb!: ArbitraryHook;
 
-    getNopForGame() {
-        if (Z64_GAME === OOT_GAME) {
-            return this.nopOOT;
-        } else if (Z64_GAME === MM_GAME) {
-            return this.nopMM;
-        }
+    constructor(){
+        SoundAccessSingleton = new SoundAccess(this);
     }
 
     getAddrForNop() {
         if (Z64_GAME === OOT_GAME) {
-            return 0x80389048;
+            return 0x80022F84;
         } else if (Z64_GAME === MM_GAME) {
+            // TODO - fix these.
             if (Z64_IS_RANDOMIZER) {
-                return 0x806EB47C;
+                return 0x800B8E58;
             } else {
-                return 0x8074B47C;
+                return 0x800B8E58;
             }
         }
     }
@@ -105,7 +123,41 @@ export class SoundManagerClient {
 
     @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
     onReset() {
-        this.backup = undefined;
+    }
+
+    get sound_id(): number{
+        return this.ModLoader.emulator.rdramRead32(this.arb.instancePointer + 0x8);
+    }
+
+    set sound_id(value: number){
+        this.ModLoader.emulator.rdramWrite32(this.arb.instancePointer + 0x8, 0);
+    }
+
+    set isMuted(bool: boolean){
+        this.ModLoader.emulator.rdramWrite32(this.arb.instancePointer + 0x4, bool ? 1 : 0);
+    }
+
+    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
+    onRomPatched(evt: {rom: Buffer}){
+        this.ModLoader.utils.setTimeoutFrames(()=>{
+            Z64O_Logger.debug("Loading new sound hack...");
+            this.arb = new ArbitraryHook("Sound Hacks", this.ModLoader, this.core, Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? SoundHax_oot : SoundHax_mm);
+            this.arb.inject();
+            this.ModLoader.utils.setTimeoutFrames(()=>{
+                Z64O_Logger.debug("Executing new sound hack...");
+                this.arb.runCreate(0xDEADBEEF, ()=>{
+                    //
+                    Z64O_Logger.debug("Hooking func_80022F84...");
+                    let sb = new SmartBuffer();
+                    sb.writeUInt32BE(J_ENCODE(this.ModLoader.emulator.rdramRead32(this.arb.instancePointer)));
+                    sb.writeBuffer(Buffer.from("0000000003E0000800000000", "hex"));
+                    this.ModLoader.emulator.rdramWriteBuffer(this.getAddrForNop()!, sb.toBuffer());
+                    sb.clear();
+                    this.ModLoader.emulator.invalidateCachedCode();
+                    Z64O_Logger.debug(`Sound Hack Context: ${this.arb.instancePointer.toString(16)}.`);
+                });
+            }, 20);
+        }, 20);
     }
 
     @EventHandler(BackwardsCompat.OLD_OOT_SOUND_PAK_EVT)
@@ -183,6 +235,7 @@ export class SoundManagerClient {
         this.hasHuman = false;
         if (ids.length === 0) {
             this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket([], this.ModLoader.clientLobby));
+            this.isMuted = false;
             return;
         }
         for (let i = 0; i < ids.length; i++) {
@@ -221,6 +274,7 @@ export class SoundManagerClient {
             this.rawSounds = evt.data;
             let buf = Z64Serialize.serializeSync(this.rawSounds);
             let _id = this.ModLoader.utils.hashBuffer(buf);
+            this.isMuted = true;
             CDNClient.singleton.askCDN(buf).then((has: boolean) => {
                 if (has) {
                     this.currentIDs.push(_id);
@@ -256,13 +310,6 @@ export class SoundManagerClient {
     }
 
     handleFormChange(age: AgeOrForm, targetage: AgeOrForm, bool: boolean) {
-        if (age === targetage) {
-            if (bool) {
-                this.ModLoader.emulator.rdramWriteBuffer(this.getAddrForNop()!, this.getNopForGame()!);
-            } else {
-                this.ModLoader.emulator.rdramWriteBuffer(this.getAddrForNop()!, this.backup!);
-            }
-        }
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
@@ -282,32 +329,12 @@ export class SoundManagerClient {
 
     @onTick()
     onTick() {
+        if (isTitleScreen(this.core)) return;
         let view = getViewStruct(this.core);
         let dir = view.position.minus(view.focus).normalized();
         this.ModLoader.sound.listener.position = view.position;
         this.ModLoader.sound.listener.direction = dir;
         this.ModLoader.sound.listener.upVector = view.axis;
-
-        if (!isPaused(this.core)) {
-            let nop = this.getNopForGame()!;
-            if (this.backup === undefined) {
-                this.ModLoader.logger.debug("Backing up original voice code.");
-                this.backup = Buffer.alloc(8);
-                this.ModLoader.emulator.rdramReadBuffer(this.getAddrForNop()!, nop.byteLength).copy(this.backup);
-            }
-            if (this.sounds.size > 0) {
-                if (!this.ModLoader.emulator.rdramReadBuffer(this.getAddrForNop()!, nop.byteLength).equals(nop)) {
-                    this.ModLoader.emulator.rdramWriteBuffer(this.getAddrForNop()!, nop);
-                    this.ModLoader.emulator.invalidateCachedCode();
-                }
-            } else {
-                if (this.ModLoader.emulator.rdramReadBuffer(this.getAddrForNop()!, nop.byteLength).equals(nop)) {
-                    this.ModLoader.emulator.rdramWriteBuffer(this.getAddrForNop()!, this.backup);
-                    this.ModLoader.emulator.invalidateCachedCode();
-                }
-                return;
-            }
-        }
 
         if (CommonConfigInst.muteLocalSounds) return;
 

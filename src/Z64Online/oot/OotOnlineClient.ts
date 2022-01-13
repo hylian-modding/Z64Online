@@ -41,7 +41,7 @@ import { ModelManagerOot } from "./models/ModelManagerOot";
 import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
 import SongOfSoaringCompat from "./compat/SongOfSoaring";
 import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
-import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
+import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import EponaModelManager from "@Z64Online/common/cosmetics/epona/EponaModelManager";
 import OotOnline_ClientModules from "./OotOnline_ClientModules";
@@ -738,7 +738,7 @@ export default class OotOnlineClient {
                 this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
             }
         }
-        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, this.core.OOT!.link.current_sound_id);
+        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, SoundAccessSingleton.sound_id);
         this.ModLoader.emulator.rdramWrite32(this.syncContext + 0x14, 0x8011A5D0);
     }
 
