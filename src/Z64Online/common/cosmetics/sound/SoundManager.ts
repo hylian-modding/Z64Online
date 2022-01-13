@@ -359,9 +359,11 @@ export class SoundManagerClient {
                 let sound: sf.Sound = this.sounds.get(getLinkSoundID(this.core))![random];
                 let raw = getLinkPos(this.core);
                 let pos = new Vector3(raw.readFloatBE(0), raw.readFloatBE(4), raw.readFloatBE(8));
-                sound.position = pos;
-                sound.minDistance = 250.0
-                sound.play();
+                if (sound !== undefined && sound.position !== undefined){
+                    sound.position = pos;
+                    sound.minDistance = 250.0
+                    sound.play();
+                }
             }
         }
 
