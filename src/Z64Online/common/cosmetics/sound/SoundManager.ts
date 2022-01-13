@@ -258,13 +258,14 @@ export class SoundManagerClient {
                 continue;
             }
             Object.keys(evt.data).forEach((key: string) => {
+                if (evt.data[key].length == 0) return;
                 let id = parseInt(key);
                 if (SoundCategory_Child.indexOf(id) > -1) this.hasChild = true;
                 if (SoundCategory_Adult.indexOf(id) > -1) this.hasAdult = true;
                 if (SoundCategory_Human.indexOf(id) > -1) this.hasHuman = true;
                 if (SoundCategory_Deku.indexOf(id) > -1) this.hasDeku = true;
                 if (SoundCategory_Goron.indexOf(id) > -1) this.hasGoron = true;
-                if (SoundCategory_Zora.indexOf(id) > -1) this.hasZora = true;
+                if (SoundCategory_Zora.indexOf(id) > -1)  this.hasZora = true;
                 if (SoundCategory_Deity.indexOf(id) > -1) this.hasDeity = true;
                 if (this.sounds.has(id)) {
                     // If an earlier pak loaded a sound for this id skip it. First come first served.
