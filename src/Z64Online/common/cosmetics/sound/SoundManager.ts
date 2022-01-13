@@ -316,7 +316,7 @@ export class SoundManagerClient {
     }
 
     handleFormChange(age: AgeOrForm, targetage: AgeOrForm, bool: boolean) {
-        this.isMuted = bool;
+        if (age === targetage) this.isMuted = bool;
     }
 
     @EventHandler(OotEvents.ON_AGE_CHANGE)
