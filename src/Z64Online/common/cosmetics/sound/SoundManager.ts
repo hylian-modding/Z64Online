@@ -139,6 +139,8 @@ export class SoundManagerClient {
 
     @onPostTick()
     onPostTick(){
+        if (this.arb === undefined) return;
+        if (this.arb.instancePointer <= 0) return;
         this.sound_id = 0;
     }
 
