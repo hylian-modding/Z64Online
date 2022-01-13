@@ -10,7 +10,7 @@ import * as sf from 'modloader64_api/Sound/sfml_audio';
 import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { SoundCategory_Adult, SoundCategory_Child, SoundCategory_Human } from "@Z64Online/common/cosmetics/sound/SoundCategory";
+import { SoundCategory_Adult, SoundCategory_Child, SoundCategory_Deity, SoundCategory_Deku, SoundCategory_Goron, SoundCategory_Human, SoundCategory_Zora } from "@Z64Online/common/cosmetics/sound/SoundCategory";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import { RemoteSoundPlayRequest, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
@@ -28,17 +28,17 @@ import { J_ENCODE } from "@Z64Online/common/lib/OpcodeBullshit";
 import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 
-export class SoundAccess{
+export class SoundAccess {
     private sm: SoundManagerClient;
-    constructor(sm: SoundManagerClient){
+    constructor(sm: SoundManagerClient) {
         this.sm = sm;
     }
 
-    get sound_id(): number{
+    get sound_id(): number {
         return this.sm.sound_id;
     }
 
-    set sound_id(value: number){
+    set sound_id(value: number) {
         this.sm.sound_id = value;
     }
 }
@@ -85,7 +85,7 @@ export class SoundManagerClient {
 
     arb!: ArbitraryHook;
 
-    constructor(){
+    constructor() {
         SoundAccessSingleton = new SoundAccess(this);
     }
 
@@ -125,34 +125,34 @@ export class SoundManagerClient {
     onReset() {
     }
 
-    get sound_id(): number{
+    get sound_id(): number {
         return this.ModLoader.emulator.rdramRead32(this.arb.instancePointer + 0x8);
     }
 
-    set sound_id(value: number){
+    set sound_id(value: number) {
         this.ModLoader.emulator.rdramWrite32(this.arb.instancePointer + 0x8, 0);
     }
 
-    set isMuted(bool: boolean){
+    set isMuted(bool: boolean) {
         this.ModLoader.emulator.rdramWrite32(this.arb.instancePointer + 0x4, bool ? 1 : 0);
     }
 
     @onPostTick()
-    onPostTick(){
+    onPostTick() {
         if (this.arb === undefined) return;
         if (this.arb.instancePointer <= 0) return;
         this.sound_id = 0;
     }
 
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
-    onRomPatched(evt: {rom: Buffer}){
-        this.ModLoader.utils.setTimeoutFrames(()=>{
+    onRomPatched(evt: { rom: Buffer }) {
+        this.ModLoader.utils.setTimeoutFrames(() => {
             Z64O_Logger.debug("Loading new sound hack...");
             this.arb = new ArbitraryHook("Sound Hacks", this.ModLoader, this.core, Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME ? SoundHax_oot : SoundHax_mm);
             this.arb.inject();
-            this.ModLoader.utils.setTimeoutFrames(()=>{
+            this.ModLoader.utils.setTimeoutFrames(() => {
                 Z64O_Logger.debug("Executing new sound hack...");
-                this.arb.runCreate(0xDEADBEEF, ()=>{
+                this.arb.runCreate(0xDEADBEEF, () => {
                     //
                     Z64O_Logger.debug("Hooking func_80022F84...");
                     let sb = new SmartBuffer();
@@ -240,6 +240,10 @@ export class SoundManagerClient {
         this.hasChild = false;
         this.hasAdult = false;
         this.hasHuman = false;
+        this.hasDeku = false;
+        this.hasGoron = false;
+        this.hasZora = false;
+        this.hasDeity = false;
         if (ids.length === 0) {
             this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket([], this.ModLoader.clientLobby));
             this.isMuted = false;
@@ -248,7 +252,7 @@ export class SoundManagerClient {
         for (let i = 0; i < ids.length; i++) {
             let id = ids[i];
             let evt = { id: id, data: this.localSoundPaks.get(id)! };
-            if (!this.localSoundPaks.has(id)){
+            if (!this.localSoundPaks.has(id)) {
                 this.ModLoader.logger.error("Something has gone very wrong with sound pak loading.");
                 this.ModLoader.logger.error(`ID ${id} does not exist.`);
                 continue;
@@ -258,6 +262,10 @@ export class SoundManagerClient {
                 if (SoundCategory_Child.indexOf(id) > -1) this.hasChild = true;
                 if (SoundCategory_Adult.indexOf(id) > -1) this.hasAdult = true;
                 if (SoundCategory_Human.indexOf(id) > -1) this.hasHuman = true;
+                if (SoundCategory_Deku.indexOf(id) > -1) this.hasDeku = true;
+                if (SoundCategory_Goron.indexOf(id) > -1) this.hasGoron = true;
+                if (SoundCategory_Zora.indexOf(id) > -1) this.hasZora = true;
+                if (SoundCategory_Deity.indexOf(id) > -1) this.hasDeity = true;
                 if (this.sounds.has(id)) {
                     // If an earlier pak loaded a sound for this id skip it. First come first served.
                     return;

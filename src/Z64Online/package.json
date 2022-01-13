@@ -1,8 +1,8 @@
 {
   "name": "Z64Online",
-  "version": "3.1.0-nightly@cf42871",
-  "date": "Thu, 13 Jan 2022 05:43:42 GMT",
-  "commit": "cf42871",
+  "version": "3.1.0-nightly@04c6d67",
+  "date": "Thu, 13 Jan 2022 09:01:09 GMT",
+  "commit": "04c6d67",
   "description": "",
   "main": "Z64Online.js",
   "author": "denoflions, Psi-Hate, Drahsid, CrookedPoe",
