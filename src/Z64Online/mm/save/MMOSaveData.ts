@@ -27,13 +27,13 @@ export class MMOSaveData implements ISaveSyncData {
     let obj: any = {};
     let keys = [
       'inventory', 'map_visible', 'map_visited', 'minimap_flags', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
-      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount'
+      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount', 'dungeon_items'
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     //obj['permSceneData'] = this.core.save.permSceneData;
     //obj['infTable'] = this.core.save.infTable;
     //obj['weekEventFlags'] = this.core.save.weekEventFlags;
-    //obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
+    obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
     let obj2: any = {};
 
     for (let i = 0; i < keys.length; i++) {
@@ -144,6 +144,7 @@ export class MMOSaveData implements ISaveSyncData {
       let obj: IMMSyncSave = Z64Serialize.deserializeSync(save);
 
       storage.heart_containers = obj.heart_containers;
+      storage.questStatus.heartPieceCount = obj.questStatus.heartPieceCount;
       storage.magic_meter_size = obj.magic_meter_size;
 
       storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
@@ -151,16 +152,18 @@ export class MMOSaveData implements ISaveSyncData {
       storage.minimap_flags = obj.minimap_flags;
       storage.map_visible = obj.map_visible;
       storage.map_visited = obj.map_visited;
+      storage.double_defense = obj.double_defense;
 
+      let old_swordLevel = storage.swords.swordLevel;
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, ['kokiriSword', 'masterSword', 'giantKnife', 'biggoronSword']);
       this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, ['dekuShield', 'hylianShield', 'mirrorShield']);
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
-
-      //Upgrades
-      this.processMixedLoop_OVERWRITE(obj.double_defense, storage.double_defense, []);
       this.processBoolLoop_OVERWRITE(obj.owlStatues, storage.owlStatues);
 
+      if (old_swordLevel !== storage.swords.swordLevel) {
+        bus.emit(Z64OnlineEvents.SWORD_NEEDS_UPDATE, {});
+      }
       if (side === ProxySide.CLIENT) {
         this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
       }
@@ -183,7 +186,7 @@ export class MMOSaveData implements ISaveSyncData {
         }
         if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
           storage.heart_containers = obj.heart_containers;
-          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+          bus.emit(Z64OnlineEvents.GAINED_HEART_CONTAINER, {});
         }
         if (storage.heart_containers > 20) {
           storage.heart_containers = 20;
@@ -197,16 +200,11 @@ export class MMOSaveData implements ISaveSyncData {
           storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
         }
 
+        let old_swordLevel = storage.swords.swordLevel;
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
-        this.processMixedLoop(obj.questStatus, storage.questStatus, []);
-
-
+        this.processMixedLoop(obj.questStatus, storage.questStatus, ['heartPieceCount']);
         this.processBoolLoop(obj.owlStatues, storage.owlStatues);
-
-
-        //Upgrades
-        this.processMixedLoop(obj.double_defense, storage.double_defense, []);
 
         //Maps
         let minimap_flags = storage.minimap_flags;
@@ -218,6 +216,10 @@ export class MMOSaveData implements ISaveSyncData {
         storage.minimap_flags = minimap_flags;
         storage.map_visible = map_visible;
         storage.map_visited = map_visited;
+
+        if (old_swordLevel !== storage.swords.swordLevel) {
+          bus.emit(Z64OnlineEvents.SWORD_NEEDS_UPDATE, storage.swords.swordLevel);
+        }
 
         if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) {
           storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
@@ -245,18 +247,31 @@ export class MMOSaveData implements ISaveSyncData {
 
         this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE5", "FIELD_BOTTLE6"]);
 
-        if (storage.questStatus.heartPieceCount >= 3 && obj.questStatus.heartPieceCount === 0) {
+        if (storage.questStatus.heartPieceCount < obj.questStatus.heartPieceCount && obj.questStatus.heartPieceCount < 4) {
+          storage.questStatus.heartPieceCount = obj.questStatus.heartPieceCount;
+          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+        }
+        else if (obj.questStatus.heartPieceCount > 3) {
           storage.questStatus.heartPieceCount = 0;
+          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+        }
+        else if (storage.questStatus.heartPieceCount >= 3 && obj.questStatus.heartPieceCount === 0) {
+          storage.questStatus.heartPieceCount = 0;
+          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
         }
 
-        if (side === ProxySide.CLIENT) {
-          //let cur = this.core.save.dungeonItemManager.getRawBuffer();
-          //parseFlagChanges(obj.dungeon_items, cur);
-          //this.core.save.dungeonItemManager.setRawBuffer(cur);
-          //bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
-        } else {
-          //parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
+        if (storage.double_defense < obj.double_defense) {
+          storage.double_defense = obj.double_defense;
         }
+
+        //if (side === ProxySide.CLIENT) {
+        //  let cur = this.core.save.dungeonItemManager.getRawBuffer();
+        //  parseFlagChanges(obj.dungeon_items, cur);
+        //  this.core.save.dungeonItemManager.setRawBuffer(cur);
+        //  bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
+        //} else {
+        //  parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
+        //}
         accept(true);
       }).catch((err: string) => {
         console.log(err);

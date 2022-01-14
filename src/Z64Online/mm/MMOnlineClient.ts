@@ -27,7 +27,7 @@ import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
 import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "@Z64Online/common/network/Z64OPackets";
-import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult } from "Z64Lib/API/Common/Z64API";
+import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult, Sword } from "Z64Lib/API/Common/Z64API";
 import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
@@ -88,7 +88,7 @@ export default class MMOnlineClient {
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
-    
+
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
@@ -756,7 +756,8 @@ export default class MMOnlineClient {
     }
 
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
-    onSwordChange(evt: any) {
+    onSwordChange(evt: Sword) {
+        console.log(`Sword updated: ${Sword[evt]}`)
         this.core.MM!.save.sword_helper.updateSwordonB();
     }
 
