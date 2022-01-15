@@ -14,6 +14,7 @@ import { PuppetQuery, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { MMEvents, Scene } from "Z64Lib/API/MM/MMAPI";
 import { IZ64Master } from "@Z64Online/common/api/InternalAPI";
+import { LinkState } from "Z64Lib/API/Common/Z64API";
 
 export class PuppetOverlordServer_MM extends PuppetOverlordServer {
 
@@ -150,33 +151,30 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
         this.processPuppetPacket(packet);
     }
 
-    private isWaitScene(): boolean {
-        return this.core.MM!.global.scene === Scene.MAJORAS_MASK_BOSS_ROOM || this.core.MM!.global.scene === Scene.MOON;
+    isCurrentlyWarping() {
+        return this.core.MM!.link.rdramRead32(0xA90) === 0x00030000;
     }
-
+    
     @onTick()
     onTick() {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid() ||
-            this.core.MM!.helper.isPaused()
+            this.core.MM!.helper.isPaused() || this.core.MM!.helper.isFadeIn()
         ) {
             return;
         }
         if (
-            !this.core.MM!.helper.isLinkEnteringLoadingZone()
+            !this.core.MM!.helper.isLinkEnteringLoadingZone() &&
+            this.core.MM!.helper.isInterfaceShown() &&
+            !this.isCurrentlyWarping() &&
+            !this.core.MM!.helper.isFadeIn()
         ) {
+            if(this.core.MM!.helper.isFadeIn()) return;
             this.processNewPlayers();
-            if (this.isWaitScene()) {
-                this.ModLoader.utils.setTimeoutFrames(() => {
-                    //console.log("in the moon")
-                    this.processAwaitingSpawns();
-                }, 60);
-            }
-            else this.processAwaitingSpawns();
+            this.processAwaitingSpawns();
             this.lookForMissingOrStrandedPuppets();
             this.sendPuppetPacket();
         }
     }
-
 }
