@@ -67,13 +67,13 @@ export default class OotOnline_ClientModules {
 
     // Test modules that don't exist in prod builds.
     // #ifdef IS_DEV_BUILD
-    @SidedProxy(ProxySide.CLIENT, PvPModule)
+    //@SidedProxy(ProxySide.CLIENT, PvPModule)
     pvp!: PvPModule;
-    @SidedProxy(ProxySide.CLIENT, NPCReplacer)
+    //@SidedProxy(ProxySide.CLIENT, NPCReplacer)
     npc!: NPCReplacer;
-    @SidedProxy(ProxySide.CLIENT, EponaModelManager)
+    //@SidedProxy(ProxySide.CLIENT, EponaModelManager)
     eponaManager!: EponaModelManager;
-    @SidedProxy(ProxySide.CLIENT, GamemodeManager)
+    //@SidedProxy(ProxySide.CLIENT, GamemodeManager)
     gamemodes!: GamemodeManager;
     // #endif
     @ParentReference()

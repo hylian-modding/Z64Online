@@ -58,6 +58,11 @@ export default class ActorFixManager {
         });
     }
 
+    @EventHandler(ModLoaderEvents.ON_SOFT_RESET_PRE)
+    onSoftReset() {
+        this.fixes.clear();
+    }
+
     @EventHandler(Z64.OotEvents.ON_ACTOR_SPAWN)
     onActorSpawn(actor: IActor) {
         this.actorsAwaiting.push(actor);

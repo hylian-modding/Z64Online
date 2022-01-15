@@ -108,3 +108,7 @@ export function getCurrentSceneID(core: IZ64Main){
 export function getCurrentRoomID(core: IZ64Main){
     return core.OOT !== undefined ? core.OOT!.global.room : core.MM!.global.room;
 }
+
+export function getLink(core: IZ64Main){
+    return core.OOT !== undefined ? core.OOT!.link : core.MM!.link;
+}

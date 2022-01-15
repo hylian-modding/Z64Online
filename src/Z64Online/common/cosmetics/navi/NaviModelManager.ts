@@ -1,12 +1,14 @@
 import { IModelReference, registerModel, Z64Online_ModelAllocation, Z64O_CosmeticEvents } from "@Z64Online/common/api/Z64API";
 import ArbitraryHook from "@Z64Online/common/lib/ArbitraryHook";
 import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
+import { getLink } from "@Z64Online/common/types/GameAliases";
 import { Scene } from "@Z64Online/common/types/Types";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { LinkState } from "Z64Lib/API/Common/Z64API";
 import { Z64 } from "Z64Lib/API/imports";
 import { optimize } from "Z64Lib/API/zzoptimize";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
@@ -31,6 +33,7 @@ export default class NaviModelManager {
     core!: IZ64Main;
     models: Map<string, IModelReference> = new Map();
     hook: ArbitraryHook | undefined;
+    int: string | undefined;
 
     @EventHandler(Z64O_CosmeticEvents.LOAD_CUSTOM_NAVI)
     onLoad(evt: Z64Online_ModelAllocation) {
@@ -63,18 +66,24 @@ export default class NaviModelManager {
 
     @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
     onSceneChanged(scene: Scene) {
-        if (this.currentNaviModel !== undefined) {
-            if (this.hook === undefined) {
-                this.hook = new ArbitraryHook("Navi", this.ModLoader, this.core, FairyHax.getFairyHax(Z64_GAME)!);
-                this.hook.inject();
+        if (this.int !== undefined) return;
+        this.int = this.ModLoader.utils.setIntervalFrames(()=>{
+            if (getLink(this.core).state !== LinkState.STANDING) return;
+            if (this.currentNaviModel !== undefined) {
+                if (this.hook === undefined) {
+                    this.hook = new ArbitraryHook("Navi", this.ModLoader, this.core, FairyHax.getFairyHax(Z64_GAME)!);
+                    this.hook.inject();
+                }
+                this.currentNaviModel.loadModel();
+                this.ModLoader.utils.setTimeoutFrames(() => {
+                    this.hook!.runCreate(this.currentNaviModel!.pointer, () => {
+                        Z64O_Logger.debug(`Navi successfully hooked.`);
+                    });
+                }, 20);
             }
-            this.currentNaviModel.loadModel();
-            this.ModLoader.utils.setTimeoutFrames(() => {
-                this.hook!.runCreate(this.currentNaviModel!.pointer, () => {
-                    Z64O_Logger.debug(`Navi successfully hooked.`);
-                });
-            }, 20);
-        }
+            this.ModLoader.utils.clearIntervalFrames(this.int!);
+            this.int = undefined;
+        }, 1);
     }
 
 }

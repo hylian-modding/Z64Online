@@ -233,7 +233,7 @@ gulp.task('roman', function () {
 gulp.task('mm', function () {
     let m = JSON.parse(fs.readFileSync("./modloader64-config.json").toString());
     m["ModLoader64"]["rom"] = "Legend of Zelda, The - Majora's Mask (USA).z64";
-    m["ModLoader64"]["patch"] = "MM_Vanillamizer.bps";
+    m["ModLoader64"]["patch"] = "MM_Vanillamizer_v14_16.bps";
     fs.writeFileSync("./modloader64-config.json", JSON.stringify(m, null, 2));
     return gulp.src('./src/**/*.ts');
 });
