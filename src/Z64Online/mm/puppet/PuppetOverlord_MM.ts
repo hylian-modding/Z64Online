@@ -1,5 +1,5 @@
 import { PuppetOverlordClient, PuppetOverlordServer } from "@Z64Online/common/puppet/PuppetOverlord";
-import { IZ64GameMain, Core, Scene, AgeOrForm } from "@Z64Online/common/types/Types";
+import { IZ64GameMain, Core, AgeOrForm } from "@Z64Online/common/types/Types";
 import { INetworkPlayer, IPacketHeader, NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api//IModLoaderAPI";
@@ -12,10 +12,10 @@ import { EventHandler, EventsClient } from "modloader64_api/EventHandler";
 import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { PuppetQuery, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
-import { MMEvents } from "Z64Lib/API/MM/MMAPI";
+import { MMEvents, Scene } from "Z64Lib/API/MM/MMAPI";
 import { IZ64Master } from "@Z64Online/common/api/InternalAPI";
 
-export class PuppetOverlordServer_MM extends PuppetOverlordServer{
+export class PuppetOverlordServer_MM extends PuppetOverlordServer {
 
     @ParentReference()
     parent!: IZ64Master;
@@ -131,7 +131,7 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
             evt.puppet = this.puppets.get(evt.player.uuid);
         }
     }
-    
+
     // Networking
     @NetworkHandler('Z64O_ScenePacket')
     onSceneChange_client(packet: Z64O_ScenePacket) {
@@ -150,8 +150,8 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
         this.processPuppetPacket(packet);
     }
 
-    private dummy(): boolean {
-        return false;
+    private isWaitScene(): boolean {
+        return this.core.MM!.global.scene === Scene.MAJORAS_MASK_BOSS_ROOM || this.core.MM!.global.scene === Scene.MOON;
     }
 
     @onTick()
@@ -167,7 +167,13 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
             !this.core.MM!.helper.isLinkEnteringLoadingZone()
         ) {
             this.processNewPlayers();
-            this.processAwaitingSpawns();
+            if (this.isWaitScene()) {
+                this.ModLoader.utils.setTimeoutFrames(() => {
+                    //console.log("in the moon")
+                    this.processAwaitingSpawns();
+                }, 60);
+            }
+            else this.processAwaitingSpawns();
             this.lookForMissingOrStrandedPuppets();
             this.sendPuppetPacket();
         }
