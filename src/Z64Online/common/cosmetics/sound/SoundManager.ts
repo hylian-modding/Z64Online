@@ -67,11 +67,11 @@ export class SoundManagerClient {
     @InjectCore()
     core!: IZ64Main;
     PlayerSounds: Map<string, Map<number, sf.Sound[]>> = new Map<string, Map<number, sf.Sound[]>>();
-    rawSounds: any;
+    rawSounds!: Record<number, Buffer>;
     SIZE_LIMIT: number = 10;
     nops: Map<AgeOrForm, () => void> = new Map();
     sounds: Map<number, Array<sf.Sound>> = new Map<number, Array<sf.Sound>>();
-    localSoundPaks: Map<string, any> = new Map<string, any>();
+    localSoundPaks: Map<string, Record<number, Buffer>> = new Map<string, Record<number, Buffer>>();
     currentIDs: string[] = [];
     soundCache: Map<string, sf.Sound> = new Map();
 
@@ -252,7 +252,7 @@ export class SoundManagerClient {
         }
         for (let i = 0; i < ids.length; i++) {
             let id = ids[i];
-            let evt = { id: id, data: this.localSoundPaks.get(id)! };
+            let evt: {id: string, data: Record<number, Buffer>} = { id: id, data: this.localSoundPaks.get(id)! };
             if (!this.localSoundPaks.has(id)) {
                 this.ModLoader.logger.error("Something has gone very wrong with sound pak loading.");
                 this.ModLoader.logger.error(`ID ${id} does not exist.`);

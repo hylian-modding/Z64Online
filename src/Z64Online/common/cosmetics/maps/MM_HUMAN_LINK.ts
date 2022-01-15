@@ -1,4 +1,4 @@
-export const MM_HUMAN_LINK: any = {
+export const MM_HUMAN_LINK: Record<string, number> = {
     "Cube": 0x000053C8,
     "Sheath.1": 0x000050C0,
     "Sheath.2": 0x000050C8,

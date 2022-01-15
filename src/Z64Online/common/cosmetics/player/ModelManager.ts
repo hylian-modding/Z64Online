@@ -353,7 +353,7 @@ export class ModelManagerClient {
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_START, {});
     this.allocationManager.getLocalPlayerData().equipment.forEach((value: IModelReference) => {
       value.loadModel();
-      let map = FormToMap.GetMapFromForm(age);
+      let map = FormToMap.GetMapFromForm(age)!;
       let eqmap = Z64OEquipmentManifest.getEquipmentMap(this.allocationManager.getModel(value).zobj);
       let link = this.child.findLink();
       Object.keys(eqmap).forEach((key: string)=>{

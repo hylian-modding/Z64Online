@@ -1,4 +1,4 @@
-export const MM_ZORA_LINK: any = {
+export const MM_ZORA_LINK: Record<string, number> = {
     "Cube": 0x000053C8,
     "Sheath": 0x000050C0,
     "Fist.L": 0x000050A0,

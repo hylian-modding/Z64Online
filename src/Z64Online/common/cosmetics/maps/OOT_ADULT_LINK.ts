@@ -1,4 +1,4 @@
-export const OOT_ADULT_LINK: any = {
+export const OOT_ADULT_LINK: Record<string, number> = {
     "Cube": 0x000053C8,
     "Sheath": 0x000050C8,
     "FPS.Hookshot": 0x00005170,

@@ -706,7 +706,7 @@ export class UniversalAliasTable {
         } else if (Z64OManifestParser.isOldZZConvert(p)) {
             p = Z64OManifestParser.convertZZConvertToZ64O(p);
         }
-        let m: any = Z64OManifestParser.parse(p);
+        let m = Z64OManifestParser.parse(p);
         let zobj: Buffer = p;
         let __defines = fs.readFileSync(path.resolve(__dirname, "Defines.h")).toString().split("\n");
         let defines: Map<string, number> = new Map();

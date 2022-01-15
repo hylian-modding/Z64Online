@@ -49,7 +49,7 @@ export default class Z64OManifestParser {
     }
 
     static parse(buf: Buffer) {
-        let o: any = {};
+        let o: Record<string, number> = {};
         let i = buf.indexOf(this.start);
         let e = buf.indexOf(this.end);
         if (i > -1 && e > -1) {

@@ -1,4 +1,4 @@
-export const OOT_CHILD_LINK: any = {
+export const OOT_CHILD_LINK: Record<string, number> = {
     "Cube": 0x000053C8,
     "Limb 1": 0x00005020,
     "Limb 3": 0x00005028,
