@@ -43,7 +43,8 @@ export default class NaviModelManager {
         sb.writeBuffer(op.zobj);
         sb.writeUInt32BE(0x06000000 + op.oldOffs2NewOffs.get(offset)!, 0x24);
         evt.model = sb.toBuffer();
-        evt.ref = registerModel(evt.model, true);
+        evt.ref = registerModel(evt.model, true)!;
+        if (evt.ref === undefined) return;
         this.models.set(evt.name, evt.ref);
         this.currentNaviModel = evt.ref;
     }

@@ -73,7 +73,7 @@ export function getLinkPos(core: IZ64Main): Buffer {
 }
 
 export function getLinkSoundID(core: IZ64Main): number {
-    return SoundAccessSingleton.sound_id;
+    return SoundAccessSingleton !== undefined ? SoundAccessSingleton.sound_id : 0;
 }
 
 export function isTitleScreen(core: IZ64Main): boolean {

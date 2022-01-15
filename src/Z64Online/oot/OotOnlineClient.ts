@@ -1,13 +1,8 @@
 import { Z64O_PRIVATE_EVENTS, SendToScene } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
-import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
-import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
-import { NPCReplacer } from "@Z64Online/common/cosmetics/npc/NPCReplacer";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
-import { markAsRandomizer } from "@Z64Online/common/types/GameAliases";
+import { getLinkSoundID, markAsRandomizer } from "@Z64Online/common/types/GameAliases";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
-import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import path from "path";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { DiscordStatus } from "modloader64_api/Discord";
@@ -23,27 +18,16 @@ import { InventoryItem, IInventory } from "Z64Lib/API/OoT/OOTAPI";
 import { Strength } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { Multiworld, MultiWorld_ItemPacket, OotRCosmeticHelper, RomansCosmeticHelper } from "./compat/OotR";
+import { MultiWorld_ItemPacket, OotRCosmeticHelper, RomansCosmeticHelper } from "./compat/OotR";
 import RomFlags from "./compat/RomFlags";
-import { ImGuiHandler } from "./imgui/ImGuiHandler";
-import { Notifications } from "./imgui/Notifications";
-import { ModelManagerClient } from "../common/cosmetics/player/ModelManager";
 import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from "./OotOnline";
 import { ThiccOpa } from "./opa/ThiccOpa";
-import { OOT_PuppetOverlordClient } from "./puppet/OOT_PuppetOverlord";
-import { PvPModule } from "./pvp/PvPModule";
 import { OotOSaveData } from "./save/OotoSaveData";
 import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
-import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
-import SongOfSoaringCompat from "./compat/SongOfSoaring";
-import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
-import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
-import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
-import EponaModelManager from "@Z64Online/common/cosmetics/epona/EponaModelManager";
 import OotOnline_ClientModules from "./OotOnline_ClientModules";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
@@ -89,8 +73,12 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
         this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
         this.ModLoader.config.setData("OotOnline", "autosaves", true);
-        this.modules.gui.settings = this.config;
-        this.modules.modelManager.child = new ModelManagerOot(this.modules.modelManager);
+        if (this.modules.gui !== undefined){
+            this.modules.gui.settings = this.config;
+        }
+        if (this.modules.modelManager !== undefined){
+            this.modules.modelManager.child = new ModelManagerOot(this.modules.modelManager);
+        }
     }
 
     @Init()
@@ -140,10 +128,13 @@ export default class OotOnlineClient {
         this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
 
         if (RomFlags.isOotR) {
-            if (this.modules.multiworld.isRomMultiworld()) {
-                RomFlags.isMultiworld = true;
-                this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.modules.multiworld.contextPointer, 0x0) + 0x4);
-                this.modules.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
+            try{
+                if (this.modules.multiworld.isRomMultiworld()) {
+                    RomFlags.isMultiworld = true;
+                    this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.modules.multiworld.contextPointer, 0x0) + 0x4);
+                    this.modules.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
+                }
+            }catch(err){
             }
         }
     }
@@ -160,7 +151,7 @@ export default class OotOnlineClient {
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.DOING_SYNC_CHECK, {});
             this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
             let packet = new Z64O_UpdateSaveDataPacket(this.ModLoader.clientLobby, save, this.clientStorage.world);
-            if (this.modules.songOfSoaring.isModLoaded()) {
+            if (this.modules.songOfSoaring !== undefined && this.modules.songOfSoaring.isModLoaded()) {
                 packet.modData["SongOfSoaring"] = this.modules.songOfSoaring.getOwlData();
             }
             this.ModLoader.clientSide.sendPacket(packet);
@@ -738,7 +729,7 @@ export default class OotOnlineClient {
                 this.ModLoader.emulator.rdramWriteBuffer(this.syncContext + 0x5, this.ModLoader.emulator.rdramReadBuffer(0x800F7AE4 + 0x3, 0x3));
             }
         }
-        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, SoundAccessSingleton.sound_id);
+        this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, getLinkSoundID(this.core));
         this.ModLoader.emulator.rdramWrite32(this.syncContext + 0x14, 0x8011A5D0);
     }
 

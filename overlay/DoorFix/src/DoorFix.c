@@ -13,7 +13,6 @@ void update(void* thisx, GlobalContext* globalCtx)
 void draw(void* thisx, GlobalContext* globalCtx)
 {
     ((ActorFunc) haxPointer->draw)(thisx, globalCtx);
-
 }
 
 void doInject(void* this, GlobalContext* globalCtx, uint32_t pointer){
@@ -23,8 +22,11 @@ void doInject(void* this, GlobalContext* globalCtx, uint32_t pointer){
     Actor* actor = ((Actor*)thisx->inst);
     thisx->update = actor->update;
     thisx->draw = actor->draw;
-    actor->update = &update;
-    actor->draw = &draw;
+    s32 doorType = actor->params >> 7 & 7;
+    if (doorType == DOOR_LOCKED){
+        actor->update = &update;
+        actor->draw = &draw;
+    }
 }
 
 void doDestroy(void* this, GlobalContext* globalCtx, uint32_t pointer){

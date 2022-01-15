@@ -126,7 +126,8 @@ export class ModelAPIHandlers {
         } else {
             model = evt.model;
         }
-        ref = registerModel(model);
+        ref = registerModel(model)!;
+        if (ref === undefined) return undefined;
         if (evt.script !== undefined) {
             ref.script = evt.script;
         }

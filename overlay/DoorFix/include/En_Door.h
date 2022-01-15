@@ -7,6 +7,17 @@
 
 typedef void (*EnDoorActionFunc)(struct EnDoor*, GlobalContext*);
 
+typedef enum {
+    /* 0x00 */ DOOR_ROOMLOAD,  // loads rooms
+    /* 0x01 */ DOOR_LOCKED,    // small key locked door
+    /* 0x02 */ DOOR_ROOMLOAD2, // loads rooms
+    /* 0x03 */ DOOR_SCENEEXIT, // doesn't load rooms, used for doors paired with scene transition polygons
+    /* 0x04 */ DOOR_AJAR,      // open slightly but slams shut if Link gets too close
+    /* 0x05 */ DOOR_CHECKABLE, // doors that display a textbox when interacting
+    /* 0x06 */ DOOR_EVENING,   // unlocked between 18:00 and 21:00, Dampé's hut
+    /* 0x07 */ DOOR_ROOMLOAD7  // loads rooms
+} EnDoorType;
+
 typedef struct EnDoor {
     /* 0x0000 */ Actor actor;
     /* 0x014C */ SkelAnime skelAnime;

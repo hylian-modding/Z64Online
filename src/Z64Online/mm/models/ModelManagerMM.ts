@@ -73,7 +73,8 @@ export class ModelManagerMM implements IModelManagerShim {
         this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: gear.OBJECT_MASK_DEITY_SCREAMING, alias: defines.DL_DEITY_MASK_SCREAM });
 
         this.parent.ModLoader.utils.setTimeoutFrames(() => {
-            this.gearRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "gear.zobj")), true);
+            this.gearRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "gear.zobj")), true)!;
+            if (this.gearRef === undefined) return;
             this.gearRef.loadModel();
         }, 20);
 

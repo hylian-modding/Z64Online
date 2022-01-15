@@ -171,8 +171,13 @@ export class WorldEventRewards {
                     let rs = require('require-from-string');
                     let b = this.assets.bundle.files.get(ticket.name)!;
                     let c = zlib.inflateSync(b).toString();
-                    let r = rs(c);
-                    this.compressedTicketCache.set(ticket.uuid, r);
+                    try{
+                        let r = rs(c);
+                        this.compressedTicketCache.set(ticket.uuid, r);
+                    }catch(err: any){
+                        this.ModLoader.logger.error(err.stack);
+                        return;
+                    }
                 }
             }
         });

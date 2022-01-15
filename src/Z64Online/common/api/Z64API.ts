@@ -99,9 +99,10 @@ export class Z64Online_LocalModelChangeProcessEvt {
   }
 }
 
-export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference {
+export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference | undefined {
   let evt = new Z64Online_ModelAllocation(model, 0x69, Z64_GAME);
   bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, evt);
+  if (evt.ref === undefined) return undefined;
   evt.ref.isPlayerModel = !noautoGC;
   return evt.ref;
 }
