@@ -24,6 +24,9 @@ export let Z64_MANIFEST: Manifest;
 export let Z64_OBJECT_TABLE_RAM: number = 0;
 export let Z64_PLAYER_PROXY: Buffer;
 
+export let MM_IS_FAIRY: boolean;
+export let MM_IS_SKULL: boolean;
+
 export function setupOot() {
     Z64_ANIM_BANK_DMA = OOT_ANIM_BANK_DMA;
     Z64_ANIM_BANK_SIZE = OOT_ANIM_BANK_SIZE;
@@ -50,6 +53,14 @@ export function setupMM() {
 
 export function markAsRandomizer() {
     Z64_IS_RANDOMIZER = true;
+}
+
+export function markAsFairySync() {
+    MM_IS_FAIRY = true;
+}
+
+export function markAsSkullSync() {
+    MM_IS_SKULL = true;
 }
 
 export function setPlayerProxy(buf: Buffer) {
@@ -101,14 +112,14 @@ export function getLinkLocation(core: IZ64Main): { pos: Vector3, rot: Vector3 } 
     return { pos: _core.link.position.getVec3(), rot: _core.link.rotation.getVec3() };
 }
 
-export function getCurrentSceneID(core: IZ64Main){
+export function getCurrentSceneID(core: IZ64Main) {
     return core.OOT !== undefined ? core.OOT!.global.scene : core.MM!.global.scene;
 }
 
-export function getCurrentRoomID(core: IZ64Main){
+export function getCurrentRoomID(core: IZ64Main) {
     return core.OOT !== undefined ? core.OOT!.global.room : core.MM!.global.room;
 }
 
-export function getLink(core: IZ64Main){
+export function getLink(core: IZ64Main) {
     return core.OOT !== undefined ? core.OOT!.link : core.MM!.link;
 }

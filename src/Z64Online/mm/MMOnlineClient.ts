@@ -38,6 +38,7 @@ import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosm
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
+import { markAsFairySync, markAsSkullSync, MM_IS_FAIRY, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -729,11 +730,11 @@ export default class MMOnlineClient {
         let strayShuffle2: number = this.ModLoader.emulator.rdramRead32(0x8014451C);
         let strayShuffle3: number = this.ModLoader.emulator.rdramRead32(0x8014452C);
 
-        if (skullShuffle0 === 0x00000000 && skullShuffle1 === 0x00000000) this.clientStorage.isSkulltulaSync = true;
-        if (strayShuffle0 === 0x00000000 && strayShuffle1 === 0x00000000 && strayShuffle2 === 0x00000000 && strayShuffle3 === 0x00000000) this.clientStorage.isFairySync = true;
+        if (skullShuffle0 === 0x00000000 && skullShuffle1 === 0x00000000) markAsSkullSync();
+        if (strayShuffle0 === 0x00000000 && strayShuffle1 === 0x00000000 && strayShuffle2 === 0x00000000 && strayShuffle3 === 0x00000000) markAsFairySync();
 
-        this.ModLoader.logger.info("Skulltula Sync: " + this.clientStorage.isFairySync);
-        this.ModLoader.logger.info("Fairy Sync: " + this.clientStorage.isSkulltulaSync);
+        this.ModLoader.logger.info("Skulltula Sync: " + MM_IS_SKULL);
+        this.ModLoader.logger.info("Fairy Sync: " + MM_IS_FAIRY);
     }
 
     @NetworkHandler('Z64O_PermFlagsPacket')
@@ -771,7 +772,6 @@ export default class MMOnlineClient {
             this.ModLoader.logger.debug("This is an MMR Rom.");
             this.clientStorage.isMMR = true;
             markAsRandomizer();
-            //this.mmrSyncCheck();
         }
     }
 
@@ -799,6 +799,7 @@ export default class MMOnlineClient {
                 }
             }
         }
+        if (this.core.MM!.helper.isTitleScreen() && this.core.MM!.global.scene_framecount === 1 && !this.core.MM!.save.checksum) this.mmrSyncCheck();
     }
 
     inventoryUpdateTick() {
