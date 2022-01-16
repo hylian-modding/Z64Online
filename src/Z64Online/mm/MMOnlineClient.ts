@@ -730,8 +730,8 @@ export default class MMOnlineClient {
         let strayShuffle2: number = this.ModLoader.emulator.rdramRead32(0x8014451C);
         let strayShuffle3: number = this.ModLoader.emulator.rdramRead32(0x8014452C);
 
-        if (skullShuffle0 === 0x00000000 && skullShuffle1 === 0x00000000) markAsSkullSync();
-        if (strayShuffle0 === 0x00000000 && strayShuffle1 === 0x00000000 && strayShuffle2 === 0x00000000 && strayShuffle3 === 0x00000000) markAsFairySync();
+        if (skullShuffle0 === 0x00000000 || skullShuffle1 === 0x00000000) markAsSkullSync();
+        if (strayShuffle0 === 0x00000000 || strayShuffle1 === 0x00000000 || strayShuffle2 === 0x00000000 || strayShuffle3 === 0x00000000) markAsFairySync();
 
         this.ModLoader.logger.info("Skulltula Sync: " + MM_IS_SKULL);
         this.ModLoader.logger.info("Fairy Sync: " + MM_IS_FAIRY);

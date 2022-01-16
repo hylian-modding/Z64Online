@@ -49,6 +49,8 @@ export function setupMM() {
     Z64_ADULT_ZOBJ_DMA = 654;
     Z64_CHILD_ZOBJ_DMA = 654;
     Z64_OBJECT_TABLE_RAM = 0x803FE8A8;
+    MM_IS_FAIRY = false;
+    MM_IS_SKULL = false;
 }
 
 export function markAsRandomizer() {
