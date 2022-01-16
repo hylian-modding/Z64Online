@@ -548,7 +548,7 @@ export default class MMOnlineClient {
     @EventHandler(Z64OnlineEvents.SAVE_DATA_ITEM_SET)
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
         switch (evt.key) {
-            case "bombchus":
+            case "FIELD_BOMBCHU":
                 if (this.core.MM!.save.inventory.bombchuCount === 0) {
                     this.core.MM!.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
                 }
@@ -558,7 +558,7 @@ export default class MMOnlineClient {
                     this.core.MM!.save.inventory.bombsCount = UpgradeCountLookup(InventoryItem.BOMB, evt.value as number);
                 }
                 break;
-            case "powderKeg":
+            case "FIELD_POWDER_KEG":
                 if (this.core.MM!.save.inventory.powderKegCount === 0) {
                     this.core.MM!.save.inventory.powderKegCount = UpgradeCountLookup(InventoryItem.POWDER_KEG, evt.value as number);
                 }
