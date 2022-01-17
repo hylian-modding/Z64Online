@@ -12,12 +12,12 @@ import { rejects } from "assert";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import { MMOnlineStorageClient } from "../storage/MMOnlineStorageClient";
 import { Z64O_PermFlagsPacket } from "../network/MMOPackets";
+import { MM_IS_FAIRY, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
 
 export class MMOSaveData implements ISaveSyncData {
   core!: IMMCore;
   private ModLoader: IModLoaderAPI;
   hash: string = "";
-
   constructor(core: IMMCore, ModLoader: IModLoaderAPI) {
     this.core = core;
     this.ModLoader = ModLoader;
@@ -27,13 +27,14 @@ export class MMOSaveData implements ISaveSyncData {
     let obj: any = {};
     let keys = [
       'inventory', 'map_visible', 'map_visited', 'minimap_flags', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
-      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount', 'dungeon_items'
+      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount', 'dungeon_items', 'stray', 'skull'
     ];
+
     obj = JSON.parse(JSON.stringify(this.core.save));
     //obj['permSceneData'] = this.core.save.permSceneData;
     //obj['infTable'] = this.core.save.infTable;
     //obj['weekEventFlags'] = this.core.save.weekEventFlags;
-    obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
+    //obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
     let obj2: any = {};
 
     for (let i = 0; i < keys.length; i++) {
@@ -154,9 +155,13 @@ export class MMOSaveData implements ISaveSyncData {
       storage.map_visited = obj.map_visited;
       storage.double_defense = obj.double_defense;
 
+
+
       let old_swordLevel = storage.swords.swordLevel;
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, ['kokiriSword', 'masterSword', 'giantKnife', 'biggoronSword']);
       this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, ['dekuShield', 'hylianShield', 'mirrorShield']);
+      if(MM_IS_FAIRY) this.processMixedLoop_OVERWRITE(obj.stray, storage.stray, []);
+      if(MM_IS_SKULL) this.processMixedLoop_OVERWRITE(obj.skull, storage.skull, []);
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
       this.processBoolLoop_OVERWRITE(obj.owlStatues, storage.owlStatues);
@@ -203,6 +208,14 @@ export class MMOSaveData implements ISaveSyncData {
         let old_swordLevel = storage.swords.swordLevel;
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
+        if(MM_IS_FAIRY) {
+          console.log(obj.stray)
+          this.processMixedLoop(obj.stray, storage.stray, []); 
+        } 
+        if(MM_IS_SKULL) {
+          console.log(obj.skull)
+          this.processMixedLoop(obj.skull, storage.skull, []);
+        } 
         this.processMixedLoop(obj.questStatus, storage.questStatus, ['heartPieceCount']);
         this.processBoolLoop(obj.owlStatues, storage.owlStatues);
 

@@ -10,7 +10,7 @@ export interface IMMInventorySync extends IMMInventoryFields, Pick<IMMInventoryC
 }
 
 export interface IMMSyncSave extends Pick<IMMSaveContext, 'map_visible' | 'map_visited' | 'heart_containers' | 'double_defense' | 'magic_meter_size' | 'swords' | 'shields'
-  | 'questStatus' | 'checksum' | 'owlStatues' | 'minimap_flags'> {
+  | 'questStatus' | 'checksum' | 'owlStatues' | 'minimap_flags' | 'stray' | 'skull'> {
   inventory: IMMInventorySync;
   dungeon_items: Buffer;
 }
