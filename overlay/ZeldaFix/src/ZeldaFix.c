@@ -26,11 +26,4 @@ void doInject(void* this, GlobalContext* globalCtx, uint32_t pointer){
 }
 
 void doDestroy(void* this, GlobalContext* globalCtx, uint32_t pointer){
-    En_HaxBase* thisx = ((En_HaxBase*)this);
-    if (pointer == 0){
-        Actor* actor = ((Actor*)thisx->inst);
-        actor->update = thisx->update;
-        actor->draw = thisx->draw;
-        return;
-    }
 }

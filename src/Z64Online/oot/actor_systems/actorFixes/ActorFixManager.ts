@@ -50,11 +50,21 @@ export default class ActorFixManager {
         let wait = (hook: ArbitraryHook, tick: number = 20) => {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 hook.inject();
+                this.ModLoader.utils.setTimeoutFrames(()=>{
+                    console.log(`${hook.name} ${hook.instancePointer.toString(16)}`);
+                }, 20);
             }, tick);
         };
         let i = 1;
         this.fixes.forEach((fix: ActorFix)=>{
             wait(fix.hook, i++);
+        });
+    }
+
+    @EventHandler(Z64.OotEvents.ON_LOADING_ZONE)
+    onSceneChange(){
+        this.fixes.forEach((fix: ActorFix)=>{
+            fix.hook.runDestroy(0, ()=>{});
         });
     }
 

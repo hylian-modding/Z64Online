@@ -9,7 +9,6 @@ import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { SmartBuffer } from "smart-buffer";
 import { Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
-import fs from 'fs';
 import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 

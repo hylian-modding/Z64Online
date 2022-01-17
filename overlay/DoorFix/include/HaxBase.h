@@ -5,9 +5,15 @@
 #include "HaxEmbed.h"
 
 typedef struct{
-    uint32_t inst;
+    Actor* inst;
     uint32_t update;
-    uint32_t draw;
+} Door_Data;
+
+#define DOORS_MAX 0xFF
+
+typedef struct{
+    uint8_t index;
+    Door_Data doors[DOORS_MAX];
 } En_HaxBase;
 
 extern En_HaxBase* haxPointer;
