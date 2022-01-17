@@ -14,6 +14,7 @@ import * as gear from './zobjs/gear';
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { IZ64Offsets, Z64Offsets } from "Z64Lib/API/Common/ModelData/IZ64Offsets";
+import { MMR_Cosmetics } from "../compat/MMR";
 
 export class ModelManagerMM implements IModelManagerShim {
 
@@ -81,6 +82,7 @@ export class ModelManagerMM implements IModelManagerShim {
     }
 
     onRomPatched(evt: any): void {
+        MMR_Cosmetics.extractMMRModel(this.parent.ModLoader, evt.rom);
         this.loadHumanModelMM(evt);
         this.loadZoraModelMM(evt);
         this.loadNutsModelMM(evt);
