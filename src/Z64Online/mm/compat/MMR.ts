@@ -5,7 +5,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IMMOClientside } from "../save/IMMOClientside";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
+import { Z64_GAME, Z64_IS_RANDOMIZER } from "Z64Lib/src/Common/types/GameAliases";
 import { SmartBuffer } from "smart-buffer";
 import { Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/api/Z64API";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
@@ -35,6 +35,7 @@ export class MMR_Cosmetics {
     private static MM_Manifest: Buffer = Buffer.from('21506C617941734D616E69666573743000035761697374000000BDB048616E642E52000000D05848616E642E4C000000D528FFFFFFFFFFFFFFFFFFFFFFFFFFFF', 'hex');
 
     static extractMMRModel(ModLoader: IModLoaderAPI, rom: Buffer) {
+        if (!Z64_IS_RANDOMIZER) return;
         ModLoader.logger.info("Extracting MMR model...");
         let tools = new Z64RomTools(ModLoader, Z64_GAME);
         let zobj: Buffer = tools.decompressObjectFileFromRom(rom, 0x0011);

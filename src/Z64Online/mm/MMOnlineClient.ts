@@ -762,7 +762,7 @@ export default class MMOnlineClient {
         this.core.MM!.save.sword_helper.updateSwordonB();
     }
 
-    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED_POST)
+    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRomPost(evt: any) {
         let rom: Buffer = evt.rom;
         let offset: number = rom.indexOf('DPAD_CONFIG');
