@@ -27,8 +27,9 @@ export default class TimeSyncServer {
     simulatedNight!: number;
 
 
-    @EventHandler(Z64OnlineEvents.MMO_UPDATE_TIME)
+    @ServerNetworkHandler('Z64O_ServerTimeStart')
     serverUpdate(evt: any) {
+        console.log(`Server: Z64O_ServerTimeStart`)
         //600 frames between event handler
         //3 ticks per frame on normal
         //1 tick per frame on inverted
@@ -54,9 +55,10 @@ export default class TimeSyncServer {
         this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, this.ModLoader.clientLobby));
 
     }
-
+    
     @ServerNetworkHandler('Z64O_SoTPacket')
     onSOT() {
+        console.log(`Server: SoTPacket`);
         this.simulatedTime = 0;
         this.simulatedDay = 0;
         this.simulatedSpeed = 0;

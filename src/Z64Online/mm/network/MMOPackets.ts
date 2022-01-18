@@ -49,5 +49,13 @@ export class Z64O_SyncSettings extends Packet {
     this.syncModeBasic = syncModeBasic;
     this.syncModeTime = syncModeTime;
   }
+}
 
+export class Z64O_ServerTimeStart extends Packet {
+  start: boolean;
+
+  constructor(start: boolean, lobby: string) {
+    super('Z64O_ServerTimeStart', 'Z64Online', lobby, true);
+    this.start = start;
+  }
 }

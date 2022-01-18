@@ -8,7 +8,8 @@ import { Preinit, onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { LinkState } from "Z64Lib/API/Common/Z64API";
 import { MMEvents } from "Z64Lib/API/MM/MMAPI";
-import { Z64O_SoTPacket, Z64O_TimePacket } from "../network/MMOPackets";
+import { MMOnlineConfigCategory } from "../MMOnline";
+import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
 import SoTTrigger from "./SoTTrigger";
 
 export const RECORD_TICK_MODULO = 6
@@ -29,10 +30,12 @@ export default class TimeSyncClient {
     sentSoT: boolean = false;
     songOfTimeLoop: string | undefined;
     dontRepeat: boolean = false;
-
+    lobbyConfig!: MMOnlineConfigCategory;
+    
     @Postinit()
     postInit() {
         this.songOfTime = new SoTTrigger(this.ModLoader, this.core);
+        this.lobbyConfig = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
     }
 
     get currentCutscene(): number {
@@ -41,7 +44,7 @@ export default class TimeSyncClient {
 
     @onTick()
     onTick() {
-        if (!this.isStarted || !this.ModLoader.config.data["MMOnline"]["syncModeTime"]) return;
+        if (!this.isStarted || !this.lobbyConfig.syncModeTime) return;
         if (this.core.MM!.save.time_speed === -2 && !this.inverted) {
             // switched to ISoT
             this.inverted = true;
@@ -68,9 +71,13 @@ export default class TimeSyncClient {
 
     @EventHandler(Z64OnlineEvents.MMO_TIME_START)
     timeStarted() {
+        console.log(`Client: MMO_TIME_START`)
         this.ModLoader.utils.setIntervalFrames(() => {
-            if(!this.ModLoader.config.data["MMOnline"]["syncModeTime"]) return;
-            bus.emit(Z64OnlineEvents.MMO_UPDATE_TIME);
+            console.log(`Client: syncModeTime = ${this.lobbyConfig.syncModeTime}`)
+            if (!this.lobbyConfig.syncModeTime) return;
+            this.ModLoader.clientSide.sendPacket(new Z64O_ServerTimeStart(true, this.ModLoader.clientLobby))
+            //bus.emit(Z64OnlineEvents.MMO_UPDATE_TIME);
+            console.log(`Client: Z64O_ServerTimeStart`);
         }, 200);
         this.isStarted = true;
     }
@@ -78,7 +85,7 @@ export default class TimeSyncClient {
     @NetworkHandler('Z64O_SoTPacket')
     onSOT() {
         if (this.sentSoT) return;
-        if(this.songOfTimeLoop !== undefined) return;
+        if (this.songOfTimeLoop !== undefined) return;
         console.log('recieving song of time! executing...')
         this.songOfTimeLoop = this.ModLoader.utils.setIntervalFrames(() => {
             if (!this.core.MM!.helper.isLinkEnteringLoadingZone() &&
@@ -95,7 +102,7 @@ export default class TimeSyncClient {
 
     @NetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
-        if (!this.isStarted/*  || this.core.MM!.link.state !== LinkState.STANDING */|| this.ModLoader.config.data["MMOnline"]["syncModeBaisc"]) return;
+        if (!this.isStarted/*  || this.core.MM!.link.state !== LinkState.STANDING */ || !this.lobbyConfig.syncModeTime) return;
         if (this.core.MM!.link.state === LinkState.BUSY || !this.core.MM!.helper.isInterfaceShown()) return;
         console.log(`Client onTime time: ${packet.time}`)
 
@@ -142,5 +149,9 @@ export default class TimeSyncClient {
         //this.core.MM!.save.day_night = night;
 
     }
-
+    @NetworkHandler('Z64O_SyncSettings')
+    onSyncSettings(packet: Z64O_SyncSettings){
+        this.lobbyConfig.syncModeBasic = packet.syncModeBasic;
+        this.lobbyConfig.syncModeTime = packet.syncModeTime;
+    }
 }
