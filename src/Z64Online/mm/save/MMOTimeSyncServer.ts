@@ -29,7 +29,7 @@ export default class TimeSyncServer {
 
     @ServerNetworkHandler('Z64O_ServerTimeStart')
     serverUpdate(packet: Z64O_ServerTimeStart) {
-        console.log(`Server: Z64O_ServerTimeStart`)
+       //console.log(`Server: Z64O_ServerTimeStart`)
         //600 frames between event handler
         //3 ticks per frame on normal
         //1 tick per frame on inverted
@@ -58,7 +58,7 @@ export default class TimeSyncServer {
     
     @ServerNetworkHandler('Z64O_SoTPacket')
     onSOT() {
-        console.log(`Server: SoTPacket`);
+       //console.log(`Server: SoTPacket`);
         this.simulatedTime = 0;
         this.simulatedDay = 0;
         this.simulatedSpeed = 0;
@@ -67,10 +67,10 @@ export default class TimeSyncServer {
 
     @ServerNetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
-        console.log(`Server: onTime: ${packet.time}`)
+       //console.log(`Server: onTime: ${packet.time}`)
         //Server needs to catch up to client
         this.simulatedTime = (packet.time + 0xC000) % NUM_TICKS_PER_DAY;
-        console.log(`server: onTime simulatedTime: ${this.simulatedTime}; packet.time: ${packet.time}; sending: ${(this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY}`)
+       //console.log(`server: onTime simulatedTime: ${this.simulatedTime}; packet.time: ${packet.time}; sending: ${(this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY}`)
         this.simulatedDay = packet.day;
         this.simulatedSpeed = packet.speed;
         this.simulatedNight = packet.night;
