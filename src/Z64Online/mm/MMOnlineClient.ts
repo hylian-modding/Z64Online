@@ -32,13 +32,14 @@ import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
-import { Z64O_PermFlagsPacket } from "./network/MMOPackets";
+import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings } from "./network/MMOPackets";
 import { MMOSaveData } from "./save/MMOSaveData";
 import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
 import { markAsFairySync, markAsSkullSync, MM_IS_FAIRY, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
+import TimeSyncClient from "./save/MMOTimeSyncClient";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -89,6 +90,8 @@ export default class MMOnlineClient {
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
+    @SidedProxy(ProxySide.CLIENT, TimeSyncClient)
+    timeSync!: TimeSyncClient;
 
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
@@ -128,7 +131,8 @@ export default class MMOnlineClient {
     @Preinit()
     preinit(): void {
         this.config = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
-        this.ModLoader.config.setData("MMOnline", "syncMode", syncMode.BASIC); // 0 is default, 1 is time sync, 2 is groundhog's-day sync
+        this.ModLoader.config.setData("MMOnline", "syncModeBasic", true); 
+        this.ModLoader.config.setData("MMOnline", "syncModeTime", false); 
         this.ModLoader.config.setData("MMOnline", "notifications", true);
         this.ModLoader.config.setData("MMOnline", "nameplates", true);
 
@@ -137,7 +141,8 @@ export default class MMOnlineClient {
 
     @Init()
     init(): void {
-        this.clientStorage.syncMode = this.config.syncMode;
+        this.clientStorage.syncModeBasic = this.config.syncModeBasic;
+        this.clientStorage.syncModeTime = this.config.syncModeTime;
     }
 
     @Postinit()
@@ -214,7 +219,7 @@ export default class MMOnlineClient {
             let save_scene_data: Buffer = this.core.MM!.global.getSaveDataForCurrentScene();
             let save: Buffer = Buffer.alloc(0x1c);
 
-            if (this.config.syncMode === syncMode.TIME) {
+            if (this.config.syncModeTime) {
                 live_scene_chests = this.core.MM!.global.liveSceneData_chests;
                 live_scene_switches = this.core.MM!.global.liveSceneData_switch;
                 live_scene_clear = this.core.MM!.global.liveSceneData_clear;
@@ -283,6 +288,8 @@ export default class MMOnlineClient {
         lobby.data['MMOnline:data_syncing'] = true;
         lobby.data['MMOnline:actor_syncing'] = true;
         lobby.data['MMOnline:key_syncing'] = this.config.keySync;
+        lobby.data['MMOnline:syncModeBasic'] = true;
+        lobby.data['MMOnline:syncModeTime'] = false;
     }
 
     @EventHandler(EventsClient.ON_LOBBY_JOIN)
@@ -291,6 +298,9 @@ export default class MMOnlineClient {
         this.LobbyConfig.actor_syncing = lobby.data['MMOnline:actor_syncing'];
         this.LobbyConfig.data_syncing = lobby.data['MMOnline:data_syncing'];
         this.LobbyConfig.key_syncing = lobby.data['MMOnline:key_syncing'];
+        this.LobbyConfig.syncModeBasic = lobby.data['MMOnline:syncModeBasic'];
+        this.LobbyConfig.syncModeTime = lobby.data['MMOnline:syncModeTime'];
+
         this.ModLoader.logger.info('MMOnline settings inherited from lobby.');
         if (GHOST_MODE_TRIGGERED) {
             bus.emit(Z64OnlineEvents.GHOST_MODE, true);
@@ -442,6 +452,12 @@ export default class MMOnlineClient {
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
+        }
+        if (this.config.syncModeTime) {
+            console.log(`Time sync start!`);
+            this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
+                this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
+            bus.emit(Z64OnlineEvents.MMO_TIME_START);
         }
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.clientStorage.first_time_sync = true;
@@ -756,6 +772,22 @@ export default class MMOnlineClient {
         this.ModLoader.logger.error(packet.message);
     }
 
+    @NetworkHandler('Z64O_SyncSettings')
+    Z64O_SyncSettings(packet: Z64O_SyncSettings) {
+        this.config.syncModeBasic = packet.syncModeBasic;
+        this.config.syncModeTime = packet.syncModeTime;
+        this.LobbyConfig.syncModeBasic = packet.syncModeBasic;
+        this.LobbyConfig.syncModeTime = packet.syncModeTime;
+
+        console.log(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
+        if (this.config.syncModeTime) {
+            console.log(`Time Sync Start!`);
+            this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
+                this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
+            bus.emit(Z64OnlineEvents.MMO_TIME_START);
+        }
+    }
+
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
     onSwordChange(evt: Sword) {
         console.log(`Sword updated: ${Sword[evt]}`)
@@ -774,7 +806,6 @@ export default class MMOnlineClient {
             markAsRandomizer();
         }
     }
-
 
     @onTick()
     onTick() {

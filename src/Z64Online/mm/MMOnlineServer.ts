@@ -14,11 +14,12 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
-import { Z64O_PermFlagsPacket } from "./network/MMOPackets";
+import { Z64O_PermFlagsPacket, Z64O_SyncSettings } from "./network/MMOPackets";
 import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
 import { MMOSaveData } from "./save/MMOSaveData";
+import TimeSyncServer from "./save/MMOTimeSyncServer";
 import { MMOnlineStorage, MMOnlineSave_Server } from "./storage/MMOnlineStorage";
 
 export default class MMOnlineServer {
@@ -35,7 +36,9 @@ export default class MMOnlineServer {
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.SERVER, CDNServer)
     cdn!: CDNServer;
-
+    @SidedProxy(ProxySide.SERVER, TimeSyncServer)
+    timeSync!: TimeSyncServer;
+    
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
             let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
@@ -298,6 +301,11 @@ export default class MMOnlineServer {
     @ServerNetworkHandler('Z64O_ClientSceneContextUpdate')
     onSceneContextSync_server(packet: Z64O_ClientSceneContextUpdate) {
         this.sendPacketToPlayersInScene(packet);
+    }
+
+    @ServerNetworkHandler('Z64O_SyncSettings')
+    Z64O_SyncSettings_server(packet: Z64O_SyncSettings) {
+        
     }
 
 }

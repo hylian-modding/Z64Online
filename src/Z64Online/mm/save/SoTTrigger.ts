@@ -22,7 +22,7 @@ export default class SoTTrigger {
             }
             this.ModLoader.utils.setTimeoutFrames(() => {
                 this.hook.runCreate(0, () => { });
-            }, 1);
+            }, 2);
         }, 1);
     }
 
