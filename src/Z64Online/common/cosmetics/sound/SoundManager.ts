@@ -183,7 +183,15 @@ export class SoundManagerClient {
         if (packet.ids.length === 0) return;
         for (let i = 0; i < packet.ids.length; i++) {
             CDNClient.singleton.requestFile(packet.ids[i]).then((buf: Buffer) => {
-                let sounds = Z64Serialize.deserializeSync(buf);
+                let sounds: any;
+                try{
+                    sounds = Z64Serialize.deserializeSync(buf);
+                }catch(err: any){
+                    this.ModLoader.logger.error(err.stack);
+                    this.ModLoader.logger.error("CDN failure?");
+                    CDNClient.singleton.flagCDNFailure(packet.ids[i]);
+                    return;
+                }
                 Object.keys(sounds).forEach((key: string) => {
                     if (sounds[key].length === 0) return;
                     this.PlayerSounds.get(packet.player.uuid)!.set(parseInt(key), []);

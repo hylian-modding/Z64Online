@@ -3,7 +3,7 @@ import { Preinit } from 'modloader64_api/PluginLifecycle';
 import path from 'path';
 import { CDNData } from './ICDNData';
 import { ServerNetworkHandler } from 'modloader64_api/NetworkHandler';
-import { CDNFileDownload_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
+import { CDNFileDownload_Packet, CDNFileFailure_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import CDNConfig, { CDNConfigTag } from './CDNConfig';
@@ -30,6 +30,11 @@ export class CDNServer {
         //@ts-ignore
         wr.buf = sab;
         this.sendMessageToThread(wr.packet_id, wr);
+    }
+
+    @ServerNetworkHandler('CDNFileFailure_Packet')
+    onFail(packet: CDNFileFailure_Packet){
+        this.sendMessageToThread(packet.packet_id, packet);
     }
 
     @ServerNetworkHandler('CDNFileDownload_Packet')

@@ -47,3 +47,14 @@ export class CDNFileDownload_Packet extends Packet{
     }
 
 }
+
+export class CDNFileFailure_Packet extends Packet{
+
+    id: string;
+
+    constructor(id: string){
+        super('CDNFileFailure_Packet', 'CDNServer', "__GLOBAL__", false);
+        this.id = id;
+    }
+
+}

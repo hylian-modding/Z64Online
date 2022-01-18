@@ -1,7 +1,7 @@
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { ModLoaderAPIInject } from 'modloader64_api/ModLoaderAPIInjector';
 import { NetworkHandler } from 'modloader64_api/NetworkHandler';
-import { CDNConfirm_Packet, CDNFileDownload_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
+import { CDNConfirm_Packet, CDNFileDownload_Packet, CDNFileFailure_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
 import zip from 'adm-zip';
 import { SmartBuffer } from 'smart-buffer';
 import { onTick, onViUpdate } from 'modloader64_api/PluginLifecycle';
@@ -85,6 +85,10 @@ export class CDNClient {
             }
         });
         return promise;
+    }
+
+    flagCDNFailure(id: string){
+        this.ModLoader.clientSide.sendPacket(new CDNFileFailure_Packet(id));
     }
 
     @NetworkHandler('CDNFileRequest_Packet')

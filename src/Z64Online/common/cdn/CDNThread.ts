@@ -2,7 +2,7 @@
 import { parentPort } from 'worker_threads';
 import { CDNData } from './ICDNData';
 import path from 'path';
-import { CDNConfirm_Packet, CDNFileDownload_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
+import { CDNConfirm_Packet, CDNFileDownload_Packet, CDNFileFailure_Packet, CDNFileRequest_Packet, CDNFileUpload_Packet } from './CDNPackets';
 import fs from 'fs-extra';
 import zip from 'adm-zip';
 import http, { IncomingMessage, ServerResponse } from 'http';
@@ -85,6 +85,16 @@ class CDNThread {
         this.sendMessageToMainThread(resp.packet_id, resp);
     }
 
+    handleFailure(packet: CDNFileFailure_Packet){
+        if (this.knownFiles.has(packet.id)){
+            let p = this.knownFiles.get(packet.id)!;
+            try{
+                fs.unlinkSync(p);
+            }catch(err: any){}
+            this.knownFiles.delete(packet.id);
+        }
+    }
+
     private sendMessageToMainThread(id: string, packet: any) {
         parentPort!.postMessage(new CDNData(id, packet));
     }
@@ -104,6 +114,9 @@ class CDNThread {
                 break;
             case 'CDNFileDownload_Packet':
                 this.handleDownload(p.packet);
+                break;
+            case 'CDNFileFailure_Packet':
+                this.handleFailure(p.packet);
                 break;
         }
     }
