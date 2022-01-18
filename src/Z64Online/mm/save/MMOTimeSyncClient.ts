@@ -102,6 +102,7 @@ export default class TimeSyncClient {
 
     @NetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
+        console.log(`Client onTime`)
         if (!this.isStarted/*  || this.core.MM!.link.state !== LinkState.STANDING */ || !this.lobbyConfig.syncModeTime) return;
         if (this.core.MM!.link.state === LinkState.BUSY || !this.core.MM!.helper.isInterfaceShown()) return;
         console.log(`Client onTime time: ${packet.time}`)
