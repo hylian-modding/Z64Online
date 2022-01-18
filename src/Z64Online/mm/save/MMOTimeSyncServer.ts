@@ -7,7 +7,7 @@ import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHan
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { MMEvents } from "Z64Lib/API/MM/MMAPI";
-import { Z64O_TimePacket } from "../network/MMOPackets";
+import { Z64O_ServerTimeStart, Z64O_TimePacket } from "../network/MMOPackets";
 
 export const RECORD_TICK_MODULO = 6
 export const NUM_SCHEDULE_TICKS = 196608;
@@ -28,7 +28,7 @@ export default class TimeSyncServer {
 
 
     @ServerNetworkHandler('Z64O_ServerTimeStart')
-    serverUpdate(evt: any) {
+    serverUpdate(packet: Z64O_ServerTimeStart) {
         console.log(`Server: Z64O_ServerTimeStart`)
         //600 frames between event handler
         //3 ticks per frame on normal
@@ -52,7 +52,7 @@ export default class TimeSyncServer {
         } */
 
 
-        this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, this.ModLoader.clientLobby));
+        this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
 
     }
     
@@ -75,7 +75,7 @@ export default class TimeSyncServer {
         this.simulatedSpeed = packet.speed;
         this.simulatedNight = packet.night;
 
-        this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, this.ModLoader.clientLobby));
+        this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
     }
 
 }
