@@ -15,6 +15,7 @@ import { isInterfaceShown } from "../types/GameAliases";
 // #ifdef IS_DEV_BUILD
 import DListCrawler from "./DListCrawler";
 import { ZobjTester } from "./ZobjTester";
+import { FunctionTester } from "./FunctionTester";
 // #endif
 
 function buf2hex(buffer: Buffer) {
@@ -43,6 +44,7 @@ export abstract class ImGuiHandlerCommon {
     actor_data: Buffer = Buffer.alloc(0x13C);
     crawler!: DListCrawler;
     tester!: ZobjTester;
+    fnTest!: FunctionTester;
     // #endif
     font!: Font;
 
@@ -55,6 +57,7 @@ export abstract class ImGuiHandlerCommon {
             // #ifdef IS_DEV_BUILD
             this.crawler = new DListCrawler(this.ModLoader);
             this.tester = new ZobjTester(this.ModLoader, this.core);
+            this.fnTest = new FunctionTester(this.ModLoader, this.core);
             // #endif
             return;
         }
@@ -78,6 +81,9 @@ export abstract class ImGuiHandlerCommon {
                     }
                     if (this.ModLoader.ImGui.menuItem("ZOBJ Tester")) {
                         this.tester.isOpen = !this.tester.isOpen;
+                    }
+                    if (this.ModLoader.ImGui.menuItem("Function Tester")){
+                        this.fnTest.isOpen = !this.fnTest.isOpen;
                     }
                     // #endif
                     if (this.ModLoader.ImGui.beginMenu("General Settings")) {
@@ -114,6 +120,9 @@ export abstract class ImGuiHandlerCommon {
         }
         if (this.tester !== undefined) {
             this.tester.onVi();
+        }
+        if (this.fnTest !== undefined){
+            this.fnTest.onVi();
         }
         if (this.showSpawner) {
             if (this.ModLoader.ImGui.begin("Actor Spawner###OotO:ActorSpawner")) {
