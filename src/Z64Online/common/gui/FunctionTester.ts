@@ -1,6 +1,7 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { Z64O_Logger } from "../lib/Logger";
 import { getCommandBuffer } from "../types/GameAliases";
 
 export class FunctionTester{
@@ -39,7 +40,9 @@ export class FunctionTester{
                 if (parseInt(this.param3[0]) > 0) c++;
                 if (parseInt(this.param4[0]) > 0) c++;
                 this.ModLoader.utils.setTimeoutFrames(()=>{
-                    getCommandBuffer(this.core)!.arbitraryFunctionCall(parseInt(this.pointer[0], 16), h, c);
+                    getCommandBuffer(this.core)!.arbitraryFunctionCall(parseInt(this.pointer[0], 16), h, c).then((value: Buffer)=>{
+                        Z64O_Logger.debug(`Function call complete. Return: ${value.toString('hex')}`);
+                    });
                 }, 1);
             }
             this.ModLoader.ImGui.end();
