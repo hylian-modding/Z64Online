@@ -10,10 +10,10 @@ export class FunctionTester{
     core: IZ64Main
     isOpen: boolean = false;
     pointer: string_ref = [""];
-    param1: string_ref = ["0"];
-    param2: string_ref = ["0"];
-    param3: string_ref = ["0"];
-    param4: string_ref = ["0"];
+    param1: string_ref = [""];
+    param2: string_ref = [""];
+    param3: string_ref = [""];
+    param4: string_ref = [""];
 
     constructor(ModLoader: IModLoaderAPI, core: IZ64Main){
         this.ModLoader = ModLoader;
@@ -30,15 +30,23 @@ export class FunctionTester{
             this.ModLoader.ImGui.inputText("a3", this.param4);
             if (this.ModLoader.ImGui.smallButton("Invoke")){
                 let h = this.ModLoader.heap!.malloc(4 * 4);
-                this.ModLoader.emulator.rdramWrite32(h + 0x0, parseInt(this.param1[0]));
-                this.ModLoader.emulator.rdramWrite32(h + 0x4, parseInt(this.param2[0]));
-                this.ModLoader.emulator.rdramWrite32(h + 0x8, parseInt(this.param3[0]));
-                this.ModLoader.emulator.rdramWrite32(h + 0xC, parseInt(this.param4[0]));
                 let c = 0;
-                if (parseInt(this.param1[0]) > 0) c++;
-                if (parseInt(this.param2[0]) > 0) c++;
-                if (parseInt(this.param3[0]) > 0) c++;
-                if (parseInt(this.param4[0]) > 0) c++;
+                if (this.param1[0] !== ""){
+                    this.ModLoader.emulator.rdramWrite32(h + 0x0, parseInt(this.param1[0]));
+                    c++;
+                } 
+                if (this.param2[0] !== ""){
+                    this.ModLoader.emulator.rdramWrite32(h + 0x4, parseInt(this.param2[0]));
+                    c++;
+                }
+                if (this.param3[0] !== ""){
+                    this.ModLoader.emulator.rdramWrite32(h + 0x8, parseInt(this.param3[0]));
+                    c++;
+                }
+                if (this.param4[0] !== ""){
+                    this.ModLoader.emulator.rdramWrite32(h + 0xC, parseInt(this.param4[0]));
+                    c++;
+                }
                 this.ModLoader.utils.setTimeoutFrames(()=>{
                     getCommandBuffer(this.core)!.arbitraryFunctionCall(parseInt(this.pointer[0], 16), h, c).then((value: Buffer)=>{
                         Z64O_Logger.debug(`Function call complete. Return: ${value.toString('hex')}`);
