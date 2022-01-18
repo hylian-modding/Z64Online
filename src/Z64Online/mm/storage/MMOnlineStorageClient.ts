@@ -29,7 +29,8 @@ export class MMOnlineStorageClient extends MMOnlineStorageBase implements IZ64Cl
   scene_keys: any = {};
   schedules: any = {};
   schedule: PlayerSchedule = new PlayerSchedule();
-  syncMode = syncMode.BASIC;
+  syncModeBasic = false;
+  syncModeTime = false;
   last_time = 0;
   last_day = 0;
   pictoboxAlert: PictoboxPreview = new PictoboxPreview(xy(0, 0));

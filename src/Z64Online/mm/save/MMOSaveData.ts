@@ -209,11 +209,11 @@ export class MMOSaveData implements ISaveSyncData {
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
         if(MM_IS_FAIRY) {
-          console.log(obj.stray)
+          //console.log(obj.stray)
           this.processMixedLoop(obj.stray, storage.stray, []); 
         } 
         if(MM_IS_SKULL) {
-          console.log(obj.skull)
+          //console.log(obj.skull)
           this.processMixedLoop(obj.skull, storage.skull, []);
         } 
         this.processMixedLoop(obj.questStatus, storage.questStatus, ['heartPieceCount']);

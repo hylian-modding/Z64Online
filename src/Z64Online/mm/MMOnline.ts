@@ -27,6 +27,8 @@ export interface IMMOnlineLobbyConfig {
     data_syncing: boolean;
     actor_syncing: boolean;
     key_syncing: boolean;
+    syncModeBasic: boolean;
+    syncModeTime: boolean;
 }
 
 export class MMOnlineConfigCategory {
@@ -38,7 +40,8 @@ export class MMOnlineConfigCategory {
     notificationSound: boolean = true;
     syncBottleContents: boolean = false;
     diagnosticMode: boolean = false;
-    syncMode: number = syncMode.BASIC;
+    syncModeBasic: boolean = false;
+    syncModeTime: boolean = false;
 }
 
 export default class MMOnline implements IZ64GameMain, IZ64Utility {
