@@ -15,6 +15,7 @@ class CDNThread {
     pendingUploads: Map<string, SmartBuffer> = new Map<string, SmartBuffer>();
     server!: http.Server;
     config!: CDNConfig;
+    deleteMode: boolean = true;
 
     makeServer(){
         try {
@@ -25,7 +26,11 @@ class CDNThread {
         fs.readdirSync("./cdn/files").forEach((f: string) => {
             let p = path.resolve("./cdn/files", f);
             if (fs.existsSync(p)) {
-                this.knownFiles.set(path.parse(p).name, p);
+                if (this.deleteMode){
+                    fs.unlinkSync(p);
+                }else{
+                    this.knownFiles.set(path.parse(p).name, p);
+                }
             }
         });
         this.server = new http.Server((req: IncomingMessage, res: ServerResponse) => {
