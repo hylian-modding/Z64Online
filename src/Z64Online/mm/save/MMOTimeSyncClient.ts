@@ -41,7 +41,7 @@ export default class TimeSyncClient {
 
     @onTick()
     onTick() {
-        if (!this.isStarted || this.ModLoader.config.data["MMOnline"]["syncModeBasic"]) return;
+        if (!this.isStarted || !this.ModLoader.config.data["MMOnline"]["syncModeTime"]) return;
         if (this.core.MM!.save.time_speed === -2 && !this.inverted) {
             // switched to ISoT
             this.inverted = true;
@@ -69,7 +69,7 @@ export default class TimeSyncClient {
     @EventHandler(Z64OnlineEvents.MMO_TIME_START)
     timeStarted() {
         this.ModLoader.utils.setIntervalFrames(() => {
-            if(this.ModLoader.config.data["MMOnline"]["syncModeBasic"]) return;
+            if(!this.ModLoader.config.data["MMOnline"]["syncModeTime"]) return;
             bus.emit(Z64OnlineEvents.MMO_UPDATE_TIME);
         }, 200);
         this.isStarted = true;
@@ -97,18 +97,18 @@ export default class TimeSyncClient {
     onTime(packet: Z64O_TimePacket) {
         if (!this.isStarted/*  || this.core.MM!.link.state !== LinkState.STANDING */|| this.ModLoader.config.data["MMOnline"]["syncModeBaisc"]) return;
         if (this.core.MM!.link.state === LinkState.BUSY || !this.core.MM!.helper.isInterfaceShown()) return;
-        //console.log(`Client onTime time: ${packet.time}`)
+        console.log(`Client onTime time: ${packet.time}`)
 
         // if (this.core.MM!.save.day_time >= 0x4000 && packet.time < 0x4000) return;
         // if (this.core.MM!.save.day_time >= 0xC000 && packet.time < 0xC000) return;
 
-        //console.log(`client time: ${this.core.MM!.save.day_time}; time - packet.time: ${this.core.MM!.save.day_time - packet.time}`);
+        console.log(`client time: ${this.core.MM!.save.day_time}; time - packet.time: ${this.core.MM!.save.day_time - packet.time}`);
         // if ((packet.time - this.core.MM!.save.day_time) > (TICKS_PER_HOUR / 4)) {
 
         //Check to see if player needs to be caught up through day change
         if (this.core.MM!.save.current_day < packet.day) {
             if (packet.time >= 0x4000) {
-                //console.log(`Moving forward a day? 1`)
+                console.log(`Moving forward a day? 1`)
                 this.core.MM!.save.day_time = packet.time;
                 //this.core.MM!.save.current_day = packet.day;
             }
@@ -127,7 +127,7 @@ export default class TimeSyncClient {
         //Check to see if player goes forward one day
         if (this.core.MM!.save.day_time >= 0x4000 && packet.time >= 0xC000) {
             if (this.core.MM!.save.current_day > packet.day) {
-                //console.log(`Moving forward a day? 2`)
+                console.log(`Moving forward a day? 2`)
                 this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time, this.core.MM!.save.current_day,
                     this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby))
             }

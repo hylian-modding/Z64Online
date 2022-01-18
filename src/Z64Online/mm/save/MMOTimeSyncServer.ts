@@ -65,10 +65,10 @@ export default class TimeSyncServer {
 
     @ServerNetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
-        //console.log(`Server: onTime: ${packet.time}`)
+        console.log(`Server: onTime: ${packet.time}`)
         //Server needs to catch up to client
         this.simulatedTime = (packet.time + 0xC000) % NUM_TICKS_PER_DAY;
-        //console.log(`server: onTime simulatedTime: ${this.simulatedTime}; packet.time: ${packet.time}; sending: ${(this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY}`)
+        console.log(`server: onTime simulatedTime: ${this.simulatedTime}; packet.time: ${packet.time}; sending: ${(this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY}`)
         this.simulatedDay = packet.day;
         this.simulatedSpeed = packet.speed;
         this.simulatedNight = packet.night;
