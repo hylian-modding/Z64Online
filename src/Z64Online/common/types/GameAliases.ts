@@ -27,6 +27,7 @@ export let Z64_PLAYER_PROXY: Buffer;
 export let MM_IS_FAIRY: boolean;
 export let MM_IS_SKULL: boolean;
 export let MM_IS_KEY_KEEP: boolean;
+export let MM_IS_TIME: boolean;
 
 export function setupOot() {
     Z64_ANIM_BANK_DMA = OOT_ANIM_BANK_DMA;
@@ -53,6 +54,7 @@ export function setupMM() {
     MM_IS_FAIRY = false;
     MM_IS_SKULL = false;
     MM_IS_KEY_KEEP = false;
+    MM_IS_TIME = false;
 }
 
 export function markAsRandomizer() {
@@ -70,6 +72,11 @@ export function markAsSkullSync() {
 export function markAsKeySync() {
     MM_IS_KEY_KEEP = true;
 }
+
+export function markAsTimeSync(bool: boolean) {
+    MM_IS_TIME = bool;
+}
+
 
 export function setPlayerProxy(buf: Buffer) {
     Z64_PLAYER_PROXY = buf;
