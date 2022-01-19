@@ -38,7 +38,7 @@ import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosm
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { markAsFairySync, markAsSkullSync, MM_IS_FAIRY, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
+import { markAsFairySync, markAsKeySync, markAsSkullSync, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./save/MMOTimeSyncClient";
 
 function RGBA32ToA5(rgba: Buffer) {
@@ -97,6 +97,7 @@ export default class MMOnlineClient {
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
     isTimeSync: boolean = false;
+    isKeyKeep: boolean = false;
 
     syncContext: number = -1;
 
@@ -127,6 +128,32 @@ export default class MMOnlineClient {
                 //}
             });
         } catch (err: any) { }
+    }
+
+    mmrKeepThroughTimeCheck() {
+        //MMR keep dungeon keys through time check
+        let mmrStaticAddressConfig = 0x8077FFFC;
+        let mmrConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddressConfig, 0x18);
+        let itemsToReturn = this.ModLoader.emulator.rdramReadBuffer(mmrConfigAddr + 0x140, 0x24);
+        let len = itemsToReturn.readInt16BE(0x22);
+        console.log(`mmrConfigAddr: ${mmrConfigAddr.toString(16)}`);
+        console.log(`imemsToReturnAddr: ${(mmrConfigAddr + 0x140).toString(16)}`);
+        console.log(`itemsToReturn: ${itemsToReturn.toString('hex')}`);
+        console.log(`len: ${len.toString(16)}`);
+
+        if (len !== 0) {
+            for (let i = 0; i < (len * 0x2); i++) {
+                if (itemsToReturn.readUInt32BE(i) === 0) {
+                    this.isKeyKeep = false;
+                }
+                else {
+                    this.isKeyKeep = true;
+                    markAsKeySync();
+                }
+                if (i === len) console.log(`Keep keys through time: ${this.isKeyKeep}`)
+            }
+        }
+        else console.log(`Keep keys through time: ${this.isKeyKeep}`)
     }
 
     @Preinit()
@@ -202,53 +229,57 @@ export default class MMOnlineClient {
             // Slap key checking in here too.
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.MM!.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
+                console.log(`dungeon key update`)
                 this.clientStorage.keySaveHash = keyHash;
                 this.ModLoader.clientSide.sendPacket(new Z64O_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
-            // and beans too why not.
-            if (this.clientStorage.lastbeans !== this.core.MM!.save.inventory.magicBeansCount) {
-                this.clientStorage.lastbeans = this.core.MM!.save.inventory.magicBeansCount;
-                this.updateInventory();
-            }
-
-            let live_scene_chests: Buffer = Buffer.alloc(0);
-            let live_scene_switches: Buffer = Buffer.alloc(0);
-            let live_scene_clear: Buffer = Buffer.alloc(0);
-            let live_scene_collect: Buffer = this.core.MM!.global.liveSceneData_collectable;
-            let live_scene_temp: Buffer = this.core.MM!.global.liveSceneData_temp;
-
-            let save_scene_data: Buffer = this.core.MM!.global.getSaveDataForCurrentScene();
-            let save: Buffer = Buffer.alloc(0x1c);
-
-            if (this.config.syncModeTime) {
-                live_scene_chests = this.core.MM!.global.liveSceneData_chests;
-                live_scene_switches = this.core.MM!.global.liveSceneData_switch;
-                live_scene_clear = this.core.MM!.global.liveSceneData_clear;
-
-                live_scene_chests.copy(save, 0x0); // Chests
-                live_scene_switches.copy(save, 0x4); // Switches
-                live_scene_clear.copy(save, 0x8); // Room Clear
-            }
-
-            live_scene_collect.copy(save, 0xc); // Collectables
-            live_scene_temp.copy(save, 0x10); // Unused space.
-
-            save_scene_data.copy(save, 0x14, 0x14, 0x18); // Visited Rooms.
-            save_scene_data.copy(save, 0x18, 0x18, 0x1c); // Visited Rooms.
-            let save_hash_2: string = this.ModLoader.utils.hashBuffer(save);
-            if (save_hash_2 !== this.clientStorage.autoSaveHash) {
-                this.ModLoader.logger.info('autosaveSceneData()');
-                save_scene_data.copy(save, 0x10, 0x10, 0x14);
-                for (let i = 0; i < save_scene_data.byteLength; i++) {
-                    save_scene_data[i] |= save[i];
+            if (this.timeSync) {
+                // and beans too why not.
+                if (this.clientStorage.lastbeans !== this.core.MM!.save.inventory.magicBeansCount) {
+                    this.clientStorage.lastbeans = this.core.MM!.save.inventory.magicBeansCount;
+                    this.updateInventory();
                 }
-                this.clientStorage.autoSaveHash = save_hash_2;
+
+                let live_scene_chests: Buffer = Buffer.alloc(0);
+                let live_scene_switches: Buffer = Buffer.alloc(0);
+                let live_scene_clear: Buffer = Buffer.alloc(0);
+                let live_scene_collect: Buffer = this.core.MM!.global.liveSceneData_collectable;
+                let live_scene_temp: Buffer = this.core.MM!.global.liveSceneData_temp;
+
+                let save_scene_data: Buffer = this.core.MM!.global.getSaveDataForCurrentScene();
+                let save: Buffer = Buffer.alloc(0x1c);
+
+                if (this.config.syncModeTime) {
+                    live_scene_chests = this.core.MM!.global.liveSceneData_chests;
+                    live_scene_switches = this.core.MM!.global.liveSceneData_switch;
+                    live_scene_clear = this.core.MM!.global.liveSceneData_clear;
+
+                    live_scene_chests.copy(save, 0x0); // Chests
+                    live_scene_switches.copy(save, 0x4); // Switches
+                    live_scene_clear.copy(save, 0x8); // Room Clear
+                }
+
+                live_scene_collect.copy(save, 0xc); // Collectables
+                live_scene_temp.copy(save, 0x10); // Unused space.
+
+                save_scene_data.copy(save, 0x14, 0x14, 0x18); // Visited Rooms.
+                save_scene_data.copy(save, 0x18, 0x18, 0x1c); // Visited Rooms.
+                let save_hash_2: string = this.ModLoader.utils.hashBuffer(save);
+                if (save_hash_2 !== this.clientStorage.autoSaveHash) {
+                    this.ModLoader.logger.info('autosaveSceneData()');
+                    save_scene_data.copy(save, 0x10, 0x10, 0x14);
+                    for (let i = 0; i < save_scene_data.byteLength; i++) {
+                        save_scene_data[i] |= save[i];
+                    }
+                    this.clientStorage.autoSaveHash = save_hash_2;
+                }
+                else {
+                    return;
+                }
+                this.core.MM!.global.writeSaveDataForCurrentScene(save_scene_data);
+                this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.MM!.global.scene, this.clientStorage.world));
             }
-            else {
-                return;
-            }
-            this.core.MM!.global.writeSaveDataForCurrentScene(save_scene_data);
-            this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.MM!.global.scene, this.clientStorage.world));
+
         }
     }
 
@@ -787,8 +818,8 @@ export default class MMOnlineClient {
         let timeSyncStart: string | undefined;
 
         console.log(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
+        if (!this.config.syncModeTime) this.isTimeSync = false;
         if (this.config.syncModeTime && !this.isTimeSync) {
-
 
             timeSyncStart = this.ModLoader.utils.setIntervalFrames(() => {
                 if (!this.core.MM!.helper.isLinkEnteringLoadingZone() &&
@@ -806,7 +837,6 @@ export default class MMOnlineClient {
                 }
             }, 20);
         }
-        if (!this.config.syncModeTime) this.isTimeSync = false;
     }
 
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
@@ -843,7 +873,7 @@ export default class MMOnlineClient {
                     //this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    //this.autosaveSceneData();
+                    if (this.config.syncModeTime || MM_IS_KEY_KEEP) this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSyncContext();
                     this.updatePermFlags();
@@ -851,7 +881,10 @@ export default class MMOnlineClient {
                 }
             }
         }
-        if (this.core.MM!.helper.isTitleScreen() && this.core.MM!.global.scene_framecount === 1 && !this.core.MM!.save.checksum) this.mmrSyncCheck();
+        if (this.core.MM!.helper.isTitleScreen() && this.core.MM!.global.scene_framecount === 1 && !this.core.MM!.save.checksum) {
+            this.mmrSyncCheck();
+            this.mmrKeepThroughTimeCheck()
+        }
     }
 
     inventoryUpdateTick() {
