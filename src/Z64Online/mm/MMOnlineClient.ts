@@ -3,7 +3,7 @@ import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedPro
 import { Init, onTick, onViUpdate, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
 import { ModelManagerMM } from "./models/ModelManagerMM";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
-import { bus, EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
+import { bus, EventHandler, EventsClient, EventsServer, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
 import fs from 'fs';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
@@ -96,6 +96,7 @@ export default class MMOnlineClient {
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
+    isTimeSync: boolean = false;
 
     syncContext: number = -1;
 
@@ -131,8 +132,8 @@ export default class MMOnlineClient {
     @Preinit()
     preinit(): void {
         this.config = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
-        this.ModLoader.config.setData("MMOnline", "syncModeBasic", true); 
-        this.ModLoader.config.setData("MMOnline", "syncModeTime", false); 
+        this.ModLoader.config.setData("MMOnline", "syncModeBasic", true);
+        this.ModLoader.config.setData("MMOnline", "syncModeTime", false);
         this.ModLoader.config.setData("MMOnline", "notifications", true);
         this.ModLoader.config.setData("MMOnline", "nameplates", true);
 
@@ -141,8 +142,8 @@ export default class MMOnlineClient {
 
     @Init()
     init(): void {
-        this.clientStorage.syncModeBasic = this.config.syncModeBasic;
-        this.clientStorage.syncModeTime = this.config.syncModeTime;
+        //this.clientStorage.syncModeBasic = this.config.syncModeBasic;
+        //this.clientStorage.syncModeTime = this.config.syncModeTime;
     }
 
     @Postinit()
@@ -301,6 +302,7 @@ export default class MMOnlineClient {
         this.LobbyConfig.syncModeBasic = lobby.data['MMOnline:syncModeBasic'];
         this.LobbyConfig.syncModeTime = lobby.data['MMOnline:syncModeTime'];
 
+
         this.ModLoader.logger.info('MMOnline settings inherited from lobby.');
         if (GHOST_MODE_TRIGGERED) {
             bus.emit(Z64OnlineEvents.GHOST_MODE, true);
@@ -452,13 +454,16 @@ export default class MMOnlineClient {
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
+            this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby))
         }
-        if (this.config.syncModeTime) {
+        if (this.config.syncModeTime && !this.isTimeSync) {
             console.log(`Time sync start!`);
+            this.isTimeSync = true;
             this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                 this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
             bus.emit(Z64OnlineEvents.MMO_TIME_START);
         }
+        if (!this.config.syncModeTime) this.isTimeSync = false;
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.clientStorage.first_time_sync = true;
             this.updateBottles(true);
@@ -779,13 +784,29 @@ export default class MMOnlineClient {
         this.LobbyConfig.syncModeBasic = packet.syncModeBasic;
         this.LobbyConfig.syncModeTime = packet.syncModeTime;
 
+        let timeSyncStart: string | undefined;
+
         console.log(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
-        if (this.config.syncModeTime) {
-            console.log(`Time Sync Start!`);
-            this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
-                this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
-            bus.emit(Z64OnlineEvents.MMO_TIME_START);
+        if (this.config.syncModeTime && !this.isTimeSync) {
+
+
+            timeSyncStart = this.ModLoader.utils.setIntervalFrames(() => {
+                if (!this.core.MM!.helper.isLinkEnteringLoadingZone() &&
+                    !this.core.MM!.helper.isFadeIn() &&
+                    this.core.MM!.helper.isInterfaceShown() &&
+                    !this.core.MM!.helper.isPaused() &&
+                    !this.core.MM!.helper.isTitleScreen()) {
+                    console.log(`Time Sync Start!`);
+                    this.isTimeSync = true;
+                    bus.emit(Z64OnlineEvents.MMO_TIME_START);
+                    this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
+                        this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
+                    this.ModLoader.utils.clearIntervalFrames(timeSyncStart!);
+                    timeSyncStart = undefined;
+                }
+            }, 20);
         }
+        if (!this.config.syncModeTime) this.isTimeSync = false;
     }
 
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
