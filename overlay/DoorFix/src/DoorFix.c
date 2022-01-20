@@ -8,11 +8,19 @@ void update(void* thisx, GlobalContext* globalCtx)
             break;
         }
     }
+    #ifdef GAME_OOT
     EnDoor* door = ((EnDoor*)thisx);
     if (door->lockTimer == 0) return;
     if (Flags_GetSwitch(globalCtx, door->actor.params & 0x3F)){
         if (door->lockTimer > 0) door->lockTimer--;
     }
+    #elif defined GAME_MM
+    EnDoorMM* door = ((EnDoorMM*)thisx);
+    if (door->lockTimer == 0) return;
+    if (Flags_GetSwitch(globalCtx, door->actor.params & 0x3F)){
+        if (door->lockTimer > 0) door->lockTimer--;
+    }
+    #endif
 }
 
 void draw(void* thisx, GlobalContext* globalCtx)
@@ -26,10 +34,18 @@ void doInject(void* this, GlobalContext* globalCtx, uint32_t pointer){
     if (actor->update == &update){
         return;
     }
+    #ifdef GAME_OOT
     s32 doorType = actor->params >> 7 & 7;
     if (doorType != DOOR_LOCKED){
         return;
     }
+    #elif defined GAME_MM
+    EnDoorMM* door = (EnDoorMM*) actor;
+    u8 isDoorLocked = door->lockTimer;
+    if (isDoorLocked != MM_IS_DOOR_LOCKED){
+        return;
+    }
+    #endif
     for (uint8_t i = 0; i < DOORS_MAX; i++){
         if (thisx->doors[i].inst != NULL){
             if (thisx->doors[i].inst == actor){

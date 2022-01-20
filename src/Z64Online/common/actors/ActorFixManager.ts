@@ -1,5 +1,5 @@
 import ArbitraryHook from "@Z64Online/common/lib/ArbitraryHook";
-import { DoorFix_oot } from "@Z64Online/overlay/DoorFix";
+import { DoorFix_mm, DoorFix_oot } from "@Z64Online/overlay/DoorFix";
 import { ZeldaFix_oot } from "@Z64Online/overlay/ZeldaFix";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsClient } from "modloader64_api/EventHandler";
@@ -10,6 +10,7 @@ import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IActor, Z64 } from "Z64Lib/API/imports";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
+import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 
 class ActorFix{
 
@@ -41,18 +42,25 @@ export default class ActorFixManager {
     doorPatch!: ArbitraryHook;
     zeldaPatch!: ArbitraryHook;
 
-    @EventHandler(EventsClient.ON_INJECT_FINISHED)
-    onHeapReady(evt: any) {
-
+    OotHooks(){
         this.fixes.set(0x0009, new ActorFix(new ArbitraryHook("Door", this.ModLoader, this.core, DoorFix_oot)));
         this.fixes.set(0x0179, new ActorFix(new ArbitraryHook("Zelda", this.ModLoader, this.core, ZeldaFix_oot)));
+    }
 
+    MMHooks(){
+        this.fixes.set(0x0009, new ActorFix(new ArbitraryHook("Door", this.ModLoader, this.core, DoorFix_mm)));
+    }
+
+    @EventHandler(EventsClient.ON_INJECT_FINISHED)
+    onHeapReady(evt: any) {
+        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
+            this.OotHooks();
+        }else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
+            this.MMHooks();
+        }
         let wait = (hook: ArbitraryHook, tick: number = 20) => {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 hook.inject();
-                this.ModLoader.utils.setTimeoutFrames(()=>{
-                    console.log(`${hook.name} ${hook.instancePointer.toString(16)}`);
-                }, 20);
             }, tick);
         };
         let i = 1;
@@ -90,8 +98,7 @@ export default class ActorFixManager {
         }
     }
 
-    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
-    onRomPatched(evt: any) {
+    fixDinsfire(evt: any){
         // I tried really hard to find a soft way to deal with this, but it wasn't to be.
         let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
         // Make Din's Fire not move to Link.
@@ -107,6 +114,13 @@ export default class ActorFixManager {
             dins.writeUInt32BE(0x0, 0x1AC);
         }
         tools.recompressActorFileIntoRom(evt.rom, 0x009F, dins);
+    }
+
+    @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
+    onRomPatched(evt: any) {
+        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
+            this.fixDinsfire(evt);
+        }
     }
 
 }

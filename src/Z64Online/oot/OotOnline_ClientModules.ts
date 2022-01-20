@@ -11,7 +11,7 @@ import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
 import { IZ64GameMain } from "@Z64Online/common/types/Types";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { SidedProxy, ProxySide, ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
-import ActorFixManager from "./actor_systems/actorFixes/ActorFixManager";
+import ActorFixManager from "../common/actors/ActorFixManager";
 import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
 import { Multiworld } from "./compat/OotR";
 import SongOfSoaringCompat from "./compat/SongOfSoaring";

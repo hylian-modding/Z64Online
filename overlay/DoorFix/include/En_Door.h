@@ -32,4 +32,12 @@ typedef struct EnDoor {
     /* 0x01D4 */ EnDoorActionFunc actionFunc;
 } EnDoor; // size = 0x01D8
 
+typedef struct EnDoorMM{
+    Actor actor;
+    u8 dontcare[0x165];
+    u8 lockTimer;
+} EnDoorMM;
+
+#define MM_IS_DOOR_LOCKED 0x0A
+
 #endif /* EN_DOOR_H */
