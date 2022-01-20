@@ -6,14 +6,13 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { onTick, onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
 import { Sound, SoundSourceStatus } from "modloader64_api/Sound/sfml_audio";
 import { bool_ref, WindowFlags } from "modloader64_api/Sylvain/ImGui";
-import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
 import { Core, LinkStandingState } from "@Z64Online/common/types/Types";
 import { IMGUI_LABELS } from "@Z64Online/common/lib/Labels";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import { Z64O_EmoteLoadPacket, Z64O_EmotePlayPacket, Z64O_EmoteRequestPacket } from "@Z64Online/common/network/Z64OPackets";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
-import { getLinkPos } from "@Z64Online/common/types/GameAliases";
+import { getLink, getLinkPos } from "@Z64Online/common/types/GameAliases";
 import Vector3 from "modloader64_api/math/Vector3";
 import { CommonConfigInst, volume_local, volume_remote } from "@Z64Online/common/lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
@@ -70,7 +69,7 @@ export class EmoteManager {
                             this.masterEmoteList[this.currentEmoteID].sound!.stop();
                         } catch (err: any) { }
                         this.isCurrentlyPlayingEmote = false;
-                        this.core.OOT!.link.redeadFreeze = 0x0;
+                        getLink(this.core).redeadFreeze = 0x0;
                         this.currentEmoteFrame = -1;
                         this.currentEmoteID = -1;
                     }
@@ -81,7 +80,7 @@ export class EmoteManager {
                             this.ModLoader.ImGui.text(this.masterEmoteList[i].name);
                             this.ModLoader.ImGui.sameLine();
                             if (this.ModLoader.ImGui.button("Play###OotO:Emotes:" + this.masterEmoteList[i].name)) {
-                                if (this.core.OOT!.link.state === LinkStandingState) {
+                                if (getLink(this.core).state === LinkStandingState) {
                                     this.currentEmoteID = i;
                                     this.isCurrentlyPlayingEmote = true;
                                 }
@@ -183,19 +182,19 @@ export class EmoteManager {
                         s.volume = (Math.floor((volume_local[0] * 100)));
                         s.play();
                         this.ModLoader.clientSide.sendPacket(new Z64O_EmotePlayPacket(new RemoteSoundPlayRequest(this.ModLoader.me, pos, this.currentEmoteID), this.ModLoader.clientLobby));
-                        this.core.OOT!.link.current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
+                        getLink(this.core).current_sound_id = this.masterEmoteList[this.currentEmoteID].soundid!;
                     }
                 }
             }
-            this.core.OOT!.link.redeadFreeze = 0x3;
-            this.core.OOT!.link.anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
+            getLink(this.core).redeadFreeze = 0x3;
+            getLink(this.core).anim_data = this.masterEmoteList[this.currentEmoteID].readAnimFrame(this.currentEmoteFrame);
             this.currentEmoteFrame++;
             if (this.currentEmoteFrame > this.masterEmoteList[this.currentEmoteID].getTotalFrames()) {
                 if (this.masterEmoteList[this.currentEmoteID].loops) {
                     this.currentEmoteFrame = 0;
                 } else {
                     this.isCurrentlyPlayingEmote = false;
-                    this.core.OOT!.link.redeadFreeze = 0x0;
+                    getLink(this.core).redeadFreeze = 0x0;
                     this.currentEmoteFrame = -1;
                 }
             }
