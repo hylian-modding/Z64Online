@@ -34,7 +34,7 @@ typedef struct EnDoor {
 
 typedef struct EnDoorMM{
     Actor actor;
-    u8 dontcare[0x165];
+    u8 dontcare[0x21];
     u8 lockTimer;
 } EnDoorMM;
 
