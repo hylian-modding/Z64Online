@@ -3,7 +3,7 @@ import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedPro
 import { Init, onTick, onViUpdate, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
 import { ModelManagerMM } from "./models/ModelManagerMM";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
-import { bus, EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
+import { bus, EventHandler, EventsClient, EventsServer, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
 import fs from 'fs';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
@@ -38,7 +38,7 @@ import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosm
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { markAsFairySync, markAsSkullSync, MM_IS_FAIRY, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
+import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./save/MMOTimeSyncClient";
 
 function RGBA32ToA5(rgba: Buffer) {
@@ -96,6 +96,8 @@ export default class MMOnlineClient {
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
     syncPending: boolean = false;
+    isTimeSync: boolean = false;
+    isKeyKeep: boolean = false;
 
     syncContext: number = -1;
 
@@ -128,11 +130,37 @@ export default class MMOnlineClient {
         } catch (err: any) { }
     }
 
+    mmrKeepThroughTimeCheck() {
+        //MMR keep dungeon keys through time check
+        let mmrStaticAddressConfig = 0x8077FFFC;
+        let mmrConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddressConfig, 0x18);
+        let itemsToReturn = this.ModLoader.emulator.rdramReadBuffer(mmrConfigAddr + 0x140, 0x24);
+        let len = itemsToReturn.readInt16BE(0x22);
+        console.log(`mmrConfigAddr: ${mmrConfigAddr.toString(16)}`);
+        console.log(`imemsToReturnAddr: ${(mmrConfigAddr + 0x140).toString(16)}`);
+        console.log(`itemsToReturn: ${itemsToReturn.toString('hex')}`);
+        console.log(`len: ${len.toString(16)}`);
+
+        if (len !== 0) {
+            for (let i = 0; i < (len * 0x2); i++) {
+                if (itemsToReturn.readUInt32BE(i) === 0) {
+                    this.isKeyKeep = false;
+                }
+                else {
+                    this.isKeyKeep = true;
+                    markAsKeySync();
+                }
+                if (i === len) console.log(`Keep keys through time: ${this.isKeyKeep}`)
+            }
+        }
+        else console.log(`Keep keys through time: ${this.isKeyKeep}`)
+    }
+
     @Preinit()
     preinit(): void {
         this.config = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
-        this.ModLoader.config.setData("MMOnline", "syncModeBasic", true); 
-        this.ModLoader.config.setData("MMOnline", "syncModeTime", false); 
+        this.ModLoader.config.setData("MMOnline", "syncModeBasic", true);
+        this.ModLoader.config.setData("MMOnline", "syncModeTime", false);
         this.ModLoader.config.setData("MMOnline", "notifications", true);
         this.ModLoader.config.setData("MMOnline", "nameplates", true);
 
@@ -141,8 +169,8 @@ export default class MMOnlineClient {
 
     @Init()
     init(): void {
-        this.clientStorage.syncModeBasic = this.config.syncModeBasic;
-        this.clientStorage.syncModeTime = this.config.syncModeTime;
+        //this.clientStorage.syncModeBasic = this.config.syncModeBasic;
+        //this.clientStorage.syncModeTime = this.config.syncModeTime;
     }
 
     @Postinit()
@@ -201,9 +229,13 @@ export default class MMOnlineClient {
             // Slap key checking in here too.
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.MM!.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
+                console.log(`dungeon key update`)
                 this.clientStorage.keySaveHash = keyHash;
                 this.ModLoader.clientSide.sendPacket(new Z64O_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
+            //console.log(`MM_IS_TIME: ${MM_IS_TIME}`)
+            if (!MM_IS_TIME) return;
+            //this.ModLoader.logger.info('autosaveSceneData() isTime');
             // and beans too why not.
             if (this.clientStorage.lastbeans !== this.core.MM!.save.inventory.magicBeansCount) {
                 this.clientStorage.lastbeans = this.core.MM!.save.inventory.magicBeansCount;
@@ -219,15 +251,13 @@ export default class MMOnlineClient {
             let save_scene_data: Buffer = this.core.MM!.global.getSaveDataForCurrentScene();
             let save: Buffer = Buffer.alloc(0x1c);
 
-            if (this.config.syncModeTime) {
-                live_scene_chests = this.core.MM!.global.liveSceneData_chests;
-                live_scene_switches = this.core.MM!.global.liveSceneData_switch;
-                live_scene_clear = this.core.MM!.global.liveSceneData_clear;
+            live_scene_chests = this.core.MM!.global.liveSceneData_chests;
+            live_scene_switches = this.core.MM!.global.liveSceneData_switch;
+            live_scene_clear = this.core.MM!.global.liveSceneData_clear;
 
-                live_scene_chests.copy(save, 0x0); // Chests
-                live_scene_switches.copy(save, 0x4); // Switches
-                live_scene_clear.copy(save, 0x8); // Room Clear
-            }
+            live_scene_chests.copy(save, 0x0); // Chests
+            live_scene_switches.copy(save, 0x4); // Switches
+            live_scene_clear.copy(save, 0x8); // Room Clear
 
             live_scene_collect.copy(save, 0xc); // Collectables
             live_scene_temp.copy(save, 0x10); // Unused space.
@@ -248,6 +278,8 @@ export default class MMOnlineClient {
             }
             this.core.MM!.global.writeSaveDataForCurrentScene(save_scene_data);
             this.ModLoader.clientSide.sendPacket(new Z64O_ClientSceneContextUpdate(live_scene_chests, live_scene_switches, live_scene_collect, live_scene_clear, live_scene_temp, this.ModLoader.clientLobby, this.core.MM!.global.scene, this.clientStorage.world));
+
+
         }
     }
 
@@ -300,6 +332,7 @@ export default class MMOnlineClient {
         this.LobbyConfig.key_syncing = lobby.data['MMOnline:key_syncing'];
         this.LobbyConfig.syncModeBasic = lobby.data['MMOnline:syncModeBasic'];
         this.LobbyConfig.syncModeTime = lobby.data['MMOnline:syncModeTime'];
+
 
         this.ModLoader.logger.info('MMOnline settings inherited from lobby.');
         if (GHOST_MODE_TRIGGERED) {
@@ -452,12 +485,18 @@ export default class MMOnlineClient {
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
+            this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby))
         }
-        if (this.config.syncModeTime) {
+        if (this.config.syncModeTime && !MM_IS_TIME) {
             console.log(`Time sync start!`);
+            markAsTimeSync(true);
+            //console.log(`MM_IS_TIME: ${MM_IS_TIME}`)
             this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                 this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
             bus.emit(Z64OnlineEvents.MMO_TIME_START);
+        }
+        if (!this.config.syncModeTime) {
+            markAsTimeSync(false);
         }
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.clientStorage.first_time_sync = true;
@@ -779,13 +818,30 @@ export default class MMOnlineClient {
         this.LobbyConfig.syncModeBasic = packet.syncModeBasic;
         this.LobbyConfig.syncModeTime = packet.syncModeTime;
 
+        let timeSyncStart: string | undefined;
+
         console.log(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
-        if (this.config.syncModeTime) {
-            console.log(`Time Sync Start!`);
-            this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
-                this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
-            bus.emit(Z64OnlineEvents.MMO_TIME_START);
+
+        if (this.config.syncModeTime && !MM_IS_TIME) {
+
+            timeSyncStart = this.ModLoader.utils.setIntervalFrames(() => {
+                if (!this.core.MM!.helper.isLinkEnteringLoadingZone() &&
+                    !this.core.MM!.helper.isFadeIn() &&
+                    this.core.MM!.helper.isInterfaceShown() &&
+                    !this.core.MM!.helper.isPaused() &&
+                    !this.core.MM!.helper.isTitleScreen()) {
+                    console.log(`Time Sync Start!`);
+                    markAsTimeSync(true);
+                    //console.log(`MM_IS_TIME: ${MM_IS_TIME}`)
+                    bus.emit(Z64OnlineEvents.MMO_TIME_START);
+                    this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
+                        this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
+                    this.ModLoader.utils.clearIntervalFrames(timeSyncStart!);
+                    timeSyncStart = undefined;
+                }
+            }, 20);
         }
+        if (!this.config.syncModeTime) markAsTimeSync(false)
     }
 
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
@@ -822,7 +878,7 @@ export default class MMOnlineClient {
                     //this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    //this.autosaveSceneData();
+                    if (this.config.syncModeTime || MM_IS_TIME || MM_IS_KEY_KEEP) this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSyncContext();
                     this.updatePermFlags();
@@ -830,7 +886,10 @@ export default class MMOnlineClient {
                 }
             }
         }
-        if (this.core.MM!.helper.isTitleScreen() && this.core.MM!.global.scene_framecount === 1 && !this.core.MM!.save.checksum) this.mmrSyncCheck();
+        if (this.core.MM!.helper.isTitleScreen() && this.core.MM!.global.scene_framecount === 1 && !this.core.MM!.save.checksum) {
+            this.mmrSyncCheck();
+            this.mmrKeepThroughTimeCheck()
+        }
     }
 
     inventoryUpdateTick() {

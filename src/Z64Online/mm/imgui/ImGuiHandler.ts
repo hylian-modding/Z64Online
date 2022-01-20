@@ -15,6 +15,7 @@ import { Z64O_SyncSettings } from "../network/MMOPackets";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Z64O_DownloadResponsePacket } from "@Z64Online/common/network/Z64OPackets";
+import { markAsTimeSync } from "@Z64Online/common/types/GameAliases";
 
 export class ImGuiHandler_MM extends ImGuiHandlerCommon {
 
@@ -81,6 +82,7 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
                             if(this.lobbyConfig.syncModeBasic === false && this.lobbyConfig.syncModeTime === false) this.lobbyConfig.syncModeTime = true;
                             this.ModLoader.config.save();
                             console.log(`Sync config updated; Basic: ${this.lobbyConfig.syncModeBasic}`)
+                            markAsTimeSync(this.lobbyConfig.syncModeTime)
                             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.lobbyConfig.syncModeBasic, this.lobbyConfig.syncModeTime, this.ModLoader.clientLobby))
                         }
                         if (this.ModLoader.ImGui.menuItem("Sync Mode: Time", undefined, this.lobbyConfig.syncModeTime, this.amIHost)) {
@@ -89,6 +91,7 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
                             if(this.lobbyConfig.syncModeTime === false && this.lobbyConfig.syncModeBasic === false) this.lobbyConfig.syncModeBasic = true;
                             this.ModLoader.config.save();
                             console.log(`Sync config updated; Time: ${this.lobbyConfig.syncModeTime}`)
+                            markAsTimeSync(this.lobbyConfig.syncModeTime)
                             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.lobbyConfig.syncModeBasic, this.lobbyConfig.syncModeTime, this.ModLoader.clientLobby))
                         }
                         //if (this.ModLoader.ImGui.menuItem("Sync Bottle Contents", undefined, this.lobbyConfig.syncBottleContents)) {
