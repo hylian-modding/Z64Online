@@ -61,6 +61,9 @@ export default class ActorFixManager {
         let wait = (hook: ArbitraryHook, tick: number = 20) => {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 hook.inject();
+                this.ModLoader.utils.setTimeoutFrames(()=>{
+                    console.log(`${hook.name} ${hook.instancePointer.toString(16)}`);
+                }, 20)
             }, tick);
         };
         let i = 1;
