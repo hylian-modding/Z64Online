@@ -40,6 +40,7 @@ import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager"
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
 import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./save/MMOTimeSyncClient";
+import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -92,6 +93,9 @@ export default class MMOnlineClient {
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, TimeSyncClient)
     timeSync!: TimeSyncClient;
+    // Actor specific crash or behavior fixes
+    @SidedProxy(ProxySide.CLIENT, ActorFixManager)
+    actorFixes!: ActorFixManager;
 
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
@@ -242,18 +246,14 @@ export default class MMOnlineClient {
                 this.updateInventory();
             }
 
-            let live_scene_chests: Buffer = Buffer.alloc(0);
-            let live_scene_switches: Buffer = Buffer.alloc(0);
-            let live_scene_clear: Buffer = Buffer.alloc(0);
+            let live_scene_chests: Buffer = this.core.MM!.global.liveSceneData_chests
+            let live_scene_switches: Buffer = this.core.MM!.global.liveSceneData_switch
+            let live_scene_clear: Buffer = this.core.MM!.global.liveSceneData_clear
             let live_scene_collect: Buffer = this.core.MM!.global.liveSceneData_collectable;
             let live_scene_temp: Buffer = this.core.MM!.global.liveSceneData_temp;
 
             let save_scene_data: Buffer = this.core.MM!.global.getSaveDataForCurrentScene();
             let save: Buffer = Buffer.alloc(0x1c);
-
-            live_scene_chests = this.core.MM!.global.liveSceneData_chests;
-            live_scene_switches = this.core.MM!.global.liveSceneData_switch;
-            live_scene_clear = this.core.MM!.global.liveSceneData_clear;
 
             live_scene_chests.copy(save, 0x0); // Chests
             live_scene_switches.copy(save, 0x4); // Switches
