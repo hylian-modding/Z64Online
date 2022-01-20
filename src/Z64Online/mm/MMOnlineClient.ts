@@ -94,8 +94,8 @@ export default class MMOnlineClient {
     @SidedProxy(ProxySide.CLIENT, TimeSyncClient)
     timeSync!: TimeSyncClient;
     // Actor specific crash or behavior fixes
-    @SidedProxy(ProxySide.CLIENT, ActorFixManager)
-    actorFixes!: ActorFixManager;
+/*     @SidedProxy(ProxySide.CLIENT, ActorFixManager)
+    actorFixes!: ActorFixManager; */
 
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
