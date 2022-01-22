@@ -33,8 +33,7 @@ export default class AnimationManager {
         let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64_GAME);
         let bank: Buffer = tools.decompressDMAFileFromRom(rom, Z64_ANIM_BANK_DMA);
         this.vanillaBank = bank;
-        this.animationBankAddress = tools.relocateFileToExtendedRom(rom, Z64_ANIM_BANK_DMA, bank, bank.byteLength, true);
-        tools.noCRC(rom);
+        this.animationBankAddress = tools.getStartEndOfDMAEntry(evt.rom, Z64_ANIM_BANK_DMA).start;
     }
 
     @EventHandler(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK)
