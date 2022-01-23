@@ -16,6 +16,7 @@ import { isInterfaceShown } from "../types/GameAliases";
 import DListCrawler from "./DListCrawler";
 import { ZobjTester } from "./ZobjTester";
 import { FunctionTester } from "./FunctionTester";
+import AnimBankTester from "./AnimBankTester";
 // #endif
 
 function buf2hex(buffer: Buffer) {
@@ -45,6 +46,7 @@ export abstract class ImGuiHandlerCommon {
     crawler!: DListCrawler;
     tester!: ZobjTester;
     fnTest!: FunctionTester;
+    banktest!: AnimBankTester;
     // #endif
     font!: Font;
 
@@ -58,6 +60,7 @@ export abstract class ImGuiHandlerCommon {
             this.crawler = new DListCrawler(this.ModLoader);
             this.tester = new ZobjTester(this.ModLoader, this.core);
             this.fnTest = new FunctionTester(this.ModLoader, this.core);
+            this.banktest = new AnimBankTester(this.ModLoader, this.core);
             // #endif
             return;
         }
@@ -81,6 +84,9 @@ export abstract class ImGuiHandlerCommon {
                     }
                     if (this.ModLoader.ImGui.menuItem("ZOBJ Tester")) {
                         this.tester.isOpen = !this.tester.isOpen;
+                    }
+                    if (this.ModLoader.ImGui.menuItem("Anim Bank Tester")){
+                        this.banktest.isOpen = !this.banktest.isOpen;
                     }
                     if (this.ModLoader.ImGui.menuItem("Function Tester")){
                         this.fnTest.isOpen = !this.fnTest.isOpen;
@@ -123,6 +129,9 @@ export abstract class ImGuiHandlerCommon {
         }
         if (this.fnTest !== undefined){
             this.fnTest.onVi();
+        }
+        if (this.banktest !== undefined){
+            this.banktest.onVi();
         }
         if (this.showSpawner) {
             if (this.ModLoader.ImGui.begin("Actor Spawner###OotO:ActorSpawner")) {

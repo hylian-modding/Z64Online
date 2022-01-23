@@ -12,20 +12,7 @@ import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import * as defines from '../cosmetics/Defines';
 import { MatrixTranslate } from "../cosmetics/utils/MatrixTranslate";
 import Z64OManifestParser from "../cosmetics/Z64OManifestParser";
-
-class zobj {
-    name: string;
-    _path: string;
-
-    constructor(_path: string) {
-        this.name = path.parse(_path).name;
-        this._path = _path;
-    }
-
-    toString() {
-        return this.name;
-    }
-}
+import { ListBoxData } from "./ListBoxData";
 
 class MTX_Group {
     XR: number_ref = [0];
@@ -42,7 +29,7 @@ class MTX_Group {
 export class ZobjTester {
 
     ModLoader!: IModLoaderAPI;
-    zobjs: zobj[] = [];
+    zobjs: ListBoxData[] = [];
     current: number_ref = [0];
     isOOT: boolean = false;
     isMM: boolean = false;
@@ -160,7 +147,7 @@ export class ZobjTester {
                     if (fs.existsSync(file) && !fs.lstatSync(file).isDirectory()) {
                         let parse = path.parse(file);
                         if (parse.ext === ".zobj") {
-                            this.zobjs.push(new zobj(file));
+                            this.zobjs.push(new ListBoxData(file));
                         }
                     }
                 });
