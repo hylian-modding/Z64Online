@@ -20,8 +20,6 @@ export default class AnimBankTester {
     constructor(ModLoader: IModLoaderAPI, core: IZ64Main) {
         this.ModLoader = ModLoader;
         this.core = core;
-        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) this.animAddr = 0x801DABDE;
-        else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) this.animAddr = 0x803FFFF8;
     }
 
     onVi() {
@@ -52,7 +50,8 @@ export default class AnimBankTester {
                 if (this.ModLoader.ImGui.smallButton("Load Bank")) {
                     bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Tester", fs.readFileSync(this.banks[this.current[0]]._path)));
                 }
-                this.ModLoader.ImGui.text(`Current Anim ID: 0x${this.ModLoader.emulator.rdramRead16(this.animAddr).toString(16)}`)
+                if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) this.ModLoader.ImGui.text(`Current Anim ID: 0x${this.core.OOT!.link.get_anim_id().toString(16)}`)
+                if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) this.ModLoader.ImGui.text(`Current Anim ID: 0x${this.core.MM!.link.get_anim_id().toString(16)}`)
             }
             this.ModLoader.ImGui.end();
         }
