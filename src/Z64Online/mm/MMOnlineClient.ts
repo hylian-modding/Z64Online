@@ -370,7 +370,7 @@ export default class MMOnlineClient {
                     this.ModLoader.clientSide.sendPacket(new Z64O_DownloadRequestPacket(this.ModLoader.clientLobby, new MMOSaveData(this.core.MM!, this.ModLoader).createSave()));
                     this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isMMR, RomFlags.isVanilla));
                 }
-            }, 300);
+            }, 200);
             this.syncPending = true;
         }
         this.ModLoader.clientSide.sendPacket(
