@@ -94,8 +94,8 @@ export default class MMOnlineClient {
     @SidedProxy(ProxySide.CLIENT, TimeSyncClient)
     timeSync!: TimeSyncClient;
     // Actor specific crash or behavior fixes
-/*     @SidedProxy(ProxySide.CLIENT, ActorFixManager)
-    actorFixes!: ActorFixManager; */
+    /*     @SidedProxy(ProxySide.CLIENT, ActorFixManager)
+        actorFixes!: ActorFixManager; */
 
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
@@ -136,28 +136,25 @@ export default class MMOnlineClient {
 
     mmrKeepThroughTimeCheck() {
         //MMR keep dungeon keys through time check
-        let mmrStaticAddressConfig = 0x8077FFFC;
-        let mmrConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddressConfig, 0x18);
+        let mmrStaticAddr = 0x8077FFFC;
+        let mmrConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddr, 0x18);
+        let mmrConfigAddrCheck = this.ModLoader.emulator.rdramRead32(mmrConfigAddr);
         let itemsToReturn = this.ModLoader.emulator.rdramReadBuffer(mmrConfigAddr + 0x140, 0x24);
         let len = itemsToReturn.readInt16BE(0x22);
         console.log(`mmrConfigAddr: ${mmrConfigAddr.toString(16)}`);
         console.log(`imemsToReturnAddr: ${(mmrConfigAddr + 0x140).toString(16)}`);
         console.log(`itemsToReturn: ${itemsToReturn.toString('hex')}`);
         console.log(`len: ${len.toString(16)}`);
-
-        if (len !== 0) {
-            for (let i = 0; i < (len * 0x2); i++) {
-                if (itemsToReturn.readUInt32BE(i) === 0) {
-                    this.isKeyKeep = false;
-                }
-                else {
-                    this.isKeyKeep = true;
-                    markAsKeySync();
-                }
-                if (i === len) console.log(`Keep keys through time: ${this.isKeyKeep}`)
-            }
+        let mmrConfigCheck = Buffer.from(mmrConfigAddrCheck.toString(16), 'hex').toString();
+        console.log(`mmrConfigCheck: ${mmrConfigCheck}`)
+        if (mmrConfigCheck !== "MMRC" || len === 0) {
+            this.isKeyKeep = false;
         }
-        else console.log(`Keep keys through time: ${this.isKeyKeep}`)
+        else if (mmrConfigCheck === "MMRC" && len !== 0) {
+            markAsKeySync();
+            this.isKeyKeep = true;
+        }
+        console.log(`Keep keys through time: ${this.isKeyKeep}`)
     }
 
     @Preinit()
