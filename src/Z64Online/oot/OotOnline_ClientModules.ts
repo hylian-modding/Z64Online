@@ -82,6 +82,7 @@ export default class OotOnline_ClientModules {
     constructor(){
         setTimeout(()=>{
             setupGameParentReference(this.actorHooks, (this.parent as any).OOT);
+            setupGameParentReference(this.multiworld, (this.parent as any).OOT);
         }, 10 * 1000);
     }
 }
