@@ -7,7 +7,7 @@ import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHan
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { MMEvents } from "Z64Lib/API/MM/MMAPI";
-import { Z64O_ServerTimeStart, Z64O_TimePacket } from "../network/MMOPackets";
+import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_TimePacket } from "../network/MMOPackets";
 
 export const RECORD_TICK_MODULO = 6
 export const NUM_SCHEDULE_TICKS = 196608;
@@ -25,11 +25,11 @@ export default class TimeSyncServer {
     simulatedDay!: number;
     simulatedSpeed!: number;
     simulatedNight!: number;
-
+    sotActive: boolean = false;
 
     @ServerNetworkHandler('Z64O_ServerTimeStart')
     serverUpdate(packet: Z64O_ServerTimeStart) {
-       //console.log(`Server: Z64O_ServerTimeStart`)
+        //console.log(`Server: Z64O_ServerTimeStart`)
         //600 frames between event handler
         //3 ticks per frame on normal
         //1 tick per frame on inverted
@@ -55,22 +55,33 @@ export default class TimeSyncServer {
         this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
 
     }
-    
+
     @ServerNetworkHandler('Z64O_SoTPacket')
-    onSOT() {
-       //console.log(`Server: SoTPacket`);
+    onSOT(packet: Z64O_SoTPacket) {
+        //console.log(`Server: SoTPacket`);
+        this.sotActive = packet.isTriggered;
+        if(!this.sotActive) return;
         this.simulatedTime = 0;
         this.simulatedDay = 0;
         this.simulatedSpeed = 0;
         this.simulatedNight = 0;
+        this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket(this.simulatedTime, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
     }
 
     @ServerNetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
-       //console.log(`Server: onTime: ${packet.time}`)
+        if (this.sotActive) {
+            this.simulatedTime = 0;
+            this.simulatedDay = 0;
+            this.simulatedSpeed = 0;
+            this.simulatedNight = 0;
+            this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket(this.simulatedTime, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
+            return;
+        }
+        //console.log(`Server: onTime: ${packet.time}`)
         //Server needs to catch up to client
         this.simulatedTime = (packet.time + 0xC000) % NUM_TICKS_PER_DAY;
-       //console.log(`server: onTime simulatedTime: ${this.simulatedTime}; packet.time: ${packet.time}; sending: ${(this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY}`)
+        //console.log(`server: onTime simulatedTime: ${this.simulatedTime}; packet.time: ${packet.time}; sending: ${(this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY}`)
         this.simulatedDay = packet.day;
         this.simulatedSpeed = packet.speed;
         this.simulatedNight = packet.night;
