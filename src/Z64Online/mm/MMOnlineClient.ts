@@ -41,6 +41,7 @@ import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationMan
 import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./save/MMOTimeSyncClient";
 import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
+import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -93,6 +94,10 @@ export default class MMOnlineClient {
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, TimeSyncClient)
     timeSync!: TimeSyncClient;
+    // Todo: Does this actually work in MM?
+    @SidedProxy(ProxySide.CLIENT, EmoteManager)
+    emotes!: EmoteManager;
+
     // Actor specific crash or behavior fixes
     /*     @SidedProxy(ProxySide.CLIENT, ActorFixManager)
         actorFixes!: ActorFixManager; */
