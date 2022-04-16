@@ -13,9 +13,6 @@ import { number_ref } from 'modloader64_api/Sylvain/ImGui';
 export class Z64OnlineAPIProvider {
 }
 
-
-
-
 export enum Z64OnlineEvents {
     PLAYER_PUPPET_PRESPAWN = 'Z64Online:onPlayerPuppetPreSpawned',
     PLAYER_PUPPET_SPAWNED = 'Z64Online:onPlayerPuppetSpawned',

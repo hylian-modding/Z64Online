@@ -1,5 +1,5 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { EventHandler, PrivateEventHandler } from "modloader64_api/EventHandler";
+import { bus, EventHandler, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { Z64OnlineEvents, Z64Emote_Emote, RemoteSoundPlayRequest } from '@Z64Online/common/api/Z64API';
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { InjectCore } from "modloader64_api/CoreInjection";
@@ -16,6 +16,7 @@ import { getLink, getLinkPos } from "@Z64Online/common/types/GameAliases";
 import Vector3 from "modloader64_api/math/Vector3";
 import { CommonConfigInst, volume_local, volume_remote } from "@Z64Online/common/lib/Settings";
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
+import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
 
 export class EmoteManager {
     isCurrentlyPlayingEmote: boolean = false;
@@ -32,8 +33,14 @@ export class EmoteManager {
     remoteEmoteSounds: Map<string, Map<number, Sound>> = new Map();
     loadedEmotes: Array<string> = [];
 
+    @EventHandler(BackwardsCompat.OLD_OOT_EMOTE_PAK_EVT)
+    onRegisterEmote_old(emote: Z64Emote_Emote){
+        bus.emit(Z64OnlineEvents.ON_REGISTER_EMOTE, emote);
+    }
+
     @EventHandler(Z64OnlineEvents.ON_REGISTER_EMOTE)
     onRegisterEmote(emote: Z64Emote_Emote) {
+        console.log(emote);
         let s: Sound | undefined;
         let id: number | undefined;
         let e = new anim_binary_container(emote.name, emote.buf, s, emote.sound, id);

@@ -23,6 +23,7 @@ import { MM_DEITY_LINK } from './maps/MM_DEITY_LINK';
 import { DUMMY_LINK } from './maps/DUMMY_LINK';
 import * as defines from './Defines';
 import { NEW_PIPELINE_REMAP } from './maps/New_Pipeline';
+import { Z64O_Logger } from '../lib/Logger';
 
 const USE_ERROR_CUBE: boolean = false;
 
@@ -913,9 +914,16 @@ export class UniversalAliasTable {
             });
         }
 
-        let model_data = optimize(temp.toBuffer(), off, sb.writeOffset, 0x06, true);
+        let model_data: IOptimized;
+        try{
+            model_data = optimize(temp.toBuffer(), off, sb.writeOffset, 0x06, true);
+        }catch(err: any){
+            Z64O_Logger.debug(err.stack);
+            fs.writeFileSync("./error.zobj", temp.toBuffer());
+            fs.writeFileSync("./error.txt", JSON.stringify(off, null, 2));
+        }
         sb.writeBuffer(temp.toBuffer().slice(0x0, 0x5000), 0x0);
-        sb.writeBuffer(model_data.zobj);
+        sb.writeBuffer(model_data!.zobj);
 
         for (let i = 0; i < skeletons.length; i++) {
             skeletons[i].bones.forEach((limb: Bone) => {
@@ -926,7 +934,7 @@ export class UniversalAliasTable {
         }
 
         // Step 6: Call form specific function.
-        manifest.build(sb, model_data, pieces, this);
+        manifest.build(sb, model_data!, pieces, this);
 
         // Step 7: Build skeleton.
         for (let i = 0; i < skeletons.length; i++) {

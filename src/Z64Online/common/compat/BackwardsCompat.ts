@@ -12,4 +12,6 @@ export class BackwardsCompat {
 
     static OLD_OOT_SOUND_PAK_EVT: string = "OotOnline:OnLoadSoundPack";
 
+    static OLD_OOT_EMOTE_PAK_EVT: string = "OotOnline:OnRegisterEmote";
+
 }
