@@ -9,7 +9,7 @@ import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { LinkState } from "Z64Lib/API/Common/Z64API";
 import { MMEvents } from "Z64Lib/API/MM/MMAPI";
 import { MMOnlineConfigCategory } from "../MMOnline";
-import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
+import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncRequest, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
 import SoTTrigger from "./SoTTrigger";
 
 export const RECORD_TICK_MODULO = 6
@@ -46,6 +46,7 @@ export default class TimeSyncClient {
     @onTick()
     onTick() {
         if (!this.isStarted || !this.lobbyConfig.syncModeTime) return;
+        if(this.core.MM?.helper.isTitleScreen()) return;
         if (this.core.MM!.save.time_speed === -2 && !this.inverted) {
             // switched to ISoT
             console.log("Switching to slowed speed...")
@@ -78,7 +79,7 @@ export default class TimeSyncClient {
     timeStarted() {
         //console.log(`Client: MMO_TIME_START`)
         this.ModLoader.utils.setIntervalFrames(() => {
-            //console.log(`Client: syncModeTime = ${this.lobbyConfig.syncModeTime}`)
+            if(this.core.MM?.helper.isTitleScreen()) return;
             if (!this.lobbyConfig.syncModeTime) return;
             this.ModLoader.clientSide.sendPacket(new Z64O_ServerTimeStart(true, this.ModLoader.clientLobby))
             //bus.emit(Z64OnlineEvents.MMO_UPDATE_TIME);
@@ -110,8 +111,14 @@ export default class TimeSyncClient {
     @NetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
         //console.log(`Client onTime`)
-        if (!this.isStarted/*  || this.core.MM!.link.state !== LinkState.STANDING */ || !this.lobbyConfig.syncModeTime) return;
+
+        if(!this.lobbyConfig.syncModeTime) {
+            this.ModLoader.clientSide.sendPacket(new Z64O_SyncRequest(this.ModLoader.clientLobby, false, false));
+            return;
+        }
+        if (!this.isStarted) return;
         if (this.core.MM!.link.state === LinkState.BUSY || !this.core.MM!.helper.isInterfaceShown()) return;
+        if(this.core.MM?.helper.isTitleScreen()) return;
         if (this.sotActive) return;
         //console.log(`Client onTime time: ${packet.time}`)
 
@@ -162,6 +169,12 @@ export default class TimeSyncClient {
 
     @NetworkHandler('Z64O_SyncSettings')
     onSyncSettings(packet: Z64O_SyncSettings) {
+        this.lobbyConfig.syncModeBasic = packet.syncModeBasic;
+        this.lobbyConfig.syncModeTime = packet.syncModeTime;
+    }
+
+    @NetworkHandler('Z64O_SyncRequest')
+    onSyncRequest(packet: Z64O_SyncRequest) {
         this.lobbyConfig.syncModeBasic = packet.syncModeBasic;
         this.lobbyConfig.syncModeTime = packet.syncModeTime;
     }

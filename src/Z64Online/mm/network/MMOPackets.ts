@@ -45,7 +45,18 @@ export class Z64O_SyncSettings extends Packet {
   syncModeTime: boolean;
 
   constructor(syncModeBasic: boolean, syncModeTime: boolean, lobby: string) {
-    super('Z64O_SyncSettings', 'Z64Online', lobby, true);
+    super('Z64O_SyncSettings', 'Z64Online', lobby, false);
+    this.syncModeBasic = syncModeBasic;
+    this.syncModeTime = syncModeTime;
+  }
+}
+
+export class Z64O_SyncRequest extends Packet {
+  syncModeBasic: boolean;
+  syncModeTime: boolean;
+
+  constructor(lobby: string, syncModeBasic: boolean, syncModeTime: boolean) {
+    super('Z64O_SyncRequest', 'Z64Online', lobby, true);
     this.syncModeBasic = syncModeBasic;
     this.syncModeTime = syncModeTime;
   }

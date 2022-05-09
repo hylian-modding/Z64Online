@@ -7,7 +7,8 @@ import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHan
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { MMEvents } from "Z64Lib/API/MM/MMAPI";
-import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_TimePacket } from "../network/MMOPackets";
+import { MMOnlineConfigCategory } from "../MMOnline";
+import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncRequest, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
 
 export const RECORD_TICK_MODULO = 6
 export const NUM_SCHEDULE_TICKS = 196608;
@@ -26,10 +27,12 @@ export default class TimeSyncServer {
     simulatedSpeed!: number;
     simulatedNight!: number;
     sotActive: boolean = false;
+    lobbyConfig!: MMOnlineConfigCategory;
 
     @ServerNetworkHandler('Z64O_ServerTimeStart')
     serverUpdate(packet: Z64O_ServerTimeStart) {
         //console.log(`Server: Z64O_ServerTimeStart`)
+
         //600 frames between event handler
         //3 ticks per frame on normal
         //1 tick per frame on inverted
@@ -87,6 +90,21 @@ export default class TimeSyncServer {
         this.simulatedNight = packet.night;
 
         this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
+    }
+
+    @ServerNetworkHandler('Z64O_SyncRequest')
+    onSyncRequest(packet: Z64O_SyncRequest){
+        this.lobbyConfig = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
+        console.log(`Player ${packet.player.nickname} requested the current sync mode; basic: ${this.lobbyConfig.syncModeBasic}, time: ${this.lobbyConfig.syncModeTime}`);
+        this.ModLoader.serverSide.sendPacketToSpecificPlayer(new Z64O_SyncRequest(packet.lobby, this.lobbyConfig.syncModeBasic, this.lobbyConfig.syncModeTime), packet.player);
+    }
+
+    @ServerNetworkHandler('Z64O_SyncSettings')
+    onSyncSettings(packet: Z64O_SyncSettings){
+        this.lobbyConfig = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
+        this.lobbyConfig.syncModeBasic = packet.syncModeBasic;
+        this.lobbyConfig.syncModeTime = packet.syncModeTime;
+        this.ModLoader.serverSide.sendPacket(new Z64O_SyncSettings(packet.syncModeBasic, packet.syncModeTime, packet.lobby));
     }
 
 }
