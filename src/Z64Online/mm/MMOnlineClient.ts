@@ -38,7 +38,7 @@ import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosm
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME } from "@Z64Online/common/types/GameAliases";
+import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIsClient, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME, setSyncContext } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./save/MMOTimeSyncClient";
 import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
 import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
@@ -863,6 +863,15 @@ export default class MMOnlineClient {
             this.clientStorage.isMMR = true;
             markAsRandomizer();
         }
+    }
+
+    @EventHandler(EventsClient.ON_HEAP_READY)
+    onHeapReady() {
+        this.syncContext = this.ModLoader.heap!.malloc(0x100);
+        global.ModLoader["Z64O_SyncContext"] = this.syncContext;
+        this.ModLoader.logger.debug(`MMO Context: ${this.syncContext.toString(16)}`);
+        markIsClient();
+        setSyncContext(this.syncContext);
     }
 
     @onTick()

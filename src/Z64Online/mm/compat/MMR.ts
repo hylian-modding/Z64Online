@@ -11,6 +11,7 @@ import { Z64OnlineEvents, Z64Online_ModelAllocation } from "@Z64Online/common/ap
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64O_Logger } from "@Z64Online/common/lib/Logger";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
+import { ML_IS_CLIENT, ML_SYNC_CONTEXT } from "@Z64Online/common/types/GameAliases";
 
 export class MMRando {
     @ModLoaderAPIInject()
@@ -19,8 +20,6 @@ export class MMRando {
     parent!: IMMOClientside;
     @InjectCore()
     core!: IZ64Main;
-
-
 }
 
 export class MMR_Cosmetics {
@@ -63,6 +62,23 @@ export class MMR_Cosmetics {
         }
         evt.name = "MMR Model";
         ModLoader.publicBus.emit(Z64OnlineEvents.REGISTER_CUSTOM_MODEL, evt);
+    }
+}
+
+export class MMR_QuirkFixes {
+
+    static magicMeterQuirkFix(ModLoader: IModLoaderAPI, magic: number) {
+        if (ML_IS_CLIENT) {
+            let p = ModLoader.emulator.rdramRead8(ML_SYNC_CONTEXT);
+            if (magic > p) {
+                ModLoader.emulator.rdramWrite8(ML_SYNC_CONTEXT, magic);
+                return magic;
+            } else {
+                return p;
+            }
+        } else {
+            return magic;
+        }
     }
 
 }

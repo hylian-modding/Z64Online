@@ -3,6 +3,7 @@ import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { CDNServer } from "@Z64Online/common/cdn/CDNServer";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
+import { markIsServer } from "@Z64Online/common/types/GameAliases";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
@@ -38,6 +39,10 @@ export default class MMOnlineServer {
     cdn!: CDNServer;
     @SidedProxy(ProxySide.SERVER, TimeSyncServer)
     timeSync!: TimeSyncServer;
+
+    constructor(){
+        markIsServer();
+    }
     
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

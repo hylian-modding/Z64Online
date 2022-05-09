@@ -14,6 +14,7 @@ import { OotOSaveData } from "./save/OotoSaveData";
 import { OotOnlineStorage, OotOnlineSave_Server } from "./storage/OotOnlineStorage";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { OotOnline_ServerModules } from "./OotOnline_ServerModules";
+import { markIsServer } from "@Z64Online/common/types/GameAliases";
 
 export default class OotOnlineServer {
 
@@ -25,6 +26,10 @@ export default class OotOnlineServer {
     parent!: IPlugin;
     @SidedProxy(ProxySide.SERVER, OotOnline_ServerModules)
     modules!: OotOnline_ServerModules;
+
+    constructor(){
+        markIsServer();
+    }
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {

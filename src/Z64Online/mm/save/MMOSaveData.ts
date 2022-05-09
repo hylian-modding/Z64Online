@@ -13,6 +13,7 @@ import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import { MMOnlineStorageClient } from "../storage/MMOnlineStorageClient";
 import { Z64O_PermFlagsPacket } from "../network/MMOPackets";
 import { MM_IS_FAIRY, MM_IS_SKULL } from "@Z64Online/common/types/GameAliases";
+import { MMR_QuirkFixes } from "../compat/MMR";
 
 export class MMOSaveData implements ISaveSyncData {
   core!: IMMCore;
@@ -196,9 +197,10 @@ export class MMOSaveData implements ISaveSyncData {
         if (storage.heart_containers > 20) {
           storage.heart_containers = 20;
         }
-        if (obj.magic_meter_size > storage.magic_meter_size) {
-          storage.magic_meter_size = obj.magic_meter_size;
-          bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, storage.magic_meter_size);
+        let magic_meter_data: number = MMR_QuirkFixes.magicMeterQuirkFix(this.ModLoader, obj.magic_meter_size);
+        if (magic_meter_data > storage.magic_meter_size) {
+          storage.magic_meter_size = magic_meter_data;
+          bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, magic_meter_data);
         }
 
         if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {

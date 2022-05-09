@@ -1,7 +1,7 @@
 import { Z64O_PRIVATE_EVENTS, SendToScene } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
-import { getLinkSoundID, markAsRandomizer } from "@Z64Online/common/types/GameAliases";
+import { getLinkSoundID, markAsRandomizer, markIsClient, setSyncContext } from "@Z64Online/common/types/GameAliases";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import path from "path";
 import { InjectCore } from "modloader64_api/CoreInjection";
@@ -126,7 +126,8 @@ export default class OotOnlineClient {
         this.syncContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["Z64O_SyncContext"] = this.syncContext;
         this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
-
+        markIsClient();
+        setSyncContext(this.syncContext);
         if (RomFlags.isOotR) {
             try{
                 if (this.modules.multiworld.isRomMultiworld()) {

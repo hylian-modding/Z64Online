@@ -28,6 +28,10 @@ export let MM_IS_FAIRY: boolean;
 export let MM_IS_SKULL: boolean;
 export let MM_IS_KEY_KEEP: boolean;
 export let MM_IS_TIME: boolean;
+//ML stuff
+export let ML_IS_CLIENT: boolean;
+export let ML_IS_SERVER: boolean;
+export let ML_SYNC_CONTEXT: number;
 
 export function setupOot() {
     Z64_ANIM_BANK_DMA = OOT_ANIM_BANK_DMA;
@@ -77,6 +81,17 @@ export function markAsTimeSync(bool: boolean) {
     MM_IS_TIME = bool;
 }
 
+export function markIsClient(){
+    ML_IS_CLIENT = true;
+}
+
+export function markIsServer(){
+    ML_IS_SERVER = true;
+}
+
+export function setSyncContext(pointer: number){
+    ML_SYNC_CONTEXT = pointer;
+}
 
 export function setPlayerProxy(buf: Buffer) {
     Z64_PLAYER_PROXY = buf;
