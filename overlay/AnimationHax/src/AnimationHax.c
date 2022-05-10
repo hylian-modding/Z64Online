@@ -3,7 +3,7 @@
 extern AnimationEntry* AnimationContext_AddEntry(AnimationContext* animationCtx, AnimationType type);
 asm("AnimationContext_AddEntry = 0x8008B48C");
 
-void AnimationContext_SetLoadFrame(GlobalContext* globalCtx, LinkAnimationHeader* animation, s32 frame, s32 limbCount,
+void AnimationContext_SetLoadFrameR(GlobalContext* globalCtx, LinkAnimationHeader* animation, s32 frame, s32 limbCount,
                                    Vec3s* frameTable) {
 #ifdef GAME_OOT
         LinkAnimationHeader* linkAnimHeader = SEGMENTED_TO_VIRTUAL(animation);
@@ -39,7 +39,7 @@ void draw(void* thisx, GlobalContext* globalCtx)
 void doInject(void* this, GlobalContext* globalCtx, uint32_t pointer){
     En_HaxBase* thisx = ((En_HaxBase*)this);
     haxPointer = thisx;
-    haxPointer->inst = &AnimationContext_SetLoadFrame;
+    haxPointer->inst = &AnimationContext_SetLoadFrameR;
 }
 
 void doDestroy(void* this, GlobalContext* globalCtx, uint32_t pointer){

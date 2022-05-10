@@ -74,6 +74,7 @@ export class SoundManagerClient {
     localSoundPaks: Map<string, Record<number, Buffer>> = new Map<string, Record<number, Buffer>>();
     currentIDs: string[] = [];
     soundCache: Map<string, sf.Sound> = new Map();
+    context: number = -1;
 
     hasAdult: boolean = false;
     hasChild: boolean = false;
@@ -82,6 +83,7 @@ export class SoundManagerClient {
     hasGoron: boolean = false;
     hasZora: boolean = false;
     hasDeity: boolean = false;
+    pendingSoundWrites: Set<number> = new Set();
 
     arb!: ArbitraryHook;
 
@@ -162,6 +164,21 @@ export class SoundManagerClient {
                     sb.clear();
                     this.ModLoader.emulator.invalidateCachedCode();
                     Z64O_Logger.debug(`Sound Hack Context: ${this.arb.instancePointer.toString(16)}.`);
+                    this.context = this.ModLoader.emulator.rdramRead32(this.arb.instancePointer + 0xC);
+                    this.ModLoader.utils.setIntervalFrames(()=>{
+                        if (this.pendingSoundWrites.size > 0){
+                            this.ModLoader.emulator.rdramWriteBuffer(this.context, Buffer.alloc(1530 * 2));
+                            let i = 0;
+                            let arr = Array.from(this.pendingSoundWrites.values());
+                            while (arr.length > 0){
+                                let s = arr.shift()!;
+                                this.ModLoader.emulator.rdramWrite16(this.context + i, (s & 0xF0FF));
+                                i+=2;
+                            }
+                            this.ModLoader.emulator.rdramWrite16(this.context + i, 0xFFFF);
+                            this.pendingSoundWrites.clear();
+                        }
+                    }, 20);
                 });
             }, 20);
         }, 20);
@@ -211,7 +228,9 @@ export class SoundManagerClient {
                         }
                     }
                 });
-            });
+            }).catch((err: any)=>{
+                this.ModLoader.logger.error(err);
+            });;
         }
     }
 
@@ -293,6 +312,7 @@ export class SoundManagerClient {
                         sound.ref();
                         this.sounds.get(parseInt(key))!.push(sound);
                     }
+                    this.pendingSoundWrites.add(parseInt(key));
                 }
             });
             this.rawSounds = evt.data;

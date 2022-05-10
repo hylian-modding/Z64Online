@@ -3,11 +3,11 @@
 
 #include <libzelda64.h>
 
-extern s32 SkelAnime_Update(SkelAnime* skelAnime);
-asm("SkelAnime_Update = 0x8008C9C0");
+/* extern s32 SkelAnime_Update(SkelAnime* skelAnime);
+asm("SkelAnime_Update = 0x8008C9C0"); */
 
-extern s32 Animation_OnFrame(SkelAnime* skelAnime, f32 frame);
-asm("Animation_OnFrame = 0x8008D6A8");
+/* extern s32 Animation_OnFrame(SkelAnime* skelAnime, f32 frame);
+asm("Animation_OnFrame = 0x8008D6A8"); */
 
 extern void Collider_SetQuadVertices(ColliderQuad* collider, Vec3f* a, Vec3f* b, Vec3f* c, Vec3f* d);
 asm("Collider_SetQuadVertices = 0x80050B64");
