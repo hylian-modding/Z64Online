@@ -17,7 +17,7 @@ import zlib from 'zlib';
 import { IModelReference, IModelScript, Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64_AnimationBank } from '@Z64Online/common/api/Z64API';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
-import { getAdultID, getChildID } from '../types/GameAliases';
+import { getAdultID, getChildID, isPaused } from '../types/GameAliases';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
 import { Z64 } from 'Z64Lib/API/imports';
@@ -433,6 +433,11 @@ export class WorldEventRewards {
                 if (this.ModLoader.ImGui.begin("Costume Manager###OotO:EventRewards", this.rewardsWindowStatus)) {
                     if (!this.allowManagerUsage) {
                         this.ModLoader.ImGui.text("Load a save to enable this feature.");
+                        this.ModLoader.ImGui.end();
+                        return;
+                    }
+                    if (isPaused(this.core)){
+                        this.ModLoader.ImGui.text("Unpause to use this feature.");
                         this.ModLoader.ImGui.end();
                         return;
                     }
