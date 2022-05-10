@@ -326,7 +326,9 @@ export class SoundManagerClient {
         if (this.PlayerSounds.has(player.uuid)) {
             this.PlayerSounds.get(player.uuid)!.forEach((sounds: Array<sf.Sound>) => {
                 for (let i = 0; i < sounds.length; i++) {
-                    sounds[i].unref();
+                    try{
+                        sounds[i].unref();
+                    }catch(err){}
                 }
             });
             this.PlayerSounds.delete(player.uuid);
