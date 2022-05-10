@@ -8,7 +8,7 @@ import path from 'path';
 import { ImGuiHandlerCommon } from "@Z64Online/common/gui/ImGuiHandlerCommon";
 import fse from 'fs-extra';
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
-import { bus } from "modloader64_api/EventHandler";
+import { bus, EventHandler, EventOwnerChanged, EventsClient } from "modloader64_api/EventHandler";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
 import { MMOnlineConfigCategory } from "@Z64Online/mm/MMOnline";
 import { Z64O_SyncSettings } from "../network/MMOPackets";
@@ -127,4 +127,12 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
         if(packet.host) this.amIHost = true;
         else this.amIHost = false;
     }
+
+    @EventHandler(EventsClient.ON_LOBBY_OWNER_CHANGE)
+    onLobbyOwnerChange(evt: EventOwnerChanged){
+        console.log(`Lobby is currently owned by ${evt.owner.nickname}`);
+        if(evt.owner.uuid === this.ModLoader.me.uuid) this.amIHost = true;
+        else this.amIHost = false;
+    }
+
 }

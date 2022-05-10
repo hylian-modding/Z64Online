@@ -68,10 +68,10 @@ export class ModelManagerMM implements IModelManagerShim {
             return tools.relocateFileToExtendedRom(evt.rom, dma, buf, 0, true)
         };
 
-        this.MaskMap.set("goron_mask_t", { vrom: moveAndClear(678), offset: 0x14A0, replacement: gear.OBJECT_MASK_GORON_SCREAMING, alias: defines.DL_GORON_MASK_SCREAM });
-        this.MaskMap.set("zora_mask_t", { vrom: moveAndClear(679), offset: 0xDB0, replacement: gear.OBJECT_MASK_ZORA_SCREAMING, alias: defines.DL_ZORA_MASK_SCREAM });
-        this.MaskMap.set("deku_mask_t", { vrom: moveAndClear(680), offset: 0x1D90, replacement: gear.OBJECT_MASK_NUTS_SCREAMING, alias: defines.DL_DEKU_MASK_SCREAM });
-        this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: gear.OBJECT_MASK_DEITY_SCREAMING, alias: defines.DL_DEITY_MASK_SCREAM });
+        //this.MaskMap.set("goron_mask_t", { vrom: moveAndClear(678), offset: 0x14A0, replacement: gear.OBJECT_MASK_GORON_SCREAMING, alias: defines.DL_GORON_MASK_SCREAM });
+        //this.MaskMap.set("zora_mask_t", { vrom: moveAndClear(679), offset: 0xDB0, replacement: gear.OBJECT_MASK_ZORA_SCREAMING, alias: defines.DL_ZORA_MASK_SCREAM });
+        //this.MaskMap.set("deku_mask_t", { vrom: moveAndClear(680), offset: 0x1D90, replacement: gear.OBJECT_MASK_NUTS_SCREAMING, alias: defines.DL_DEKU_MASK_SCREAM });
+        //this.MaskMap.set("fd_mask_t", { vrom: moveAndClear(681), offset: 0x900, replacement: gear.OBJECT_MASK_DEITY_SCREAMING, alias: defines.DL_DEITY_MASK_SCREAM });
 
         this.parent.ModLoader.utils.setTimeoutFrames(() => {
             this.gearRef = registerModel(fs.readFileSync(path.join(this.parent.cacheDir, "gear.zobj")), true)!;
