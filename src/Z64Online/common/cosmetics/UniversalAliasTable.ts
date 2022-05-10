@@ -874,7 +874,7 @@ export class UniversalAliasTable {
         wrapGen(`DL_RHAND_OCARINA_FAIRY`, `DL_OCARINA_FAIRY`, undefined, [`DL_RHAND`]);
         wrapGen(`DL_RHAND_OCARINA_TIME`, `DL_OCARINA_2`, undefined, [`DL_RHAND`]);
         wrapGen(`DL_RFIST_BOW`, `DL_BOW`, undefined, [`DL_RFIST`]);
-        wrapGen(`DL_FPS_RHAND_BOW`, `DL_BOW`, undefined, [`DL_RHAND`]);
+        wrapGen(`DL_FPS_RHAND_BOW`, `DL_BOW`, undefined, [`DL_FPS_RHAND`]);
         wrapGen(`DL_FPS_LHAND_HOOKSHOT`, `DL_FPS_HOOKSHOT`, undefined, [`DL_FPS_RHAND`]);
         wrapGen(`DL_SHIELD1_ODD`, `DL_SHIELD_1`, 'MATRIX_SHIELD1_ITEM', []);
         wrapGen(`DL_LFIST_BOOMERANG`, `DL_BOOMERANG`, undefined, [`DL_LFIST`]);
