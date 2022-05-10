@@ -269,7 +269,9 @@ export class ModelManagerClient {
       if (this.allocationManager.isPlayerAllocated(player)) {
         this.setPuppetModel(player, model, packet.age, packet.ageThePlayerActuallyIs);
       }
-    });
+    }).catch((err: any)=>{
+      this.ModLoader.logger.error(err);
+  });;
   }
 
   /* @NetworkHandler('Z64OnlineLib_EquipmentPakPacket')

@@ -129,6 +129,8 @@ export class EmoteManager {
             if (data.id !== undefined) {
                 this.remoteEmoteSounds.get(packet.player.uuid)!.set(data.id!, this.ModLoader.sound.initSound(data.sound!));
             }
+        }).catch((err: any)=>{
+            this.ModLoader.logger.error(err);
         });
     }
 
