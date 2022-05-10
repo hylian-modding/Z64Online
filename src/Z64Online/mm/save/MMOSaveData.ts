@@ -161,8 +161,10 @@ export class MMOSaveData implements ISaveSyncData {
       let old_swordLevel = storage.swords.swordLevel;
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, ['kokiriSword', 'masterSword', 'giantKnife', 'biggoronSword']);
       this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, ['dekuShield', 'hylianShield', 'mirrorShield']);
-      if(MM_IS_FAIRY) this.processMixedLoop_OVERWRITE(obj.stray, storage.stray, []);
-      if(MM_IS_SKULL) this.processMixedLoop_OVERWRITE(obj.skull, storage.skull, []);
+      if (MM_IS_FAIRY) {
+        this.processMixedLoop_OVERWRITE(obj.stray, storage.stray, []);
+        storage.stray.strayClockTown = obj.stray.strayClockTown;
+      }
       this.processMixedLoop_OVERWRITE(obj.questStatus, storage.questStatus, []);
       this.processMixedLoop_OVERWRITE(obj.inventory, storage.inventory, []);
       this.processBoolLoop_OVERWRITE(obj.owlStatues, storage.owlStatues);
@@ -210,14 +212,14 @@ export class MMOSaveData implements ISaveSyncData {
         let old_swordLevel = storage.swords.swordLevel;
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
-        if(MM_IS_FAIRY) {
+        if (MM_IS_FAIRY) {
           //console.log(obj.stray)
-          this.processMixedLoop(obj.stray, storage.stray, []); 
-        } 
-        if(MM_IS_SKULL) {
+          this.processMixedLoop(obj.stray, storage.stray, []);
+        }
+        if (MM_IS_SKULL) {
           //console.log(obj.skull)
           this.processMixedLoop(obj.skull, storage.skull, []);
-        } 
+        }
         this.processMixedLoop(obj.questStatus, storage.questStatus, ['heartPieceCount']);
         this.processBoolLoop(obj.owlStatues, storage.owlStatues);
 

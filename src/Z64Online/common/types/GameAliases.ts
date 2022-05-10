@@ -65,15 +65,15 @@ export function markAsRandomizer() {
     Z64_IS_RANDOMIZER = true;
 }
 
-export function markAsFairySync() {
+export function markAsFairySync(bool: boolean) {
     MM_IS_FAIRY = true;
 }
 
-export function markAsSkullSync() {
+export function markAsSkullSync(bool: boolean) {
     MM_IS_SKULL = true;
 }
 
-export function markAsKeySync() {
+export function markAsKeySync(bool: boolean) {
     MM_IS_KEY_KEEP = true;
 }
 
