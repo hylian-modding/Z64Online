@@ -262,8 +262,7 @@ export class SoundManagerClient {
             let id = ids[i];
             let evt: {id: string, data: Record<number, Buffer>} = { id: id, data: this.localSoundPaks.get(id)! };
             if (!this.localSoundPaks.has(id)) {
-                this.ModLoader.logger.error("Something has gone very wrong with sound pak loading.");
-                this.ModLoader.logger.error(`ID ${id} does not exist.`);
+                this.ModLoader.logger.warn(`[SoundManager]: Sound pak ID ${id} does not exist but was requested.`);
                 continue;
             }
             Object.keys(evt.data).forEach((key: string) => {

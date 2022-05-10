@@ -698,22 +698,8 @@ export class WorldEventRewards {
                     }
                 }
             });
-
             if (this.config.voices.length > 0) {
-                let missing_sounds: string[] = [];
-                for (let i = 0; i < this.config.voices.length; i++) {
-                    if (this.customSoundGroups.has(this.config.voices[i])) {
-                        bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices[i]);
-                    } else {
-                        this.ModLoader.logger.warn(`${this.config.voices[i]} voice is selected but missing.`);
-                        missing_sounds.push(this.config.voices[i]);
-                    }
-                }
-                for (let i = 0; i < missing_sounds.length; i++) {
-                    if (this.config.voices.indexOf(missing_sounds[i]) > -1) {
-                        this.config.voices.splice(this.config.voices.indexOf(missing_sounds[i]), 1);
-                    }
-                }
+                bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
             }
             if (this.config.anim_bank !== "") {
                 if (this.anims.has(this.config.anim_bank)) {
