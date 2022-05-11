@@ -165,22 +165,18 @@ export class SoundManagerClient {
                     this.ModLoader.emulator.invalidateCachedCode();
                     Z64O_Logger.debug(`Sound Hack Context: ${this.arb.instancePointer.toString(16)}.`);
                     this.context = this.ModLoader.emulator.rdramRead32(this.arb.instancePointer + 0xC);
-                    this.ModLoader.utils.setIntervalFrames(()=>{
-                        if (this.pendingSoundWrites.size > 0){
+                    this.ModLoader.utils.setIntervalFrames(() => {
+                        if (this.pendingSoundWrites.size > 0) {
                             this.ModLoader.emulator.rdramWriteBuffer(this.context, Buffer.alloc(1530 * 2));
                             let i = 0;
                             let arr = Array.from(this.pendingSoundWrites.values());
-                            while (arr.length > 0){
+                            while (arr.length > 0) {
                                 let s = arr.shift()!;
                                 this.ModLoader.emulator.rdramWrite16(this.context + i, (s & 0xF0FF));
-                                i+=2;
+                                i += 2;
                             }
                             this.ModLoader.emulator.rdramWrite16(this.context + i, 0xFFFF);
                             this.pendingSoundWrites.clear();
-                        }else{
-                            if (this.ModLoader.emulator.rdramRead16(this.context) > 0 && !this.isMuted){
-                                this.ModLoader.emulator.rdramWriteBuffer(this.context, Buffer.alloc(1530 * 2));
-                            }
                         }
                     }, 20);
                 });
@@ -205,9 +201,9 @@ export class SoundManagerClient {
         for (let i = 0; i < packet.ids.length; i++) {
             CDNClient.singleton.requestFile(packet.ids[i]).then((buf: Buffer) => {
                 let sounds: any;
-                try{
+                try {
                     sounds = Z64Serialize.deserializeSync(buf);
-                }catch(err: any){
+                } catch (err: any) {
                     this.ModLoader.logger.error(err.stack);
                     this.ModLoader.logger.error("CDN failure?");
                     CDNClient.singleton.flagCDNFailure(packet.ids[i]);
@@ -232,7 +228,7 @@ export class SoundManagerClient {
                         }
                     }
                 });
-            }).catch((err: any)=>{
+            }).catch((err: any) => {
                 this.ModLoader.logger.error(err);
             });;
         }
@@ -279,11 +275,12 @@ export class SoundManagerClient {
         if (ids.length === 0) {
             this.ModLoader.clientSide.sendPacket(new OotO_SoundPackLoadPacket([], this.ModLoader.clientLobby));
             this.isMuted = false;
+            this.pendingSoundWrites.add(0xFFFF);
             return;
         }
         for (let i = 0; i < ids.length; i++) {
             let id = ids[i];
-            let evt: {id: string, data: Record<number, Buffer>} = { id: id, data: this.localSoundPaks.get(id)! };
+            let evt: { id: string, data: Record<number, Buffer> } = { id: id, data: this.localSoundPaks.get(id)! };
             if (!this.localSoundPaks.has(id)) {
                 this.ModLoader.logger.warn(`[SoundManager]: Sound pak ID ${id} does not exist but was requested.`);
                 continue;
@@ -296,7 +293,7 @@ export class SoundManagerClient {
                 if (SoundCategory_Human.indexOf(id) > -1) this.hasHuman = true;
                 if (SoundCategory_Deku.indexOf(id) > -1) this.hasDeku = true;
                 if (SoundCategory_Goron.indexOf(id) > -1) this.hasGoron = true;
-                if (SoundCategory_Zora.indexOf(id) > -1)  this.hasZora = true;
+                if (SoundCategory_Zora.indexOf(id) > -1) this.hasZora = true;
                 if (SoundCategory_Deity.indexOf(id) > -1) this.hasDeity = true;
                 if (this.sounds.has(id)) {
                     // If an earlier pak loaded a sound for this id skip it. First come first served.
@@ -350,9 +347,9 @@ export class SoundManagerClient {
         if (this.PlayerSounds.has(player.uuid)) {
             this.PlayerSounds.get(player.uuid)!.forEach((sounds: Array<sf.Sound>) => {
                 for (let i = 0; i < sounds.length; i++) {
-                    try{
+                    try {
                         sounds[i].unref();
-                    }catch(err){}
+                    } catch (err) { }
                 }
             });
             this.PlayerSounds.delete(player.uuid);
@@ -394,7 +391,7 @@ export class SoundManagerClient {
                 let sound: sf.Sound = this.sounds.get(getLinkSoundID(this.core))![random];
                 let raw = getLinkPos(this.core);
                 let pos = new Vector3(raw.readFloatBE(0), raw.readFloatBE(4), raw.readFloatBE(8));
-                if (sound !== undefined && sound.position !== undefined){
+                if (sound !== undefined && sound.position !== undefined) {
                     sound.position = pos;
                     sound.minDistance = 250.0
                     sound.play();
