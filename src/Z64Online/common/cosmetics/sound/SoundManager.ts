@@ -177,6 +177,10 @@ export class SoundManagerClient {
                             }
                             this.ModLoader.emulator.rdramWrite16(this.context + i, 0xFFFF);
                             this.pendingSoundWrites.clear();
+                        }else{
+                            if (this.ModLoader.emulator.rdramRead16(this.context) > 0 && !this.isMuted){
+                                this.ModLoader.emulator.rdramWriteBuffer(this.context, Buffer.alloc(1530 * 2));
+                            }
                         }
                     }, 20);
                 });
