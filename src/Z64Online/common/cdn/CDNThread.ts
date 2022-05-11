@@ -15,7 +15,7 @@ class CDNThread {
     pendingUploads: Map<string, SmartBuffer> = new Map<string, SmartBuffer>();
     server!: http.Server;
     config!: CDNConfig;
-    deleteMode: boolean = true;
+    deleteMode: boolean = false;
 
     makeServer(){
         try {
