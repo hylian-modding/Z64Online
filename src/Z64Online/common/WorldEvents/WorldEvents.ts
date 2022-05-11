@@ -641,6 +641,7 @@ export class WorldEventRewards {
             if (this.config.voices.indexOf(id) > -1) {
                 this.config.voices.splice(this.config.voices.indexOf(id), 1);
                 bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
+                this.ModLoader.config.save();
             }
         }
         this.ModLoader.ImGui.sameLine();
@@ -664,12 +665,14 @@ export class WorldEventRewards {
         this.config.voices[c] = id;
         this.config.voices[index] = itemAtIndex;
         bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
+        this.ModLoader.config.save();
     }
 
     drawSoundSelections(id: string) {
         if (this.ModLoader.ImGui.smallButton(`${id}###Z64O::Sound::ENABLE::${id}`)) {
             this.config.voices.push(id);
             bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, this.config.voices);
+            this.ModLoader.config.save();
         }
     }
 

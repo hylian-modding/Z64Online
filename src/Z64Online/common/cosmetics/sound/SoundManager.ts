@@ -67,11 +67,11 @@ export class SoundManagerClient {
     @InjectCore()
     core!: IZ64Main;
     PlayerSounds: Map<string, Map<number, sf.Sound[]>> = new Map<string, Map<number, sf.Sound[]>>();
-    rawSounds!: Record<number, Buffer>;
+    rawSounds!: Record<number, Array<Buffer>>;
     SIZE_LIMIT: number = 10;
     nops: Map<AgeOrForm, () => void> = new Map();
     sounds: Map<number, Array<sf.Sound>> = new Map<number, Array<sf.Sound>>();
-    localSoundPaks: Map<string, Record<number, Buffer>> = new Map<string, Record<number, Buffer>>();
+    localSoundPaks: Map<string, Record<number, Array<Buffer>>> = new Map<string, Record<number, Array<Buffer>>>();
     currentIDs: string[] = [];
     soundCache: Map<string, sf.Sound> = new Map();
     context: number = -1;
@@ -113,13 +113,15 @@ export class SoundManagerClient {
     @EventHandler(Z64OnlineEvents.ON_LOAD_SOUND_PACK)
     onSoundPackLoaded(evt: any) {
         try {
+            let output: Record<number, Array<Buffer>> = {};
             Object.keys(evt.data).forEach((key: string) => {
                 let arr: Array<Buffer> = evt.data[key];
                 for (let i = 0; i < arr.length; i++) {
                     arr[i] = zlib.inflateSync(arr[i]);
                 }
+                output[(parseInt(key) & 0xF0FF)] = arr;
             });
-            this.localSoundPaks.set(evt.id, evt.data);
+            this.localSoundPaks.set(evt.id, output);
         } catch (err: any) { }
     }
 
@@ -172,7 +174,10 @@ export class SoundManagerClient {
                             let arr = Array.from(this.pendingSoundWrites.values());
                             while (arr.length > 0) {
                                 let s = arr.shift()!;
-                                this.ModLoader.emulator.rdramWrite16(this.context + i, (s & 0xF0FF));
+                                if (s < 0xFFFF) {
+                                    s = s & 0xF0FF;
+                                }
+                                this.ModLoader.emulator.rdramWrite16(this.context + i, s);
                                 i += 2;
                             }
                             this.ModLoader.emulator.rdramWrite16(this.context + i, 0xFFFF);
@@ -280,7 +285,7 @@ export class SoundManagerClient {
         }
         for (let i = 0; i < ids.length; i++) {
             let id = ids[i];
-            let evt: { id: string, data: Record<number, Buffer> } = { id: id, data: this.localSoundPaks.get(id)! };
+            let evt: { id: string, data: Record<number, Array<Buffer>> } = { id: id, data: this.localSoundPaks.get(id)! };
             if (!this.localSoundPaks.has(id)) {
                 this.ModLoader.logger.warn(`[SoundManager]: Sound pak ID ${id} does not exist but was requested.`);
                 continue;
