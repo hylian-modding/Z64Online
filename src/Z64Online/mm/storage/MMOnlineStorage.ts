@@ -39,6 +39,12 @@ class OwlStatuesServer implements IOwlStatues {
 }
 
 class MMSyncSaveServer implements IMMSyncSaveServer {
+  bank: number = 0;
+  lottery_numbers_day1: Buffer = Buffer.alloc(0x3);
+  lottery_numbers_day2: Buffer = Buffer.alloc(0x3);
+  lottery_numbers_day3: Buffer = Buffer.alloc(0x3);
+  spider_house_mask_order: Buffer = Buffer.alloc(0x6);
+  bomber_code: Buffer = Buffer.alloc(0x5);
   stray!: IStray;
   skull!: ISkull;
   minimap_flags: Buffer = Buffer.alloc(0x1C);

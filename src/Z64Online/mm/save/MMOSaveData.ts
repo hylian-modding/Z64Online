@@ -28,7 +28,8 @@ export class MMOSaveData implements ISaveSyncData {
     let obj: any = {};
     let keys = [
       'inventory', 'map_visible', 'map_visited', 'minimap_flags', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
-      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount', 'dungeon_items', 'stray', 'skull'
+      'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount', 'dungeon_items', 'stray', 'skull', 'bank',
+      'lottery_numbers_day1', 'lottery_numbers_day2', 'lottery_numbers_day3', 'spider_house_mask_order', 'bomber_code'
     ];
 
     obj = JSON.parse(JSON.stringify(this.core.save));
@@ -156,7 +157,13 @@ export class MMOSaveData implements ISaveSyncData {
       storage.map_visited = obj.map_visited;
       storage.double_defense = obj.double_defense;
 
-
+      //Misc
+      storage.bank = obj.bank;
+      storage.lottery_numbers_day1 = obj.lottery_numbers_day1;
+      storage.lottery_numbers_day2 = obj.lottery_numbers_day2;
+      storage.lottery_numbers_day3 = obj.lottery_numbers_day3;
+      storage.bomber_code = obj.bomber_code;
+      storage.spider_house_mask_order = obj.spider_house_mask_order;
 
       let old_swordLevel = storage.swords.swordLevel;
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, ['kokiriSword', 'masterSword', 'giantKnife', 'biggoronSword']);
@@ -234,6 +241,15 @@ export class MMOSaveData implements ISaveSyncData {
         storage.map_visible = map_visible;
         storage.map_visited = map_visited;
 
+        //Misc
+        if (storage.bank !== obj.bank) storage.bank = obj.bank;
+        if (storage.lottery_numbers_day1 !== obj.lottery_numbers_day1) storage.lottery_numbers_day1 = obj.lottery_numbers_day1;
+        if (storage.lottery_numbers_day2 !== obj.lottery_numbers_day2) storage.lottery_numbers_day2 = obj.lottery_numbers_day2;
+        if (storage.lottery_numbers_day3 !== obj.lottery_numbers_day3) storage.lottery_numbers_day3 = obj.lottery_numbers_day3;
+        if (storage.bomber_code !== obj.bomber_code) storage.bomber_code = obj.bomber_code;
+        if (storage.spider_house_mask_order !== obj.spider_house_mask_order) storage.spider_house_mask_order = obj.spider_house_mask_order;
+
+
         if (old_swordLevel !== storage.swords.swordLevel) {
           bus.emit(Z64OnlineEvents.SWORD_NEEDS_UPDATE, storage.swords.swordLevel);
         }
@@ -262,7 +278,7 @@ export class MMOSaveData implements ISaveSyncData {
           storage.inventory.FIELD_BOTTLE6 = obj.inventory.FIELD_BOTTLE6;
         }
 
-        this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE5", "FIELD_BOTTLE6"]);
+        this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE5", "FIELD_BOTTLE6", "bank"]);
 
         if (storage.questStatus.heartPieceCount < obj.questStatus.heartPieceCount && obj.questStatus.heartPieceCount < 4) {
           storage.questStatus.heartPieceCount = obj.questStatus.heartPieceCount;
