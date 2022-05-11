@@ -146,20 +146,20 @@ export default class MMOnlineClient {
         let mmrConfigAddrCheck = this.ModLoader.emulator.rdramRead32(mmrConfigAddr);
         let itemsToReturn = this.ModLoader.emulator.rdramReadBuffer(mmrConfigAddr + 0x140, 0x24);
         let len = itemsToReturn.readInt16BE(0x22);
-        console.log(`mmrConfigAddr: ${mmrConfigAddr.toString(16)}`);
-        console.log(`imemsToReturnAddr: ${(mmrConfigAddr + 0x140).toString(16)}`);
-        console.log(`itemsToReturn: ${itemsToReturn.toString('hex')}`);
-        console.log(`len: ${len.toString(16)}`);
+        this.ModLoader.logger.debug(`mmrConfigAddr: ${mmrConfigAddr.toString(16)}`);
+        this.ModLoader.logger.debug(`imemsToReturnAddr: ${(mmrConfigAddr + 0x140).toString(16)}`);
+        this.ModLoader.logger.debug(`itemsToReturn: ${itemsToReturn.toString('hex')}`);
+        this.ModLoader.logger.debug(`len: ${len.toString(16)}`);
         let mmrConfigCheck = Buffer.from(mmrConfigAddrCheck.toString(16), 'hex').toString();
-        console.log(`mmrConfigCheck: ${mmrConfigCheck}`)
+        this.ModLoader.logger.debug(`mmrConfigCheck: ${mmrConfigCheck}`)
         if (mmrConfigCheck !== "MMRC" || len === 0) {
             this.isKeyKeep = false;
         }
         else if (mmrConfigCheck === "MMRC" && len !== 0) {
-            markAsKeySync();
+            markAsKeySync(true);
             this.isKeyKeep = true;
         }
-        console.log(`Keep keys through time: ${this.isKeyKeep}`)
+        this.ModLoader.logger.debug(`Keep keys through time: ${this.isKeyKeep}`)
     }
 
     @Preinit()
@@ -235,13 +235,13 @@ export default class MMOnlineClient {
             // Slap key checking in here too.
             let keyHash: string = this.ModLoader.utils.hashBuffer(this.core.MM!.save.keyManager.getRawKeyBuffer());
             if (keyHash !== this.clientStorage.keySaveHash) {
-                console.log(`dungeon key update`)
+                this.ModLoader.logger.info(`Dungeon Key Update`)
                 this.clientStorage.keySaveHash = keyHash;
                 this.ModLoader.clientSide.sendPacket(new Z64O_UpdateKeyringPacket(this.clientStorage.saveManager.createKeyRing(), this.ModLoader.clientLobby, this.clientStorage.world));
             }
-            //console.log(`MM_IS_TIME: ${MM_IS_TIME}`)
+            //this.ModLoader.logger.debug(`MM_IS_TIME: ${MM_IS_TIME}`)
             if (!MM_IS_TIME) return;
-            //this.ModLoader.logger.info('autosaveSceneData() isTime');
+            //this.ModLoader.logger.debug('autosaveSceneData() isTime');
             // and beans too why not.
             if (this.clientStorage.lastbeans !== this.core.MM!.save.inventory.magicBeansCount) {
                 this.clientStorage.lastbeans = this.core.MM!.save.inventory.magicBeansCount;
@@ -490,15 +490,19 @@ export default class MMOnlineClient {
             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby))
         }
         if (this.config.syncModeTime && !MM_IS_TIME) {
-            console.log(`Time sync start!`);
+            this.ModLoader.logger.info(`Time sync start!`);
             markAsTimeSync(true);
-            //console.log(`MM_IS_TIME: ${MM_IS_TIME}`)
+            markAsFairySync(true);
+            markAsSkullSync(true);
+            //this.ModLoader.logger.info(`MM_IS_TIME: ${MM_IS_TIME}`)
             this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                 this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
             bus.emit(Z64OnlineEvents.MMO_TIME_START);
         }
         if (!this.config.syncModeTime) {
             markAsTimeSync(false);
+            markAsFairySync(false);
+            markAsSkullSync(false);
         }
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.clientStorage.first_time_sync = true;
@@ -512,11 +516,11 @@ export default class MMOnlineClient {
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
         ) {
-            console.log("onSaveUpdate Failure 0")
+            //this.ModLoader.logger.debug("onSaveUpdate Failure 0")
             return;
         }
         if (packet.world !== this.clientStorage.world) {
-            console.log("onSaveUpdate Failure 1")
+            //this.ModLoader.logger.debug("onSaveUpdate Failure 1")
             return;
         }
 
@@ -532,11 +536,11 @@ export default class MMOnlineClient {
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
         ) {
-            console.log("onKeyUpdate Failure 0")
+            //this.ModLoader.logger.debug("onKeyUpdate Failure 0")
             return;
         }
         if (packet.world !== this.clientStorage.world) {
-            console.log("onKeyUpdate Failure 1")
+            //this.ModLoader.logger.debug("onKeyUpdate Failure 1")
             return;
         }
         this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
@@ -607,7 +611,7 @@ export default class MMOnlineClient {
         switch (evt.key) {
             case "FIELD_BOMBCHU":
                 if (this.core.MM!.save.inventory.bombchuCount === 0) {
-                    this.core.MM!.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, AmmoUpgrade.BASE);
+                    this.core.MM!.save.inventory.bombchuCount = UpgradeCountLookup(InventoryItem.BOMBCHU, evt.value as number);
                 }
                 break;
             case "bombBag":
@@ -787,8 +791,8 @@ export default class MMOnlineClient {
         let strayShuffle2: number = this.ModLoader.emulator.rdramRead32(0x8014451C);
         let strayShuffle3: number = this.ModLoader.emulator.rdramRead32(0x8014452C);
 
-        if (skullShuffle0 === 0x00000000 || skullShuffle1 === 0x00000000) markAsSkullSync();
-        if (strayShuffle0 === 0x00000000 || strayShuffle1 === 0x00000000 || strayShuffle2 === 0x00000000 || strayShuffle3 === 0x00000000) markAsFairySync();
+        if (skullShuffle0 === 0x00000000 || skullShuffle1 === 0x00000000) markAsSkullSync(true);
+        if (strayShuffle0 === 0x00000000 || strayShuffle1 === 0x00000000 || strayShuffle2 === 0x00000000 || strayShuffle3 === 0x00000000) markAsFairySync(true);
 
         this.ModLoader.logger.info("Skulltula Sync: " + MM_IS_SKULL);
         this.ModLoader.logger.info("Fairy Sync: " + MM_IS_FAIRY);
@@ -822,7 +826,7 @@ export default class MMOnlineClient {
 
         let timeSyncStart: string | undefined;
 
-        console.log(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
+        this.ModLoader.logger.info(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
 
         if (this.config.syncModeTime && !MM_IS_TIME) {
 
@@ -832,9 +836,11 @@ export default class MMOnlineClient {
                     this.core.MM!.helper.isInterfaceShown() &&
                     !this.core.MM!.helper.isPaused() &&
                     !this.core.MM!.helper.isTitleScreen()) {
-                    console.log(`Time Sync Start!`);
+                    this.ModLoader.logger.info(`Time Sync Start!`);
                     markAsTimeSync(true);
-                    //console.log(`MM_IS_TIME: ${MM_IS_TIME}`)
+                    markAsFairySync(true);
+                    markAsSkullSync(true);
+                    //this.ModLoader.logger.debug(`MM_IS_TIME: ${MM_IS_TIME}`)
                     bus.emit(Z64OnlineEvents.MMO_TIME_START);
                     this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                         this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
@@ -843,12 +849,16 @@ export default class MMOnlineClient {
                 }
             }, 20);
         }
-        if (!this.config.syncModeTime) markAsTimeSync(false)
+        if (!this.config.syncModeTime) {
+            markAsTimeSync(false);
+            markAsFairySync(false);
+            markAsSkullSync(false);
+        }
     }
 
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
     onSwordChange(evt: Sword) {
-        console.log(`Sword updated: ${Sword[evt]}`)
+        this.ModLoader.logger.info(`Sword updated: ${Sword[evt]}`)
         this.core.MM!.save.sword_helper.updateSwordonB();
     }
 
