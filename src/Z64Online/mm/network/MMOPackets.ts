@@ -52,6 +52,19 @@ export class Z64O_SoTPacket extends Packet {
   }
 }
 
+export class Z64O_MMR_Sync extends Packet {
+  isKeySync: boolean;
+  isSkullSync: boolean;
+  isFairySync: boolean;
+
+  constructor(isKeySync: boolean, isSkullSync: boolean, isFairySync: boolean, lobby: string) {
+    super('Z64O_MMR_Sync', 'Z64Online', lobby, false);
+    this.isKeySync = isKeySync;
+    this.isSkullSync = isSkullSync;
+    this.isFairySync = isFairySync;
+  }
+}
+
 export class Z64O_SyncSettings extends Packet {
   syncModeBasic: boolean;
   syncModeTime: boolean;

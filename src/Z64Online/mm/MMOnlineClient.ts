@@ -15,7 +15,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { DiscordStatus } from "modloader64_api/Discord";
 import { INetworkPlayer, IPacketHeader, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { IMMOnlineLobbyConfig, MMOnlineConfigCategory, syncMode } from "./MMOnline";
-import { permFlags} from "./save/permflags";
+import { permFlags } from "./save/permflags";
 import { MMOnlineStorage } from "./storage/MMOnlineStorage";
 import { MMOnlineStorageClient } from "./storage/MMOnlineStorageClient";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
@@ -32,7 +32,7 @@ import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
-import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket } from "./network/MMOPackets";
+import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket, Z64O_MMR_Sync } from "./network/MMOPackets";
 import { MMOSaveData } from "./save/MMOSaveData";
 import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
@@ -146,7 +146,7 @@ export default class MMOnlineClient {
         } catch (err: any) { }
     }
 
-    mmrKeepThroughTimeCheck() {
+    mmrKeyTimeCheck(): boolean {
         //MMR keep dungeon keys through time check
         let mmrStaticAddr = 0x8077FFFC;
         let mmrConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddr, 0x18);
@@ -160,6 +160,7 @@ export default class MMOnlineClient {
         let mmrConfigCheck = Buffer.from(mmrConfigAddrCheck.toString(16), 'hex').toString();
         this.ModLoader.logger.debug(`mmrConfigCheck: ${mmrConfigCheck}`)
         if (mmrConfigCheck !== "MMRC" || len === 0) {
+            markAsKeySync(false);
             this.isKeyKeep = false;
         }
         else if (mmrConfigCheck === "MMRC" && len !== 0) {
@@ -167,6 +168,28 @@ export default class MMOnlineClient {
             this.isKeyKeep = true;
         }
         this.ModLoader.logger.debug(`Keep keys through time: ${this.isKeyKeep}`)
+
+        return MM_IS_KEY_KEEP;
+    }
+
+    mmrSyncSkull(): boolean {
+        let skullShuffle0: number = this.ModLoader.emulator.rdramRead32(0x8014449C);
+        let skullShuffle1: number = this.ModLoader.emulator.rdramRead32(0x801444A4);
+        if (skullShuffle0 === 0x00000000 && skullShuffle1 === 0x00000000) markAsSkullSync(true);
+        else markAsSkullSync(false);
+        this.ModLoader.logger.info("Skulltula Sync: " + MM_IS_SKULL);
+        return MM_IS_SKULL;
+    }
+
+    mmrSyncFairy(): boolean {
+        let strayShuffle0: number = this.ModLoader.emulator.rdramRead32(0x8014450C);
+        let strayShuffle1: number = this.ModLoader.emulator.rdramRead32(0x80144514);
+        let strayShuffle2: number = this.ModLoader.emulator.rdramRead32(0x8014451C);
+        let strayShuffle3: number = this.ModLoader.emulator.rdramRead32(0x8014452C);
+        if (strayShuffle0 === 0x00000000 && strayShuffle1 === 0x00000000 && strayShuffle2 === 0x00000000 && strayShuffle3 === 0x00000000) markAsFairySync(true);
+        else markAsFairySync(false);
+        this.ModLoader.logger.info("Fairy Sync: " + MM_IS_FAIRY);
+        return MM_IS_FAIRY;
     }
 
     @Preinit()
@@ -494,22 +517,20 @@ export default class MMOnlineClient {
             }
         } else {
             this.ModLoader.logger.info("The lobby is mine!");
-            this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby))
+            this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby));
         }
         if (this.config.syncModeTime && !MM_IS_TIME) {
             this.ModLoader.logger.info(`Time sync start!`);
             markAsTimeSync(true);
             markAsFairySync(true);
             markAsSkullSync(true);
-            //this.ModLoader.logger.info(`MM_IS_TIME: ${MM_IS_TIME}`)
+            this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby));
             this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                 this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
             bus.emit(Z64OnlineEvents.MMO_TIME_START);
         }
         if (!this.config.syncModeTime) {
-            markAsTimeSync(false);
-            markAsFairySync(false);
-            markAsSkullSync(false);
+            this.mmrSyncCheck();
         }
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.clientStorage.first_time_sync = true;
@@ -821,21 +842,6 @@ export default class MMOnlineClient {
         }
     }
 
-    mmrSyncCheck() {
-        let skullShuffle0: number = this.ModLoader.emulator.rdramRead32(0x8014449C);
-        let skullShuffle1: number = this.ModLoader.emulator.rdramRead32(0x801444A4);
-        let strayShuffle0: number = this.ModLoader.emulator.rdramRead32(0x8014450C);
-        let strayShuffle1: number = this.ModLoader.emulator.rdramRead32(0x80144514);
-        let strayShuffle2: number = this.ModLoader.emulator.rdramRead32(0x8014451C);
-        let strayShuffle3: number = this.ModLoader.emulator.rdramRead32(0x8014452C);
-
-        if (skullShuffle0 === 0x00000000 || skullShuffle1 === 0x00000000) markAsSkullSync(true);
-        if (strayShuffle0 === 0x00000000 || strayShuffle1 === 0x00000000 || strayShuffle2 === 0x00000000 || strayShuffle3 === 0x00000000) markAsFairySync(true);
-
-        this.ModLoader.logger.info("Skulltula Sync: " + MM_IS_SKULL);
-        this.ModLoader.logger.info("Fairy Sync: " + MM_IS_FAIRY);
-    }
-
     @NetworkHandler('Z64O_PermFlagsPacket')
     onPermFlags(packet: Z64O_PermFlagsPacket) {
         parseFlagChanges(packet.flags, this.clientStorage.permFlags);
@@ -917,9 +923,7 @@ export default class MMOnlineClient {
             }, 20);
         }
         if (!this.config.syncModeTime) {
-            markAsTimeSync(false);
-            markAsFairySync(false);
-            markAsSkullSync(false);
+            this.mmrSyncCheck();
         }
     }
 
@@ -979,9 +983,17 @@ export default class MMOnlineClient {
             }
         }
         if (this.core.MM!.helper.isTitleScreen() && this.core.MM!.global.scene_framecount === 1 && !this.core.MM!.save.checksum) {
+            //Sync Check
             this.mmrSyncCheck();
-            this.mmrKeepThroughTimeCheck()
         }
+    }
+
+    mmrSyncCheck() {
+        if(MM_IS_TIME) return;
+        let skull = this.mmrSyncSkull();
+        let fairy = this.mmrSyncFairy();
+        let key = this.mmrKeyTimeCheck();
+        this.ModLoader.clientSide.sendPacket(new Z64O_MMR_Sync(key, skull, fairy, this.ModLoader.clientLobby));
     }
 
     inventoryUpdateTick() {

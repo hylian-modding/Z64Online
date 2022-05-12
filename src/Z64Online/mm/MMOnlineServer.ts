@@ -3,7 +3,7 @@ import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { CDNServer } from "@Z64Online/common/cdn/CDNServer";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
-import { markIsServer } from "@Z64Online/common/types/GameAliases";
+import { markAsFairySync, markAsKeySync, markAsSkullSync, markIsServer } from "@Z64Online/common/types/GameAliases";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
@@ -15,7 +15,7 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
-import { Z64O_FlagUpdate, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
+import { Z64O_FlagUpdate, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
 import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
@@ -316,7 +316,7 @@ export default class MMOnlineServer {
             return;
         }
 
-        if(this.sotActive) {
+        if (this.sotActive) {
             this.ModLoader.logger.info(`Reseting server event flags on SoT`);
             storage.eventFlags = packet.eventFlags;
             return;
@@ -376,7 +376,17 @@ export default class MMOnlineServer {
 
     @ServerNetworkHandler('Z64O_SyncSettings')
     Z64O_SyncSettings_server(packet: Z64O_SyncSettings) {
-
+        if (packet.syncModeTime) {
+            markAsFairySync(true);
+            markAsSkullSync(true);
+            markAsKeySync(true);
+        }
     }
 
+    @ServerNetworkHandler('Z64O_MMR_Sync')
+    onMMR_Sync(packet: Z64O_MMR_Sync) {
+        markAsKeySync(packet.isKeySync)
+        markAsSkullSync(packet.isSkullSync);
+        markAsFairySync(packet.isFairySync);
+    }
 }
