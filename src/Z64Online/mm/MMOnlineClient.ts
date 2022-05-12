@@ -15,7 +15,7 @@ import { InjectCore } from "modloader64_api/CoreInjection";
 import { DiscordStatus } from "modloader64_api/Discord";
 import { INetworkPlayer, IPacketHeader, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
 import { IMMOnlineLobbyConfig, MMOnlineConfigCategory, syncMode } from "./MMOnline";
-import { flags } from "./save/permflags";
+import { permFlags} from "./save/permflags";
 import { MMOnlineStorage } from "./storage/MMOnlineStorage";
 import { MMOnlineStorageClient } from "./storage/MMOnlineStorageClient";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
@@ -32,7 +32,7 @@ import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
-import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings } from "./network/MMOPackets";
+import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket } from "./network/MMOPackets";
 import { MMOSaveData } from "./save/MMOSaveData";
 import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
@@ -108,14 +108,21 @@ export default class MMOnlineClient {
     isTimeSync: boolean = false;
     isKeyKeep: boolean = false;
 
+    sotActive: boolean = false;
+
     syncContext: number = -1;
 
     LobbyConfig: IMMOnlineLobbyConfig = {} as IMMOnlineLobbyConfig;
     clientStorage: MMOnlineStorageClient = new MMOnlineStorageClient();
     config!: MMOnlineConfigCategory;
 
+    //Flags
     permFlagBits: Array<number> = [];
     permFlagNames: Map<number, string> = new Map<number, string>();
+    cycleFlagBits: Array<number> = [];
+    cycleFlagNames: Map<number, string> = new Map<number, string>();
+    sceneFlagBits: Array<number> = [];
+    sceneFlagNames: Map<number, string> = new Map<number, string>();
 
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
@@ -201,7 +208,7 @@ export default class MMOnlineClient {
                 //if(name.includes()) return; //For blacklisting certain flags if necessary
                 if (name.startsWith("PERM")) {
                     this.permFlagBits.push(value);
-                    this.permFlagNames.set(this.permFlagBits.indexOf(value), flags.flags[value]);
+                    this.permFlagNames.set(this.permFlagBits.indexOf(value), permFlags.flags[value]);
                 }
             }
         }
@@ -760,8 +767,7 @@ export default class MMOnlineClient {
                 f = scratch.readUInt32BE(0);
                 flag_array[j] = f;
             }
-            !
-                flags!.writeUInt32BE(flag_array[0], genericSceneFlags1Index);
+            flags!.writeUInt32BE(flag_array[0], genericSceneFlags1Index);
             flags!.writeUInt32BE(flag_array[1], genericSceneFlags2Index);
             flags!.writeUInt32BE(flag_array[2], chestSceneFlagsIndex);
             flags!.writeUInt32BE(flag_array[3], collectibleSceneFlagsIndex);
@@ -769,7 +775,11 @@ export default class MMOnlineClient {
         parseFlagChanges(flags!, this.clientStorage.permFlags);
         let bits = this.ModLoader.emulator.rdramReadBitsBuffer(0x801F0568, 99);
         let buf = Buffer.alloc(this.permFlagBits.length);
+        //console.log(`buf.length: ${buf.length}`);
+        //console.log(`permFlagBits.length: ${this.permFlagBits.length}`);
+        //console.log(`bits.length: ${bits.length}`)
         for (let i = 0; i < this.permFlagBits.length; i++) {
+            //console.log(this.permFlagBits[i]);
             buf.writeUInt8(bits.readUInt8(this.permFlagBits[i]), i);
         }
         let flips = parseFlagChanges(buf, this.clientStorage.permEvents);
@@ -777,10 +787,38 @@ export default class MMOnlineClient {
             let bit = parseInt(key);
             let value = flips[key];
             if (value > 0) {
-                this.ModLoader.logger.info(this.permFlagNames.get(bit)!);
+                this.ModLoader.logger.info(`Perm: ${this.permFlagNames.get(bit)}!`);
             }
         });
         this.ModLoader.clientSide.sendPacket(new Z64O_PermFlagsPacket(this.clientStorage.permFlags, this.clientStorage.permEvents, this.ModLoader.clientLobby));
+    }
+
+    updateTimeFlags() {
+        if (this.sotActive) return;
+        let eventFlagsAddr = 0x801F0568;
+        let eventFlags = Buffer.alloc(0x64);
+        let eventFlagByte = 0;
+        let eventFlagStorage = this.clientStorage.eventFlags;
+        const indexBlacklist = [0x52, 0x8];
+
+        for (let i = 0; i < eventFlags.byteLength; i++) {
+            let eventFlagByteStorage = eventFlagStorage.readUInt8(i); //client storage bits
+            for (let j = 0; j <= 7; j++) {
+                eventFlagByte = this.ModLoader.emulator.rdramRead8(eventFlagsAddr); //in-game bits
+                if (!indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) {
+                    eventFlagByte = (eventFlagByte |= eventFlagByteStorage)
+                    //console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
+                }
+                else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) //console.log(`indexBlacklist: 0x${i.toString(16)}`);
+                    eventFlagByteStorage = eventFlagByte; //client storage bits
+            }
+            eventFlags.writeUInt8(eventFlagByte, i);
+            eventFlagsAddr = eventFlagsAddr + 1;
+        }
+        if (!eventFlagStorage.equals(eventFlags)) {
+            this.clientStorage.eventFlags = eventFlags;
+            this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
+        }
     }
 
     mmrSyncCheck() {
@@ -812,9 +850,38 @@ export default class MMOnlineClient {
         this.ModLoader.emulator.rdramWriteBitsBuffer(0x801F0568, bits);
     }
 
+    @NetworkHandler('Z64O_FlagUpdate')
+    onFlagUpdate(packet: Z64O_FlagUpdate) {
+        if (this.core.MM!.helper.isTitleScreen() || !this.core.MM!.helper.isSceneNumberValid()) return;
+        if (this.sotActive) return;
+        //console.log("onFlagUpdate Client");
+
+        for (let i = 0; i < packet.eventFlags.byteLength; i++) {
+            let tempByteIncoming = packet.eventFlags.readUInt8(i);
+            let tempByte = this.clientStorage.eventFlags.readUInt8(i);
+            //if (tempByteIncoming !== tempByte) console.log(`Writing flag: 0x${i.toString(16)}, tempByte: 0x${tempByte.toString(16)}, tempByteIncoming: 0x${tempByteIncoming.toString(16)} `);
+        }
+
+        parseFlagChanges(packet.eventFlags, this.clientStorage.eventFlags);
+        this.core.MM!.save.weekEventFlags = this.clientStorage.eventFlags;
+    }
+
     @NetworkHandler('Z64O_ErrorPacket')
     onError(packet: Z64O_ErrorPacket) {
         this.ModLoader.logger.error(packet.message);
+    }
+
+    @NetworkHandler('Z64O_SoTPacket')
+    onSOT(packet: Z64O_SoTPacket) {
+        console.log(`sotActive client: ${packet.isTriggered}`)
+        this.sotActive = packet.isTriggered;
+        let songOfTimeLoop: string | undefined = this.ModLoader.utils.setIntervalFrames(() => {
+            if (this.sotActive) {
+                this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags;
+                this.ModLoader.utils.clearIntervalFrames(songOfTimeLoop!);
+                songOfTimeLoop = undefined;
+            }
+        }, 20);
     }
 
     @NetworkHandler('Z64O_SyncSettings')
@@ -899,7 +966,11 @@ export default class MMOnlineClient {
                     //this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
-                    if (this.config.syncModeTime || MM_IS_TIME || MM_IS_KEY_KEEP) this.autosaveSceneData();
+                    if (this.config.syncModeTime) {
+                        this.autosaveSceneData();
+                        this.updateTimeFlags();
+                        //this.updateCycleSceneFlags();
+                    } else if (MM_IS_TIME || MM_IS_KEY_KEEP) this.autosaveSceneData();
                     this.updateBottles();
                     this.updateSyncContext();
                     this.updatePermFlags();

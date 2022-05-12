@@ -15,13 +15,14 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
-import { Z64O_PermFlagsPacket, Z64O_SyncSettings } from "./network/MMOPackets";
+import { Z64O_FlagUpdate, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
 import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
 import { MMOSaveData } from "./save/MMOSaveData";
 import TimeSyncServer from "./save/MMOTimeSyncServer";
 import { MMOnlineStorage, MMOnlineSave_Server } from "./storage/MMOnlineStorage";
+import bitwise from 'bitwise';
 
 export default class MMOnlineServer {
 
@@ -40,10 +41,12 @@ export default class MMOnlineServer {
     @SidedProxy(ProxySide.SERVER, TimeSyncServer)
     timeSync!: TimeSyncServer;
 
-    constructor(){
+    sotActive: boolean = false;
+
+    constructor() {
         markIsServer();
     }
-    
+
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
             let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
@@ -254,10 +257,10 @@ export default class MMOnlineServer {
             return;
         }
         if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
-            if (packet.player.data.world === undefined){
+            if (packet.player.data.world === undefined) {
                 this.ModLoader.serverSide.sendPacket(new Z64O_ErrorPacket("The server has encountered an error with your world. (world id is undefined)", packet.lobby));
                 return;
-            }else{
+            } else {
                 storage.worlds[packet.player.data.world] = new MMOnlineSave_Server();
             }
         }
@@ -290,7 +293,7 @@ export default class MMOnlineServer {
     }
 
     @ServerNetworkHandler('Z64O_PermFlagsPacket')
-    onPermFlags(packet: Z64O_PermFlagsPacket){
+    onPermFlags(packet: Z64O_PermFlagsPacket) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -303,6 +306,69 @@ export default class MMOnlineServer {
         this.ModLoader.serverSide.sendPacket(new Z64O_PermFlagsPacket(storage.permFlags, storage.permEvents, packet.lobby));
     }
 
+    @ServerNetworkHandler('Z64O_FlagUpdate')
+    onFlagUpdate(packet: Z64O_FlagUpdate) {
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+
+        if(this.sotActive) {
+            this.ModLoader.logger.info(`Reseting server event flags on SoT`);
+            storage.eventFlags = packet.eventFlags;
+            return;
+        }
+        console.log("onFlagUpdate Server")
+
+        const indexBlacklist = [0x52, 0x8];
+
+        for (let i = 0; i < storage.eventFlags.byteLength; i++) {
+            let byteStorage = storage.eventFlags.readUInt8(i);
+            let bitsStorage = bitwise.byte.read(byteStorage as any);
+            let byteIncoming = packet.eventFlags.readUInt8(i);
+            let bitsIncoming = bitwise.byte.read(byteIncoming as any);
+
+            if (!indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
+                console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteIncoming: 0x${byteIncoming.toString(16)}, bitsIncoming: 0x${bitsIncoming} `);
+                parseFlagChanges(packet.eventFlags, storage.eventFlags);
+            }
+            else if (indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
+                console.log(`Server: indexBlacklist: 0x${i.toString(16)}`);
+                for (let j = 0; j <= 7; j++) {
+                    switch (i) {
+                        case 0x8: //Minigame_Disable_All_But_B_Button
+                            if (j !== 7) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x52: //Disable__Hide_C_Buttons2
+                            if (j !== 2 && j !== 4) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                    }
+                    let newByteStorage = bitwise.byte.write(bitsStorage); //write our updated bits into a byte
+                    //console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
+                    if (newByteStorage !== byteStorage) {  //make sure the updated byte is different than the original
+                        byteStorage = newByteStorage;
+                        storage.eventFlags.writeUInt8(byteStorage, i); //write new byte into the event flag at index i
+                        console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
+                    }
+                }
+            }
+
+            this.ModLoader.serverSide.sendPacket(new Z64O_FlagUpdate(storage.eventFlags, packet.lobby));
+        }
+    }
+
+    @ServerNetworkHandler('Z64O_SoTPacket')
+    onSOT(packet: Z64O_SoTPacket) {
+        console.log(`sotActive server: ${packet.isTriggered}`)
+        this.sotActive = packet.isTriggered;
+        this.ModLoader.serverSide.sendPacket(new Z64O_SoTPacket(packet.isTriggered, packet.lobby));
+    }
+
     @ServerNetworkHandler('Z64O_ClientSceneContextUpdate')
     onSceneContextSync_server(packet: Z64O_ClientSceneContextUpdate) {
         this.sendPacketToPlayersInScene(packet);
@@ -310,7 +376,7 @@ export default class MMOnlineServer {
 
     @ServerNetworkHandler('Z64O_SyncSettings')
     Z64O_SyncSettings_server(packet: Z64O_SyncSettings) {
-        
+
     }
 
 }

@@ -11,9 +11,12 @@ export class MMOnlineStorageBase {
     sceneStorage: Buffer = Buffer.alloc(SCENE_ARR_SIZE);
     eventStorage: Buffer = Buffer.alloc(EVENT_ARR_SIZE);
     itemFlagStorage: Buffer = Buffer.alloc(ITEM_FLAG_ARR_SIZE);
+    eventFlags: Buffer = Buffer.alloc(0x64);
 
     saveManager!: MMOSaveData;
     permFlags: Buffer = Buffer.alloc(0x960);
     permEvents: Buffer = Buffer.alloc(152);
+    cycleEvents: Buffer = Buffer.alloc(571);
+    sceneEvents: Buffer = Buffer.alloc(76);
     minimapStorage: Buffer = Buffer.alloc(0x1C);
 }

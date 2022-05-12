@@ -15,6 +15,18 @@ export class Z64O_PermFlagsPacket extends Packet {
   }
 }
 
+export class Z64O_FlagUpdate extends Packet {
+  eventFlags: Buffer;
+
+  constructor(
+    eventFlags: Buffer,
+    lobby: string
+  ) {
+    super('Z64O_FlagUpdate', 'WWOnline', lobby, false);
+    this.eventFlags = eventFlags;
+  }
+}
+
 export class Z64O_TimePacket extends Packet {
   time: number;
   day: number;
@@ -35,7 +47,7 @@ export class Z64O_SoTPacket extends Packet {
   isTriggered: boolean;
 
   constructor(isTriggered: boolean, lobby: string) {
-    super('Z64O_SoTPacket', 'Z64Online', lobby, true);
+    super('Z64O_SoTPacket', 'Z64Online', lobby, false);
     this.isTriggered = isTriggered;
   }
 }
