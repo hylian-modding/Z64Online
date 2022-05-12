@@ -148,6 +148,7 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
         ) {
             return;
         }
+        if(this.ModLoader.emulator.rdramRead32(0x8040081C) === 0x30000002) return; //transformation state @TODO: Refine later
         this.processPuppetPacket(packet);
     }
 
