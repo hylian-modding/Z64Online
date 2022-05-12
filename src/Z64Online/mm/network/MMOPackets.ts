@@ -65,6 +65,15 @@ export class Z64O_MMR_Sync extends Packet {
   }
 }
 
+export class Z64O_MMR_QuestStorage extends Packet {
+  questStorage: Buffer;
+
+  constructor(questStorage: Buffer, lobby: string) {
+    super('Z64O_MMR_QuestStorage', 'Z64Online', lobby, false);
+    this.questStorage = questStorage;
+  }
+}
+
 export class Z64O_SyncSettings extends Packet {
   syncModeBasic: boolean;
   syncModeTime: boolean;

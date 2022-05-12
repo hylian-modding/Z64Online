@@ -15,7 +15,7 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
-import { Z64O_FlagUpdate, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
+import { Z64O_FlagUpdate, Z64O_MMR_QuestStorage, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
 import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
@@ -367,6 +367,36 @@ export default class MMOnlineServer {
         console.log(`sotActive server: ${packet.isTriggered}`)
         this.sotActive = packet.isTriggered;
         this.ModLoader.serverSide.sendPacket(new Z64O_SoTPacket(packet.isTriggered, packet.lobby));
+    }
+
+    @ServerNetworkHandler('Z64O_MMR_QuestStorage')
+    onQuestStorage(packet: Z64O_MMR_QuestStorage) {
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        if (!storage.questStorage.equals(packet.questStorage)) {
+            console.log(`onQuestStorage Server: questStorage updated`);
+
+            let s = storage.questStorage;
+            let i = packet.questStorage;
+
+            for (let k = 0; k < s.byteLength; k++) {
+                let tempStorage = s.readUInt8(k);
+                let tempIncoming = i.readUInt8(k);
+
+                if (tempStorage !== tempIncoming) {
+                    tempStorage = tempIncoming;
+                }
+                s.writeUInt8(tempStorage, k);
+            }
+            storage.questStorage = s;
+
+            this.ModLoader.serverSide.sendPacket(new Z64O_MMR_QuestStorage(storage.questStorage, packet.lobby));
+        }
     }
 
     @ServerNetworkHandler('Z64O_ClientSceneContextUpdate')

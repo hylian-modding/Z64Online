@@ -12,7 +12,7 @@ export class MMOnlineStorageBase {
     eventStorage: Buffer = Buffer.alloc(EVENT_ARR_SIZE);
     itemFlagStorage: Buffer = Buffer.alloc(ITEM_FLAG_ARR_SIZE);
     eventFlags: Buffer = Buffer.alloc(0x64);
-
+    questStorage: Buffer = Buffer.alloc(0x12);
     saveManager!: MMOSaveData;
     permFlags: Buffer = Buffer.alloc(0x960);
     permEvents: Buffer = Buffer.alloc(152);

@@ -32,13 +32,13 @@ import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
-import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket, Z64O_MMR_Sync } from "./network/MMOPackets";
+import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket, Z64O_MMR_Sync, Z64O_MMR_QuestStorage } from "./network/MMOPackets";
 import { MMOSaveData } from "./save/MMOSaveData";
 import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIsClient, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME, setSyncContext } from "@Z64Online/common/types/GameAliases";
+import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIsClient, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME, setSyncContext, Z64_IS_RANDOMIZER } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./save/MMOTimeSyncClient";
 import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
 import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
@@ -144,6 +144,17 @@ export default class MMOnlineClient {
                 //}
             });
         } catch (err: any) { }
+    }
+
+    mmrQuestStorage() {
+        let mmrStaticAddr = 0x8077FFFC;
+        let mmrSaveConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddr, 0x20);
+        let questStorage = this.ModLoader.emulator.rdramReadBuffer(mmrSaveConfigAddr + 0x8, 0x12);
+        if (!questStorage.equals(this.clientStorage.questStorage)) {
+            console.log(`mmrQuestStorage: Quest storage updated`);
+            this.clientStorage.questStorage = questStorage;
+            this.ModLoader.clientSide.sendPacket(new Z64O_MMR_QuestStorage(this.clientStorage.questStorage, this.ModLoader.clientLobby));
+        }
     }
 
     mmrKeyTimeCheck(): boolean {
@@ -927,6 +938,18 @@ export default class MMOnlineClient {
         }
     }
 
+    @NetworkHandler('Z64O_MMR_QuestStorage')
+    onQuestStorage(packet: Z64O_MMR_QuestStorage) {
+        let mmrStaticAddr = 0x8077FFFC;
+        let mmrSaveConfigAddr = this.ModLoader.emulator.rdramReadPtr32(mmrStaticAddr, 0x20);
+        let questStorage = this.ModLoader.emulator.rdramReadBuffer(mmrSaveConfigAddr + 0x8, 0x12);
+        if (!questStorage.equals(packet.questStorage)) {
+            console.log(`onQuestStorage: Quest storage updated`);
+            this.ModLoader.emulator.rdramWriteBuffer(mmrSaveConfigAddr + 0x8, packet.questStorage);
+            this.clientStorage, questStorage = packet.questStorage;
+        }
+    }
+
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
     onSwordChange(evt: Sword) {
         this.ModLoader.logger.info(`Sword updated: ${Sword[evt]}`)
@@ -970,6 +993,9 @@ export default class MMOnlineClient {
                     //this.actorHooks.tick();
                 }
                 if (this.LobbyConfig.data_syncing) {
+                    if (this.clientStorage.isMMR) {
+                        this.mmrQuestStorage();
+                    }
                     if (this.config.syncModeTime) {
                         this.autosaveSceneData();
                         this.updateTimeFlags();
@@ -989,7 +1015,7 @@ export default class MMOnlineClient {
     }
 
     mmrSyncCheck() {
-        if(MM_IS_TIME) return;
+        if (MM_IS_TIME) return;
         let skull = this.mmrSyncSkull();
         let fairy = this.mmrSyncFairy();
         let key = this.mmrKeyTimeCheck();
