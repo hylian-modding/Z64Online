@@ -474,7 +474,7 @@ export default class MMOnlineClient {
     }
 
     @NetworkHandler('Z64O_BottleUpdatePacket')
-    onBottle_client(packet: Z64O_BottleUpdatePacket) {
+    onFIELD_BOTTLEclient(packet: Z64O_BottleUpdatePacket) {
         if (
             this.core.MM!.helper.isTitleScreen() ||
             !this.core.MM!.helper.isSceneNumberValid()
@@ -539,12 +539,14 @@ export default class MMOnlineClient {
             markAsTimeSync(this.clientStorage, true);
             markAsFairySync(this.clientStorage, true);
             markAsSkullSync(this.clientStorage, true);
+            this.config.syncBottleContents = true;
             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby));
             this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                 this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
             bus.emit(Z64OnlineEvents.MMO_TIME_START);
         }
         if (!this.config.syncModeTime) {
+            this.config.syncBottleContents = false;
             this.mmrSyncCheck();
         }
         this.ModLoader.utils.setTimeoutFrames(() => {
@@ -911,6 +913,7 @@ export default class MMOnlineClient {
     Z64O_SyncSettings(packet: Z64O_SyncSettings) {
         this.config.syncModeBasic = packet.syncModeBasic;
         this.config.syncModeTime = packet.syncModeTime;
+        this.config.syncBottleContents = packet.syncModeTime;
         this.LobbyConfig.syncModeBasic = packet.syncModeBasic;
         this.LobbyConfig.syncModeTime = packet.syncModeTime;
 

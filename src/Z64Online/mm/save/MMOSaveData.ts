@@ -253,27 +253,16 @@ export class MMOSaveData implements ISaveSyncData {
         }
 
         if ((settings as MMOnlineStorageBase).MM_IS_TIME) {
-          if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
-          if (obj.inventory.FIELD_BOTTLE2 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE2 = obj.inventory.FIELD_BOTTLE2;
-          if (obj.inventory.FIELD_BOTTLE3 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE3 = obj.inventory.FIELD_BOTTLE3;
-          if (obj.inventory.FIELD_BOTTLE4 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE4 = obj.inventory.FIELD_BOTTLE4;
-          if (obj.inventory.FIELD_BOTTLE5 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE5 = obj.inventory.FIELD_BOTTLE5;
-          if (obj.inventory.FIELD_BOTTLE6 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE6 = obj.inventory.FIELD_BOTTLE6;
-
           if (obj.inventory.FIELD_QUEST_ITEM_1 !== storage.inventory.FIELD_QUEST_ITEM_1) storage.inventory.FIELD_QUEST_ITEM_1 = obj.inventory.FIELD_QUEST_ITEM_1;
           if (obj.inventory.FIELD_QUEST_ITEM_2 !== storage.inventory.FIELD_QUEST_ITEM_2) storage.inventory.FIELD_QUEST_ITEM_2 = obj.inventory.FIELD_QUEST_ITEM_2;
           if (obj.inventory.FIELD_QUEST_ITEM_3 !== storage.inventory.FIELD_QUEST_ITEM_3) storage.inventory.FIELD_QUEST_ITEM_3 = obj.inventory.FIELD_QUEST_ITEM_3;
         }
-        else {
-          if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
-          if (obj.inventory.FIELD_BOTTLE2 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE2 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE2 = obj.inventory.FIELD_BOTTLE2;
-          if (obj.inventory.FIELD_BOTTLE3 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE3 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE3 = obj.inventory.FIELD_BOTTLE3;
-          if (obj.inventory.FIELD_BOTTLE4 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE4 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE4 = obj.inventory.FIELD_BOTTLE4;
-          if (obj.inventory.FIELD_BOTTLE5 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE5 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE5 = obj.inventory.FIELD_BOTTLE5;
-          if (obj.inventory.FIELD_BOTTLE6 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE6 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE6 = obj.inventory.FIELD_BOTTLE6;
-        }
-
-
+        if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE1 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
+        if (obj.inventory.FIELD_BOTTLE2 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE2 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE2 = obj.inventory.FIELD_BOTTLE2;
+        if (obj.inventory.FIELD_BOTTLE3 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE3 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE3 = obj.inventory.FIELD_BOTTLE3;
+        if (obj.inventory.FIELD_BOTTLE4 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE4 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE4 = obj.inventory.FIELD_BOTTLE4;
+        if (obj.inventory.FIELD_BOTTLE5 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE5 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE5 = obj.inventory.FIELD_BOTTLE5;
+        if (obj.inventory.FIELD_BOTTLE6 !== InventoryItem.NONE && storage.inventory.FIELD_BOTTLE6 === InventoryItem.NONE) storage.inventory.FIELD_BOTTLE6 = obj.inventory.FIELD_BOTTLE6;
 
         this.processMixedLoop(obj.inventory, storage.inventory, ["FIELD_BOTTLE1", "FIELD_BOTTLE2", "FIELD_BOTTLE3", "FIELD_BOTTLE4", "FIELD_BOTTLE5", "FIELD_BOTTLE6", "bank"]);
 
