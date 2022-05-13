@@ -119,7 +119,6 @@ export abstract class ImGuiHandlerCommon {
             }
             this.ModLoader.ImGui.endMainMenuBar();
         }
-        this.ModLoader.ImGui.end();
         // #ifdef IS_DEV_BUILD
         if (this.crawler !== undefined) {
             this.crawler.onVi();
