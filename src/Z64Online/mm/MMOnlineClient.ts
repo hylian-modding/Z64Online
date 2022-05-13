@@ -124,7 +124,7 @@ export default class MMOnlineClient {
     sceneFlagBits: Array<number> = [];
     sceneFlagNames: Map<number, string> = new Map<number, string>();
 
-    constructor(){
+    constructor() {
         markIsClient();
     }
 
@@ -835,7 +835,7 @@ export default class MMOnlineClient {
         let eventFlags = Buffer.alloc(0x64);
         let eventFlagByte = 0;
         let eventFlagStorage = this.clientStorage.eventFlags;
-        const indexBlacklist = [0x52, 0x8];
+        const indexBlacklist = [0x8, 0x1F, 0x49, 0x4B, 0x4C, 0x52, 0x5C];
 
         for (let i = 0; i < eventFlags.byteLength; i++) {
             let eventFlagByteStorage = eventFlagStorage.readUInt8(i); //client storage bits
@@ -846,7 +846,7 @@ export default class MMOnlineClient {
                     //console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
                 }
                 else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) //console.log(`indexBlacklist: 0x${i.toString(16)}`);
-                    eventFlagByteStorage = eventFlagByte; //client storage bits
+                    eventFlagByte = (eventFlagByte |= eventFlagByteStorage); //client storage bits
             }
             eventFlags.writeUInt8(eventFlagByte, i);
             eventFlagsAddr = eventFlagsAddr + 1;
@@ -898,7 +898,9 @@ export default class MMOnlineClient {
         this.sotActive = packet.isTriggered;
         let songOfTimeLoop: string | undefined = this.ModLoader.utils.setIntervalFrames(() => {
             if (this.sotActive) {
+                console.log(`resetting client event flags`);
                 this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags;
+                this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
                 this.ModLoader.utils.clearIntervalFrames(songOfTimeLoop!);
                 songOfTimeLoop = undefined;
             }

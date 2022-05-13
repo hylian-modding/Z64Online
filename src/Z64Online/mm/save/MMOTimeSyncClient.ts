@@ -34,6 +34,7 @@ export default class TimeSyncClient {
     sotActive: boolean = false;
     lobbyConfig!: MMOnlineConfigCategory;
     clientStorage: MMOnlineStorageClient = new MMOnlineStorageClient();
+    sotTimeout: boolean = false;
 
     @Postinit()
     postInit() {
@@ -66,11 +67,17 @@ export default class TimeSyncClient {
         }
         //console.log(`current cutscene: ${this.currentCutscene.toString(16)}, current scene: ${this.core.MM!.global.scene}`)
         //if(this.core.MM!.global.scene === 0x8)//console.log(`current cutscene: ${this.currentCutscene.toString(16)}, current scene: ${this.core.MM!.global.scene}`)
-        if (this.core.MM!.global.scene === 0x08 && this.currentCutscene === 0xffef && this.core.MM!.global.scene_framecount === 20 && !this.dontRepeat) {
-            console.log(`song of time triggered! sending to others...`)
-            this.sentSoT = true;
-            this.sotActive = true;
-            this.ModLoader.clientSide.sendPacket(new Z64O_SoTPacket(true, this.ModLoader.clientLobby));
+        if (this.currentCutscene === 0xfff7 && !this.sotActive) {
+            this.ModLoader.utils.setTimeoutFrames(() => {
+                if (this.core.MM!.global.scene === 0x08 && !this.dontRepeat && !this.sotActive) {
+                    console.log(`song of time triggered! sending to others...`);
+                    this.sentSoT = true;
+                    this.sotActive = true;
+                    this.ModLoader.clientSide.sendPacket(new Z64O_SoTPacket(true, this.ModLoader.clientLobby));
+                    this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags; //Clear flags on SoT Cutscene
+                    this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
+                }
+            }, 40);
         }
         if (this.core.MM!.global.scene !== 0x08 && this.core.MM!.global.scene_framecount === 20) {
             this.sentSoT = false;
@@ -187,7 +194,7 @@ export default class TimeSyncClient {
         if (this.core.MM!.global.scene === 0x08) {
             return;
         }
-        if(this.sotActive){
+        if (this.sotActive) {
             console.log("Clearing flags during SoT");
             this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags; //Clear flags on SoT Cutscene
             this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));

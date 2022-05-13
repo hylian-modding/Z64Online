@@ -315,15 +315,14 @@ export default class MMOnlineServer {
         if (storage === null) {
             return;
         }
-
+        console.log("onFlagUpdate Server")
         if (this.sotActive) {
-            this.ModLoader.logger.info(`Reseting server event flags on SoT`);
+            this.ModLoader.logger.info(`Resetting server event flags on SoT`);
             storage.eventFlags = packet.eventFlags;
             return;
         }
-        console.log("onFlagUpdate Server")
-
-        const indexBlacklist = [0x52, 0x8];
+        
+        const indexBlacklist = [0x8, 0x1F, 0x49, 0x4B, 0x4C, 0x52, 0x5C];
 
         for (let i = 0; i < storage.eventFlags.byteLength; i++) {
             let byteStorage = storage.eventFlags.readUInt8(i);
@@ -343,8 +342,28 @@ export default class MMOnlineServer {
                             if (j !== 7) bitsStorage[j] = bitsIncoming[j];
                             else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
-                        case 0x52: //Disable__Hide_C_Buttons2
+                        case 0x1F: //Took Ride with Cremia (resets after ride?)
+                            if (j !== 0) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x49: //Bombers Hide & Seek completed???
+                            if (j !== 2) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x4B: //Bombers Hide & Seek completed twice??? || Bombers have shown Code?
+                            if (j !== 1 && j !== 2) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        //case 0x4C: //Caught all Bombers
+                        //   if (j !== 1) bitsStorage[j] = bitsIncoming[j];
+                        //   else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                        //   break;
+                        case 0x52: //Disable__Hide_C_Buttons2, Disable__Hide_C_Buttons1
                             if (j !== 2 && j !== 4) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x5C: //Started Race with Gorman Brothers once?
+                            if (j !== 7) bitsStorage[j] = bitsIncoming[j];
                             else console.log(`Server: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                     }
