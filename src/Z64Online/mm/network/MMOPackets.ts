@@ -15,6 +15,18 @@ export class Z64O_PermFlagsPacket extends Packet {
   }
 }
 
+export class Z64O_FlagUpdate extends Packet {
+  eventFlags: Buffer;
+
+  constructor(
+    eventFlags: Buffer,
+    lobby: string
+  ) {
+    super('Z64O_FlagUpdate', 'WWOnline', lobby, false);
+    this.eventFlags = eventFlags;
+  }
+}
+
 export class Z64O_TimePacket extends Packet {
   time: number;
   day: number;
@@ -35,8 +47,30 @@ export class Z64O_SoTPacket extends Packet {
   isTriggered: boolean;
 
   constructor(isTriggered: boolean, lobby: string) {
-    super('Z64O_SoTPacket', 'Z64Online', lobby, true);
+    super('Z64O_SoTPacket', 'Z64Online', lobby, false);
     this.isTriggered = isTriggered;
+  }
+}
+
+export class Z64O_MMR_Sync extends Packet {
+  isKeySync: boolean;
+  isSkullSync: boolean;
+  isFairySync: boolean;
+
+  constructor(isKeySync: boolean, isSkullSync: boolean, isFairySync: boolean, lobby: string) {
+    super('Z64O_MMR_Sync', 'Z64Online', lobby, false);
+    this.isKeySync = isKeySync;
+    this.isSkullSync = isSkullSync;
+    this.isFairySync = isFairySync;
+  }
+}
+
+export class Z64O_MMR_QuestStorage extends Packet {
+  questStorage: Buffer;
+
+  constructor(questStorage: Buffer, lobby: string) {
+    super('Z64O_MMR_QuestStorage', 'Z64Online', lobby, false);
+    this.questStorage = questStorage;
   }
 }
 

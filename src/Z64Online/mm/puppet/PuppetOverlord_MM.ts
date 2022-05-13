@@ -136,7 +136,14 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
     // Networking
     @NetworkHandler('Z64O_ScenePacket')
     onSceneChange_client(packet: Z64O_ScenePacket) {
-        this.changePuppetScene(packet.player, packet.scene);
+        let loop: string | undefined = this.ModLoader.utils.setIntervalFrames(() => {
+            if (this.ModLoader.emulator.rdramRead32(0x8040081C) !== 0x30000002) {
+                this.changePuppetScene(packet.player, packet.scene);
+                this.ModLoader.utils.clearIntervalFrames(loop!);
+                loop = undefined;
+            }
+        }, 20);
+        //transformation state @TODO: Refine later
     }
 
     @NetworkHandler('Z64O_PuppetPacket')
@@ -148,13 +155,14 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
         ) {
             return;
         }
+        if (this.ModLoader.emulator.rdramRead32(0x8040081C) === 0x30000002) return; //transformation state @TODO: Refine later
         this.processPuppetPacket(packet);
     }
 
     isCurrentlyWarping() {
         return this.core.MM!.link.rdramRead32(0xA90) === 0x00030000;
     }
-    
+
     @onTick()
     onTick() {
         if (
@@ -170,7 +178,8 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
             !this.isCurrentlyWarping() &&
             !this.core.MM!.helper.isFadeIn()
         ) {
-            if(this.core.MM!.helper.isFadeIn()) return;
+            if (this.core.MM!.helper.isFadeIn()) return;
+            if (this.ModLoader.emulator.rdramRead32(0x8040081C) === 0x30000002) return; //transformation state @TODO: Refine later
             this.processNewPlayers();
             this.processAwaitingSpawns();
             this.lookForMissingOrStrandedPuppets();

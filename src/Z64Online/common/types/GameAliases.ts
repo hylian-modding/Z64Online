@@ -66,15 +66,15 @@ export function markAsRandomizer() {
 }
 
 export function markAsFairySync(bool: boolean) {
-    MM_IS_FAIRY = true;
+    MM_IS_FAIRY = bool;
 }
 
 export function markAsSkullSync(bool: boolean) {
-    MM_IS_SKULL = true;
+    MM_IS_SKULL = bool;
 }
 
 export function markAsKeySync(bool: boolean) {
-    MM_IS_KEY_KEEP = true;
+    MM_IS_KEY_KEEP = bool;
 }
 
 export function markAsTimeSync(bool: boolean) {

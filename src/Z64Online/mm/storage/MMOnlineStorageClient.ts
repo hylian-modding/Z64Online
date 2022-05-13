@@ -39,11 +39,10 @@ export class MMOnlineStorageClient extends MMOnlineStorageBase implements IZ64Cl
   isSkulltulaSync = false;
   isFairySync = false;
   isAdultSizedHuman: boolean = false;
-  
-  
   first_time_sync = false;
   playerModelCache: any = {};
   lastKnownSaveName: string = "Link";
+  questStorage: Buffer = Buffer.alloc(0x12);
 }
 
 export class PictoboxPreview {

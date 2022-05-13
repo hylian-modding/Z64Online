@@ -1,4 +1,4 @@
-export const flags = {
+export const permFlags = {
     "flags": [
         "Entered Snowhead",
         "Entered Goron Shrine",
