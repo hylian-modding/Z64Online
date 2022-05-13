@@ -54,6 +54,10 @@ export default class OotOnlineClient {
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
 
+    constructor(){
+        markIsClient();
+    }
+
     @EventHandler(Z64OnlineEvents.GHOST_MODE)
     onGhostInstruction(evt: any) {
         this.LobbyConfig.actor_syncing = false;
@@ -126,7 +130,6 @@ export default class OotOnlineClient {
         this.syncContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["Z64O_SyncContext"] = this.syncContext;
         this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
-        markIsClient();
         setSyncContext(this.syncContext);
         if (RomFlags.isOotR) {
             try{
@@ -425,8 +428,8 @@ export default class OotOnlineClient {
         }
         if (!packet.host) {
             if (packet.save) {
-                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.OOT!.save as any, ProxySide.CLIENT);
-                this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+                this.clientStorage.saveManager.forceOverrideSave(this.clientStorage, packet.save!, this.core.OOT!.save as any, ProxySide.CLIENT);
+                this.clientStorage.saveManager.processKeyRing_OVERWRITE(this.clientStorage, packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
                 // Update hash.
                 this.clientStorage.saveManager.createSave();
                 this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -452,7 +455,7 @@ export default class OotOnlineClient {
             return;
         }
         if (packet.world !== this.clientStorage.world) return;
-        this.clientStorage.saveManager.applySave(packet.save, this.config.syncMasks);
+        this.clientStorage.saveManager.applySave(this.clientStorage, packet.save, this.config.syncMasks);
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -475,7 +478,7 @@ export default class OotOnlineClient {
             return;
         }
         if (packet.world !== this.clientStorage.world) return;
-        this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+        this.clientStorage.saveManager.processKeyRing(this.clientStorage, packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;

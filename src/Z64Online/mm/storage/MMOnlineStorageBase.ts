@@ -19,4 +19,9 @@ export class MMOnlineStorageBase {
     cycleEvents: Buffer = Buffer.alloc(571);
     sceneEvents: Buffer = Buffer.alloc(76);
     minimapStorage: Buffer = Buffer.alloc(0x1C);
+
+    MM_IS_FAIRY: boolean = false;
+    MM_IS_SKULL: boolean = false;
+    MM_IS_KEY_KEEP: boolean = false;
+    MM_IS_TIME: boolean = false;
 }

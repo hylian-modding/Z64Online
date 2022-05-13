@@ -10,6 +10,11 @@ import { ICommandBuffer } from "Z64Lib/API/imports";
 import Vector3 from "modloader64_api/math/Vector3";
 import { MM_ANIM_BANK_DMA, MM_ANIM_BANK_SIZE } from "./MMAliases";
 import { SoundAccessSingleton } from "../cosmetics/sound/SoundManager";
+import { MMOnlineStorageBase } from "@Z64Online/mm/storage/MMOnlineStorageBase";
+
+/**
+ * @TODO Rewrite all of this to be safe on dedi.
+ */
 
 export let Z64_ANIM_BANK_DMA: DMAIndex = 0;
 export let Z64_ANIM_BANK_SIZE: number = 0;
@@ -61,24 +66,39 @@ export function setupMM() {
     MM_IS_TIME = false;
 }
 
+function doNotUseThingsHereonDedi(){
+    if (ML_IS_SERVER && !ML_IS_CLIENT){
+        throw Error(`Do not use GameAlias globals on dedi! ML_IS_SERVER: ${ML_IS_SERVER}, ML_IS_CLIENT: ${ML_IS_CLIENT}.`);
+    }
+}
+
 export function markAsRandomizer() {
     Z64_IS_RANDOMIZER = true;
+    doNotUseThingsHereonDedi();
 }
 
-export function markAsFairySync(bool: boolean) {
+export function markAsFairySync(storage: MMOnlineStorageBase, bool: boolean) {
     MM_IS_FAIRY = bool;
+    storage.MM_IS_FAIRY = bool;
+    doNotUseThingsHereonDedi();
 }
 
-export function markAsSkullSync(bool: boolean) {
+export function markAsSkullSync(storage: MMOnlineStorageBase, bool: boolean) {
     MM_IS_SKULL = bool;
+    storage.MM_IS_SKULL = bool;
+    doNotUseThingsHereonDedi();
 }
 
-export function markAsKeySync(bool: boolean) {
+export function markAsKeySync(storage: MMOnlineStorageBase, bool: boolean) {
     MM_IS_KEY_KEEP = bool;
+    storage.MM_IS_KEY_KEEP = bool;
+    doNotUseThingsHereonDedi();
 }
 
-export function markAsTimeSync(bool: boolean) {
+export function markAsTimeSync(storage: MMOnlineStorageBase, bool: boolean) {
     MM_IS_TIME = bool;
+    storage.MM_IS_TIME = bool;
+    doNotUseThingsHereonDedi();
 }
 
 export function markIsClient(){
@@ -91,10 +111,12 @@ export function markIsServer(){
 
 export function setSyncContext(pointer: number){
     ML_SYNC_CONTEXT = pointer;
+    doNotUseThingsHereonDedi();
 }
 
 export function setPlayerProxy(buf: Buffer) {
     Z64_PLAYER_PROXY = buf;
+    doNotUseThingsHereonDedi();
 }
 
 export function getAgeOrForm(core: IZ64Main): AgeOrForm {

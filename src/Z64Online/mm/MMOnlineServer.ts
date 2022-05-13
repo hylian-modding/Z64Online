@@ -3,7 +3,7 @@ import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
 import { CDNServer } from "@Z64Online/common/cdn/CDNServer";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
-import { markAsFairySync, markAsKeySync, markAsSkullSync, markIsServer } from "@Z64Online/common/types/GameAliases";
+import { markIsServer } from "@Z64Online/common/types/GameAliases";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
@@ -265,7 +265,7 @@ export default class MMOnlineServer {
             }
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
+        storage.saveManager.mergeSave(storage, packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
             if (bool) {
                 Z64Serialize.serialize(world.save).then((buf: Buffer) => {
                     this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, buf, packet.player.data.world));
@@ -288,7 +288,7 @@ export default class MMOnlineServer {
             storage.worlds[packet.player.data.world] = new MMOnlineSave_Server();
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);
+        storage.saveManager.processKeyRing(storage, packet.keys, world.keys, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new Z64O_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
     }
 
@@ -407,16 +407,30 @@ export default class MMOnlineServer {
     @ServerNetworkHandler('Z64O_SyncSettings')
     Z64O_SyncSettings_server(packet: Z64O_SyncSettings) {
         if (packet.syncModeTime) {
-            markAsFairySync(true);
-            markAsSkullSync(true);
-            markAsKeySync(true);
+            let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+                packet.lobby,
+                this.parent
+            ) as MMOnlineStorage;
+            if (storage === null) {
+                return;
+            }
+            storage.MM_IS_FAIRY = true;
+            storage.MM_IS_KEY_KEEP = true;
+            storage.MM_IS_SKULL = true;
         }
     }
 
     @ServerNetworkHandler('Z64O_MMR_Sync')
     onMMR_Sync(packet: Z64O_MMR_Sync) {
-        markAsKeySync(packet.isKeySync)
-        markAsSkullSync(packet.isSkullSync);
-        markAsFairySync(packet.isFairySync);
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        storage.MM_IS_FAIRY = packet.isFairySync;
+        storage.MM_IS_KEY_KEEP = packet.isKeySync;
+        storage.MM_IS_SKULL = packet.isSkullSync;
     }
 }

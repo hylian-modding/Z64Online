@@ -77,7 +77,7 @@ export class OotOSaveData implements ISaveSyncData {
     return obj;
   }
 
-  processKeyRing(keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
+  processKeyRing(settings: any, keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         if (this.isNotEqual(keys.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
@@ -93,7 +93,7 @@ export class OotOSaveData implements ISaveSyncData {
     }
   }
 
-  processKeyRing_OVERWRITE(keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
+  processKeyRing_OVERWRITE(settings: any, keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
@@ -168,7 +168,7 @@ export class OotOSaveData implements ISaveSyncData {
     return (obj1 !== obj2);
   }
 
-  forceOverrideSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
+  forceOverrideSave(settings: any, save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
       let obj: IOOTSyncSave = Z64Serialize.deserializeSync(save);
@@ -209,7 +209,7 @@ export class OotOSaveData implements ISaveSyncData {
 
   }
 
-  mergeSave(save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true): Promise<boolean> {
+  mergeSave(settings: any, save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true): Promise<boolean> {
     return new Promise((accept, reject) => {
       Z64Serialize.deserialize(save).then((obj: IOOTSyncSave) => {
         // Another title screen safety check.
@@ -471,8 +471,8 @@ export class OotOSaveData implements ISaveSyncData {
     });
   }
 
-  applySave(save: Buffer, syncMasks: boolean = true) {
-    this.mergeSave(save, this.core.save as any, ProxySide.CLIENT, syncMasks).then((bool: boolean) => { }).catch((bool: boolean) => { });
+  applySave(settings: any, save: Buffer, syncMasks: boolean = true) {
+    this.mergeSave(settings, save, this.core.save as any, ProxySide.CLIENT, syncMasks).then((bool: boolean) => { }).catch((bool: boolean) => { });
   }
 
 }

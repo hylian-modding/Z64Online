@@ -124,6 +124,10 @@ export default class MMOnlineClient {
     sceneFlagBits: Array<number> = [];
     sceneFlagNames: Map<number, string> = new Map<number, string>();
 
+    constructor(){
+        markIsClient();
+    }
+
     sendPacketToPlayersInScene(packet: IPacketHeader) {
         try {
             let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
@@ -171,11 +175,11 @@ export default class MMOnlineClient {
         let mmrConfigCheck = Buffer.from(mmrConfigAddrCheck.toString(16), 'hex').toString();
         this.ModLoader.logger.debug(`mmrConfigCheck: ${mmrConfigCheck}`)
         if (mmrConfigCheck !== "MMRC" || len === 0) {
-            markAsKeySync(false);
+            markAsKeySync(this.clientStorage, false);
             this.isKeyKeep = false;
         }
         else if (mmrConfigCheck === "MMRC" && len !== 0) {
-            markAsKeySync(true);
+            markAsKeySync(this.clientStorage, true);
             this.isKeyKeep = true;
         }
         this.ModLoader.logger.debug(`Keep keys through time: ${this.isKeyKeep}`)
@@ -186,8 +190,8 @@ export default class MMOnlineClient {
     mmrSyncSkull(): boolean {
         let skullShuffle0: number = this.ModLoader.emulator.rdramRead32(0x8014449C);
         let skullShuffle1: number = this.ModLoader.emulator.rdramRead32(0x801444A4);
-        if (skullShuffle0 === 0x00000000 && skullShuffle1 === 0x00000000) markAsSkullSync(true);
-        else markAsSkullSync(false);
+        if (skullShuffle0 === 0x00000000 && skullShuffle1 === 0x00000000) markAsSkullSync(this.clientStorage, true);
+        else markAsSkullSync(this.clientStorage, false);
         this.ModLoader.logger.info("Skulltula Sync: " + MM_IS_SKULL);
         return MM_IS_SKULL;
     }
@@ -197,8 +201,8 @@ export default class MMOnlineClient {
         let strayShuffle1: number = this.ModLoader.emulator.rdramRead32(0x80144514);
         let strayShuffle2: number = this.ModLoader.emulator.rdramRead32(0x8014451C);
         let strayShuffle3: number = this.ModLoader.emulator.rdramRead32(0x8014452C);
-        if (strayShuffle0 === 0x00000000 && strayShuffle1 === 0x00000000 && strayShuffle2 === 0x00000000 && strayShuffle3 === 0x00000000) markAsFairySync(true);
-        else markAsFairySync(false);
+        if (strayShuffle0 === 0x00000000 && strayShuffle1 === 0x00000000 && strayShuffle2 === 0x00000000 && strayShuffle3 === 0x00000000) markAsFairySync(this.clientStorage, true);
+        else markAsFairySync(this.clientStorage, false);
         this.ModLoader.logger.info("Fairy Sync: " + MM_IS_FAIRY);
         return MM_IS_FAIRY;
     }
@@ -520,8 +524,8 @@ export default class MMOnlineClient {
         }
         if (!packet.host) {
             if (packet.save) {
-                this.clientStorage.saveManager.forceOverrideSave(packet.save!, this.core.MM!.save as any, ProxySide.CLIENT);
-                this.clientStorage.saveManager.processKeyRing_OVERWRITE(packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+                this.clientStorage.saveManager.forceOverrideSave(this.clientStorage, packet.save!, this.core.MM!.save as any, ProxySide.CLIENT);
+                this.clientStorage.saveManager.processKeyRing_OVERWRITE(this.clientStorage, packet.keys!, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
                 // Update hash.
                 this.clientStorage.saveManager.createSave();
                 this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -532,9 +536,9 @@ export default class MMOnlineClient {
         }
         if (this.config.syncModeTime && !MM_IS_TIME) {
             this.ModLoader.logger.info(`Time sync start!`);
-            markAsTimeSync(true);
-            markAsFairySync(true);
-            markAsSkullSync(true);
+            markAsTimeSync(this.clientStorage, true);
+            markAsFairySync(this.clientStorage, true);
+            markAsSkullSync(this.clientStorage, true);
             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.config.syncModeBasic, this.config.syncModeTime, this.ModLoader.clientLobby));
             this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
                 this.core.MM!.save.current_day, this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
@@ -563,7 +567,7 @@ export default class MMOnlineClient {
             return;
         }
 
-        this.clientStorage.saveManager.applySave(packet.save);
+        this.clientStorage.saveManager.applySave(this.clientStorage, packet.save);
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -582,7 +586,7 @@ export default class MMOnlineClient {
             //this.ModLoader.logger.debug("onKeyUpdate Failure 1")
             return;
         }
-        this.clientStorage.saveManager.processKeyRing(packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
+        this.clientStorage.saveManager.processKeyRing(this.clientStorage, packet.keys, this.clientStorage.saveManager.createKeyRing(), ProxySide.CLIENT);
         // Update hash.
         this.clientStorage.saveManager.createSave();
         this.clientStorage.lastPushHash = this.clientStorage.saveManager.hash;
@@ -921,9 +925,9 @@ export default class MMOnlineClient {
                     !this.core.MM!.helper.isPaused() &&
                     !this.core.MM!.helper.isTitleScreen()) {
                     this.ModLoader.logger.info(`Time Sync Start!`);
-                    markAsTimeSync(true);
-                    markAsFairySync(true);
-                    markAsSkullSync(true);
+                    markAsTimeSync(this.clientStorage, true);
+                    markAsFairySync(this.clientStorage, true);
+                    markAsSkullSync(this.clientStorage, true);
                     //this.ModLoader.logger.debug(`MM_IS_TIME: ${MM_IS_TIME}`)
                     bus.emit(Z64OnlineEvents.MMO_TIME_START);
                     this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time,
@@ -974,7 +978,6 @@ export default class MMOnlineClient {
         this.syncContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["Z64O_SyncContext"] = this.syncContext;
         this.ModLoader.logger.debug(`MMO Context: ${this.syncContext.toString(16)}`);
-        markIsClient();
         setSyncContext(this.syncContext);
     }
 

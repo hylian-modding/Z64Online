@@ -10,12 +10,14 @@ import fse from 'fs-extra';
 import { Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { bus, EventHandler, EventOwnerChanged, EventsClient } from "modloader64_api/EventHandler";
 import { IZ64OnlineHelpers } from "@Z64Online/common/lib/IZ64OnlineHelpers";
-import { MMOnlineConfigCategory } from "@Z64Online/mm/MMOnline";
+import MMOnline, { MMOnlineConfigCategory } from "@Z64Online/mm/MMOnline";
 import { Z64O_SyncSettings } from "../network/MMOPackets";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { NetworkHandler } from "modloader64_api/NetworkHandler";
 import { Z64O_DownloadResponsePacket } from "@Z64Online/common/network/Z64OPackets";
 import { markAsTimeSync } from "@Z64Online/common/types/GameAliases";
+import MMOnlineClient from "../MMOnlineClient";
+import Z64Online from "@Z64Online/Z64Online";
 
 export class ImGuiHandler_MM extends ImGuiHandlerCommon {
 
@@ -82,7 +84,8 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
                             if(this.lobbyConfig.syncModeBasic === false && this.lobbyConfig.syncModeTime === false) this.lobbyConfig.syncModeTime = true;
                             this.ModLoader.config.save();
                             console.log(`Sync config updated; Basic: ${this.lobbyConfig.syncModeBasic}`)
-                            markAsTimeSync(this.lobbyConfig.syncModeTime)
+                            // This is such an ugly hack. Do something about this @TODO
+                            markAsTimeSync((((this.parent as unknown as Z64Online).MM as MMOnline).client as MMOnlineClient).clientStorage, this.lobbyConfig.syncModeTime)
                             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.lobbyConfig.syncModeBasic, this.lobbyConfig.syncModeTime, this.ModLoader.clientLobby))
                         }
                         if (this.ModLoader.ImGui.menuItem("Sync Mode: Time", undefined, this.lobbyConfig.syncModeTime, this.amIHost)) {
@@ -91,7 +94,7 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
                             if(this.lobbyConfig.syncModeTime === false && this.lobbyConfig.syncModeBasic === false) this.lobbyConfig.syncModeBasic = true;
                             this.ModLoader.config.save();
                             console.log(`Sync config updated; Time: ${this.lobbyConfig.syncModeTime}`)
-                            markAsTimeSync(this.lobbyConfig.syncModeTime)
+                            markAsTimeSync((((this.parent as unknown as Z64Online).MM as MMOnline).client as MMOnlineClient).clientStorage, this.lobbyConfig.syncModeTime)
                             this.ModLoader.clientSide.sendPacket(new Z64O_SyncSettings(this.lobbyConfig.syncModeBasic, this.lobbyConfig.syncModeTime, this.ModLoader.clientLobby))
                         }
                         //if (this.ModLoader.ImGui.menuItem("Sync Bottle Contents", undefined, this.lobbyConfig.syncBottleContents)) {

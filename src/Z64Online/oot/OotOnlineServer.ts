@@ -245,7 +245,7 @@ export default class OotOnlineServer {
             }
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.mergeSave(packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
+        storage.saveManager.mergeSave(storage, packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
             if (bool) {
                 Z64Serialize.serialize(world.save).then((buf: Buffer) => {
                     this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, buf, packet.player.data.world));
@@ -268,7 +268,7 @@ export default class OotOnlineServer {
             storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.processKeyRing(packet.keys, world.keys, ProxySide.SERVER);
+        storage.saveManager.processKeyRing(storage, packet.keys, world.keys, ProxySide.SERVER);
         this.ModLoader.serverSide.sendPacket(new Z64O_UpdateKeyringPacket(world.keys, packet.lobby, packet.player.data.world));
     }
 

@@ -8,12 +8,9 @@ import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { Z64O_PRIVATE_EVENTS } from "../../common/api/InternalAPI";
 import { ISaveSyncData } from "@Z64Online/common/save/ISaveSyncData";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
-import { rejects } from "assert";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
-import { MMOnlineStorageClient } from "../storage/MMOnlineStorageClient";
-import { Z64O_PermFlagsPacket } from "../network/MMOPackets";
-import { MM_IS_FAIRY, MM_IS_SKULL, MM_IS_TIME } from "@Z64Online/common/types/GameAliases";
 import { MMR_QuirkFixes } from "../compat/MMR";
+import { MMOnlineStorageBase } from "../storage/MMOnlineStorageBase";
 
 export class MMOSaveData implements ISaveSyncData {
   core!: IMMCore;
@@ -37,6 +34,7 @@ export class MMOSaveData implements ISaveSyncData {
     //obj['infTable'] = this.core.save.infTable;
     //obj['weekEventFlags'] = this.core.save.weekEventFlags;
     //obj['dungeon_items'] = this.core.save.dungeonItemManager.getRawBuffer();
+
     let obj2: any = {};
 
     for (let i = 0; i < keys.length; i++) {
@@ -50,7 +48,7 @@ export class MMOSaveData implements ISaveSyncData {
     return obj;
   }
 
-  processKeyRing(keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
+  processKeyRing(settings: any, keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         if (this.isNotEqual(keys.keys[i], this.core.save.keyManager.getKeyCountForIndex(i))) {
@@ -66,7 +64,7 @@ export class MMOSaveData implements ISaveSyncData {
     }
   }
 
-  processKeyRing_OVERWRITE(keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
+  processKeyRing_OVERWRITE(settings: any, keys: IKeyRing, storage: IKeyRing, side: ProxySide) {
     for (let i = 0; i < keys.keys.byteLength; i++) {
       if (side === ProxySide.CLIENT) {
         this.core.save.keyManager.setKeyCountByIndex(i, keys.keys[i]);
@@ -141,7 +139,7 @@ export class MMOSaveData implements ISaveSyncData {
     return (obj1 !== obj2);
   }
 
-  forceOverrideSave(save: Buffer, storage: IMMSyncSave, side: ProxySide) {
+  forceOverrideSave(settings: any, save: Buffer, storage: IMMSyncSave, side: ProxySide) {
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
       let obj: IMMSyncSave = Z64Serialize.deserializeSync(save);
@@ -168,7 +166,7 @@ export class MMOSaveData implements ISaveSyncData {
       let old_swordLevel = storage.swords.swordLevel;
       this.processMixedLoop_OVERWRITE(obj.swords, storage.swords, ['kokiriSword', 'masterSword', 'giantKnife', 'biggoronSword']);
       this.processMixedLoop_OVERWRITE(obj.shields, storage.shields, ['dekuShield', 'hylianShield', 'mirrorShield']);
-      if (MM_IS_FAIRY) {
+      if ((settings as MMOnlineStorageBase).MM_IS_FAIRY) {
         this.processMixedLoop_OVERWRITE(obj.stray, storage.stray, []);
         storage.stray.strayClockTown = obj.stray.strayClockTown;
       }
@@ -191,7 +189,7 @@ export class MMOSaveData implements ISaveSyncData {
 
   }
 
-  mergeSave(save: Buffer, storage: IMMSyncSave, side: ProxySide, syncMasks: boolean = true): Promise<boolean> {
+  mergeSave(settings: any, save: Buffer, storage: IMMSyncSave, side: ProxySide, syncMasks: boolean = true): Promise<boolean> {
     return new Promise((accept, reject) => {
       Z64Serialize.deserialize(save).then((obj: IMMSyncSave) => {
         // Another title screen safety check.
@@ -219,11 +217,11 @@ export class MMOSaveData implements ISaveSyncData {
         let old_swordLevel = storage.swords.swordLevel;
         this.processMixedLoop(obj.swords, storage.swords, []);
         this.processMixedLoop(obj.shields, storage.shields, []);
-        if (MM_IS_FAIRY) {
+        if ((settings as MMOnlineStorageBase).MM_IS_FAIRY) {
           //console.log(obj.stray)
           this.processMixedLoop(obj.stray, storage.stray, []);
         }
-        if (MM_IS_SKULL) {
+        if ((settings as MMOnlineStorageBase).MM_IS_SKULL) {
           //console.log(obj.skull)
           this.processMixedLoop(obj.skull, storage.skull, []);
         }
@@ -254,7 +252,7 @@ export class MMOSaveData implements ISaveSyncData {
           bus.emit(Z64OnlineEvents.SWORD_NEEDS_UPDATE, storage.swords.swordLevel);
         }
 
-        if (MM_IS_TIME) {
+        if ((settings as MMOnlineStorageBase).MM_IS_TIME) {
           if (obj.inventory.FIELD_BOTTLE1 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE1 = obj.inventory.FIELD_BOTTLE1;
           if (obj.inventory.FIELD_BOTTLE2 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE2 = obj.inventory.FIELD_BOTTLE2;
           if (obj.inventory.FIELD_BOTTLE3 !== InventoryItem.NONE) storage.inventory.FIELD_BOTTLE3 = obj.inventory.FIELD_BOTTLE3;
@@ -312,8 +310,8 @@ export class MMOSaveData implements ISaveSyncData {
     });
   }
 
-  applySave(save: Buffer) {
-    this.mergeSave(save, this.core.save as any, ProxySide.CLIENT);
+  applySave(settings: any, save: Buffer) {
+    this.mergeSave(settings, save, this.core.save as any, ProxySide.CLIENT);
   }
 
 }
