@@ -376,9 +376,8 @@ export default class MMOnlineServer {
                     }
                 }
             }
-
-            this.ModLoader.serverSide.sendPacket(new Z64O_FlagUpdate(storage.eventFlags, packet.lobby));
         }
+        this.ModLoader.serverSide.sendPacket(new Z64O_FlagUpdate(storage.eventFlags, packet.lobby));
     }
 
     @ServerNetworkHandler('Z64O_SoTPacket')

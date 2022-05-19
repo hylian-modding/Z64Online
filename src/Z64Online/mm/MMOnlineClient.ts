@@ -42,6 +42,7 @@ import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIs
 import TimeSyncClient from "./save/MMOTimeSyncClient";
 import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
 import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
+import bitwise from 'bitwise';
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -833,29 +834,66 @@ export default class MMOnlineClient {
 
     updateTimeFlags() {
         if (this.sotActive) return;
-        let eventFlagsAddr = 0x801F0568;
-        let eventFlags = Buffer.alloc(0x64);
-        let eventFlagByte = 0;
+        let eventFlagSave = this.core.MM!.save.weekEventFlags;
         let eventFlagStorage = this.clientStorage.eventFlags;
         const indexBlacklist = [0x8, 0x1F, 0x49, 0x4B, 0x4C, 0x52, 0x5C];
 
-        for (let i = 0; i < eventFlags.byteLength; i++) {
-            let eventFlagByteStorage = eventFlagStorage.readUInt8(i); //client storage bits
-            for (let j = 0; j <= 7; j++) {
-                eventFlagByte = this.ModLoader.emulator.rdramRead8(eventFlagsAddr); //in-game bits
-                if (!indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) {
-                    eventFlagByte = (eventFlagByte |= eventFlagByteStorage)
-                    //console.log(`Flag: 0x${i.toString(16)}, val: 0x${eventFlagByteStorage.toString(16)} -> 0x${eventFlagByte.toString(16)}`);
-                }
-                else if (indexBlacklist.includes(i) && eventFlagByte !== eventFlagByteStorage) //console.log(`indexBlacklist: 0x${i.toString(16)}`);
-                    eventFlagByte = (eventFlagByte |= eventFlagByteStorage); //client storage bits
+        for (let i = 0; i < eventFlagStorage.byteLength; i++) {
+            let byteStorage = eventFlagStorage.readUInt8(i);
+            let bitsStorage = bitwise.byte.read(byteStorage as any);
+            let byteIncoming = eventFlagSave.readUInt8(i);
+            let bitsIncoming = bitwise.byte.read(byteIncoming as any);
+
+            if (!indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
+                console.log(`Client: Parsing flag: 0x${i.toString(16)}, byteIncoming: 0x${byteIncoming.toString(16)}, bitsIncoming: 0x${bitsIncoming} `);
+                parseFlagChanges(eventFlagSave, eventFlagStorage);
             }
-            eventFlags.writeUInt8(eventFlagByte, i);
-            eventFlagsAddr = eventFlagsAddr + 1;
+            else if (indexBlacklist.includes(i) && byteStorage !== byteIncoming) {
+                console.log(`Client: indexBlacklist: 0x${i.toString(16)}`);
+                for (let j = 0; j <= 7; j++) {
+                    switch (i) {
+                        case 0x8: //Minigame_Disable_All_But_B_Button
+                            if (j !== 0) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x1F: //Took Ride with Cremia (resets after ride?)
+                            if (j !== 7) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x49: //Bombers Hide & Seek completed???
+                            if (j !== 5) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x4B: //Bombers Hide & Seek completed twice??? || Bombers have shown Code?
+                            if (j !== 6 && j !== 5) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x4C: //Caught all Bombers
+                           if (j !== 6) bitsStorage[j] = bitsIncoming[j];
+                           else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                           break;
+                        case 0x52: //Disable__Hide_C_Buttons2, Disable__Hide_C_Buttons1
+                            if (j !== 5 && j !== 3) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                        case 0x5C: //Started Race with Gorman Brothers once?
+                            if (j !== 0) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
+                    }
+                    let newByteStorage = bitwise.byte.write(bitsStorage); //write our updated bits into a byte
+                    //console.log(`Server: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
+                    if (newByteStorage !== byteStorage) {  //make sure the updated byte is different than the original
+                        byteStorage = newByteStorage;
+                        eventFlagStorage.writeUInt8(byteStorage, i); //write new byte into the event flag at index i
+                        console.log(`Client: Parsing flag: 0x${i.toString(16)}, byteStorage: 0x${byteStorage.toString(16)}, newByteStorage: 0x${newByteStorage.toString(16)} `);
+                    }
+                }
+            }
         }
-        if (!eventFlagStorage.equals(eventFlags)) {
-            this.clientStorage.eventFlags = eventFlags;
-            this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
+        if(!this.clientStorage.eventFlags.equals(eventFlagSave)){
+            this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(eventFlagStorage, this.ModLoader.clientLobby));
+            this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags;
         }
     }
 
