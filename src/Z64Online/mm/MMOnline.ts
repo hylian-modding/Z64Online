@@ -10,6 +10,7 @@ import { IZ64Utility } from "@Z64Online/common/api/InternalAPI";
 import { IZ64ClientStorage } from "@Z64Online/common/storage/Z64Storage";
 import { IPacketHeader } from "modloader64_api/NetworkHandler";
 import { IS_DEV_BUILD } from "@Z64Online/common/lib/IS_DEV_BUILD";
+import { SERVER_URL } from "@Z64Online/common/lib/Labels";
 
 export const SCENE_ARR_SIZE = 0xD20;
 export const EVENT_ARR_SIZE = 0x8;
@@ -72,6 +73,6 @@ export default class MMOnline implements IZ64GameMain, IZ64Utility {
     }
 
     getServerURL(): string {
-        return IS_DEV_BUILD ? "192.99.70.23:9035" : "192.99.70.23:8035";
+        return IS_DEV_BUILD ? `${SERVER_URL.current_url}:9035` : `${SERVER_URL.current_url}:8035`;
     }
 }

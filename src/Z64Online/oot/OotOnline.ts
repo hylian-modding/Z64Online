@@ -10,6 +10,7 @@ import { IZ64GameMain } from "@Z64Online/common/types/Types";
 import { IS_DEV_BUILD } from "../common/lib/IS_DEV_BUILD";
 import { IZ64Utility } from "@Z64Online/common/api/InternalAPI";
 import { IZ64ClientStorage } from "@Z64Online/common/storage/Z64Storage";
+import { SERVER_URL } from "@Z64Online/common/lib/Labels";
 
 export const SCENE_ARR_SIZE = 0xb0c;
 export const EVENT_ARR_SIZE = 0x1c;
@@ -60,7 +61,7 @@ export default class OotOnline implements IZ64GameMain, IZ64Utility {
   }
 
   getServerURL(): string {
-    return IS_DEV_BUILD ? "192.99.70.23:9000" : "192.99.70.23:8000";
+    return IS_DEV_BUILD ? `${SERVER_URL.current_url}:9000` : `${SERVER_URL.current_url}:8000`;
   }
 
 }
