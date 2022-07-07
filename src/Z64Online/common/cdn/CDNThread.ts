@@ -84,7 +84,11 @@ class CDNThread {
         let resp = new CDNFileDownload_Packet(packet.model_id);
         resp.player = packet.player;
         let port = this.config.reverseProxy ? this.config.reverseProxyPort.toString() : this.config.port.toString();
-        resp.url = `${this.config.url}:${port}/cdn/files/` + packet.model_id + ".zip";
+        if (port === "80") {
+            resp.url = `${this.config.url}/cdn/files/` + packet.model_id + ".zip";
+        } else {
+            resp.url = `${this.config.url}:${port}/cdn/files/` + packet.model_id + ".zip";
+        }
         if (!this.knownFiles.has(packet.model_id)) {
             resp.error = true;
         }

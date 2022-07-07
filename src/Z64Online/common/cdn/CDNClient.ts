@@ -146,14 +146,22 @@ export class CDNClient {
             var fetchUrl = require("fetch").fetchUrl;
 
             fetchUrl(packet.url, (error: any, meta: any, body: any) => {
-                if (this.pendingDownloads.has(packet.model_id)) {
-                    this.ModLoader.utils.setTimeoutFrames(() => {
-                        let _zip = new zip(body);
-                        let data = _zip.getEntry(packet.model_id)!.getData();
-                        this.cache.set(packet.model_id, data);
-                        this.pendingDownloads.get(packet.model_id)!.resolve(data);
+                if (error){
+                    this.ModLoader.logger.error(error);
+                    if (this.pendingDownloads.has(packet.model_id)) {
+                        this.pendingDownloads.get(packet.model_id)!.reject("Failed to connect to backend!");
                         this.pendingDownloads.delete(packet.model_id);
-                    }, 1);
+                    }
+                }else{
+                    if (this.pendingDownloads.has(packet.model_id)) {
+                        this.ModLoader.utils.setTimeoutFrames(() => {
+                            let _zip = new zip(body);
+                            let data = _zip.getEntry(packet.model_id)!.getData();
+                            this.cache.set(packet.model_id, data);
+                            this.pendingDownloads.get(packet.model_id)!.resolve(data);
+                            this.pendingDownloads.delete(packet.model_id);
+                        }, 1);
+                    }
                 }
             });
         }
