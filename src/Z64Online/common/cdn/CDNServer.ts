@@ -48,6 +48,7 @@ export class CDNServer {
         this.ModLoader.config.setData(CDNConfigTag, "url", "http://127.0.0.1");
         this.ModLoader.config.setData(CDNConfigTag, "port", "6969");
         this.ModLoader.config.setData(CDNConfigTag, "reverseProxy", false);
+        this.ModLoader.config.setData(CDNConfigTag, "reverseProxyPort", 80);
         this.thread = new Worker(path.resolve(__dirname, "CDNThreadEntryPoint.js"));
         this.thread.on('message', this.onMessageFromThread.bind(this));
         this.sendMessageToThread("config", this.config);
