@@ -17,7 +17,7 @@ class CDNThread {
     config!: CDNConfig;
     deleteMode: boolean = false;
 
-    makeServer(){
+    makeServer() {
         try {
             fs.mkdirSync("./cdn");
             fs.mkdirSync("./cdn/files");
@@ -26,9 +26,9 @@ class CDNThread {
         fs.readdirSync("./cdn/files").forEach((f: string) => {
             let p = path.resolve("./cdn/files", f);
             if (fs.existsSync(p)) {
-                if (this.deleteMode){
+                if (this.deleteMode) {
                     fs.unlinkSync(p);
-                }else{
+                } else {
                     this.knownFiles.set(path.parse(p).name, p);
                 }
             }
@@ -83,19 +83,20 @@ class CDNThread {
     handleDownload(packet: CDNFileDownload_Packet) {
         let resp = new CDNFileDownload_Packet(packet.model_id);
         resp.player = packet.player;
-        resp.url = `${this.config.url}:${this.config.port.toString()}/cdn/files/` + packet.model_id + ".zip";
+        let port = this.config.reverseProxy ? 80 : this.config.port.toString();
+        resp.url = `${this.config.url}:${port}/cdn/files/` + packet.model_id + ".zip";
         if (!this.knownFiles.has(packet.model_id)) {
             resp.error = true;
         }
         this.sendMessageToMainThread(resp.packet_id, resp);
     }
 
-    handleFailure(packet: CDNFileFailure_Packet){
-        if (this.knownFiles.has(packet.id)){
+    handleFailure(packet: CDNFileFailure_Packet) {
+        if (this.knownFiles.has(packet.id)) {
             let p = this.knownFiles.get(packet.id)!;
-            try{
+            try {
                 fs.unlinkSync(p);
-            }catch(err: any){}
+            } catch (err: any) { }
             this.knownFiles.delete(packet.id);
         }
     }
