@@ -9,7 +9,7 @@ import { SceneStruct } from "Z64Lib/API/Common/Z64API"
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { Z64O_PRIVATE_EVENTS } from "../../common/api/InternalAPI";
 import { ISaveSyncData } from "@Z64Online/common/save/ISaveSyncData";
-import { TriforceHuntHelper } from "@Z64Online/oot/compat/OotR";
+import { OotR_BadSyncData, TriforceHuntHelper } from "@Z64Online/oot/compat/OotR";
 import RomFlags from "@Z64Online/oot/compat/RomFlags";
 import bitwise from 'bitwise';
 import fs from 'fs';
@@ -57,6 +57,12 @@ export class OotOSaveData implements ISaveSyncData {
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
+
+    // Remove stuff that OotR puts in the scene flags that cause problems online.
+    for (let i = 0; i < OotR_BadSyncData.saveBitMask.byteLength; i++) {
+      obj['permSceneData'][i] = obj['permSceneData'][i] & OotR_BadSyncData.saveBitMask[i];
+    }
+
     obj['eventFlags'] = this.core.save.eventFlags;
     obj['itemFlags'] = this.core.save.itemFlags;
     obj['infTable'] = this.core.save.infTable;

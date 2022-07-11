@@ -18,6 +18,7 @@ import fs from 'fs';
 import { SmartBuffer } from 'smart-buffer';
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { GameParent } from "@Z64Online/common/api/GameParent";
+import { SCENE_ARR_SIZE } from "../OotOnline";
 
 export class MultiWorld_ItemPacket extends Packet {
 
@@ -127,6 +128,18 @@ export class TriforceHuntHelper {
 
 }
 
+export class OotR_BadSyncData {
+
+    static saveBitMask: Buffer = Buffer.alloc(SCENE_ARR_SIZE, 0xFF);
+
+    static blacklistu32(scene: number, offset: number): void {
+        this.saveBitMask.writeUInt32BE(0, scene * 0x1C + offset);
+    }
+
+}
+
+OotR_BadSyncData.blacklistu32(0x49, 0x10);
+
 export class OotRCosmeticHelper {
 
     static extractFAs(ModLoader: IModLoaderAPI, evt: { rom: Buffer }, dlist: number, target: string, offset: number = 0, offset_target: number = 0, age: AgeOrForm = AgeOrForm.ADULT) {
@@ -216,14 +229,14 @@ export class RomansCosmeticHelper {
         OotRCosmeticHelper.extractFAs(ModLoader, evt, 0x14660, "Boomerang", 0, 0, AgeOrForm.CHILD);
     }
 
-    private static extractGauntlets(ModLoader: IModLoaderAPI, evt: { rom: Buffer }){
+    private static extractGauntlets(ModLoader: IModLoaderAPI, evt: { rom: Buffer }) {
         OotRCosmeticHelper.extractFAs(ModLoader, evt, 0x252D8, "Gauntlet.Fist.L");
         OotRCosmeticHelper.extractFAs(ModLoader, evt, 0x252D8, "Gauntlet.Hand.L");
         OotRCosmeticHelper.extractFAs(ModLoader, evt, 0x25658, "Gauntlet.Fist.R");
         OotRCosmeticHelper.extractFAs(ModLoader, evt, 0x25658, "Gauntlet.Hand.R");
     }
 
-    private static extractBow(ModLoader: IModLoaderAPI, evt: { rom: Buffer }){
+    private static extractBow(ModLoader: IModLoaderAPI, evt: { rom: Buffer }) {
         OotRCosmeticHelper.extractFAs(ModLoader, evt, 0x22DA8, "Bow");
     }
 
