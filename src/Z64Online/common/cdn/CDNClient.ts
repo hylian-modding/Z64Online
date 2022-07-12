@@ -14,21 +14,21 @@ class PendingUpload {
     con: boolean = true;
     chunks: number = 0;
     curChunk: number = 0;
-    resolve: (bool: boolean)=>void;
-    reject: (error: string)=>void;
+    resolve: (bool: boolean) => void;
+    reject: (error: string) => void;
 
-    constructor(buf: Buffer, resolve: (bool: boolean)=>void, reject: (error: string)=>void) {
+    constructor(buf: Buffer, resolve: (bool: boolean) => void, reject: (error: string) => void) {
         this.buf.writeBuffer(buf);
         this.resolve = resolve;
         this.reject = reject;
     }
 }
 
-class PendingDownload{
-    resolve: (buf: Buffer)=>void;
-    reject: (error: string)=>void;
+class PendingDownload {
+    resolve: (buf: Buffer) => void;
+    reject: (error: string) => void;
 
-    constructor(r1: (buf: Buffer)=>void, r2: (error: string)=>void){
+    constructor(r1: (buf: Buffer) => void, r2: (error: string) => void) {
         this.resolve = r1;
         this.reject = r2;
     }
@@ -41,7 +41,7 @@ export class CDNClient {
     ModLoader!: IModLoaderAPI;
     pendingQueries: Map<string, Buffer> = new Map<string, Buffer>();
     pendingQueryPromises: Map<string, (bool: boolean) => void> = new Map<string, (bool: boolean) => void>();
-    pendingDownloads: Map<string, PendingDownload> = new Map<string, PendingDownload>();
+    pendingDownloads: Map<string, PendingDownload[]> = new Map<string, PendingDownload[]>();
     pendingUploads: Map<string, PendingUpload> = new Map<string, PendingUpload>();
     cache: Map<string, Buffer> = new Map();
 
@@ -49,7 +49,7 @@ export class CDNClient {
         CDNClient.singleton = this;
     }
 
-    registerWithCache(buf: Buffer){
+    registerWithCache(buf: Buffer) {
         this.cache.set(this.ModLoader.utils.hashBuffer(buf), buf);
     }
 
@@ -57,11 +57,11 @@ export class CDNClient {
         let pend = this.ModLoader.utils.hashBuffer(buf);
         this.pendingQueries.set(pend, buf);
         let promise = new Promise<boolean>((resolve, reject) => {
-            if (this.cache.has(pend)){
+            if (this.cache.has(pend)) {
                 this.pendingQueries.delete(pend);
                 resolve(true);
                 return;
-            }else{
+            } else {
                 this.pendingQueryPromises.set(pend, resolve);
             }
         });
@@ -69,25 +69,28 @@ export class CDNClient {
         return promise;
     }
 
-    uploadFile(id: string, buf: Buffer){
-        return new Promise<boolean>((resolve, reject)=>{
+    uploadFile(id: string, buf: Buffer) {
+        return new Promise<boolean>((resolve, reject) => {
             this.pendingUploads.set(id, new PendingUpload(buf, resolve, reject));
         });
     }
 
     requestFile(id: string) {
         let promise = new Promise<Buffer>((resolve, reject) => {
-            if (this.cache.has(id)){
+            if (this.cache.has(id)) {
                 resolve(this.cache.get(id)!);
-            }else{
-                this.pendingDownloads.set(id, new PendingDownload(resolve, reject));
+            } else {
+                if (!this.pendingDownloads.has(id)) {
+                    this.pendingDownloads.set(id, []);
+                }
+                this.pendingDownloads.get(id)!.push(new PendingDownload(resolve, reject));
                 this.ModLoader.clientSide.sendPacket(new CDNFileDownload_Packet(id));
             }
         });
         return promise;
     }
 
-    flagCDNFailure(id: string){
+    flagCDNFailure(id: string) {
         this.ModLoader.clientSide.sendPacket(new CDNFileFailure_Packet(id));
     }
 
@@ -105,7 +108,7 @@ export class CDNClient {
         if (this.pendingUploads.size > 0) {
             const [[k, v]] = this.pendingUploads;
             if (v.con) {
-                if (v.chunks === 0){
+                if (v.chunks === 0) {
                     v.chunks = Math.round(v.buf.length / MAX_UPLOAD_RATE);
                 }
                 if (v.buf.remaining() >= MAX_UPLOAD_RATE) {
@@ -126,39 +129,47 @@ export class CDNClient {
     }
 
     @onViUpdate()
-    onVi(){
-        if (this.pendingUploads.size > 0){
+    onVi() {
+        if (this.pendingUploads.size > 0) {
             this.ModLoader.ImGui.getForegroundDrawList().addText(xy(0, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), "You are currently uploading custom content to other players...");
             const [[k, v]] = this.pendingUploads;
             this.ModLoader.ImGui.getForegroundDrawList().addText(xy(0, 14), rgba(0xFF, 0xFF, 0xFF, 0xFF), `${v.curChunk} of ${v.chunks} blocks transferred. ${this.pendingUploads.size} items pending.`);
-        }else if (this.pendingDownloads.size > 0){
+        } else if (this.pendingDownloads.size > 0) {
             this.ModLoader.ImGui.getForegroundDrawList().addText(xy(0, 0), rgba(0xFF, 0xFF, 0xFF, 0xFF), "You are currently downloading custom content from other players...");
         }
     }
 
     @NetworkHandler('CDNFileDownload_Packet')
     private onResp2(packet: CDNFileDownload_Packet) {
-        if (packet.error){
+        if (packet.error) {
             this.ModLoader.logger.error("Failed to download asset " + packet.model_id + ".");
-            this.pendingDownloads.get(packet.model_id)!.reject("Failed to download asset " + packet.model_id + ".");
-            this.pendingDownloads.delete(packet.model_id);
-        }else{
+            if (this.pendingDownloads.has(packet.model_id)) {
+                for (let i = 0; i < this.pendingDownloads.get(packet.model_id)!.length; i++) {
+                    this.pendingDownloads.get(packet.model_id)![i].reject("Failed to download asset " + packet.model_id + ".");
+                }
+                this.pendingDownloads.delete(packet.model_id);
+            }
+        } else {
             var fetchUrl = require("fetch").fetchUrl;
 
             fetchUrl(packet.url, (error: any, meta: any, body: any) => {
-                if (error){
+                if (error) {
                     this.ModLoader.logger.error(error);
                     if (this.pendingDownloads.has(packet.model_id)) {
-                        this.pendingDownloads.get(packet.model_id)!.reject("Failed to connect to backend!");
+                        for (let i = 0; i < this.pendingDownloads.get(packet.model_id)!.length; i++) {
+                            this.pendingDownloads.get(packet.model_id)![i].reject("Failed to connect to backend!");
+                        }
                         this.pendingDownloads.delete(packet.model_id);
                     }
-                }else{
+                } else {
                     if (this.pendingDownloads.has(packet.model_id)) {
                         this.ModLoader.utils.setTimeoutFrames(() => {
                             let _zip = new zip(body);
                             let data = _zip.getEntry(packet.model_id)!.getData();
                             this.cache.set(packet.model_id, data);
-                            this.pendingDownloads.get(packet.model_id)!.resolve(data);
+                            for (let i = 0; i < this.pendingDownloads.get(packet.model_id)!.length; i++) {
+                                this.pendingDownloads.get(packet.model_id)![i].resolve(data);
+                            }
                             this.pendingDownloads.delete(packet.model_id);
                         }, 1);
                     }
@@ -168,8 +179,8 @@ export class CDNClient {
     }
 
     @NetworkHandler('CDNConfirm_Packet')
-    private onResp3(packet: CDNConfirm_Packet){
-        if (this.pendingUploads.has(packet.id)){
+    private onResp3(packet: CDNConfirm_Packet) {
+        if (this.pendingUploads.has(packet.id)) {
             this.pendingUploads.get(packet.id)!.con = packet.con;
         }
     }
