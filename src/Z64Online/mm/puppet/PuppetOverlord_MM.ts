@@ -12,9 +12,10 @@ import { EventHandler, EventsClient } from "modloader64_api/EventHandler";
 import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { PuppetQuery, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
-import { MMEvents, Scene } from "Z64Lib/API/MM/MMAPI";
+import { Scene } from "Z64Lib/API/MM/MMAPI";
 import { IZ64Master } from "@Z64Online/common/api/InternalAPI";
 import { LinkState } from "Z64Lib/API/Common/Z64API";
+import * as API from "Z64Lib/API/imports";
 
 export class PuppetOverlordServer_MM extends PuppetOverlordServer {
 
@@ -88,12 +89,12 @@ export default class PuppetOverlord_MM extends PuppetOverlordClient {
         );
     }
 
-    @EventHandler(MMEvents.ON_LOADING_ZONE)
+    @EventHandler(API.Z64.Z64Events.ON_LOADING_ZONE)
     onLoadingZone(evt: any) {
         this.localPlayerLoadingZone();
     }
 
-    @EventHandler(MMEvents.ON_SCENE_CHANGE)
+    @EventHandler(API.Z64.Z64Events.ON_SCENE_CHANGE)
     onSceneChange(scene: Scene) {
         this.localPlayerLoadingZone();
         this.localPlayerChangingScenes(scene, this.core.MM!.save.form);

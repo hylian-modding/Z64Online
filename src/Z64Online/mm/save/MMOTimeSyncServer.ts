@@ -6,7 +6,6 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { MMEvents } from "Z64Lib/API/MM/MMAPI";
 import { MMOnlineConfigCategory } from "../MMOnline";
 import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncRequest, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
 

@@ -7,11 +7,11 @@ import { NetworkHandler, ServerNetworkHandler } from "modloader64_api/NetworkHan
 import { Preinit, onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { LinkState } from "Z64Lib/API/Common/Z64API";
-import { MMEvents } from "Z64Lib/API/MM/MMAPI";
 import { MMOnlineConfigCategory } from "../MMOnline";
 import { Z64O_FlagUpdate, Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncRequest, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
 import { MMOnlineStorageClient } from "../storage/MMOnlineStorageClient";
 import SoTTrigger from "./SoTTrigger";
+import * as API from "Z64Lib/API/imports";
 
 export const RECORD_TICK_MODULO = 6
 export const NUM_SCHEDULE_TICKS = 196608;
@@ -189,7 +189,7 @@ export default class TimeSyncClient {
         this.lobbyConfig.syncModeTime = packet.syncModeTime;
     }
 
-    @EventHandler(MMEvents.ON_SCENE_CHANGE)
+    @EventHandler(API.Z64.Z64Events.ON_SCENE_CHANGE)
     onSceneChange() {
         if (this.core.MM!.global.scene === 0x08) {
             return;

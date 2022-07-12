@@ -27,8 +27,8 @@ import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
 import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "@Z64Online/common/network/Z64OPackets";
-import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult, Sword } from "Z64Lib/API/Common/Z64API";
-import { InventoryItem, IInventory, MMEvents } from "Z64Lib/API/MM/MMAPI";
+import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult, Sword, Z64Events } from "Z64Lib/API/Common/Z64API";
+import { InventoryItem, IInventory} from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
@@ -403,7 +403,7 @@ export default class MMOnlineClient {
     // Scene handling
     //------------------------------
 
-    @EventHandler(MMEvents.ON_SCENE_CHANGE)
+    @EventHandler(API.Z64.Z64Events.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
         if (!this.clientStorage.first_time_sync && !this.syncPending) {
             // #ifdef IS_DEV_BUILD
@@ -704,7 +704,7 @@ export default class MMOnlineClient {
     onNeedsMagic(size: API.Z64.Magic) {
     }
 
-    @EventHandler(MMEvents.ON_AGE_CHANGE)
+    @EventHandler(API.Z64.Z64Events.ON_AGE_CHANGE)
     onAgeChange(age: AgeOrForm) {
         this.ModLoader.clientSide.sendPacket(
             new Z64O_ScenePacket(
