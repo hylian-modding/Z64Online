@@ -72,7 +72,7 @@ export default class ActorFixManager {
         });
     }
 
-    @EventHandler(Z64.OotEvents.ON_LOADING_ZONE)
+    @EventHandler(Z64.Z64Events.ON_LOADING_ZONE)
     onSceneChange(){
         this.fixes.forEach((fix: ActorFix)=>{
             fix.hook.runDestroy(0, ()=>{});
@@ -84,7 +84,7 @@ export default class ActorFixManager {
         this.fixes.clear();
     }
 
-    @EventHandler(Z64.OotEvents.ON_ACTOR_SPAWN)
+    @EventHandler(Z64.Z64Events.ON_ACTOR_SPAWN)
     onActorSpawn(actor: IActor) {
         this.actorsAwaiting.push(actor);
     }

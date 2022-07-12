@@ -8,7 +8,7 @@ import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { onTick, onViUpdate } from "modloader64_api/PluginLifecycle";
 import { xywh, xy, rgba } from "modloader64_api/Sylvain/vec";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { OotEvents } from "Z64Lib/API/Common/Z64API";
+import { Z64Events } from "Z64Lib/API/Common/Z64API";
 import { Scene } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64OnlineEvents } from "../api/Z64API";
 import { CommonConfigInst } from "../lib/Settings";
@@ -50,12 +50,12 @@ export default class PuppetNameTagHandler {
         }
     }
 
-    @EventHandler(OotEvents.ON_SCENE_CHANGE)
+    @EventHandler(Z64Events.ON_SCENE_CHANGE)
     onSceneChanged(scene: Scene) {
         this.scene = scene;
     }
 
-    @EventHandler(OotEvents.ON_LOADING_ZONE)
+    @EventHandler(Z64Events.ON_LOADING_ZONE)
     onSceneChanging() {
         this.puppets.length = 0;
     }

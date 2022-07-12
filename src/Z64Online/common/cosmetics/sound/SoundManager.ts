@@ -7,7 +7,7 @@ import zlib from 'zlib';
 import Vector3 from "modloader64_api/math/Vector3";
 import { onPostTick, onTick, Postinit } from 'modloader64_api/PluginLifecycle';
 import * as sf from 'modloader64_api/Sound/sfml_audio';
-import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
+import { Z64Events } from "Z64Lib/API/Common/Z64API";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { SoundCategory_Adult, SoundCategory_Child, SoundCategory_Deity, SoundCategory_Deku, SoundCategory_Goron, SoundCategory_Human, SoundCategory_Zora } from "@Z64Online/common/cosmetics/sound/SoundCategory";
@@ -365,7 +365,7 @@ export class SoundManagerClient {
         if (age === targetage) this.isMuted = bool;
     }
 
-    @EventHandler(OotEvents.ON_AGE_CHANGE)
+    @EventHandler(Z64Events.ON_AGE_CHANGE)
     onAgeChange(age: AgeOrForm) {
         if (Z64_GAME === OOT_GAME) {
             this.handleFormChange(age, AgeOrForm.ADULT, this.hasAdult);

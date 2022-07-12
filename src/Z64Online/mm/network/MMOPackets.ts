@@ -22,7 +22,7 @@ export class Z64O_FlagUpdate extends Packet {
     eventFlags: Buffer,
     lobby: string
   ) {
-    super('Z64O_FlagUpdate', 'WWOnline', lobby, false);
+    super('Z64O_FlagUpdate', 'Z64Online', lobby, false);
     this.eventFlags = eventFlags;
   }
 }

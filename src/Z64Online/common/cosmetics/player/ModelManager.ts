@@ -379,14 +379,14 @@ export class ModelManagerClient {
     }, 1);
   }
 
-  @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
+  @EventHandler(Z64.Z64Events.ON_SCENE_CHANGE)
   onSceneChange(scene: Scene) {
     this.child.onSceneChange(scene);
     this.dealWithEquipmentPaks(getAgeOrForm(this.core));
     bus.emit(Z64OnlineEvents.LOCAL_MODEL_REFRESH, scene);
   }
 
-  @EventHandler(Z64.OotEvents.ON_AGE_CHANGE)
+  @EventHandler(Z64.Z64Events.ON_AGE_CHANGE)
   onAgeChange() {
     //this.child.onSceneChange(1);
   }
@@ -490,7 +490,7 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler(Z64.OotEvents.ON_DAY_TRANSITION)
+  @EventHandler(Z64.Z64Events.ON_DAY_TRANSITION)
   onDay() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
@@ -509,7 +509,7 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler(Z64.OotEvents.ON_NIGHT_TRANSITION)
+  @EventHandler(Z64.Z64Events.ON_NIGHT_TRANSITION)
   onNight() {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
@@ -528,7 +528,7 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler(Z64.OotEvents.ON_HEALTH_CHANGE)
+  @EventHandler(Z64.Z64Events.ON_HEALTH_CHANGE)
   onHealth(health: number) {
     if (this.managerDisabled) return;
     if (this.lockManager) return;
@@ -547,7 +547,7 @@ export class ModelManagerClient {
     }
   }
 
-  @EventHandler(Z64.OotEvents.ON_TUNIC_CHANGE)
+  @EventHandler(Z64.Z64Events.ON_TUNIC_CHANGE)
   onTunic(tunic: Tunic) {
     if (this.managerDisabled) return;
     if (this.lockManager) return;

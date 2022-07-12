@@ -57,7 +57,7 @@ export class NPCReplacer {
         this.facePatches.set(0xD9, new MalonFace(this.ModLoader));
     }
 
-    @EventHandler(Z64.OotEvents.ON_ACTOR_SPAWN)
+    @EventHandler(Z64.Z64Events.ON_ACTOR_SPAWN)
     onActorSpawn(actor: IActor) {
         /** TODO: Proper implementation. */
     }

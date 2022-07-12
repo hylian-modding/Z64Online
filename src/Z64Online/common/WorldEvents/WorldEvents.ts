@@ -676,7 +676,7 @@ export class WorldEventRewards {
         }
     }
 
-    @EventHandler(Z64.OotEvents.ON_SAVE_LOADED)
+    @EventHandler(Z64.Z64Events.ON_SAVE_LOADED)
     onPost() {
         this.ModLoader.utils.setTimeoutFrames(() => {
             Object.keys(this.config.costumeLoadout).forEach((key: string) => {

@@ -65,11 +65,11 @@ export class ActorHookingManagerClient {
     
   }
 
-  @EventHandler(Z64.OotEvents.ON_ACTOR_SPAWN)
+  @EventHandler(Z64.Z64Events.ON_ACTOR_SPAWN)
   onActorSpawn(actor: IActor) {
   }
 
-  @EventHandler(Z64.OotEvents.ON_ACTOR_DESPAWN)
+  @EventHandler(Z64.Z64Events.ON_ACTOR_DESPAWN)
   onActorDespawn(actor: IActor) {
   }
 
@@ -85,11 +85,11 @@ export class ActorHookingManagerClient {
   onTick() {
   }
 
-  @EventHandler(Z64.OotEvents.ON_LOADING_ZONE)
+  @EventHandler(Z64.Z64Events.ON_LOADING_ZONE)
   onLoadingZone() {
   }
 
-  @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
+  @EventHandler(Z64.Z64Events.ON_SCENE_CHANGE)
   onSceneChange(scene: number) {
   }
 

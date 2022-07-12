@@ -16,7 +16,7 @@ export default class EponaModelManager{
     core!: IZ64Main;
     hook!: ArbitraryHook;
 
-    @EventHandler(Z64.OotEvents.ON_ACTOR_SPAWN)
+    @EventHandler(Z64.Z64Events.ON_ACTOR_SPAWN)
     onActorSpawn(actor: IActor){
         if (actor.actorID === 0x0014){
             // Epona.

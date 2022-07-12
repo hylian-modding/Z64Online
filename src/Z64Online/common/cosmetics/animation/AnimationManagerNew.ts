@@ -2,7 +2,7 @@ import { Z64_ANIM_BANK_DMA, Z64_OBJECT_TABLE_RAM } from "@Z64Online/common/types
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
+import { Z64Events } from "Z64Lib/API/Common/Z64API";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
 import { Anim2Link } from "./Anim2Link";
@@ -118,7 +118,7 @@ export class AnimationManagerNew {
         }, 20);
     }
 
-    @EventHandler(OotEvents.ON_SCENE_CHANGE)
+    @EventHandler(Z64Events.ON_SCENE_CHANGE)
     onSceneChange(scene: number) {
         this.onSceneChangeU();
     }

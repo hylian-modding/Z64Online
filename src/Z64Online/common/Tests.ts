@@ -22,7 +22,7 @@ export default class Z64OTests{
         CosmeticTests.onNaviTest();
     }
 
-    @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
+    @EventHandler(Z64.Z64Events.ON_SCENE_CHANGE)
     onSceneChange(){
     }
 

@@ -10,7 +10,7 @@ import { EventsClient, EventHandler} from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { AgeOrForm} from "Z64Lib/API/Common/Z64API";
 import { IActor} from "Z64Lib/API/Common/IActor";
-import { OotEvents } from "Z64Lib/API/OoT/OOTAPI";
+import { Z64Events } from "Z64Lib/API/Common/Z64API";
 import { onTick, Postinit } from "modloader64_api/PluginLifecycle";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
@@ -101,12 +101,12 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
         this.unregisterPuppet(player);
     }
 
-    @EventHandler(OotEvents.ON_LOADING_ZONE)
+    @EventHandler(Z64Events.ON_LOADING_ZONE)
     onLoadingZone(evt: any) {
         this.localPlayerLoadingZone();
     }
 
-    @EventHandler(OotEvents.ON_SCENE_CHANGE)
+    @EventHandler(Z64Events.ON_SCENE_CHANGE)
     onSceneChange(scene: Scene) {
         this.localPlayerLoadingZone();
         this.localPlayerChangingScenes(scene, this.core.OOT!.save.age);
@@ -129,12 +129,12 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
         this.processPuppetPacket(packet);
     }
 
-    @EventHandler(OotEvents.ON_AGE_CHANGE)
+    @EventHandler(Z64Events.ON_AGE_CHANGE)
     onAgeChange(age: AgeOrForm) {
         this.localPlayerLoadingZone();
     }
 
-    @EventHandler(OotEvents.ON_ACTOR_SPAWN)
+    @EventHandler(Z64Events.ON_ACTOR_SPAWN)
     onEponaSpawned(actor: IActor) {
         if (actor.actorID === 0x0014) {
             // Epona spawned.
@@ -143,7 +143,7 @@ export class OOT_PuppetOverlordClient extends PuppetOverlordClient {
         }
     }
 
-    @EventHandler(OotEvents.ON_ACTOR_DESPAWN)
+    @EventHandler(Z64Events.ON_ACTOR_DESPAWN)
     onEponaDespawned(actor: IActor) {
         if (actor.actorID === 0x0014) {
             // Epona despawned.

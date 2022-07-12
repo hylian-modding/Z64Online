@@ -64,7 +64,7 @@ export default class NaviModelManager {
         }
     }
 
-    @EventHandler(Z64.OotEvents.ON_SCENE_CHANGE)
+    @EventHandler(Z64.Z64Events.ON_SCENE_CHANGE)
     onSceneChanged(scene: Scene) {
         if (this.int !== undefined) return;
         this.int = this.ModLoader.utils.setIntervalFrames(()=>{

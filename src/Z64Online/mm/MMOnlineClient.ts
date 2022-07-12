@@ -993,7 +993,7 @@ export default class MMOnlineClient {
         if (!questStorage.equals(packet.questStorage)) {
             console.log(`onQuestStorage: Quest storage updated`);
             this.ModLoader.emulator.rdramWriteBuffer(mmrSaveConfigAddr + 0x8, packet.questStorage);
-            this.clientStorage, questStorage = packet.questStorage;
+            this.clientStorage.questStorage = packet.questStorage;
         }
     }
 
