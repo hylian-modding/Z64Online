@@ -48,8 +48,36 @@ export default class ArbitraryHook {
         });
     }
 
+    injectPromise(): Promise<boolean> {
+        return new Promise((accept, reject) => {
+            this.payloadPointer = this.ModLoader.heap!.malloc(this.hax.byteLength);
+            this.ModLoader.emulator.rdramWriteBuffer(this.payloadPointer, this.hax);
+            let cb = getCommandBuffer(this.core);
+            cb.relocateOverlay(this.payloadPointer, this.payloadPointer + (this.hax.byteLength - this.hax.readUInt32BE(this.hax.byteLength - 0x4)), 0x80800000).then(() => {
+                let embedStart: number = this.hax.indexOf(Buffer.from("DEADBEEF", 'hex'));
+                if (this.hax.readUInt32BE(embedStart + 4) > 0) {
+                    this.paramPointers[0] = this.ModLoader.heap!.malloc(0x10);
+                    this.fnPointers[0] = this.ModLoader.emulator.rdramRead32(this.payloadPointer + embedStart + 4);
+                }
+                if (this.hax.readUInt32BE(embedStart + 8) > 0) {
+                    this.paramPointers[1] = this.ModLoader.heap!.malloc(0x10);
+                    this.fnPointers[1] = this.ModLoader.emulator.rdramRead32(this.payloadPointer + embedStart + 8);
+                }
+                let size = this.hax.readUInt32BE(embedStart + 0xC);
+                if (size > 0) {
+                    this.instancePointer = this.ModLoader.heap!.malloc(size);
+                }
+                this.ModLoader.emulator.invalidateCachedCode();
+                accept(true);
+            }).catch((err: any) => {
+                this.ModLoader.logger.error(err);
+                reject(false);
+            });
+        });
+    }
+
     clear() {
-        if (this.payloadPointer > 0){
+        if (this.payloadPointer > 0) {
             this.ModLoader.heap!.free(this.payloadPointer);
         }
         if (this.instancePointer > 0) {
