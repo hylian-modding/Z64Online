@@ -16,12 +16,10 @@ export class ModelAllocationManager {
   private models: Map<string, ModelObject> = new Map<string, ModelObject>();
   private references: Map<string, IModelReference> = new Map<string, IModelReference>();
   private cleanupRoutine: any;
-  private zz: zzstatic2;
 
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
     this.cleanupRoutine = this.ModLoader.utils.setIntervalFrames(() => { this.doGC() }, 1200);
-    this.zz = new zzstatic2();
   }
 
   doGC() {
@@ -130,7 +128,8 @@ export class ModelAllocationManager {
     let b = modelObject.zobj;
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD, b);
-      this.zz.repoint(b, pointer);
+      let zz = new zzstatic2();
+      zz.repoint(b, pointer);
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.POST_OBJECT_LOAD, b);
     } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
@@ -188,7 +187,8 @@ export class ModelAllocationManager {
     mp.proxyPointer = pointer;
     mp.proxyData = proxy;
     this.players.set(player.uuid, mp);
-    this.zz.repoint(proxy, mp.proxyPointer);
+    let zz = new zzstatic2();
+    zz.repoint(proxy, mp.proxyPointer);
     this.ModLoader.emulator.rdramWriteBuffer(pointer, proxy);
     this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;

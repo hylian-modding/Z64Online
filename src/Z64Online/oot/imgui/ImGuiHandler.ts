@@ -99,6 +99,14 @@ export class ImGuiHandler extends ImGuiHandlerCommon{
                     if (this.ModLoader.ImGui.button("PRINT LINK POS")) {
                         console.log(JSON.stringify(this.core.OOT!.link.position.getVec3()));
                     }
+                    if (this.ModLoader.ImGui.button("FLIP ALL FLAGS IN ROOM")){
+                        let flags = this.core.OOT!.global.liveSceneData_switch;
+                        let nflags = Buffer.alloc(flags.byteLength, 0xFF);
+                        if (flags.equals(nflags)){
+                            this.ModLoader.utils.clearBuffer(nflags);
+                        }
+                        this.core.OOT!.global.liveSceneData_switch = nflags;
+                    }
                     // #endif
                     this.ModLoader.ImGui.endMenu();
                 }

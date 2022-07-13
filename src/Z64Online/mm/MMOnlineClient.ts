@@ -28,7 +28,7 @@ import { AgeOrForm } from "@Z64Online/common/types/Types";
 import RomFlags from "@Z64Online/mm/compat/RomFlags";
 import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "@Z64Online/common/network/Z64OPackets";
 import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult, Sword, Z64Events } from "Z64Lib/API/Common/Z64API";
-import { InventoryItem, IInventory} from "Z64Lib/API/MM/MMAPI";
+import { InventoryItem, IInventory } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
@@ -100,8 +100,8 @@ export default class MMOnlineClient {
     emotes!: EmoteManager;
 
     // Actor specific crash or behavior fixes
-    /*     @SidedProxy(ProxySide.CLIENT, ActorFixManager)
-        actorFixes!: ActorFixManager; */
+    @SidedProxy(ProxySide.CLIENT, ActorFixManager)
+    actorFixes!: ActorFixManager;
 
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
@@ -869,9 +869,9 @@ export default class MMOnlineClient {
                             else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
                             break;
                         case 0x4C: //Caught all Bombers
-                           if (j !== 6) bitsStorage[j] = bitsIncoming[j];
-                           else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
-                           break;
+                            if (j !== 6) bitsStorage[j] = bitsIncoming[j];
+                            else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
+                            break;
                         case 0x52: //Disable__Hide_C_Buttons2, Disable__Hide_C_Buttons1
                             if (j !== 5 && j !== 3) bitsStorage[j] = bitsIncoming[j];
                             else console.log(`Client: Blacklisted event: 0x${i}, bit: ${j}`)
@@ -891,7 +891,7 @@ export default class MMOnlineClient {
                 }
             }
         }
-        if(!this.clientStorage.eventFlags.equals(eventFlagSave)){
+        if (!this.clientStorage.eventFlags.equals(eventFlagSave)) {
             this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(eventFlagStorage, this.ModLoader.clientLobby));
             this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags;
         }

@@ -5,18 +5,32 @@
 #include "Helpers.h"
 #include "HaxBase.h"
 
-typedef void (*EnDoorActionFunc)(struct EnDoor*, GlobalContext*);
+#define PlayState GlobalContext
 
-typedef enum {
-    /* 0x00 */ DOOR_ROOMLOAD,  // loads rooms
-    /* 0x01 */ DOOR_LOCKED,    // small key locked door
-    /* 0x02 */ DOOR_ROOMLOAD2, // loads rooms
-    /* 0x03 */ DOOR_SCENEEXIT, // doesn't load rooms, used for doors paired with scene transition polygons
-    /* 0x04 */ DOOR_AJAR,      // open slightly but slams shut if Link gets too close
-    /* 0x05 */ DOOR_CHECKABLE, // doors that display a textbox when interacting
-    /* 0x06 */ DOOR_EVENING,   // unlocked between 18:00 and 21:00, Dampé's hut
-    /* 0x07 */ DOOR_ROOMLOAD7  // loads rooms
-} EnDoorType;
+typedef void (*EnDoorActionFunc)(struct EnDoor*, GlobalContext*);
+typedef void (*DoorShutterActionFunc)(struct DoorShutter*, PlayState*);
+
+typedef struct EnDoor_Ext{
+    u32 label;
+    ActorFunc update;
+    u8 padding[0x8];
+} EnDoor_Ext;
+
+typedef struct DoorShutter {
+    /* 0x0000 */ DynaPolyActor dyna;
+    /* 0x0164 */ s16 unk_164;
+    /* 0x0166 */ s16 unk_166;
+    /* 0x0168 */ s16 unk_168;
+    /* 0x016A */ u8 doorType;
+    /* 0x016B */ u8 unk_16B;
+    /* 0x016C */ u8 unk_16C;
+    /* 0x016D */ s8 requiredObjBankIndex;
+    /* 0x016E */ s8 lockTimer; // verified.
+    /* 0x016F */ s8 unk_16F;
+    /* 0x0170 */ f32 unk_170;
+    /* 0x0174 */ DoorShutterActionFunc actionFunc;
+                 EnDoor_Ext ext;
+} DoorShutter; // size = 0x0178
 
 typedef struct EnDoor {
     /* 0x0000 */ Actor actor;
@@ -30,14 +44,28 @@ typedef struct EnDoor {
     /* 0x0198 */ Vec3s jointTable[5];
     /* 0x01B6 */ Vec3s morphTable[5];
     /* 0x01D4 */ EnDoorActionFunc actionFunc;
+                 EnDoor_Ext ext;
 } EnDoor; // size = 0x01D8
 
-typedef struct EnDoorMM{
-    Actor actor;
-    u8 dontcare[0x21];
-    u8 lockTimer;
-} EnDoorMM;
+#define UNK_TYPE1 u8
 
-#define MM_IS_DOOR_LOCKED 0x0A
+#define DOORSHUTTER_GET_7F(thisx) ((thisx)->params & 0x7F)
+
+typedef struct DoorShutterMM {
+    /* 0x0000 */ Actor actor;
+    /* 0x0144 */ UNK_TYPE1 unk144[0x18];
+    /* 0x015C */ s16 unk_15C;
+    /* 0x015E */ s16 unk_15E;
+    /* 0x0160 */ s16 unk_160;
+    /* 0x0162 */ u8 doorType;
+    /* 0x0163 */ u8 unk_163;
+    /* 0x0164 */ u8 unk_164;
+    /* 0x0165 */ s8 requiredObjBankIndex;
+    /* 0x0166 */ s8 unk_166; // lock timer?
+    /* 0x0167 */ s8 unk_167;
+    /* 0x0168 */ f32 unk_168;
+    /* 0x016C */ DoorShutterActionFunc actionFunc;
+                 EnDoor_Ext ext;
+} DoorShutterMM; // size = 0x170
 
 #endif /* EN_DOOR_H */

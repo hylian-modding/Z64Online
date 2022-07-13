@@ -5,8 +5,6 @@ import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { getRandomInt } from "@Z64Online/common/lib/getRandomInt";
-import { PropHunt_oot } from "@Z64Online/overlay/PropHunt";
-import { EnemyControl_oot } from "@Z64Online/overlay/EnemyControl";
 import { string_ref } from "modloader64_api/Sylvain/ImGui";
 
 export default class GamemodeManager {
@@ -22,14 +20,14 @@ export default class GamemodeManager {
 
     @EventHandler(EventsClient.ON_INJECT_FINISHED)
     onHeapReady(evt: any) {
-        this.ModLoader.utils.setTimeoutFrames(() => {
+/*         this.ModLoader.utils.setTimeoutFrames(() => {
             this.ovl = new ArbitraryHook("Prop Hunt", this.ModLoader, this.core, PropHunt_oot);
             this.ovl.inject();
         }, getRandomInt(0, 100));
         this.ModLoader.utils.setTimeoutFrames(() => {
             this.ovl2 = new ArbitraryHook("Enemy Control", this.ModLoader, this.core, EnemyControl_oot);
             this.ovl2.inject();
-        }, getRandomInt(0, 100));
+        }, getRandomInt(0, 100)); */
     }
 
     /* @onViUpdate()

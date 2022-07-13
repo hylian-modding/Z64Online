@@ -11,21 +11,22 @@ import { IActor, Z64 } from "Z64Lib/API/imports";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
+import fs from 'fs';
 
-class ActorFix{
+class ActorFix {
 
     hook: ArbitraryHook;
 
-    constructor(hook: ArbitraryHook){
+    constructor(hook: ArbitraryHook) {
         this.hook = hook;
     }
 
-    onSetupHook(){
+    onSetupHook() {
         this.hook.inject();
     }
 
-    onProcess(actor: IActor){
-        this.hook.runCreate(actor.pointer, ()=>{});
+    onProcess(actor: IActor) {
+        this.hook.runCreate(actor.pointer, () => { });
     }
 
 }
@@ -42,40 +43,46 @@ export default class ActorFixManager {
     doorPatch!: ArbitraryHook;
     zeldaPatch!: ArbitraryHook;
 
-    OotHooks(){
-        this.fixes.set(0x0009, new ActorFix(new ArbitraryHook("Door", this.ModLoader, this.core, DoorFix_oot)));
+    OotHooks() {
+        let door = new ActorFix(new ArbitraryHook("Door", this.ModLoader, this.core, DoorFix_oot));
+        let setupDoors = (id: number) => {
+            this.fixes.set(id, door);
+        };
+        setupDoors(0x0009);
+        setupDoors(0x002E);
+
         this.fixes.set(0x0179, new ActorFix(new ArbitraryHook("Zelda", this.ModLoader, this.core, ZeldaFix_oot)));
     }
 
-    MMHooks(){
-        this.fixes.set(0x0009, new ActorFix(new ArbitraryHook("Door", this.ModLoader, this.core, DoorFix_mm)));
+    MMHooks() {
+        this.fixes.set(0x001E, new ActorFix(new ArbitraryHook("Door", this.ModLoader, this.core, DoorFix_mm)));
     }
 
     @EventHandler(EventsClient.ON_INJECT_FINISHED)
     onHeapReady(evt: any) {
-        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
+        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
             this.OotHooks();
-        }else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK){
+        } else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
             this.MMHooks();
         }
         let wait = (hook: ArbitraryHook, tick: number = 20) => {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 hook.inject();
-                this.ModLoader.utils.setTimeoutFrames(()=>{
+                this.ModLoader.utils.setTimeoutFrames(() => {
                     console.log(`${hook.name} ${hook.instancePointer.toString(16)}`);
                 }, 20)
             }, tick);
         };
         let i = 1;
-        this.fixes.forEach((fix: ActorFix)=>{
+        this.fixes.forEach((fix: ActorFix) => {
             wait(fix.hook, i++);
         });
     }
 
     @EventHandler(Z64.Z64Events.ON_LOADING_ZONE)
-    onSceneChange(){
-        this.fixes.forEach((fix: ActorFix)=>{
-            fix.hook.runDestroy(0, ()=>{});
+    onSceneChange() {
+        this.fixes.forEach((fix: ActorFix) => {
+            fix.hook.runDestroy(0, () => { });
         });
     }
 
@@ -101,7 +108,7 @@ export default class ActorFixManager {
         }
     }
 
-    fixDinsfire(evt: any){
+    fixDinsfire(evt: any) {
         // I tried really hard to find a soft way to deal with this, but it wasn't to be.
         let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
         // Make Din's Fire not move to Link.
@@ -119,10 +126,42 @@ export default class ActorFixManager {
         tools.recompressActorFileIntoRom(evt.rom, 0x009F, dins);
     }
 
+    fixDoors_Oot(evt: any) {
+        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
+        let extendo_door = (id: number, offset: number, hash: string) => {
+            // Make door instance slightly bigger.
+            let door: Buffer = tools.decompressActorFileFromRom(evt.rom, id);
+            let door_hash: string = this.ModLoader.utils.hashBuffer(door);
+            if (door_hash !== hash) return;
+            door.writeUInt32BE(door.readUInt32BE(offset) + 0x10, offset);
+            tools.recompressActorFileIntoRom(evt.rom, id, door);
+        };
+
+        extendo_door(0x0009, 0xCBC, "78dd06e2505aa466d1bbf57d0f4b8381");
+        extendo_door(0x002E, 0x1E1C, "0e069401bb09c107164be13a4b0658eb");
+    }
+
+    fixDoors_MM(evt: any){
+        let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.MAJORAS_MASK);
+        let extendo_door = (id: number, offset: number) => {
+            // Make door instance slightly bigger.
+            let door: Buffer = tools.decompressActorFileFromRom(evt.rom, id);
+            let door_hash: string = this.ModLoader.utils.hashBuffer(door);
+            console.log(`door hash: ${door_hash}`);
+            door.writeUInt32BE(door.readUInt32BE(offset) + 0x10, offset);
+            tools.recompressActorFileIntoRom(evt.rom, id, door);
+        };
+
+        extendo_door(0x001E, 0x187C);
+    }
+
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRomPatched(evt: any) {
-        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME){
+        if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
             this.fixDinsfire(evt);
+            this.fixDoors_Oot(evt);
+        } else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
+            this.fixDoors_MM(evt);
         }
     }
 
