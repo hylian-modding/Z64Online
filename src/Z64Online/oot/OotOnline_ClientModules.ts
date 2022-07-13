@@ -8,7 +8,6 @@ import { NPCReplacer } from "@Z64Online/common/cosmetics/npc/NPCReplacer";
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
-import { PuppetControllerClient } from "@Z64Online/common/puppet/new_puppet_stuff_40/PuppetController";
 import { IZ64GameMain } from "@Z64Online/common/types/Types";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { SidedProxy, ProxySide, ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
