@@ -135,8 +135,14 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
 
     @NetworkHandler('Z64O_DownloadResponsePacket')
     onDownloadPacket_client(packet: Z64O_DownloadResponsePacket) {
-        if(packet.host) this.amIHost = true;
-        else this.amIHost = false;
+        let owner = this.ModLoader.clientSide.getLobbyOwner(this.ModLoader.clientLobby);
+        if (owner.uuid === this.ModLoader.me.uuid){
+            this.ModLoader.logger.debug("I own this lobby!");
+            this.amIHost = true;
+        }else{
+            this.ModLoader.logger.debug(`${owner.nickname} owns this lobby!`);
+            this.amIHost = false;
+        }
     }
 
     @EventHandler(EventsClient.ON_LOBBY_OWNER_CHANGE)
