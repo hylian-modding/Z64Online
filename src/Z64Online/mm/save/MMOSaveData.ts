@@ -11,6 +11,8 @@ import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import { MMR_QuirkFixes } from "../compat/MMR";
 import { MMOnlineStorageBase } from "../storage/MMOnlineStorageBase";
+import zlib from 'zlib';
+import * as API from 'Z64Lib/API/imports'
 
 export class MMOSaveData implements ISaveSyncData {
   core!: IMMCore;
@@ -205,11 +207,11 @@ export class MMOSaveData implements ISaveSyncData {
           storage.heart_containers = 20;
         }
 
-        if(obj.magic_meter_size > storage.magic_meter_size) {
+        if (obj.magic_meter_size > storage.magic_meter_size) {
           storage.magic_meter_size = obj.magic_meter_size;
         }
-        else if (obj.magic_meter_size === 0 && storage.magic_meter_size === 1){
-          if(obj.magic == 0x60){
+        else if (obj.magic_meter_size === 0 && storage.magic_meter_size === 1) {
+          if (obj.magic == 0x60) {
             storage.magic_meter_size = 2;
           }
         }
@@ -304,6 +306,96 @@ export class MMOSaveData implements ISaveSyncData {
 
   applySave(settings: any, save: Buffer) {
     this.mergeSave(settings, save, this.core.save as any, ProxySide.CLIENT);
+  }
+
+}
+
+//-----------------------------------------------------
+// Photo
+//-----------------------------------------------------
+
+
+export interface IPhotoSave extends API.MM.IPhoto {
+}
+
+export class PhotoSave implements IPhotoSave {
+  pictograph_photoChunk!: Buffer;
+  pictograph_spec = 0x0;
+  pictograph_quality = 0x0;
+  pictograph_unk = 0x0;
+  timestamp: number = Date.now();
+  hash: string = "";
+  pictograph_used: boolean = false;
+
+  compressPhoto(): void {
+    console.log("Original Size: " + this.pictograph_photoChunk.byteLength);
+    this.pictograph_photoChunk = zlib.deflateSync(this.pictograph_photoChunk);
+    console.log("New  Size: " + this.pictograph_photoChunk.byteLength);
+  }
+
+  decompressPhoto(): void {
+    this.pictograph_photoChunk = zlib.inflateSync(this.pictograph_photoChunk);
+  }
+
+  fromPhoto(photo: PhotoSave) {
+    this.pictograph_photoChunk = photo.pictograph_photoChunk;
+    this.pictograph_spec = photo.pictograph_spec;
+    this.pictograph_quality = photo.pictograph_quality;
+    this.pictograph_unk = photo.pictograph_unk;
+    this.timestamp = photo.timestamp;
+    this.hash = photo.hash;
+    this.pictograph_used = photo.pictograph_used;
+  }
+}
+
+export function createPhotoFromContext(ModLoader: IModLoaderAPI, save: API.MM.IPhoto) {
+  let data = new PhotoSave();
+  data.pictograph_photoChunk = save.pictograph_photoChunk;
+
+  data.pictograph_quality = save.pictograph_quality;
+  data.pictograph_spec = save.pictograph_spec;
+  data.pictograph_unk = save.pictograph_unk;
+  data.pictograph_used = save.pictograph_used;
+
+  data.hash = ModLoader.utils.hashBuffer(data.pictograph_photoChunk);
+  return data;
+}
+
+export function applyPhotoToContext(
+  data: PhotoSave,
+  save: API.MM.IPhoto
+) {
+  save.pictograph_photoChunk = data.pictograph_photoChunk;
+  save.pictograph_quality = data.pictograph_quality;
+  save.pictograph_spec = data.pictograph_spec;
+  save.pictograph_unk = data.pictograph_unk;
+  save.pictograph_used = data.pictograph_used;
+}
+
+export function mergePhotoData(
+  save: PhotoSave,
+  incoming: PhotoSave
+) {
+  if (incoming.pictograph_photoChunk !== save.pictograph_photoChunk) {
+    save.pictograph_photoChunk = incoming.pictograph_photoChunk;
+  }
+  if (incoming.pictograph_quality !== save.pictograph_quality) {
+    save.pictograph_quality = incoming.pictograph_quality;
+  }
+  if (incoming.pictograph_spec !== save.pictograph_spec) {
+    save.pictograph_spec = incoming.pictograph_spec;
+  }
+  if (incoming.pictograph_unk !== save.pictograph_unk) {
+    save.pictograph_unk = incoming.pictograph_unk;
+  }
+  if (incoming.timestamp !== save.timestamp) {
+    save.timestamp = incoming.timestamp;
+  }
+  if (incoming.hash !== save.hash) {
+    save.hash = incoming.hash;
+  }
+  if (incoming.pictograph_used !== save.pictograph_used) {
+    save.pictograph_used = incoming.pictograph_used;
   }
 
 }

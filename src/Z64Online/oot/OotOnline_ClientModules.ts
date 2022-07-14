@@ -46,7 +46,7 @@ export default class OotOnline_ClientModules {
     // GUI stuff
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
     gui!: ImGuiHandler;
-    //@SidedProxy(ProxySide.CLIENT, PuppetNameTagHandler)
+    @SidedProxy(ProxySide.CLIENT, PuppetNameTagHandler)
     nametags!: PuppetNameTagHandler;
     @SidedProxy(ProxySide.CLIENT, Notifications)
     notificationManager!: Notifications;

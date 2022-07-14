@@ -15,11 +15,11 @@ import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedPro
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
 import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
-import { Z64O_FlagUpdate, Z64O_MMR_QuestStorage, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
+import { MMO_PictoboxPacket, Z64O_FlagUpdate, Z64O_MMR_QuestStorage, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
 import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
-import { MMOSaveData } from "./save/MMOSaveData";
+import { mergePhotoData, MMOSaveData, PhotoSave } from "./save/MMOSaveData";
 import TimeSyncServer from "./save/MMOTimeSyncServer";
 import { MMOnlineStorage, MMOnlineSave_Server } from "./storage/MMOnlineStorage";
 import bitwise from 'bitwise';
@@ -243,6 +243,23 @@ export default class MMOnlineServer {
         world.save.isMMR = packet.isRando;
     }
 
+    @ServerNetworkHandler('MMO_PictoboxPacket')
+    onPictobox(packet: MMO_PictoboxPacket) {
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        let image = new PhotoSave();
+        image.fromPhoto(packet.photo);
+        if (storage.photoStorage.timestamp < image.timestamp) {
+            mergePhotoData(storage.photoStorage, image);
+            this.ModLoader.serverSide.sendPacket(packet);
+        }
+    }
+    
     //------------------------------
     // Flag Syncing
     //------------------------------
