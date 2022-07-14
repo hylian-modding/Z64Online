@@ -24,7 +24,7 @@ export class MMOSaveData implements ISaveSyncData {
   private generateWrapper(): IMMSyncSave {
     let obj: any = {};
     let keys = [
-      'inventory', 'map_visible', 'map_visited', 'minimap_flags', 'heart_containers', 'magic_meter_size', 'swords', 'shields',
+      'inventory', 'map_visible', 'map_visited', 'minimap_flags', 'heart_containers', 'magic_meter_size', 'magic', 'swords', 'shields',
       'questStatus', 'checksum', 'owlStatues', 'double_defense', 'magicBeanCount', 'dungeon_items', 'stray', 'skull', 'bank',
       'lottery_numbers_day1', 'lottery_numbers_day2', 'lottery_numbers_day3', 'spider_house_mask_order', 'bomber_code'
     ];
@@ -204,12 +204,15 @@ export class MMOSaveData implements ISaveSyncData {
         if (storage.heart_containers > 20) {
           storage.heart_containers = 20;
         }
-        let magic_meter_data: number = MMR_QuirkFixes.magicMeterQuirkFix(this.ModLoader, obj.magic_meter_size);
-        if (magic_meter_data > storage.magic_meter_size) {
-          storage.magic_meter_size = magic_meter_data;
-          bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, magic_meter_data);
-        }
 
+        if(obj.magic_meter_size > storage.magic_meter_size) {
+          storage.magic_meter_size = obj.magic_meter_size;
+        }
+        else if (obj.magic_meter_size === 0 && storage.magic_meter_size === 1){
+          if(obj.magic == 0x60){
+            storage.magic_meter_size = 2;
+          }
+        }
         if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
           storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
         }

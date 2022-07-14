@@ -58,6 +58,7 @@ class MMSyncSaveServer implements IMMSyncSaveServer {
   dungeon_items: Buffer = Buffer.alloc(0x14);
   heart_containers: number = 0;
   magic_meter_size!: Magic;
+  magic: number = 0;
   swords!: ISwords;
   shields!: IShields;
   questStatus!: IQuestStatus;
