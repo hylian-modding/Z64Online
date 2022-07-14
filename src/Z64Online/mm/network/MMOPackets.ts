@@ -3,6 +3,7 @@ import {
   packetHelper,
   UDPPacket,
 } from 'modloader64_api/ModLoaderDefaultImpls';
+import { PhotoSave } from '../save/MMOSaveData';
 
 export class Z64O_PermFlagsPacket extends Packet {
   flags: Buffer;
@@ -102,5 +103,14 @@ export class Z64O_ServerTimeStart extends Packet {
   constructor(start: boolean, lobby: string) {
     super('Z64O_ServerTimeStart', 'Z64Online', lobby, true);
     this.start = start;
+  }
+}
+
+export class MMO_PictoboxPacket extends Packet {
+  photo: PhotoSave;
+
+  constructor(photo: PhotoSave, lobby: string) {
+    super('MMO_PictoboxPacket', 'Z64Online', lobby, false);
+    this.photo = photo;
   }
 }

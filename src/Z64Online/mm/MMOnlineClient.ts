@@ -32,8 +32,8 @@ import { InventoryItem, IInventory } from "Z64Lib/API/MM/MMAPI";
 import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
 export let GHOST_MODE_TRIGGERED: boolean = false;
 import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
-import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket, Z64O_MMR_Sync, Z64O_MMR_QuestStorage } from "./network/MMOPackets";
-import { MMOSaveData } from "./save/MMOSaveData";
+import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket, Z64O_MMR_Sync, Z64O_MMR_QuestStorage, MMO_PictoboxPacket } from "./network/MMOPackets";
+import { applyPhotoToContext, createPhotoFromContext, mergePhotoData, MMOSaveData, PhotoSave } from "./save/MMOSaveData";
 import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
 import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
@@ -43,6 +43,8 @@ import TimeSyncClient from "./save/MMOTimeSyncClient";
 import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
 import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
 import bitwise from 'bitwise';
+import { SmartBuffer } from 'smart-buffer';
+import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -757,7 +759,16 @@ export default class MMOnlineClient {
         this.ModLoader.emulator.rdramWrite16(this.syncContext + 0x10, SoundAccessSingleton.sound_id);
     }
 
-
+    updatePictobox() {
+        let photo = createPhotoFromContext(this.ModLoader, this.core.MM!.save.photo);
+        if (photo.hash !== this.clientStorage.photoStorage.hash) {
+            console.log("Photo taken");
+            mergePhotoData(this.clientStorage.photoStorage, photo);
+            this.clientStorage.photoStorage.compressPhoto();
+            this.ModLoader.clientSide.sendPacket(new MMO_PictoboxPacket(this.clientStorage.photoStorage, this.ModLoader.clientLobby));
+        }
+    }
+    
     updatePermFlags() {
         let hash = this.ModLoader.utils.hashBuffer(this.core.MM!.save.permFlags);
         hash += this.ModLoader.utils.hashBuffer(this.ModLoader.emulator.rdramReadBitsBuffer(0x801F0568, 99));
@@ -997,6 +1008,35 @@ export default class MMOnlineClient {
         }
     }
 
+    @NetworkHandler('MMO_PictoboxPacket')
+    onPictobox(packet: MMO_PictoboxPacket) {
+        if (packet.player.uuid === this.ModLoader.me.uuid) {
+            return;
+        }
+        let photo = new PhotoSave();
+        photo.fromPhoto(packet.photo);
+        photo.decompressPhoto();
+        mergePhotoData(this.clientStorage.photoStorage, photo);
+        applyPhotoToContext(photo, this.core.MM!.save.photo);
+        let sb = new SmartBuffer();
+        let buf = Buffer.alloc(photo.pictograph_photoChunk.byteLength + 0x10);
+        photo.pictograph_photoChunk.copy(buf);
+        for (let i = 0; i < 0x2bc0; i += 5) {
+            let data = buf.readBigUInt64BE(i) >> 24n;
+
+            for (let k = 0n; k < 8n; ++k) {
+                let pixel = (data >> (5n * (7n - k))) & 0x1Fn;
+                let i8f = Number(pixel) / 31.0 * 255.0;
+
+                sb.writeUInt8(Math.floor(i8f * 1.0));
+                sb.writeUInt8(Math.floor(i8f * 0.65));
+                sb.writeUInt8(Math.floor(i8f * 0.65));
+                sb.writeUInt8(0xFF);
+            }
+        }
+        this.clientStorage.pictoboxAlert.buf = sb.toBuffer();
+    }
+    
     @EventHandler(Z64OnlineEvents.SWORD_NEEDS_UPDATE)
     onSwordChange(evt: Sword) {
         this.ModLoader.logger.info(`Sword updated: ${Sword[evt]}`)
@@ -1050,6 +1090,7 @@ export default class MMOnlineClient {
                     this.updateBottles();
                     this.updateSyncContext();
                     this.updatePermFlags();
+                    this.updatePictobox();
                     this.syncTimer++;
                 }
             }

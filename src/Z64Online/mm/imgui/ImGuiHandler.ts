@@ -18,6 +18,9 @@ import { Z64O_DownloadResponsePacket } from "@Z64Online/common/network/Z64OPacke
 import { markAsTimeSync } from "@Z64Online/common/types/GameAliases";
 import MMOnlineClient from "../MMOnlineClient";
 import Z64Online from "@Z64Online/Z64Online";
+import { MMOnlineStorageClient } from "../storage/MMOnlineStorageClient";
+import { rgba, xy, xywh } from "modloader64_api/Sylvain/vec";
+import { FlipFlags } from "modloader64_api/Sylvain/Gfx";
 
 export class ImGuiHandler_MM extends ImGuiHandlerCommon {
 
@@ -30,6 +33,7 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
     input: string_ref = [""];
     result: string_ref = [""];
     lobbyConfig!: MMOnlineConfigCategory;
+    clientStorage: MMOnlineStorageClient = new MMOnlineStorageClient();
     amIHost!: boolean;
 
     constructor() {
