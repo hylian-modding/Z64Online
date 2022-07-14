@@ -8,6 +8,8 @@ import { Preinit } from "modloader64_api/PluginLifecycle";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { MMOnlineConfigCategory } from "../MMOnline";
 import { Z64O_ServerTimeStart, Z64O_SoTPacket, Z64O_SyncRequest, Z64O_SyncSettings, Z64O_TimePacket } from "../network/MMOPackets";
+import { MMOnlineStorage } from "../storage/MMOnlineStorage";
+import { ParentReference } from 'modloader64_api/SidedProxy/SidedProxy';
 
 export const RECORD_TICK_MODULO = 6
 export const NUM_SCHEDULE_TICKS = 196608;
@@ -21,12 +23,13 @@ export default class TimeSyncServer {
     ModLoader!: IModLoaderAPI;
     @InjectCore()
     core!: IZ64Main;
+    @ParentReference()
+    parent: any;
     simulatedTime!: number;
     simulatedDay!: number;
     simulatedSpeed!: number;
     simulatedNight!: number;
     sotActive: boolean = false;
-    lobbyConfig!: MMOnlineConfigCategory;
 
     @ServerNetworkHandler('Z64O_ServerTimeStart')
     serverUpdate(packet: Z64O_ServerTimeStart) {
@@ -93,16 +96,27 @@ export default class TimeSyncServer {
 
     @ServerNetworkHandler('Z64O_SyncRequest')
     onSyncRequest(packet: Z64O_SyncRequest){
-        this.lobbyConfig = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
-        console.log(`Player ${packet.player.nickname} requested the current sync mode; basic: ${this.lobbyConfig.syncModeBasic}, time: ${this.lobbyConfig.syncModeTime}`);
-        this.ModLoader.serverSide.sendPacketToSpecificPlayer(new Z64O_SyncRequest(packet.lobby, this.lobbyConfig.syncModeBasic, this.lobbyConfig.syncModeTime), packet.player);
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        console.log(`Player ${packet.player.nickname} requested the current sync mode; basic: ${!storage.MM_IS_TIME}, time: ${storage.MM_IS_TIME}`);
+        this.ModLoader.serverSide.sendPacketToSpecificPlayer(new Z64O_SyncRequest(packet.lobby, !storage.MM_IS_TIME, storage.MM_IS_TIME), packet.player);
     }
 
     @ServerNetworkHandler('Z64O_SyncSettings')
     onSyncSettings(packet: Z64O_SyncSettings){
-        this.lobbyConfig = this.ModLoader.config.registerConfigCategory("MMOnline") as MMOnlineConfigCategory;
-        this.lobbyConfig.syncModeBasic = packet.syncModeBasic;
-        this.lobbyConfig.syncModeTime = packet.syncModeTime;
+        let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
+            packet.lobby,
+            this.parent
+        ) as MMOnlineStorage;
+        if (storage === null) {
+            return;
+        }
+        storage.MM_IS_TIME = packet.syncModeTime;
         this.ModLoader.serverSide.sendPacket(new Z64O_SyncSettings(packet.syncModeBasic, packet.syncModeTime, packet.lobby));
     }
 
