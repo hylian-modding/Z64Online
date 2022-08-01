@@ -9,7 +9,6 @@ import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IZ64Utility } from "@Z64Online/common/api/InternalAPI";
 import { IZ64ClientStorage } from "@Z64Online/common/storage/Z64Storage";
 import { IPacketHeader } from "modloader64_api/NetworkHandler";
-import { IS_DEV_BUILD } from "@Z64Online/common/lib/IS_DEV_BUILD";
 import { SERVER_URL } from "@Z64Online/common/lib/Labels";
 
 export const SCENE_ARR_SIZE = 0xD20;

@@ -14,7 +14,6 @@ import { PuppetQuery, Z64OnlineEvents } from "@Z64Online/common/api/Z64API";
 import { IPuppet } from "@Z64Online/common/puppet/IPuppet";
 import { Scene } from "Z64Lib/API/MM/MMAPI";
 import { IZ64Master } from "@Z64Online/common/api/InternalAPI";
-import { LinkState } from "Z64Lib/API/Common/Z64API";
 import * as API from "Z64Lib/API/imports";
 
 export class PuppetOverlordServer_MM extends PuppetOverlordServer {
