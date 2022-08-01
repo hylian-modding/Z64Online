@@ -5,7 +5,7 @@
  */
 
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { number_ref, string_ref } from "modloader64_api/Sylvain/ImGui";
+import { bool_ref, number_ref, string_ref } from "modloader64_api/Sylvain/ImGui";
 
 export default class DListCrawler {
 
@@ -20,6 +20,7 @@ export default class DListCrawler {
     aliasTick: any = undefined;
     lastAlias: number = 0;
     isOpen: boolean = false;
+    dontrestore: bool_ref = [false];
 
     constructor(ModLoader: IModLoaderAPI) {
         this.ModLoader = ModLoader;
@@ -40,6 +41,7 @@ export default class DListCrawler {
             this.ModLoader.ImGui.newLine();
             this.ModLoader.ImGui.labelText("Current", this.current[0]);
             this.ModLoader.ImGui.labelText("Last", this.lastcommand[0]);
+            this.ModLoader.ImGui.checkbox("Don't Restore", this.dontrestore);
             if (this.ModLoader.ImGui.smallButton(this.buttonState)) {
                 if (this.buttonState === "RUN") {
                     this.lastcommand[0] = "";
@@ -52,7 +54,9 @@ export default class DListCrawler {
                         this.tick = this.ModLoader.utils.setIntervalFrames(() => {
                             if (this.lastcommand[0] !== "") {
                                 let cur = parseInt(this.current[0]);
-                                this.ModLoader.emulator.rdramWriteBuffer(cur, Buffer.from(this.lastcommand[0], 'hex'));
+                                if (!this.dontrestore[0]){
+                                    this.ModLoader.emulator.rdramWriteBuffer(cur, Buffer.from(this.lastcommand[0], 'hex'));
+                                }
                                 cur += 0x8;
                                 this.current[0] = `0x${cur.toString(16)}`;
                             }

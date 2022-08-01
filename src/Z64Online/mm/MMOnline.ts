@@ -73,6 +73,13 @@ export default class MMOnline implements IZ64GameMain, IZ64Utility {
     }
 
     getServerURL(): string {
-        return IS_DEV_BUILD ? `${SERVER_URL.current_url}:9035` : `${SERVER_URL.current_url}:8035`;
+        let port = "8035";
+        // #ifdef IS_DEV_BUILD
+        port = "9035";
+        //#endif
+        // #ifdef IS_BLEEDING_EDGE
+        port = "9036";
+        //#endif
+        return `${SERVER_URL.current_url}:${port}`;
     }
 }

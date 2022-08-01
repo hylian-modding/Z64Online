@@ -2,7 +2,7 @@
   "rootDir": "./",
   "outDir": "build",
   "compilerOptions": {
-    "rootDir": "./",
+    "rootDir": "./src",
     "target": "ESNEXT",
     "module": "commonjs",
     "sourceMap": true,

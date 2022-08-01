@@ -1,4 +1,3 @@
-// #ifdef IS_DEV_BUILD
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import fs from 'fs';
 import path from 'path';
@@ -13,6 +12,8 @@ import * as defines from '../cosmetics/Defines';
 import { MatrixTranslate } from "../cosmetics/utils/MatrixTranslate";
 import Z64OManifestParser from "../cosmetics/Z64OManifestParser";
 import { ListBoxData } from "./ListBoxData";
+
+// #ifdef IS_DEV_BUILD
 
 class MTX_Group {
     XR: number_ref = [0];
