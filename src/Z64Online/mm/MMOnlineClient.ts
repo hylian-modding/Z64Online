@@ -970,8 +970,7 @@ export default class MMOnlineClient {
 
         this.ModLoader.logger.info(`Recieved sync setting change; syncModeBasic: ${packet.syncModeBasic}, syncModeTime: ${packet.syncModeTime}`)
 
-        if (this.config.syncModeTime && !MM_IS_TIME) {
-
+        if (this.config.syncModeTime) {
             timeSyncStart = this.ModLoader.utils.setIntervalFrames(() => {
                 if (!this.core.MM!.helper.isLinkEnteringLoadingZone() &&
                     !this.core.MM!.helper.isFadeIn() &&
@@ -990,6 +989,8 @@ export default class MMOnlineClient {
                     timeSyncStart = undefined;
                 }
             }, 20);
+        }else{
+            bus.emit(Z64OnlineEvents.MMO_TIME_STOP);
         }
         if (!this.config.syncModeTime) {
             this.mmrSyncCheck();

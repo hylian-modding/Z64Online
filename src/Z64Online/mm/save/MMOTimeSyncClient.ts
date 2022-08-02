@@ -35,6 +35,7 @@ export default class TimeSyncClient {
     lobbyConfig!: MMOnlineConfigCategory;
     clientStorage: MMOnlineStorageClient = new MMOnlineStorageClient();
     sotTimeout: boolean = false;
+    timeSyncTickHandler: any = undefined;
 
     @Postinit()
     postInit() {
@@ -87,15 +88,28 @@ export default class TimeSyncClient {
 
     @EventHandler(Z64OnlineEvents.MMO_TIME_START)
     timeStarted() {
-        //console.log(`Client: MMO_TIME_START`)
-        this.ModLoader.utils.setIntervalFrames(() => {
-            if (this.core.MM?.helper.isTitleScreen()) return;
-            if (!this.lobbyConfig.syncModeTime) return;
-            this.ModLoader.clientSide.sendPacket(new Z64O_ServerTimeStart(true, this.ModLoader.clientLobby))
-            //bus.emit(Z64OnlineEvents.MMO_UPDATE_TIME);
-            //console.log(`Client: Z64O_ServerTimeStart`);
-        }, 200);
-        this.isStarted = true;
+        if (this.timeSyncTickHandler === undefined) {
+            this.timeSyncTickHandler = this.ModLoader.utils.setIntervalFrames(() => {
+                if (this.core.MM!.helper.isTitleScreen()) return;
+                if (!this.lobbyConfig.syncModeTime) return;
+                if (this.ModLoader.clientSide.getLobbyOwner(this.ModLoader.clientLobby).uuid === this.ModLoader.me.uuid) {
+                    this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time, this.core.MM!.save.current_day,
+                        this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby));
+                } else {
+                    this.ModLoader.clientSide.sendPacket(new Z64O_ServerTimeStart(true, this.ModLoader.clientLobby));
+                }
+            }, 200);
+            this.isStarted = true;
+        }
+    }
+
+    @EventHandler(Z64OnlineEvents.MMO_TIME_STOP)
+    timeStopped() {
+        if (this.timeSyncTickHandler !== undefined) {
+            this.isStarted = false;
+            this.ModLoader.utils.clearIntervalFrames(this.timeSyncTickHandler);
+            this.timeSyncTickHandler = undefined;
+        }
     }
 
     @NetworkHandler('Z64O_SoTPacket')

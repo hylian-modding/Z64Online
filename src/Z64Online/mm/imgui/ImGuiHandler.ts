@@ -94,8 +94,7 @@ export class ImGuiHandler_MM extends ImGuiHandlerCommon {
                         }
                         if (this.ModLoader.ImGui.menuItem("Sync Mode: Time", undefined, this.lobbyConfig.syncModeTime, this.amIHost)) {
                             this.lobbyConfig.syncModeTime = !this.lobbyConfig.syncModeTime;
-                            this.lobbyConfig.syncModeBasic = false;
-                            if(this.lobbyConfig.syncModeTime === false && this.lobbyConfig.syncModeBasic === false) this.lobbyConfig.syncModeBasic = true;
+                            this.lobbyConfig.syncModeBasic = !this.lobbyConfig.syncModeTime;
                             this.ModLoader.config.save();
                             console.log(`Sync config updated; Time: ${this.lobbyConfig.syncModeTime}`)
                             markAsTimeSync((((this.parent as unknown as Z64Online).MM as MMOnline).client as MMOnlineClient).clientStorage, this.lobbyConfig.syncModeTime)

@@ -41,10 +41,10 @@ export default class TimeSyncServer {
         //60 ticks = 20fps = 1 second
 
         // this.simulatedTime = this.simulatedTime + (this.simulatedSpeed + 3) * 200;
-        if (this.simulatedTime > NUM_TICKS_PER_DAY) {
+/*         if (this.simulatedTime > NUM_TICKS_PER_DAY) {
             this.simulatedTime = 0;
             this.simulatedDay++;
-        }
+        } */
 
         /* if (this.simulatedTime <= 0xBFFF && this.simulatedNight === 0) {
             this.simulatedTime = 0xC000;
