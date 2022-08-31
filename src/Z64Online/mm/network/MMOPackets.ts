@@ -33,13 +33,15 @@ export class Z64O_TimePacket extends Packet {
   day: number;
   speed: number;
   night: number;
+  reset?: boolean
 
-  constructor(time: number, day: number, speed: number, night: number, lobby: string) {
+  constructor(time: number, day: number, speed: number, night: number, lobby: string, reset?: boolean) {
     super('Z64O_TimePacket', 'Z64Online', lobby, false);
     this.time = time;
     this.day = day;
     this.speed = speed;
     this.night = night;
+    this.reset = reset;
   }
 
 }

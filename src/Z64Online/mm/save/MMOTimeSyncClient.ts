@@ -36,6 +36,8 @@ export default class TimeSyncClient {
     clientStorage: MMOnlineStorageClient = new MMOnlineStorageClient();
     sotTimeout: boolean = false;
     timeSyncTickHandler: any = undefined;
+    moonCrash = false;
+    moonThread: string | undefined;
 
     @Postinit()
     postInit() {
@@ -71,7 +73,7 @@ export default class TimeSyncClient {
         if (this.currentCutscene === 0xfff7 && !this.sotActive) {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 if (this.core.MM!.global.scene === 0x08 && !this.dontRepeat && !this.sotActive) {
-                    console.log(`song of time triggered! sending to others...`);
+                    console.log(`Song of Time triggered! Sending to others...`);
                     this.sentSoT = true;
                     this.sotActive = true;
                     this.ModLoader.clientSide.sendPacket(new Z64O_SoTPacket(true, this.ModLoader.clientLobby));
@@ -80,7 +82,21 @@ export default class TimeSyncClient {
                 }
             }, 40);
         }
-        if (this.core.MM!.global.scene !== 0x08 && this.core.MM!.global.scene_framecount === 20) {
+        if (this.core.MM!.global.scene == 0x2D && this.core.MM!.save.current_day === 4 && this.core.MM!.save.day_time >= 0x3FA0 && this.moonThread === undefined && !this.moonCrash) {
+            this.moonThread = this.ModLoader.utils.setIntervalFrames(() => {
+                if (this.core.MM!.global.scene === 0x8 && !this.moonCrash) {
+                    console.log(`Moon crash triggered! Resetting time...`);
+                    this.moonCrash = true;
+                    this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(0, 0, 0, 0, this.ModLoader.clientLobby, true));
+                    this.clientStorage.eventFlags = this.core.MM!.save.weekEventFlags; //Clear flags on SoT Cutscene
+                    this.ModLoader.clientSide.sendPacket(new Z64O_FlagUpdate(this.clientStorage.eventFlags, this.ModLoader.clientLobby));
+                    this.ModLoader.utils.clearIntervalFrames(this.moonThread!);
+                    this.moonThread = undefined;
+                }
+            }, 100);
+        }
+        if (this.core.MM!.global.scene !== 0x08 && this.core.MM!.global.scene !== 0x2D && this.core.MM!.global.scene_framecount === 5) {
+            this.moonCrash = false;
             this.sentSoT = false;
             this.dontRepeat = false;
         }
@@ -118,7 +134,7 @@ export default class TimeSyncClient {
         if (this.songOfTimeLoop !== undefined) return;
         if (!packet.isTriggered) return;
         this.sotActive = true;
-        console.log('recieving song of time! executing...')
+        console.log('Recieving Song of Time! Executing...')
         this.songOfTimeLoop = this.ModLoader.utils.setIntervalFrames(() => {
             if (!this.core.MM!.helper.isLinkEnteringLoadingZone() &&
                 !this.core.MM!.helper.isFadeIn() &&
@@ -141,6 +157,14 @@ export default class TimeSyncClient {
             return;
         }
         if (!this.isStarted) return;
+
+        if(packet.reset) {
+            this.core.MM!.save.day_time = packet.time;
+            this.core.MM!.save.current_day = packet.day;
+            this.core.MM!.save.day_night = packet.night;
+            this.core.MM!.save.time_speed = packet.speed;
+        }
+
         if (this.core.MM!.link.state === LinkState.BUSY || !this.core.MM!.helper.isInterfaceShown()) return;
         if (this.core.MM?.helper.isTitleScreen()) return;
         if (this.sotActive) return;
@@ -161,6 +185,7 @@ export default class TimeSyncClient {
             if (packet.time >= 0x4000) {
                 //console.log(`Moving forward a day? 1`)
                 this.core.MM!.save.day_time = packet.time;
+                if (packet.day < 4) this.core.MM!.save.current_day = packet.day;
                 //this.core.MM!.save.current_day = packet.day;
             }
         }

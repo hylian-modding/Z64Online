@@ -41,10 +41,10 @@ export default class TimeSyncServer {
         //60 ticks = 20fps = 1 second
 
         // this.simulatedTime = this.simulatedTime + (this.simulatedSpeed + 3) * 200;
-/*         if (this.simulatedTime > NUM_TICKS_PER_DAY) {
-            this.simulatedTime = 0;
-            this.simulatedDay++;
-        } */
+        /*         if (this.simulatedTime > NUM_TICKS_PER_DAY) {
+                    this.simulatedTime = 0;
+                    this.simulatedDay++;
+                } */
 
         /* if (this.simulatedTime <= 0xBFFF && this.simulatedNight === 0) {
             this.simulatedTime = 0xC000;
@@ -65,7 +65,7 @@ export default class TimeSyncServer {
     onSOT(packet: Z64O_SoTPacket) {
         //console.log(`Server: SoTPacket`);
         this.sotActive = packet.isTriggered;
-        if(!this.sotActive) return;
+        if (!this.sotActive) return;
         this.simulatedTime = 0;
         this.simulatedDay = 0;
         this.simulatedSpeed = 0;
@@ -75,12 +75,13 @@ export default class TimeSyncServer {
 
     @ServerNetworkHandler('Z64O_TimePacket')
     onTime(packet: Z64O_TimePacket) {
-        if (this.sotActive) {
+        if (this.sotActive || packet.reset) {
+            console.log(`Server: Resetting time.`)
             this.simulatedTime = 0;
             this.simulatedDay = 0;
             this.simulatedSpeed = 0;
             this.simulatedNight = 0;
-            this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket(this.simulatedTime, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
+            this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket(this.simulatedTime, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby, true));
             return;
         }
         //console.log(`Server: onTime: ${packet.time}`)
@@ -90,12 +91,11 @@ export default class TimeSyncServer {
         this.simulatedDay = packet.day;
         this.simulatedSpeed = packet.speed;
         this.simulatedNight = packet.night;
-
         this.ModLoader.serverSide.sendPacket(new Z64O_TimePacket((this.simulatedTime + 0x4000) % NUM_TICKS_PER_DAY, this.simulatedDay, this.simulatedSpeed, this.simulatedNight, packet.lobby));
     }
 
     @ServerNetworkHandler('Z64O_SyncRequest')
-    onSyncRequest(packet: Z64O_SyncRequest){
+    onSyncRequest(packet: Z64O_SyncRequest) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
@@ -108,7 +108,7 @@ export default class TimeSyncServer {
     }
 
     @ServerNetworkHandler('Z64O_SyncSettings')
-    onSyncSettings(packet: Z64O_SyncSettings){
+    onSyncSettings(packet: Z64O_SyncSettings) {
         let storage: MMOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
             packet.lobby,
             this.parent
