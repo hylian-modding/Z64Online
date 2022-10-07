@@ -13,7 +13,7 @@ export class OOT_to_MM {
     static convert(evt: Z64Online_ModelAllocation) {
         console.log(`Attempting to convert OOT model ${evt.name} to MM...`);
         let a = evt.model.readUInt8(0x500B);
-
+        evt.script = undefined;
         evt.model = Z64OManifestParser.removeMTXData(evt.model);
         let u = new UniversalAliasTable().createTable(evt.model, getManifestForFormOot(evt.age), false, Z64LibSupportedGames.OCARINA_OF_TIME, true, (sb: SmartBuffer) => {
             let fn = () => {
