@@ -12,6 +12,7 @@ import * as defines from '../cosmetics/Defines';
 import { MatrixTranslate } from "../cosmetics/utils/MatrixTranslate";
 import Z64OManifestParser from "../cosmetics/Z64OManifestParser";
 import { ListBoxData } from "./ListBoxData";
+import { zzplayas_to_zzconvert } from "Z64Lib/API/Common/ModelData/zzplayas_to_zzconvert";
 
 // #ifdef IS_DEV_BUILD
 
@@ -175,6 +176,18 @@ export class ZobjTester {
                     let evt = new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), this.forceAdultSizedInMM[0] ? 0x68 : getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK);
                     bus.emit(Z64OnlineEvents.PREPROCESS_ZOBJ, evt);
                     bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
+                }
+                if (this.ModLoader.ImGui.smallButton("Dump zzc zobj")) {
+                    let evt = new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), this.forceAdultSizedInMM[0] ? 0x68 : getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK);
+                    if (Z64OManifestParser.isOldZZPlayas(evt.model)) {
+                        let gameOverride = Z64_GAME;
+                        if (gameOverride === Z64LibSupportedGames.OCARINA_OF_TIME) {
+                            evt.model = zzplayas_to_zzconvert.processOotZobj(evt.model)!;
+                        } else {
+                            evt.model = zzplayas_to_zzconvert.processMMZobj(evt.model)!;
+                        }
+                    }
+                    fs.writeFileSync(`zobjFooter.zobj`, evt.model);
                 }
                 this.ModLoader.ImGui.nextColumn();
                 this.ModLoader.ImGui.labelText("", "Matrix Editor");
