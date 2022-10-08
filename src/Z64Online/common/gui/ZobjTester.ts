@@ -177,7 +177,7 @@ export class ZobjTester {
                     bus.emit(Z64OnlineEvents.PREPROCESS_ZOBJ, evt);
                     bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
                 }
-                if (this.ModLoader.ImGui.smallButton("Dump zzc zobj")) {
+                if (this.ModLoader.ImGui.smallButton("Dump As ZZConvert")) {
                     let evt = new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), this.forceAdultSizedInMM[0] ? 0x68 : getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK);
                     if (Z64OManifestParser.isOldZZPlayas(evt.model)) {
                         let gameOverride = Z64_GAME;
@@ -187,7 +187,7 @@ export class ZobjTester {
                             evt.model = zzplayas_to_zzconvert.processMMZobj(evt.model)!;
                         }
                     }
-                    fs.writeFileSync(`zobjFooter.zobj`, evt.model);
+                    fs.writeFileSync(`${this.zobjs[this.current[0]].name}_zzc.zobj`, evt.model);
                 }
                 this.ModLoader.ImGui.nextColumn();
                 this.ModLoader.ImGui.labelText("", "Matrix Editor");
