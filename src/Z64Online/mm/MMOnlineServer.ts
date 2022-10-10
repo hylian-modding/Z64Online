@@ -20,7 +20,7 @@ import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
 //import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
 //import { PvPServer } from "./pvp/PvPModule";
 import { mergePhotoData, MMOSaveData, PhotoSave } from "./save/MMOSaveData";
-import TimeSyncServer from "./save/MMOTimeSyncServer";
+import TimeSyncServer from "./time/MMOTimeSyncServer";
 import { MMOnlineStorage, MMOnlineSave_Server } from "./storage/MMOnlineStorage";
 import bitwise from 'bitwise';
 

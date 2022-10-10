@@ -274,12 +274,10 @@ export class MMOSaveData implements ISaveSyncData {
         if (storage.questStatus.heartPieceCount < obj.questStatus.heartPieceCount && obj.questStatus.heartPieceCount < 4) {
           storage.questStatus.heartPieceCount = obj.questStatus.heartPieceCount;
           bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
-        }
-        else if (obj.questStatus.heartPieceCount > 3) {
+        } else if (obj.questStatus.heartPieceCount > 3) {
           storage.questStatus.heartPieceCount = 0;
           bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
-        }
-        else if (storage.questStatus.heartPieceCount >= 3 && obj.questStatus.heartPieceCount === 0) {
+        } else if (storage.questStatus.heartPieceCount >= 3 && obj.questStatus.heartPieceCount === 0) {
           storage.questStatus.heartPieceCount = 0;
           bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
         }

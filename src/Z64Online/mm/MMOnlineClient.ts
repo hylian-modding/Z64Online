@@ -39,7 +39,7 @@ import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
 import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
 import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIsClient, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME, setSyncContext, Z64_IS_RANDOMIZER } from "@Z64Online/common/types/GameAliases";
-import TimeSyncClient from "./save/MMOTimeSyncClient";
+import TimeSyncClient from "./time/MMOTimeSyncClient";
 import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
 import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
 import bitwise from 'bitwise';

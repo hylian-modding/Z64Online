@@ -29,6 +29,7 @@ import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
 import fs from 'fs';
 import { ModelManagerOot } from "./models/ModelManagerOot";
 import OotOnline_ClientModules from "./OotOnline_ClientModules";
+import { Z64_SAVE } from "Z64Lib/src/Common/types/GameAliases";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -534,7 +535,7 @@ export default class OotOnlineClient {
             return;
         }
         this.ModLoader.emulator.rdramWrite16(
-            global.ModLoader.save_context + 0x1424,
+            Z64_SAVE + 0x1424,
             0x65
         );
     }

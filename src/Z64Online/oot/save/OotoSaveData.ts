@@ -228,7 +228,7 @@ export class OotOSaveData implements ISaveSyncData {
         }
         if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
           storage.heart_containers = obj.heart_containers;
-          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+          bus.emit(Z64OnlineEvents.GAINED_HEART_CONTAINER, {});
         }
         if (storage.heart_containers > 20) {
           storage.heart_containers = 20;
@@ -270,8 +270,15 @@ export class OotOSaveData implements ISaveSyncData {
 
         this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
 
-        if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
+        if (storage.questStatus.heartPieces < obj.questStatus.heartPieces && obj.questStatus.heartPieces < 4) {
+          storage.questStatus.heartPieces = obj.questStatus.heartPieces;
+          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+        } else if (obj.questStatus.heartPieces > 3) {
           storage.questStatus.heartPieces = 0;
+          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+        } else if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
+          storage.questStatus.heartPieces = 0;
+          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
         }
 
         if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
