@@ -38,7 +38,7 @@ export default class OotOnline_ClientModules {
     cdn!: CDNClient;
 
     // Sync related stuff
-    //@SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
+    @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
     @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
     puppets!: OOT_PuppetOverlordClient;
