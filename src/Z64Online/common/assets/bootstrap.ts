@@ -23,9 +23,10 @@ export default class AssetBootstrap {
         try {
             fs.mkdirSync("./cache");
         } catch (err: any) { }
-        let extractIfMissing = (p: string, buf: Buffer) => {
+        let extractIfMissing = (p: string, buf: Buffer, decode?: boolean) => {
             if (fs.existsSync(p)) return;
-            fs.writeFileSync(p, decodeAsset(buf));
+            if(decode === false) fs.writeFileSync(p, buf);
+            else fs.writeFileSync(p, decodeAsset(buf));
         };
         if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
             extractIfMissing(path.join("./cache", "human.zobj"), object_link_human);
@@ -38,7 +39,7 @@ export default class AssetBootstrap {
             extractIfMissing(path.join("./cache", "adult.zobj"), object_link_boy);
             extractIfMissing(path.join("./cache", "child.zobj"), object_link_child);
         }
-        extractIfMissing(path.join("./cache", "proxy_universal.zobj"), proxy_universal);
+        extractIfMissing(path.join("./cache", "proxy_universal.zobj"), proxy_universal, false);
     }
 
 }
