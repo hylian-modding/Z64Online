@@ -61,11 +61,11 @@ export default class AnimBankTester {
                     this.floorPlane = !this.floorPlane;
                 }
                 if (this.ModLoader.ImGui.smallButton("Restore Vanilla Bank")) {
-                    bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Tester", Buffer.alloc(1)));
+                    bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Vanilla", Buffer.alloc(1)));
                 }
                 if (this.ModLoader.ImGui.smallButton("Load Anim")) {
                     let fileBuf = fs.readFileSync(this.anims[this.current[0]]._path);
-                    bus.emit(Z64OnlineEvents.CONVERT_CUSTOM_ANIMATION, new Z64_AnimConvert(fileBuf, this.floorPlane))
+                    bus.emit(Z64OnlineEvents.CONVERT_CUSTOM_ANIMATION, new Z64_AnimConvert(this.anims[this.current[0]].name, fileBuf, this.floorPlane))
                 }
                 if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) this.ModLoader.ImGui.text(`Current Anim ID: 0x${this.core.OOT!.link.get_anim_id().toString(16)}`)
                 if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) this.ModLoader.ImGui.text(`Current Anim ID: 0x${this.core.MM!.link.get_anim_id().toString(16)}`)

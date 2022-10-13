@@ -592,7 +592,7 @@ export class WorldEventRewards {
                                 if (this.ModLoader.ImGui.menuItem(key, undefined, key === this.config.anim_bank)) {
                                     if (key === this.config.anim_bank) {
                                         this.config.anim_bank = "";
-                                        bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("vanilla", Buffer.alloc(1)));
+                                        bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Vanilla", Buffer.alloc(1)));
                                     } else {
                                         this.config.anim_bank = key;
                                         bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank(key, value));

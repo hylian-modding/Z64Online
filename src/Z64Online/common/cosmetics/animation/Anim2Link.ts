@@ -226,7 +226,6 @@ export class Anim2Link {
         }
         let link_animetion = tools.decompressDMAFileFromRom(this.rom, lkIndex);
         let gpk = tools.decompressDMAFileFromRom(this.rom, gpkIndex);
-        let gpk_clean = tools.decompressDMAFileFromRom(this.rom, gpkIndex);
         let nameArray = this.getAnimNameArray(animFile.split("\n"));
         let anim: Animation = new Animation;
         for (let i = 0; i < nameArray.length; i++) {
@@ -240,6 +239,6 @@ export class Anim2Link {
         }
 
         if (link_animetion.length <= 0) return;
-        bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Tester", link_animetion));
+        return link_animetion;
     }
 }

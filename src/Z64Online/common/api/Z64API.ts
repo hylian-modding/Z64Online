@@ -226,15 +226,16 @@ export class Z64_AnimationBank {
 }
 
 export class Z64_AnimConvert {
+  name!: string;
   fileBuf!: Buffer;
   floorPlane!: boolean;
-
-  constructor(fileBuf: Buffer, floorPlane: boolean) {
+  constructor(name: string, fileBuf: Buffer, floorPlane: boolean) {
+    this.name = name;
     this.fileBuf = fileBuf;
     this.floorPlane = floorPlane;
   }
-
 }
+
 export interface PuppetQuery {
   puppet: IPuppet | undefined;
   player: INetworkPlayer;
