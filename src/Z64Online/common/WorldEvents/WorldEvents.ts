@@ -331,6 +331,7 @@ export class WorldEventRewards {
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ADULT, Z64LibSupportedGames.OCARINA_OF_TIME));
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.CHILD, Z64LibSupportedGames.OCARINA_OF_TIME));
             bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, []);
+            bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Vanilla", Buffer.alloc(1)));
         }
     }
 
@@ -343,6 +344,7 @@ export class WorldEventRewards {
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.ZORA, Z64LibSupportedGames.MAJORAS_MASK));
             bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, new Z64Online_ModelAllocation(Buffer.alloc(1), AgeOrForm.FD, Z64LibSupportedGames.MAJORAS_MASK));
             bus.emit(Z64OnlineEvents.ON_SELECT_SOUND_PACK, []);
+            bus.emit(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK, new Z64_AnimationBank("Vanilla", Buffer.alloc(1)));
         }
     }
 
@@ -447,6 +449,7 @@ export class WorldEventRewards {
                         this.config.costumeLoadout = {};
                         this.config.equipmentLoadout = {};
                         this.config.voices = [];
+                        this.config.anim_bank = '';
                         this.ModLoader.utils.setTimeoutFrames(() => {
                             this.clearEverything_OOT();
                             this.clearEverything_MM();
