@@ -1,4 +1,4 @@
-import { Z64OnlineEvents, Z64_AnimationBank } from "@Z64Online/common/api/Z64API";
+import { Z64OnlineEvents, Z64_AnimationBank, Z64_AnimConvert } from "@Z64Online/common/api/Z64API";
 import { EventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { Init } from "modloader64_api/PluginLifecycle";
@@ -7,6 +7,7 @@ import { Z64O_PRIVATE_EVENTS } from "../../api/InternalAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { Z64_ANIM_BANK_DMA } from "@Z64Online/common/types/GameAliases";
 import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
+import { Anim2Link } from "./Anim2Link";
 
 export default class AnimationManager {
 
@@ -36,6 +37,16 @@ export default class AnimationManager {
         this.animationBankAddress = tools.getStartEndOfDMAEntry(evt.rom, Z64_ANIM_BANK_DMA).start;
     }
 
+    @EventHandler(Z64OnlineEvents.CONVERT_CUSTOM_ANIMATION)
+    onConvert(evt: Z64_AnimConvert){
+        let animFile = evt.fileBuf.toString();
+        let floorPlane = evt.floorPlane;
+        let anim2link = new Anim2Link(this.ModLoader);
+
+        anim2link.processAnims(animFile, floorPlane);
+        console.log("Animaton replacement complete!");
+    }
+    
     @EventHandler(Z64OnlineEvents.FORCE_CUSTOM_ANIMATION_BANK)
     onApply(evt: Z64_AnimationBank) {
         if (this.disabled) return;

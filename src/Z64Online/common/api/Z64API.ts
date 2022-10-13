@@ -49,6 +49,7 @@ export enum Z64OnlineEvents {
     SAVE_DATA_ITEM_SET = 'Z64Online:SAVE_DATA_ITEM_SET',
     LOCAL_MODEL_CHANGE_FINISHED = "Z64Online:LOCAL_MODEL_CHANGE_FINISHED",
     LOCAL_MODEL_REFRESH = "Z64Online:LOCAL_MODEL_REFRESH",
+    CONVERT_CUSTOM_ANIMATION = "Z64Online:CONVERT_CUSTOM_ANIMATION",
     CUSTOM_ANIMATION_BANK_REGISTER = "Z64Online:CUSTOM_ANIMATION_BANK_REGISTER",
     FORCE_CUSTOM_ANIMATION_BANK = "Z64Online:FORCE_CUSTOM_ANIMATION_BANK",
     CUSTOM_ANIMATION_BANK_EQUIPPED = "Z64Online:CUSTOM_ANIMATION_BANK_EQUIPPED",
@@ -224,6 +225,16 @@ export class Z64_AnimationBank {
   }
 }
 
+export class Z64_AnimConvert {
+  fileBuf!: Buffer;
+  floorPlane!: boolean;
+
+  constructor(fileBuf: Buffer, floorPlane: boolean) {
+    this.fileBuf = fileBuf;
+    this.floorPlane = floorPlane;
+  }
+
+}
 export interface PuppetQuery {
   puppet: IPuppet | undefined;
   player: INetworkPlayer;
