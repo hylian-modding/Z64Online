@@ -158,7 +158,7 @@ export default class TimeSyncClient {
         }
         if (!this.isStarted) return;
 
-        if(packet.reset) {
+        if (packet.reset) {
             this.core.MM!.save.day_time = packet.time;
             this.core.MM!.save.current_day = packet.day;
             this.core.MM!.save.day_night = packet.night;
@@ -185,7 +185,7 @@ export default class TimeSyncClient {
             if (packet.time >= 0x4000) {
                 //console.log(`Moving forward a day? 1`)
                 this.core.MM!.save.day_time = packet.time;
-                if (packet.day < 4) this.core.MM!.save.current_day = packet.day;
+                //if (packet.day < 4) this.core.MM!.save.current_day = packet.day;
                 //this.core.MM!.save.current_day = packet.day;
             }
         }
@@ -201,13 +201,13 @@ export default class TimeSyncClient {
             }
         }
         //Check to see if player goes forward one day
-        if (this.core.MM!.save.day_time >= 0x4000 && packet.time >= 0xC000) {
-            if (this.core.MM!.save.current_day > packet.day) {
-                //console.log(`Moving forward a day? 2`)
-                this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time, this.core.MM!.save.current_day,
-                    this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby))
-            }
-        }
+        /*         if (this.core.MM!.save.day_time >= 0x4000 && packet.time >= 0xC000) {
+                    if (this.core.MM!.save.current_day > packet.day) {
+                        //console.log(`Moving forward a day? 2`)
+                        this.ModLoader.clientSide.sendPacket(new Z64O_TimePacket(this.core.MM!.save.day_time, this.core.MM!.save.current_day,
+                            this.core.MM!.save.time_speed, this.core.MM!.save.day_night, this.ModLoader.clientLobby))
+                    }
+                } */
 
         //this.core.MM!.save.day_time = time;
         //this.core.MM!.save.current_day = day;
