@@ -133,7 +133,7 @@ export class OotR_BadSyncData {
     static saveBitMask: Buffer = Buffer.alloc(SCENE_ARR_SIZE, 0xFF);
 
     static blacklistu32(offset: number): void {
-        this.saveBitMask.writeUInt32BE(0, offset);
+        this.saveBitMask.writeUInt32BE(0, (offset * 0x1C) + 0x10);
     }
 
 }
