@@ -140,6 +140,10 @@ export class OotR_BadSyncData {
 
 OotR_BadSyncData.blacklistu32(0x30);
 OotR_BadSyncData.blacklistu32(0x31);
+OotR_BadSyncData.blacklistu32(0x32);
+OotR_BadSyncData.blacklistu32(0x33);
+OotR_BadSyncData.blacklistu32(0x34);
+OotR_BadSyncData.blacklistu32(0x35);
 
 export class OotRCosmeticHelper {
 
