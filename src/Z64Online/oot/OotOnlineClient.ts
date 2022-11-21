@@ -674,7 +674,7 @@ export default class OotOnlineClient {
         prog++;
         if (rom.readUInt8(start + prog) > 0) {
             let ver = rom.slice(start + prog - 1, start + prog - 1 + 0x4);
-            this.ModLoader.logger.info(`Oot Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
+            this.ModLoader.logger.info(`OoT Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
             RomFlags.isOotR = true;
             markAsRandomizer();
             try {
@@ -683,19 +683,26 @@ export default class OotOnlineClient {
             } catch (err: any) {
                 if (err) this.ModLoader.logger.error(err.stack);
             }
-            if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OotR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
+            if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OoTR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
                 RomFlags.hasFastBunHood = true;
             } else if (ver.readUInt32BE(0) >= 0x50253) {
                 let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
-                let buf = tools.decompressDMAFileFromRom(rom, 1496); //Decompressing OotR Payload, specifically
+                let buf = tools.decompressDMAFileFromRom(rom, 1496); //Decompressing OoTR Payload, specifically
                 let cosmetic_ctxt = buf.readUInt32BE(4);
                 let cosmetic_frmt_ver = buf.readUInt32BE(cosmetic_ctxt - 0x80400000);
-                if (cosmetic_frmt_ver === 0x1F073FD8) {
-                    if (buf.readInt8((cosmetic_ctxt + 0x49C) - 0x80400000) === 0x01) {
+                if (cosmetic_frmt_ver === 0x1F073FD8 || cosmetic_frmt_ver === 0x1F073FD9) {
+                    let bunHood_offset = 0x49C; //OoTR v5.2.83 - v6.0.62 Fast Bunny Hood Enabled Byte Offset from Cosmetic Context
+                    if (ver.readUInt32BE(0) >= 0x6003F && ver.readUInt32BE(0) < 0x6024B) bunHood_offset = 0x49B; //OoTR v6.0.63 - v6.2.74
+                    if (ver.readUInt32BE(0) >= 0x6024B && ver.readUInt32BE(0) < 0x6025F) bunHood_offset = 0x533; //OoTR v6.2.75 - v6.2.94
+                    if (ver.readUInt32BE(0) >= 0x6025F && ver.readUInt32BE(0) < 0x602CB) bunHood_offset = 0x527; //OoTR v6.2.95 - v6.2.202
+                    if (ver.readUInt32BE(0) >= 0x602CB && ver.readUInt32BE(0) < 0x602CE) bunHood_offset = 0x52B; //OoTR v6.2.203 - v6.2.205
+                    if (ver.readUInt32BE(0) >= 0x602CE && ver.readUInt32BE(0) < 0x60901) bunHood_offset = 0x527; //OoTR v6.2.206 - v6.9.0
+                    if (ver.readUInt32BE(0) >= 0x60901 && ver.readUInt32BE(0) <= 0x70001) bunHood_offset = 0x528; //OoTR v6.9.1 - v7.0.1
+                    if (buf.readInt8((cosmetic_ctxt + bunHood_offset) - 0x80400000) === 0x01) {
                         RomFlags.hasFastBunHood = true;
                     }
                 } else {
-                    this.ModLoader.logger.info('Unexpected Cosmetic Format Version. Ask a developer to check if the latest version of the randomizer has changed things.');
+                    this.ModLoader.logger.info(`Unexpected Cosmetic Format Version: 0x${cosmetic_frmt_ver.toString(16)}. Ask a developer to check if the latest version of the randomizer has changed things.`);
                 }
             }
         } else {
