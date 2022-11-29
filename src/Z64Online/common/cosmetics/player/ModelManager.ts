@@ -371,7 +371,6 @@ export class ModelManagerClient {
     bus.emit(Z64OnlineEvents.EQUIPMENT_LOAD_END, {});
   }
 
-  @EventHandler(Z64OnlineEvents.PUPPETS_CLEAR)
   onPuppetsClear(evt: any) {
     this.ModLoader.utils.setTimeoutFrames(() => {
       this.allocationManager.deallocateAllPlayers();

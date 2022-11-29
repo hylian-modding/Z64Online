@@ -33,7 +33,6 @@ export abstract class PuppetOverlordClient implements IPuppetOverlordClient {
       }
     );
     this.awaiting_spawn.splice(0, this.awaiting_spawn.length);
-    bus.emit(Z64OnlineEvents.PUPPETS_CLEAR, {});
   }
 
   localPlayerChangingScenes(entering_scene: Scene, age: AgeOrForm) {

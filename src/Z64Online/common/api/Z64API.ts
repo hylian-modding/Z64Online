@@ -43,7 +43,6 @@ export enum Z64OnlineEvents {
     EQUIPMENT_LOAD_START = "Z64Online:EqZobjLoadStart",
     EQUIPMENT_LOAD_END = "Z64Online:EqZobjLoadEnd",
     DEBUG_DUMP_RAM = "Z64Online:DumpRam",
-    PUPPETS_CLEAR = "Z64Online:PuppetsClear",
     ON_MODEL_MANAGER_READY = "Z64Online:ON_MODEL_MANAGER_READY",
     PUPPET_AGE_CHANGED = 'Z64Online:PUPPET_AGE_CHANGED',
     SAVE_DATA_ITEM_SET = 'Z64Online:SAVE_DATA_ITEM_SET',
@@ -105,6 +104,7 @@ export class Z64Online_LocalModelChangeProcessEvt {
 }
 
 export function registerModel(model: Buffer, noautoGC: boolean = false): IModelReference | undefined {
+  //@ts-ignore
   let evt = new Z64Online_ModelAllocation(model, 0x69, Z64_GAME);
   bus.emit(Z64OnlineEvents.ALLOCATE_MODEL_BLOCK, evt);
   if (evt.ref === undefined) return undefined;
