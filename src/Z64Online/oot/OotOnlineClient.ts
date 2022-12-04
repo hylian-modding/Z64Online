@@ -697,7 +697,30 @@ export default class OotOnlineClient {
                     if (ver.readUInt32BE(0) >= 0x6025F && ver.readUInt32BE(0) < 0x602CB) bunHood_offset = 0x527; //OoTR v6.2.95 - v6.2.202
                     if (ver.readUInt32BE(0) >= 0x602CB && ver.readUInt32BE(0) < 0x602CE) bunHood_offset = 0x52B; //OoTR v6.2.203 - v6.2.205
                     if (ver.readUInt32BE(0) >= 0x602CE && ver.readUInt32BE(0) < 0x60901) bunHood_offset = 0x527; //OoTR v6.2.206 - v6.9.0
-                    if (ver.readUInt32BE(0) >= 0x60901 && ver.readUInt32BE(0) <= 0x70001) bunHood_offset = 0x528; //OoTR v6.9.1 - v7.0.1
+                    if (ver.readUInt32BE(0) >= 0x60901 && ver.readUInt32BE(0) < 0x70101) bunHood_offset = 0x528; //OoTR v6.9.1 - v7.1.1
+                    if (ver.readUInt32BE(0) >= 0x70101) {//Code to try and check OoTR's Github's asm_symbols.txt file in a state that matches the OoTR version to a tag
+                        let common_url_start = `https://raw.githubusercontent.com/TestRunnerSRL/OoT-Randomizer/`;
+                        let common_url_end = `/ASM/build/asm_symbols.txt`;
+                        let symbols_txt = ``;
+                        var fetchUrl = require("fetch").fetchUrl;
+                        fetchUrl(`${common_url_start}${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}${common_url_end}`)
+                        .then(function(response) {//Trying dev build version format first (i.e.- #.#.#)
+                            if (response.ok) return response.text();
+                            else fetchUrl(`${common_url_start}v${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}${common_url_end}`)
+                            .then(function(response) {//Trying longer stable version format next (i.e.- v#.#.#)
+                                if (response.ok) return response.text();
+                                else fetchUrl(`${common_url_start}v${ver.readUInt8(1)}.${ver.readUInt8(2)}${common_url_end}`)
+                                .then(function(response) {//Trying stable version format last (i.e.- v#.#)
+                                    if (response.ok) return response.text();
+                                })
+                            })
+                            .then(function(text) {
+                                symbols_txt = text;
+                                let bunHood_symbol = symbols_txt.match(/([0-9A-Fa-f]+?)(?= FAST_BUNNY_HOOD_ENABLED)/g);
+                                if (bunHood_symbol) bunHood_offset = parseInt(bunHood_symbol[0], 16) - cosmetic_ctxt;
+                            });
+                        });
+                    }
                     if (buf.readInt8((cosmetic_ctxt + bunHood_offset) - 0x80400000) === 0x01) {
                         RomFlags.hasFastBunHood = true;
                     }
