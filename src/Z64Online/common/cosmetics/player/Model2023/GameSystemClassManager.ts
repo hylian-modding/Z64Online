@@ -1,5 +1,5 @@
 import { ModelSystemSupportedGames } from "./ModelSystemSupportedGames";
-import OotGame from './games/z64/oot/OotGame';
+import OotGame from './mupen/oot/OotGame';
 import IModelSystemGame from './IModelSystemGame';
 
 export default class GameSystemClassManager {
