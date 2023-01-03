@@ -165,7 +165,7 @@ export default class PuppetClient {
         return PuppetOffsets.offsets.get(struct)!.members.get(member)!.size;
     }
 
-    //#ifdef IS_DEV_BUILD
+    //#ifdef HAS_PUPPET_DEBUGGER
     makeTestPuppet(ModLoader: IModLoaderAPI) {
         ModLoader.logger.debug("Testing makePuppet...");
         if (this.makePuppetArgs <= 0) {
