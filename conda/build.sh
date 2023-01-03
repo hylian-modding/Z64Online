@@ -1,4 +1,3 @@
-mkdir -p $PREFIX/bin
-mkdir -p $PREFIX/bin/client
-mkdir -p $PREFIX/bin/client/mods
-cp -r ./Z64Online $PREFIX/bin/client/mods
+mkdir -p $PREFIX/client
+mkdir -p $PREFIX/client/mods
+cp ./Z64Online/Z64Online.pak $PREFIX/client/mods/Z64Online.pak
