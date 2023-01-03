@@ -76,13 +76,13 @@ export class WorldEventRewards {
     @EventHandler(Z64OnlineEvents.POST_LOADED_MODELS_LIST)
     onModelPost(evt: any) {
         this.customModelRegistry = evt.models;
-        let eqMap: Map<string, Z64Online_EquipmentPak> = evt.equipment;
+/*         let eqMap: Map<string, Z64Online_EquipmentPak> = evt.equipment;
         eqMap.forEach((value: Z64Online_EquipmentPak) => {
             if (!this.customModelsFilesEquipment.has(value.category)) {
                 this.customModelsFilesEquipment.set(value.category, []);
             }
             this.customModelsFilesEquipment.get(value.category)!.push(value);
-        });
+        }); */
     }
 
     @EventHandler(Z64OnlineEvents.POST_LOADED_SOUND_LIST)
@@ -554,6 +554,7 @@ export class WorldEventRewards {
                                             this.ModLoader.config.save();
                                         } else {
                                             let evt = new Z64Online_ModelAllocation(Buffer.alloc(1), form, Z64_GAME);
+                                            evt.name = key;
                                             evt.ref = value;
                                             this.ModLoader.utils.setTimeoutFrames(() => {
                                                 bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);

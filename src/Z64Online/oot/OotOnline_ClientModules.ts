@@ -2,24 +2,20 @@ import { setupGameParentReference } from "@Z64Online/common/api/GameParent";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
 import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
 import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
-import EponaModelManager from "@Z64Online/common/cosmetics/epona/EponaModelManager";
-import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
 import { NPCReplacer } from "@Z64Online/common/cosmetics/npc/NPCReplacer";
 import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
 import { SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
-import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
 import { IZ64GameMain } from "@Z64Online/common/types/Types";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
 import { SidedProxy, ProxySide, ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
 import ActorFixManager from "../common/actors/ActorFixManager";
 import { ActorHookingManagerClient } from "./actor_systems/ActorHookingSystem";
-import { Multiworld } from "./compat/OotR";
 import SongOfSoaringCompat from "./compat/SongOfSoaring";
 import GamemodeManager from "./gamemodes/GamemodeManager";
 import { ImGuiHandler } from "./imgui/ImGuiHandler";
 import { Notifications } from "./imgui/Notifications";
-import { OOT_PuppetOverlordClient } from "./puppet/OOT_PuppetOverlord";
 import { PvPModule } from "./pvp/PvPModule";
+import PuppetClient from '../common/puppet/Puppet2023/PuppetClient';
 
 export default class OotOnline_ClientModules {
 
@@ -28,26 +24,24 @@ export default class OotOnline_ClientModules {
     emotes!: EmoteManager;
     @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
     modelManager!: ModelManagerClient;
-    @SidedProxy(ProxySide.CLIENT, NaviModelManager)
-    naviManager!: NaviModelManager;
+    //@SidedProxy(ProxySide.CLIENT, NaviModelManager)
+    //naviManager!: NaviModelManager;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
     sound!: SoundManagerClient;
     @SidedProxy(ProxySide.CLIENT, CDNClient)
     cdn!: CDNClient;
+    @SidedProxy(ProxySide.CLIENT, PuppetClient)
+    puppets!: PuppetClient;
 
     // Sync related stuff
     @SidedProxy(ProxySide.CLIENT, ActorHookingManagerClient)
     actorHooks!: ActorHookingManagerClient;
-    @SidedProxy(ProxySide.CLIENT, OOT_PuppetOverlordClient)
-    puppets!: OOT_PuppetOverlordClient;
 
     // GUI stuff
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler)
     gui!: ImGuiHandler;
-    @SidedProxy(ProxySide.CLIENT, PuppetNameTagHandler)
-    nametags!: PuppetNameTagHandler;
     @SidedProxy(ProxySide.CLIENT, Notifications)
     notificationManager!: Notifications;
 
@@ -56,8 +50,6 @@ export default class OotOnline_ClientModules {
     worldEvents!: WorldEvents;
 
     // Compatibility modules.
-    @SidedProxy(ProxySide.CLIENT, Multiworld)
-    multiworld!: Multiworld;
     @SidedProxy(ProxySide.CLIENT, SongOfSoaringCompat)
     songOfSoaring!: SongOfSoaringCompat;
 
@@ -71,8 +63,6 @@ export default class OotOnline_ClientModules {
     pvp!: PvPModule;
     //@SidedProxy(ProxySide.CLIENT, NPCReplacer)
     npc!: NPCReplacer;
-    //@SidedProxy(ProxySide.CLIENT, EponaModelManager)
-    eponaManager!: EponaModelManager;
     //@SidedProxy(ProxySide.CLIENT, GamemodeManager)
     gamemodes!: GamemodeManager;
     // #endif
@@ -82,7 +72,6 @@ export default class OotOnline_ClientModules {
     constructor() {
         setTimeout(() => {
             setupGameParentReference(this.actorHooks, (this.parent as any).OOT);
-            setupGameParentReference(this.multiworld, (this.parent as any).OOT);
         }, 10 * 1000);
     }
 }

@@ -14,14 +14,16 @@ export class OotOnlineStorage extends OotOnlineStorageBase {
 export interface IOOTSyncSaveServer extends IOOTSyncSave {
   isOotR: boolean;
   isVanilla: boolean;
-  hasFastBunHood?: boolean;
-  isMultiworld?: boolean;
+  hasFastBunHood: boolean;
+  isMultiworld: boolean;
+  hasPotsanity: boolean;
+  PotsanityFlagSize: number;
 }
 
 class OOTSyncSaveServer implements IOOTSyncSaveServer {
   isOotR: boolean = false;
-  hasFastBunHood?: boolean = false;
-  isMultiworld?: boolean = false;
+  hasFastBunHood: boolean = false;
+  isMultiworld: boolean = false;
   isVanilla: boolean = false;
   inventory!: IOOTInventorySync;
   dungeon_items: Buffer = Buffer.alloc(0x14);
@@ -44,6 +46,9 @@ class OOTSyncSaveServer implements IOOTSyncSaveServer {
   scarecrowsSongChildFlag: boolean = false;
   scarecrowsSong: Buffer = Buffer.alloc(SCARECROW_ARR_SIZE);
   checksum: number = 0;
+  hasPotsanity: boolean = false;
+  PotsanityFlagSize: number = -1;
+  collectible_override_flags: Buffer = Buffer.alloc(1);
 }
 
 class OOTKeyRingServer implements IKeyRing {

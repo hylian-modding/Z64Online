@@ -220,7 +220,12 @@ export default class OotOnlineServer {
         world.save.isVanilla = packet.isVanilla;
         world.save.isOotR = packet.isRando;
         world.save.hasFastBunHood = packet.hasFastBunHood;
-        world.save.isMultiworld = packet.isMultiworld;
+        world.save.hasPotsanity = packet.hasPotsanity;
+        world.save.PotsanityFlagSize = packet.potsanityFlagSize;
+        if (world.save.PotsanityFlagSize > -1){
+            this.ModLoader.logger.debug(`Setting up potsanity for lobby ${packet.lobby}`);
+            world.save.collectible_override_flags = Buffer.alloc(world.save.PotsanityFlagSize);
+        }
     }
 
     //------------------------------

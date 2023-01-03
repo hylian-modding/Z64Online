@@ -1,11 +1,11 @@
-import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak, registerModel } from "@Z64Online/common/api/Z64API";
+import { Z64Online_ModelAllocation, IModelReference, Z64OnlineEvents, Z64OnlineAPI_BankModelRequest, Z64Online_EquipmentPak } from "@Z64Online/common/api/Z64API";
 import { BackwardsCompat } from "@Z64Online/common/compat/BackwardsCompat";
-import { getAgeOrForm, getChildID } from "@Z64Online/common/types/GameAliases";
+import { getAgeOrForm, getChildID, Z64_OBJECT_TABLE_RAM } from "@Z64Online/common/types/GameAliases";
 import { bus, EventHandler, PrivateEventHandler } from "modloader64_api/EventHandler";
 import path from "path";
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
-import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
+import { Z64_GAME, Z64_PLAYER } from "Z64Lib/src/Common/types/GameAliases";
 import { UniversalAliasTable, getManifestForForm } from "../UniversalAliasTable";
 import { ModelManagerClient } from "./ModelManager";
 import fs from 'fs';
@@ -18,6 +18,7 @@ import { number_ref } from "modloader64_api/Sylvain/ImGui";
 import { MatrixTranslate } from "../utils/MatrixTranslate";
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
+import { ModelAllocationManager } from "../utils/ModelAllocationManager";
 
 export class ModelAPIHandlers {
 
@@ -35,18 +36,24 @@ export class ModelAPIHandlers {
         evt.buf = this.parent.allocationManager.getModel(ref).zobj;
     }
 
+    private findLink(){
+        let index = this.parent.ModLoader.emulator.rdramRead8(Z64_PLAYER + 0x1E);
+        let obj_list: number = Z64_OBJECT_TABLE_RAM;
+        obj_list += 0xC;
+        let offset = index * 0x44;
+        obj_list += offset;
+        obj_list += 0x4;
+        let pointer = this.parent.ModLoader.emulator.rdramRead32(obj_list);
+        return pointer;
+    }
+
     @EventHandler(Z64OnlineEvents.GET_LINK_OBJECT)
     onGetLink(evt: number_ref) {
-        evt[0] = this.parent.child.findLink();
+        evt[0] = this.findLink();
     }
 
     @EventHandler(Z64OnlineEvents.REFRESH_EQUIPMENT)
     onRefresh() {
-        if (this.parent.managerDisabled) return;
-        this.parent.ModLoader.utils.setTimeoutFrames(() => {
-            this.parent.onSceneChange(-1);
-            this.parent.proxyNeedsSync = true;
-        }, 1);
     }
 
     @EventHandler(Z64OnlineEvents.LOAD_EQUIPMENT_BUFFER)
@@ -126,7 +133,7 @@ export class ModelAPIHandlers {
         } else {
             model = evt.model;
         }
-        ref = registerModel(model)!;
+        ref = ModelAllocationManager.singleton.registerModel(model);
         if (ref === undefined) return undefined;
         if (evt.script !== undefined) {
             ref.script = evt.script;
@@ -178,6 +185,7 @@ export class ModelAPIHandlers {
         e.name = path.parse(evt).name;
         if (game === Z64LibSupportedGames.MAJORAS_MASK) {
             if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
+                //@ts-ignore
                 e.age = 0x68;
             }
         }

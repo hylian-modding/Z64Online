@@ -1,50 +1,44 @@
-import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
-import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
-import { Init, onTick, onViUpdate, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
-import { ModelManagerMM } from "./models/ModelManagerMM";
-import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
-import { bus, EventHandler, EventsClient, EventsServer, PrivateEventHandler } from "modloader64_api/EventHandler";
+import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
+import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
-import fs from 'fs';
-import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { IModLoaderAPI, IPlugin, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
-import { ImGuiHandler_MM } from "./imgui/ImGuiHandler";
+import { CDNClient } from "@Z64Online/common/cdn/CDNClient";
+import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
+import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
+import { ModelManagerClient } from "@Z64Online/common/cosmetics/player/ModelManager";
+import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
+import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
+import { Z64O_BottleUpdatePacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_UpdateKeyringPacket, Z64O_UpdateSaveDataPacket } from "@Z64Online/common/network/Z64OPackets";
+import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIsClient, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME, setSyncContext } from "@Z64Online/common/types/GameAliases";
+import RomFlags from "@Z64Online/common/types/RomFlags";
+import { AgeOrForm } from "@Z64Online/common/types/Types";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
-import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import bitwise from 'bitwise';
+import fs from 'fs';
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { DiscordStatus } from "modloader64_api/Discord";
-import { INetworkPlayer, IPacketHeader, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
-import { IMMOnlineLobbyConfig, MMOnlineConfigCategory, syncMode } from "./MMOnline";
+import { bus, EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
+import { IModLoaderAPI, IPlugin, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
+import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
+import { IPacketHeader, LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
+import { Init, onTick, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
+import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
+import path from "path";
+import { SmartBuffer } from 'smart-buffer';
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { IOvlPayloadResult, Sword, UpgradeCountLookup } from "Z64Lib/API/Common/Z64API";
+import * as API from 'Z64Lib/API/imports';
+import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
+import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
+import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
+import { ImGuiHandler_MM } from "./imgui/ImGuiHandler";
+import { IMMOnlineLobbyConfig, MMOnlineConfigCategory } from "./MMOnline";
+import { MMO_PictoboxPacket, Z64O_FlagUpdate, Z64O_MMR_QuestStorage, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings, Z64O_TimePacket } from "./network/MMOPackets";
+import { applyPhotoToContext, createPhotoFromContext, mergePhotoData, MMOSaveData, PhotoSave } from "./save/MMOSaveData";
 import { permFlags } from "./save/permflags";
 import { MMOnlineStorage } from "./storage/MMOnlineStorage";
 import { MMOnlineStorageClient } from "./storage/MMOnlineStorageClient";
-import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
-import path from "path";
-import { addToKillFeedQueue } from "modloader64_api/Announcements";
-import { GUITunnelPacket } from "modloader64_api/GUITunnel";
-import * as API from 'Z64Lib/API/imports';
-import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
-import { AgeOrForm } from "@Z64Online/common/types/Types";
-import RomFlags from "@Z64Online/mm/compat/RomFlags";
-import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_BottleUpdatePacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "@Z64Online/common/network/Z64OPackets";
-import { UpgradeCountLookup, AmmoUpgrade, IOvlPayloadResult, Sword, Z64Events } from "Z64Lib/API/Common/Z64API";
-import { InventoryItem, IInventory } from "Z64Lib/API/MM/MMAPI";
-import PuppetOverlord_MM from "./puppet/PuppetOverlord_MM";
-export let GHOST_MODE_TRIGGERED: boolean = false;
-import { EventFlags } from 'Z64Lib/API/MM/EventFlags';
-import { Z64O_TimePacket, Z64O_PermFlagsPacket, Z64O_SyncSettings, Z64O_FlagUpdate, Z64O_SoTPacket, Z64O_MMR_Sync, Z64O_MMR_QuestStorage, MMO_PictoboxPacket } from "./network/MMOPackets";
-import { applyPhotoToContext, createPhotoFromContext, mergePhotoData, MMOSaveData, PhotoSave } from "./save/MMOSaveData";
-import { SoundAccessSingleton, SoundManagerClient } from "@Z64Online/common/cosmetics/sound/SoundManager";
-import { markAsRandomizer } from "Z64Lib/src/Common/types/GameAliases";
-import NaviModelManager from "@Z64Online/common/cosmetics/navi/NaviModelManager";
-import AnimationManager from "@Z64Online/common/cosmetics/animation/AnimationManager";
-import { markAsFairySync, markAsKeySync, markAsSkullSync, markAsTimeSync, markIsClient, MM_IS_FAIRY, MM_IS_KEY_KEEP, MM_IS_SKULL, MM_IS_TIME, setSyncContext, Z64_IS_RANDOMIZER } from "@Z64Online/common/types/GameAliases";
 import TimeSyncClient from "./time/MMOTimeSyncClient";
-import ActorFixManager from "@Z64Online/common/actors/ActorFixManager";
-import { EmoteManager } from "@Z64Online/common/cosmetics/animation/emoteManager";
-import bitwise from 'bitwise';
-import { SmartBuffer } from 'smart-buffer';
-import PuppetNameTagHandler from "@Z64Online/common/gui/PuppetNameTagHandler";
+export let GHOST_MODE_TRIGGERED: boolean = false;
 
 function RGBA32ToA5(rgba: Buffer) {
     let i, k, data
@@ -83,14 +77,10 @@ export default class MMOnlineClient {
     cdn!: CDNClient;
     @SidedProxy(ProxySide.CLIENT, ModelManagerClient)
     modelManager!: ModelManagerClient;
-    @SidedProxy(ProxySide.CLIENT, NaviModelManager)
-    naviManager!: NaviModelManager;
     @SidedProxy(ProxySide.CLIENT, AnimationManager)
     animManager!: AnimationManager;
     @SidedProxy(ProxySide.CLIENT, ImGuiHandler_MM)
     gui!: ImGuiHandler_MM;
-    @SidedProxy(ProxySide.CLIENT, PuppetOverlord_MM)
-    puppets!: PuppetOverlord_MM;
     @SidedProxy(ProxySide.CLIENT, WorldEvents)
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.CLIENT, SoundManagerClient)
@@ -217,8 +207,6 @@ export default class MMOnlineClient {
         this.ModLoader.config.setData("MMOnline", "syncModeTime", false);
         this.ModLoader.config.setData("MMOnline", "notifications", true);
         this.ModLoader.config.setData("MMOnline", "nameplates", true);
-
-        this.modelManager.child = new ModelManagerMM(this.modelManager);
     }
 
     @Init()
@@ -418,7 +406,7 @@ export default class MMOnlineClient {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
                     this.ModLoader.clientSide.sendPacket(new Z64O_DownloadRequestPacket(this.ModLoader.clientLobby, new MMOSaveData(this.core.MM!, this.ModLoader).createSave()));
-                    this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isMMR, RomFlags.isVanilla));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isRando, RomFlags.isVanilla, RomFlags.hasFastBunHood, RomFlags.OotR_HasPotsanity, RomFlags.OotR_PotsanityFlagSize));
                 }
             }, 200);
             this.syncPending = true;

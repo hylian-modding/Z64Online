@@ -86,9 +86,8 @@ overlay/SoTHax/bin_mm
 src/MMR_15_0_10_Enemizer_28_2.bps
 src/MMR_skulltula_fairy_shffl.bps
 banks/link_animetion.zdata
-overlay/DoorFix/bin/DoorFix_mm.ovl
-overlay/DoorFix/bin/DoorFix_mm.ovl
-overlay/DoorFix/bin/DoorFix_mm.ovl
-overlay/DoorFix/bin/DoorFix_oot.ovl
 ModLoader64-config-player1.json
 ModLoader64-config-player2.json
+overlay/CustomEponaObject/bin/CustomEponaObject.ts
+*.ovl
+*.zobj

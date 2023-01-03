@@ -1,35 +1,31 @@
-import { Z64O_PRIVATE_EVENTS, SendToScene } from "@Z64Online/common/api/InternalAPI";
+import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_PlayerScene, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
 import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import { getLinkSoundID, markAsRandomizer, markIsClient, setSyncContext } from "@Z64Online/common/types/GameAliases";
 import { AgeOrForm } from "@Z64Online/common/types/Types";
-import path from "path";
+import fs from 'fs';
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { DiscordStatus } from "modloader64_api/Discord";
-import { EventHandler, PrivateEventHandler, EventsClient, bus } from "modloader64_api/EventHandler";
+import { bus, EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, IPlugin, ModLoaderEvents } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { LobbyData, NetworkHandler } from "modloader64_api/NetworkHandler";
-import { Preinit, Init, Postinit, onTick } from "modloader64_api/PluginLifecycle";
-import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
+import { Init, onTick, Postinit, Preinit } from "modloader64_api/PluginLifecycle";
+import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { Z64Events, UpgradeCountLookup, AmmoUpgrade, LinkState } from "Z64Lib/API/Common/Z64API";
-import { InventoryItem, IInventory } from "Z64Lib/API/OoT/OOTAPI";
-import { Strength } from "Z64Lib/API/OoT/OOTAPI";
+import { AmmoUpgrade, UpgradeCountLookup, Z64Events } from "Z64Lib/API/Common/Z64API";
+import { IInventory, InventoryItem, Strength } from "Z64Lib/API/OoT/OOTAPI";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
-import { MultiWorld_ItemPacket, OotRCosmeticHelper, RomansCosmeticHelper } from "./compat/OotR";
-import RomFlags from "./compat/RomFlags";
-import { Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
+import { Z64_SAVE } from "Z64Lib/src/Common/types/GameAliases";
+import { Z64O_BottleUpdatePacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_SceneRequestPacket, Z64O_UpdateKeyringPacket, Z64O_UpdateSaveDataPacket } from "../common/network/Z64OPackets";
+import RomFlags from "../common/types/RomFlags";
+import { OotR_FAST_BUNNY_HOOD_ENABLED, OotR_PotsanityHelper, OotR_SignatureManager } from './compat/OotR';
 import { IOotOnlineLobbyConfig, OotOnlineConfigCategory } from "./OotOnline";
+import OotOnline_ClientModules from "./OotOnline_ClientModules";
 import { ThiccOpa } from "./opa/ThiccOpa";
 import { OotOSaveData } from "./save/OotoSaveData";
-import { OotOnlineStorage } from "./storage/OotOnlineStorage";
 import { OotOnlineStorageClient } from "./storage/OotOnlineStorageClient";
-import fs from 'fs';
-import { ModelManagerOot } from "./models/ModelManagerOot";
-import OotOnline_ClientModules from "./OotOnline_ClientModules";
-import { Z64_SAVE } from "Z64Lib/src/Common/types/GameAliases";
 
 export let GHOST_MODE_TRIGGERED: boolean = false;
 
@@ -55,7 +51,7 @@ export default class OotOnlineClient {
     syncTimer: number = 0;
     synctimerMax: number = 60 * 20;
 
-    constructor(){
+    constructor() {
         markIsClient();
     }
 
@@ -71,6 +67,7 @@ export default class OotOnlineClient {
     @Preinit()
     preinit() {
         this.config = this.ModLoader.config.registerConfigCategory("OotOnline") as OotOnlineConfigCategory;
+        console.log(this.config);
         this.ModLoader.config.setData("OotOnline", "keySync", true);
         this.ModLoader.config.setData("OotOnline", "notifications", true);
         this.ModLoader.config.setData("OotOnline", "notificationSound", true);
@@ -78,11 +75,8 @@ export default class OotOnlineClient {
         this.ModLoader.config.setData("OotOnline", "syncBottleContents", true);
         this.ModLoader.config.setData("OotOnline", "diagnosticMode", false);
         this.ModLoader.config.setData("OotOnline", "autosaves", true);
-        if (this.modules.gui !== undefined){
+        if (this.modules.gui !== undefined) {
             this.modules.gui.settings = this.config;
-        }
-        if (this.modules.modelManager !== undefined){
-            this.modules.modelManager.child = new ModelManagerOot(this.modules.modelManager);
         }
     }
 
@@ -109,39 +103,12 @@ export default class OotOnlineClient {
         }, 20);
     }
 
-    @PrivateEventHandler(Z64O_PRIVATE_EVENTS.SEND_TO_SCENE)
-    onSendToScene(send: SendToScene) {
-        let storage: OotOnlineStorage = this.ModLoader.lobbyManager.getLobbyStorage(
-            send.packet.lobby,
-            this.parent
-        ) as OotOnlineStorage;
-        if (storage === null) {
-            return;
-        }
-        let players = Object.keys(storage.players);
-        for (let i = 0; i < players.length; i++) {
-            if (storage.players[players[i]] === send.scene) {
-                this.ModLoader.serverSide.sendPacketToSpecificPlayer(send.packet, storage.networkPlayerInstances[players[i]]);
-            }
-        }
-    }
-
     @EventHandler(EventsClient.ON_HEAP_READY)
     onHeapReady() {
         this.syncContext = this.ModLoader.heap!.malloc(0x100);
         global.ModLoader["Z64O_SyncContext"] = this.syncContext;
         this.ModLoader.logger.debug(`OotO Context: ${this.syncContext.toString(16)}`);
         setSyncContext(this.syncContext);
-        if (RomFlags.isOotR) {
-            try{
-                if (this.modules.multiworld.isRomMultiworld()) {
-                    RomFlags.isMultiworld = true;
-                    this.clientStorage.world = this.ModLoader.emulator.rdramRead8(this.ModLoader.emulator.rdramReadPtr32(this.modules.multiworld.contextPointer, 0x0) + 0x4);
-                    this.modules.multiworld.setPlayerName(this.ModLoader.me.nickname, this.clientStorage.world);
-                }
-            }catch(err){
-            }
-        }
     }
 
     updateInventory() {
@@ -328,7 +295,7 @@ export default class OotOnlineClient {
                 if (this.LobbyConfig.data_syncing) {
                     this.ModLoader.me.data["world"] = this.clientStorage.world;
                     this.ModLoader.clientSide.sendPacket(new Z64O_DownloadRequestPacket(this.ModLoader.clientLobby, new OotOSaveData(this.core.OOT!, this.ModLoader).createSave()));
-                    this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isOotR, RomFlags.isVanilla, RomFlags.hasFastBunHood, RomFlags.isMultiworld));
+                    this.ModLoader.clientSide.sendPacket(new Z64O_RomFlagsPacket(this.ModLoader.clientLobby, RomFlags.isRando, RomFlags.isVanilla, RomFlags.hasFastBunHood, RomFlags.OotR_HasPotsanity, RomFlags.OotR_PotsanityFlagSize));
                 }
             }, 50);
         }
@@ -645,21 +612,6 @@ export default class OotOnlineClient {
         }
     }
 
-    @EventHandler(EventsClient.ON_INJECT_FINISHED)
-    onPayloads() {
-        fs.readdirSync(path.resolve(__dirname, "payloads", "E0")).forEach((f: string) => {
-            let file = path.resolve(__dirname, "payloads", "E0", f);
-            let parse = path.parse(file);
-            if (parse.ext === ".ovl") {
-                this.clientStorage.overlayCache[path.parse(file).base] = this.ModLoader.payloadManager.parseFile(file);
-                if (path.parse(file).base === "puppet_oot.ovl") {
-                    this.clientStorage.puppetOvl = this.clientStorage.overlayCache[path.parse(file).base];
-                }
-                this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOADED_OVL, { result: this.clientStorage.overlayCache[path.parse(file).base], name: path.parse(file).base });
-            }
-        });
-    }
-
     @EventHandler(ModLoaderEvents.ON_ROM_PATCHED)
     onRom(evt: any) {
         let rom: Buffer = evt.rom;
@@ -675,35 +627,21 @@ export default class OotOnlineClient {
         if (rom.readUInt8(start + prog) > 0) {
             let ver = rom.slice(start + prog - 1, start + prog - 1 + 0x4);
             this.ModLoader.logger.info(`OoT Randomizer detected. Version: ${ver.readUInt8(1)}.${ver.readUInt8(2)}.${ver.readUInt8(3)}`);
-            RomFlags.isOotR = true;
+            RomFlags.isRando = true;
             markAsRandomizer();
             try {
-                OotRCosmeticHelper.extractMirrorShield(this.ModLoader, evt);
-                RomansCosmeticHelper.extractAllRomanCosmetics(this.ModLoader, evt);
+                //OotRCosmeticHelper.extractMirrorShield(this.ModLoader, evt);
+                //RomansCosmeticHelper.extractAllRomanCosmetics(this.ModLoader, evt);
+                this.ModLoader.utils.setTimeoutFrames(() => {
+                    OotR_SignatureManager.checkAll(this.ModLoader);
+                    RomFlags.hasFastBunHood = this.ModLoader.emulator.rdramRead8(OotR_SignatureManager.SignatureLookup.get(OotR_FAST_BUNNY_HOOD_ENABLED)!) > 0;
+                    if (OotR_PotsanityHelper.hasPotsanity()) {
+                        RomFlags.OotR_HasPotsanity = true;
+                        RomFlags.OotR_PotsanityFlagSize = OotR_PotsanityHelper.getFlagArraySize(this.ModLoader);
+                    }
+                }, 20);
             } catch (err: any) {
                 if (err) this.ModLoader.logger.error(err.stack);
-            }
-            if (ver.readUInt32BE(0) >= 0x40101 && ver.readUInt32BE(0) < 0x50253) { //OoTR v4.1.1 up until v5.2.83 lacked a toggle to turn off Fast Bunny Hood
-                RomFlags.hasFastBunHood = true;
-            } else if (ver.readUInt32BE(0) >= 0x50253) {
-                let tools: Z64RomTools = new Z64RomTools(this.ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
-                let buf = tools.decompressDMAFileFromRom(rom, 1496); //Decompressing OoTR Payload, specifically
-                let cosmetic_ctxt = buf.readUInt32BE(4);
-                let cosmetic_frmt_ver = buf.readUInt32BE(cosmetic_ctxt - 0x80400000);
-                if (cosmetic_frmt_ver === 0x1F073FD8 || cosmetic_frmt_ver === 0x1F073FD9) {
-                    let bunHood_offset = 0x49C; //OoTR v5.2.83 - v6.0.62 Fast Bunny Hood Enabled Byte Offset from Cosmetic Context
-                    if (ver.readUInt32BE(0) >= 0x6003F && ver.readUInt32BE(0) < 0x6024B) bunHood_offset = 0x49B; //OoTR v6.0.63 - v6.2.74
-                    if (ver.readUInt32BE(0) >= 0x6024B && ver.readUInt32BE(0) < 0x6025F) bunHood_offset = 0x533; //OoTR v6.2.75 - v6.2.94
-                    if (ver.readUInt32BE(0) >= 0x6025F && ver.readUInt32BE(0) < 0x602CB) bunHood_offset = 0x527; //OoTR v6.2.95 - v6.2.202
-                    if (ver.readUInt32BE(0) >= 0x602CB && ver.readUInt32BE(0) < 0x602CE) bunHood_offset = 0x52B; //OoTR v6.2.203 - v6.2.205
-                    if (ver.readUInt32BE(0) >= 0x602CE && ver.readUInt32BE(0) < 0x60901) bunHood_offset = 0x527; //OoTR v6.2.206 - v6.9.0
-                    if (ver.readUInt32BE(0) >= 0x60901 && ver.readUInt32BE(0) <= 0x70001) bunHood_offset = 0x528; //OoTR v6.9.1 - v7.0.1
-                    if (buf.readInt8((cosmetic_ctxt + bunHood_offset) - 0x80400000) === 0x01) {
-                        RomFlags.hasFastBunHood = true;
-                    }
-                } else {
-                    this.ModLoader.logger.info(`Unexpected Cosmetic Format Version: 0x${cosmetic_frmt_ver.toString(16)}. Ask a developer to check if the latest version of the randomizer has changed things.`);
-                }
             }
         } else {
             let intended: string = "dc7100d5f3a020f962ae1b3cdd99049f";
@@ -746,18 +684,6 @@ export default class OotOnlineClient {
     }
 
     private updateMultiworld() {
-        let item = this.modules.multiworld!.getOutgoingItem();
-        if (item !== undefined) {
-            if (!this.modules.multiworld.doesPlayerNameExist(item.dest)) {
-                this.modules.multiworld.setPlayerName(`World ${item.dest}`, item.dest);
-            }
-            this.ModLoader.clientSide.sendPacket(new MultiWorld_ItemPacket(this.ModLoader.clientLobby, item));
-        }
-        if (this.modules.multiworld.itemsInQueue.length === 0) return;
-        if (this.core.OOT!.link.state === LinkState.STANDING && !this.core.OOT!.helper.isLinkEnteringLoadingZone() && !this.core.OOT!.helper.Player_InBlockingCsMode()) {
-            let item = this.modules.multiworld.itemsInQueue.shift()!;
-            this.modules.multiworld.processIncomingItem(item.item, this.core.OOT!.save);
-        }
     }
 
     @onTick()

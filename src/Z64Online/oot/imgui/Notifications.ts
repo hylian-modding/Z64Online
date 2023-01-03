@@ -16,7 +16,7 @@ import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
 import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { SpriteMap } from "./SpriteMap";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
-import RomFlags from "@Z64Online/oot/compat/RomFlags";
+import RomFlags from "@Z64Online/common/types/RomFlags";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
 import { HYLIAN_FONT_REF } from "@Z64Online/common/gui/HyliaFont";

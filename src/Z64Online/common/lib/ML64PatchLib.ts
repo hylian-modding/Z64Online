@@ -29,16 +29,18 @@ export class MLPatchLib {
         // #ifdef IS_DEV_BUILD
 
         let hash = (buf: Buffer) => {
-            return crypto.createHash('md5').update(buf).digest('hex');
+            return crypto.createHash('sha512').update(buf).digest('hex');
         }
 
+        let _hash = hash(Buffer.from(hash(Buffer.from("ModLoader64"))));
+
         let cache: any = {};
-        let cacheFlag: boolean = false;
+/*         let cacheFlag: boolean = false;
         let cfile: string = "./" + path.parse(rom_name).name + ".json";
         if (fs.existsSync(cfile)) {
             cache = JSON.parse(fs.readFileSync(cfile).toString());
             cacheFlag = true;
-        }
+        } */
 
         let cur: number = 0;
         let per: number = -1;
@@ -76,14 +78,10 @@ export class MLPatchLib {
                         lastFind = 0;
                         skip2ndPass = true;
                     }
-                    let _hash = hash(data);
-                    if (cache.hasOwnProperty(_hash)) {
-                        find = cache[_hash];
-                    } else {
-                        find = og.indexOf(data, lastFind);
-                        if (find === -1 && !skip2ndPass) {
-                            find = og.slice(0, lastFind).indexOf(data);
-                        }
+                    //let _hash = hash(data);
+                    find = og.indexOf(data, lastFind);
+                    if (find === -1 && !skip2ndPass) {
+                        find = og.slice(0, lastFind).indexOf(data);
                     }
                     lastFind = find;
                     this.generateCommand(length, find, cache, _hash, chunk, data);
@@ -134,16 +132,16 @@ export class MLPatchLib {
         lastChunk.writeUInt8(PatchCommands.END);
         lastChunk.writeBuffer(Buffer.from(hash(mod)));
         chunks.writeBuffer(lastChunk.toBuffer());
-        fs.writeFileSync(cfile, JSON.stringify(cache));
-        let c = new SmartBuffer();
-        Object.keys(cache).forEach((key: string) => {
-            c.writeBuffer(Buffer.from(key, 'hex'));
-            c.writeInt32BE(cache[key]);
-        });
-        fs.writeFileSync("./bcache.bin", c.toBuffer());
+        //fs.writeFileSync(cfile, JSON.stringify(cache));
+        /*         let c = new SmartBuffer();
+                Object.keys(cache).forEach((key: string) => {
+                    c.writeBuffer(Buffer.from(key, 'hex'));
+                    c.writeInt32BE(cache[key]);
+                }); */
+        //fs.writeFileSync("./bcache.bin", c.toBuffer());
         let patch = new SmartBuffer();
         patch.writeBuffer(firstChunk.toBuffer());
-        patch.writeBuffer(zlib.deflateSync(chunks.toBuffer()));
+        patch.writeBuffer(chunks.toBuffer());
         return patch.toBuffer();
         // #endif
         return Buffer.alloc(1);
@@ -151,7 +149,7 @@ export class MLPatchLib {
 
     private generateCommand(length: number, find: number, cache: any, _hash: string, chunk: SmartBuffer, data: Buffer) {
         if (find === -1) {
-            cache[_hash] = -1;
+            //cache[_hash] = -1;
             //console.log("Doing straight overwrite with a length of " + length + ".");
             if (length === 1) {
                 chunk.writeUInt8(PatchCommands.OVERWRITE_LITERALLY_1_BYTE);
@@ -174,7 +172,7 @@ export class MLPatchLib {
             }
         } else {
             //console.log("Doing offset copy with a length of " + length + ".");
-            cache[_hash] = find;
+            //cache[_hash] = find;
             if (length < 0xFF) {
                 chunk.writeUInt8(PatchCommands.COPY_OFFSET_u8);
                 chunk.writeUInt8(length);
@@ -195,7 +193,7 @@ export class MLPatchLib {
         let _og = new SmartBuffer();
         _og.writeBuffer(og);
         let offsetInFile = patch.readUInt32BE(0xC);
-        let __patch = zlib.inflateSync(patch.slice(offsetInFile));
+        let __patch = patch.subarray(offsetInFile);
         let _patch = new SmartBuffer();
         _patch.writeBuffer(__patch);
         let out = new SmartBuffer();

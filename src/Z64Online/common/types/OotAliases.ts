@@ -15,6 +15,7 @@ export interface IOOTSyncSave extends Pick<IOOTSaveContext, 'death_counter' | 'h
   inventory: IOOTInventorySync;
   dungeon_items: Buffer;
   triforcePieces: number;
+  collectible_override_flags: Buffer;
 }
 
 export const OOT_ANIM_BANK_DMA: DMAIndex = 7;

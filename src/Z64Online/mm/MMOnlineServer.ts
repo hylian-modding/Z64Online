@@ -5,24 +5,21 @@ import { parseFlagChanges } from "@Z64Online/common/lib/parseFlagChanges";
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
 import { markIsServer } from "@Z64Online/common/types/GameAliases";
 import { WorldEvents } from "@Z64Online/common/WorldEvents/WorldEvents";
+import bitwise from 'bitwise';
 import { InjectCore } from "modloader64_api/CoreInjection";
-import { EventHandler, EventsServer, EventServerJoined, EventServerLeft, bus } from "modloader64_api/EventHandler";
+import { bus, EventHandler, EventServerJoined, EventServerLeft, EventsServer } from "modloader64_api/EventHandler";
 import { IModLoaderAPI, IPlugin } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
 import { IPacketHeader, LobbyData, ServerNetworkHandler } from "modloader64_api/NetworkHandler";
 import { Preinit } from "modloader64_api/PluginLifecycle";
-import { ParentReference, SidedProxy, ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
+import { ParentReference, ProxySide, SidedProxy } from "modloader64_api/SidedProxy/SidedProxy";
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
 import { InventoryItem } from "Z64Lib/API/MM/MMAPI";
-import { Z64O_ScenePacket, Z64O_BottleUpdatePacket, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_RomFlagsPacket, Z64O_UpdateSaveDataPacket, Z64O_UpdateKeyringPacket, Z64O_ClientSceneContextUpdate, Z64O_ErrorPacket } from "../common/network/Z64OPackets";
+import { Z64O_BottleUpdatePacket, Z64O_ClientSceneContextUpdate, Z64O_DownloadRequestPacket, Z64O_DownloadResponsePacket, Z64O_ErrorPacket, Z64O_RomFlagsPacket, Z64O_ScenePacket, Z64O_UpdateKeyringPacket, Z64O_UpdateSaveDataPacket } from "../common/network/Z64OPackets";
 import { MMO_PictoboxPacket, Z64O_FlagUpdate, Z64O_MMR_QuestStorage, Z64O_MMR_Sync, Z64O_PermFlagsPacket, Z64O_SoTPacket, Z64O_SyncSettings } from "./network/MMOPackets";
-import { PuppetOverlordServer_MM } from "./puppet/PuppetOverlord_MM";
-//import { MM_PuppetOverlordServer } from "./puppet/MM_PuppetOverlord";
-//import { PvPServer } from "./pvp/PvPModule";
 import { mergePhotoData, MMOSaveData, PhotoSave } from "./save/MMOSaveData";
+import { MMOnlineSave_Server, MMOnlineStorage } from "./storage/MMOnlineStorage";
 import TimeSyncServer from "./time/MMOTimeSyncServer";
-import { MMOnlineStorage, MMOnlineSave_Server } from "./storage/MMOnlineStorage";
-import bitwise from 'bitwise';
 
 export default class MMOnlineServer {
 
@@ -32,8 +29,6 @@ export default class MMOnlineServer {
     ModLoader!: IModLoaderAPI;
     @ParentReference()
     parent!: IPlugin;
-    @SidedProxy(ProxySide.SERVER, PuppetOverlordServer_MM)
-    puppets!: PuppetOverlordServer_MM;
     @SidedProxy(ProxySide.SERVER, WorldEvents)
     worldEvents!: WorldEvents;
     @SidedProxy(ProxySide.SERVER, CDNServer)

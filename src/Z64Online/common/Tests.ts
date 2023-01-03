@@ -19,7 +19,6 @@ export default class Z64OTests{
     @Init()
     init(){
         //CosmeticTests.onEquipmentTest();
-        CosmeticTests.onNaviTest();
     }
 
     @EventHandler(Z64.Z64Events.ON_SCENE_CHANGE)

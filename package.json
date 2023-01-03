@@ -1,13 +1,14 @@
 {
   "name": "Z64Online",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Template base for making [ModLoader64](https://github.com/hylian-modding/ModLoader64) Plugins.",
   "main": "index.js",
   "scripts": {
-    "test": "modloader64 -r",
-    "prod": "modloader64 -c && gulp build_production && modloader64 -d",
-    "debug": "modloader64 -cbd",
-    "packassets": "gulp packassets"
+    "test": "modloader64 -cbr",
+    "dist": "modloader64 -cbd",
+    "update_assembly": "julia ./build.jl update_assembly",
+    "update_tag": "julia ./build.jl update_tag",
+    "generate_update_file": "julia ./build.jl generate_update_file"
   },
   "repository": {
     "type": "git",

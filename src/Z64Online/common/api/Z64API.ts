@@ -2,7 +2,6 @@ import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { bus } from 'modloader64_api/EventHandler';
 import { ExternalAPIProvider } from 'modloader64_api/ExternalAPIProvider';
 import path from 'path';
-import { IPuppet } from '@Z64Online/common/puppet/IPuppet';
 import { Scene, Z64Tunic } from '@Z64Online/common/types/Types';
 import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
@@ -17,7 +16,6 @@ export enum Z64OnlineEvents {
     PLAYER_PUPPET_PRESPAWN = 'Z64Online:onPlayerPuppetPreSpawned',
     PLAYER_PUPPET_SPAWNED = 'Z64Online:onPlayerPuppetSpawned',
     PLAYER_PUPPET_DESPAWNED = 'Z64Online:onPlayerPuppetDespawned',
-    PLAYER_PUPPET_QUERY = "Z64Online:PlayerPuppetQuery",
     SERVER_PLAYER_CHANGED_SCENES = 'Z64Online:onServerPlayerChangedScenes',
     CLIENT_REMOTE_PLAYER_CHANGED_SCENES = 'Z64Online:onRemotePlayerChangedScenes',
     GHOST_MODE = 'Z64Online:EnableGhostMode',
@@ -25,7 +23,6 @@ export enum Z64OnlineEvents {
     GAINED_PIECE_OF_HEART = 'Z64Online:GainedPieceOfHeart',
     MAGIC_METER_INCREASED = 'Z64Online:GainedMagicMeter',
     ON_INVENTORY_UPDATE = 'Z64Online:OnInventoryUpdate',
-    ON_EXTERNAL_ACTOR_SYNC_LOAD = 'Z64Online:OnExternalActorSyncLoad',
     ON_REGISTER_EMOTE = 'Z64Online:OnRegisterEmote',
     ON_LOAD_SOUND_PACK = "Z64Online:OnLoadSoundPack",
     POST_LOADED_SOUND_LIST = "Z64Online:PostLoadedSoundList",
@@ -169,6 +166,7 @@ export interface IModelReference {
   pointer: number;
   isDead: boolean;
   isPlayerModel: boolean;
+  doNotGC: boolean;
   isLoaded: boolean;
   loadModel(): boolean;
   unregister(): boolean;
@@ -233,25 +231,6 @@ export class Z64_AnimConvert {
     this.name = name;
     this.fileBuf = fileBuf;
     this.floorPlane = floorPlane;
-  }
-}
-
-export interface PuppetQuery {
-  puppet: IPuppet | undefined;
-  player: INetworkPlayer;
-}
-
-export function Z64OnlineAPI_QueryPuppet(player: INetworkPlayer): PuppetQuery {
-  let evt: PuppetQuery = { puppet: undefined, player } as PuppetQuery;
-  bus.emit(Z64OnlineEvents.PLAYER_PUPPET_QUERY, evt);
-  return evt;
-}
-
-export class Z64OnlineAPI_PuppetStubDestroyed {
-  player: INetworkPlayer;
-
-  constructor(player: INetworkPlayer) {
-    this.player = player;
   }
 }
 

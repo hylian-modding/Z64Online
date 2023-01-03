@@ -7,7 +7,6 @@ import { AgeOrForm } from '../types/Types';
 import { ZZPlayasEmbedParser } from 'Z64Lib/API/Utilities/ZZPlayasEmbedParser';
 import { Z64_GAME } from 'Z64Lib/src/Common/types/GameAliases';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
-import { decodeAsset } from '../assets/decoder';
 import { cube } from '../assets/cube';
 import { MatrixTranslate } from './utils/MatrixTranslate';
 import { DF_COMMAND, DL_ERROR_CUBE, TEX_EYES, TEX_MOUTH } from './Defines';
@@ -24,6 +23,8 @@ import { DUMMY_LINK } from './maps/DUMMY_LINK';
 import * as defines from './Defines';
 import { NEW_PIPELINE_REMAP } from './maps/New_Pipeline';
 import { Z64O_Logger } from '../lib/Logger';
+import { OOT_EPONA } from './maps/OOT_EPONA';
+import { adult, child } from '@Z64Online/overlay/LinkObjects';
 
 const USE_ERROR_CUBE: boolean = false;
 
@@ -72,6 +73,10 @@ export function getManifestForFormOot(form: AgeOrForm) {
         default:
             return new DummyManifest();
     }
+}
+
+export function getManifestForEpona(){
+    return new EponaManifest();
 }
 
 export function getManifestForFormMM(form: AgeOrForm) {
@@ -268,11 +273,24 @@ export class MMGoronManifest implements IManifest {
     }
 }
 
+export class EponaManifest implements IManifest {
+    build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
+        pieces.forEach((p: ZobjPiece, name: string) => {
+            if (OOT_EPONA.hasOwnProperty(name)) {
+                let __off = OOT_EPONA[name];
+                sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
+            }
+        });
+
+        sb.writeUInt8(0x42, 0x501B);
+    }
+}
+
 export class DummyManifest implements IManifest {
     build(sb: SmartBuffer, model_data: IOptimized, pieces: Map<string, ZobjPiece>, u: UniversalAliasTable): void {
         pieces.forEach((p: ZobjPiece, name: string) => {
             if (DUMMY_LINK.hasOwnProperty(name)) {
-                let __off = MM_GORON_LINK[name];
+                let __off = DUMMY_LINK[name];
                 sb.writeUInt32BE(model_data.oldOffs2NewOffs.get(p.newOffset)! + 0x06000000, __off + 0x4);
             }
         });
@@ -547,21 +565,21 @@ export class UniversalAliasTable {
     private loadBankObjects() {
         if (BANK_OBJECTS.size === 0) {
             console.log("Loading Bank objects...");
-            let objs: Array<string> = [];
+            let objs: Array<{name: string, data: Buffer}> = [];
             if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-                objs.push("./cache/adult.zobj");
-                objs.push("./cache/child.zobj");
+                objs.push({name: "adult", data: adult});
+                objs.push({name: "child", data: child});
             } else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
-                objs.push("./cache/human.zobj");
+/*                 objs.push("./cache/human.zobj");
                 objs.push("./cache/nuts.zobj");
                 objs.push("./cache/goron.zobj");
                 objs.push("./cache/zora.zobj");
-                objs.push("./cache/fd.zobj");
+                objs.push("./cache/fd.zobj"); */
             }
             for (let i = 0; i < objs.length; i++) {
                 let parse = new ZZPlayasEmbedParser();
-                let zobj = fs.readFileSync(path.resolve(objs[i]));
-                let name = path.parse(objs[i]).name;
+                let zobj = objs[i].data;
+                let name = objs[i].name;
                 BANK_LOOKUP.set(name, new Map());
                 let parse_zobj = parse.parse(zobj);
                 Object.keys(parse_zobj).forEach((key: string) => {
@@ -571,16 +589,6 @@ export class UniversalAliasTable {
                     BANK_LOOKUP.get(name)!.set(key, piece.hash);
                 });
             }
-        }
-        if (CUBE.size === 0) {
-            let parse = new ZZPlayasEmbedParser();
-            let _cube = decodeAsset(cube);
-            let parse_cube = parse.parse(_cube);
-            Object.keys(parse_cube).forEach((key: string) => {
-                let o = optimize(_cube, [parse_cube[key]]);
-                let piece = new ZobjPiece(o.zobj, o.oldOffs2NewOffs.get(parse_cube[key])!);
-                CUBE.set(key, piece);
-            });
         }
     }
 
@@ -731,7 +739,7 @@ export class UniversalAliasTable {
                 if (key.includes("riggedmesh.")) {
                     repkey = key.replace("riggedmesh.", "");
                 }
-                if (NEW_PIPELINE_REMAP.hasOwnProperty(repkey)){
+                if (NEW_PIPELINE_REMAP.hasOwnProperty(repkey)) {
                     repkey = NEW_PIPELINE_REMAP[repkey];
                 }
                 let o = optimize(zobj, [m[key]]);
@@ -840,9 +848,9 @@ export class UniversalAliasTable {
         sb.writeUInt32BE(0x06000000 + 0x4000, TEX_MOUTH + 4);
 
         // Step 4: Create combined display lists.
-        let restores: any = {};
         let wrapGen = (name: string, dl1: string, mtx1: string | undefined, dl2: Array<string>) => {
             let off = 0;
+            //off = this.addDebugLabel(sb, name);
             if (mtx1 !== undefined) {
                 off = this.addMtxPushPop(sb, name, defines.get(mtx1)!, this.createJump(sb, defines.get(dl1)!, true).next().value! as Buffer);
             } else {
@@ -854,7 +862,6 @@ export class UniversalAliasTable {
             }
             this.addDF(sb);
             sb.writeUInt32BE(off + 0x06000000, defines.get(name)! + 0x4);
-            restores[defines.get(name)! + 0x4] = 0x06000000 + off;
         };
 
         for (let i = 1; i < 4; i++) {
@@ -863,6 +870,7 @@ export class UniversalAliasTable {
             for (let j = 1; j < 4; j++) {
                 wrapGen(`DL_SWORD${j}_SHIELD${i}`, `DL_SWORD${j}_SHEATHED`, undefined, [`DL_SHIELD${i}_BACK`]);
                 wrapGen(`DL_SWORD${j}_SHIELD${i}_SHEATH`, `DL_SHIELD${i}_BACK`, undefined, [`DL_SWORD_SHEATH_${j}`]);
+                wrapGen(`DL_SWORD${j}_SHIELD${i}_SHEATHED`, `DL_SHIELD${i}_BACK`, undefined, [`DL_SWORD${i}_SHEATHED`]);
             }
             wrapGen(`DL_LFIST_SWORD${i}`, `DL_SWORD_HILT_${i}`, undefined, [`DL_SWORD_BLADE_${i}`, `DL_LFIST`]);
             wrapGen(`DL_RFIST_SHIELD_${i}`, `DL_SHIELD_${i}`, undefined, [`DL_RFIST`]);
@@ -915,9 +923,9 @@ export class UniversalAliasTable {
         }
 
         let model_data: IOptimized;
-        try{
+        try {
             model_data = optimize(temp.toBuffer(), off, sb.writeOffset, 0x06, true);
-        }catch(err: any){
+        } catch (err: any) {
             Z64O_Logger.debug(err.stack);
             fs.writeFileSync("./error.zobj", temp.toBuffer());
             fs.writeFileSync("./error.txt", JSON.stringify(off, null, 2));
@@ -969,9 +977,6 @@ export class UniversalAliasTable {
         }
 
         // Step 8: Footer
-        let footer = sb.writeOffset;
-        sb.writeUInt32BE(0x06000000 + footer, 0x5017);
-        sb.writeBuffer(this.jsonToBinary(JSON.stringify(restores)));
         while (sb.length % 0x10 !== 0) {
             sb.writeUInt8(PAD_VALUE);
         }

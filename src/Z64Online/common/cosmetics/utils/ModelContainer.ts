@@ -10,6 +10,7 @@ export class ModelReference implements IModelReference {
   script: IModelScript | undefined;
   flags: Buffer = Buffer.alloc(4);
   ModLoader: IModLoaderAPI;
+  doNotGC: boolean = false;
 
   constructor(hash: string, ModLoader: IModLoaderAPI) {
     this.hash = hash;

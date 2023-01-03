@@ -1,7 +1,6 @@
 // #ifdef IS_DEV_BUILD
 
-import { Z64OnlineEvents, Z64Online_EquipmentPak, Z64Online_ModelAllocation, Z64O_CosmeticEvents } from '@Z64Online/common/api/Z64API';
-import { OOT_GAME } from '@Z64Online/common/types/OotAliases';
+import { Z64OnlineEvents, Z64Online_EquipmentPak } from '@Z64Online/common/api/Z64API';
 import fs from 'fs';
 import { bus } from 'modloader64_api/EventHandler';
 import path from 'path';
@@ -17,13 +16,6 @@ export default class CosmeticTests {
                 let evt = new Z64Online_EquipmentPak("Equipment Test", "Biggoron's Sword", fs.readFileSync(p));
                 bus.emit(Z64OnlineEvents.LOAD_EQUIPMENT_PAK, evt);
             }
-        }
-    }
-
-    static onNaviTest() {
-        if (fs.existsSync(path.resolve(global.ModLoader.startdir, "test_files/navi.zobj"))) {
-            let evt = new Z64Online_ModelAllocation(fs.readFileSync(path.resolve(global.ModLoader.startdir, "test_files/navi.zobj")), 0x69, OOT_GAME);
-            bus.emit(Z64O_CosmeticEvents.LOAD_CUSTOM_NAVI, evt);
         }
     }
 

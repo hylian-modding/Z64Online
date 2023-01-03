@@ -1,113 +1,194 @@
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
-import { zeldaString } from 'Z64Lib/API/Common/ZeldaString';
-import { IOOTSaveContext } from "@Z64Online/common/types/OotAliases";
-import { Z64OnlineEvents, Z64_PlayerScene } from "@Z64Online/common/api/Z64API";
-import { EventHandler } from "modloader64_api/EventHandler";
-import { Packet } from "modloader64_api/ModLoaderDefaultImpls";
-import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { NetworkHandler } from "modloader64_api/NetworkHandler";
-import { InjectCore } from "modloader64_api/CoreInjection";
-import RomFlags from "@Z64Online/oot/compat/RomFlags";
-import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
+import RomFlags from "@Z64Online/common/types/RomFlags";
 import { Z64RomTools } from "Z64Lib/API/Utilities/Z64RomTools";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { optimize } from "Z64Lib/API/zzoptimize";
-import { BANK_LOOKUP, BANK_OBJECTS, BANK_REPLACEMENTS, UniversalAliasTable, ZobjPiece } from "@Z64Online/common/cosmetics/UniversalAliasTable";
-import fs from 'fs';
+import { BANK_LOOKUP, BANK_OBJECTS, BANK_REPLACEMENTS, ZobjPiece } from "@Z64Online/common/cosmetics/UniversalAliasTable";
 import { SmartBuffer } from 'smart-buffer';
 import { AgeOrForm } from "Z64Lib/API/Common/Z64API";
-import { GameParent } from "@Z64Online/common/api/GameParent";
 import { SCENE_ARR_SIZE } from "../OotOnline";
+import fs from 'fs';
+import Zip from 'adm-zip';
+import path from 'path';
 
-export class MultiWorld_ItemPacket extends Packet {
+class Signature {
+    name: string = "";
+    size_name: number = -1;
+    offset_name: number = -1;
 
-    item: MultiworldItem;
-
-    constructor(lobby: string, item: MultiworldItem) {
-        super('MultiWorld_ItemPacket', 'Multiworld', lobby, true);
-        this.item = item;
-    }
+    addr: number = -1;
 }
 
-export class Multiworld {
-    @ModLoaderAPIInject()
-    ModLoader!: IModLoaderAPI
-    @GameParent()
-    parent!: IZ64Clientside;
-    @InjectCore()
-    core!: IZ64Main;
-    contextPointer: number = 0x801C8464;
-    itemsInQueue: Array<MultiWorld_ItemPacket> = [];
-
-    @NetworkHandler('MultiWorld_ItemPacket')
-    onIncomingItem(packet: MultiWorld_ItemPacket) {
-        if (this.parent.getClientStorage()!.world === packet.item.dest) {
-            this.setPlayerName(packet.player.nickname, packet.player.data.world);
-            this.itemsInQueue.push(packet);
-        }
-    }
-
-    @EventHandler(Z64OnlineEvents.CLIENT_REMOTE_PLAYER_CHANGED_SCENES)
-    onPlayerChangedScenes(change: Z64_PlayerScene) {
-        if (!RomFlags.isMultiworld) return;
-        this.setPlayerName(change.player.nickname, change.player.data.world);
-    }
-
-    isRomMultiworld() {
-        return this.ModLoader.emulator.rdramRead32(this.contextPointer) > 0;
-    }
-
-    setPlayerName(playerName: string, playerNumber: number) {
-        let player_names_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 20;
-        playerName = playerName.substr(0, 8).padEnd(8, " ");
-        var offset = player_names_addr + (8 * playerNumber);
-        this.ModLoader.emulator.rdramWriteBuffer(offset, zeldaString.encode(playerName));
-    }
-
-    doesPlayerNameExist(playerNumber: number) {
-        let player_names_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 20;
-        var offset = player_names_addr + (8 * playerNumber);
-        return this.ModLoader.emulator.rdramRead8(offset) !== 0xDF;
-    }
-
-    getOutgoingItem(): MultiworldItem | undefined {
-        let outgoing_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 16;
-        let outgoing_player_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 18;
-        let id = this.ModLoader.emulator.rdramRead16(outgoing_addr);
-        if (id > 0) {
-            let player = this.ModLoader.emulator.rdramRead16(outgoing_player_addr);
-            this.ModLoader.emulator.rdramWrite16(outgoing_addr, 0);
-            this.ModLoader.emulator.rdramWrite16(outgoing_player_addr, 0);
-            return new MultiworldItem(id, player);
-        }
-        return undefined;
-    }
-
-    processIncomingItem(item: MultiworldItem, save: IOOTSaveContext) {
-        let incoming_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 8;
-        let incoming_player_addr = this.ModLoader.emulator.rdramReadPtr32(this.contextPointer, 0) + 6;
-        if (item.item > 0) {
-            this.ModLoader.emulator.rdramWrite16(incoming_addr, item.item);
-            this.ModLoader.emulator.rdramWrite16(incoming_player_addr, item.dest);
-        }
-    }
+class Settings {
+    name: string = "";
+    offset_name: number = -1;
+    offset_addr: number = -1;
+    addr: number = -1;
+    size_name: number = -1;
 }
 
-export class MultiworldItem {
-    item: number;
-    dest: number;
+export const OotR_collectible_override_flags = "collectible_override_flags"; // u32 - pointer to the flags.
+export const OotR_num_override_flags = "num_override_flags";                 // u16 - size of the buffer.
+export const OotR_FLAG_SIZE_ADD = 100;                                       // Rando's asm adds this to the buffer size.
+export const OotR_FAST_BUNNY_HOOD_ENABLED = "FAST_BUNNY_HOOD_ENABLED";       // u8  - if bunny hood go zoom.
 
-    constructor(item: number, dest: number) {
-        this.item = item;
-        this.dest = dest;
+export class OotR_SignatureManager {
+
+    private parsed: Signature[] = [];
+    private parsed2: Settings[] = [];
+    private static instance: OotR_SignatureManager = new OotR_SignatureManager();
+
+    static SignatureLookup: Map<string, number> = new Map();
+
+    static checkAll(ModLoader: IModLoaderAPI) {
+        ModLoader.logger.debug("Trying to find OotR symbols...");
+        let found: boolean = false;
+        let header = ModLoader.utils.hashBuffer(ModLoader.rom.romReadBuffer(0x20, 0x20)).toUpperCase();
+
+        if (!fs.existsSync("./sigs")) {
+            fs.mkdirSync("./sigs");
+        }
+
+        let process = (f: string) => {
+            let sigs = new Zip(fs.readFileSync(f));
+
+            let e = sigs.getEntries();
+
+            for (let i = 0; i < e.length; i++) {
+                let file = e[i].getData();
+                if (this.instance.findSignatures(ModLoader, file, header)) {
+                    let sigcheck = this.instance.loadSigs();
+                    if (!sigcheck.failed) {
+                        ModLoader.logger.debug(`Loaded symbols: ${e[i].entryName}`);
+                        found = true;
+                        this.SignatureLookup = sigcheck.Sigs;
+                        break;
+                    } else {
+                        ModLoader.logger.debug(`${e[i].entryName} failed.`);
+                    }
+                }
+            }
+        };
+
+        let zips = fs.readdirSync("./sigs");
+        
+        for (let i = 0; i < zips.length; i++){
+            let z = path.resolve("./sigs", zips[i]);
+            if (path.parse(z).ext === ".zip"){
+                process(z);
+            }
+        }
+
+        if (!found) {
+            throw new Error("Failed to find OotR symbols. Check your sigs folder or if OotR updated recently file a bug report.");
+        }
     }
+
+    private loadSigs() {
+        let Sigs: Map<string, number> = new Map();
+
+        let failed = false;
+
+        // Check sigs.
+        for (let i = 0; i < this.parsed.length; i++) {
+            Sigs.set(this.parsed[i].name, this.parsed[i].addr);
+        }
+        for (let i = 0; i < this.parsed2.length; i++) {
+            Sigs.set(this.parsed2[i].name, this.parsed2[i].addr);
+        }
+
+        return { failed, Sigs };
+    }
+
+    private findSignatures(ModLoader: IModLoaderAPI, sigfile: Buffer, header: string): boolean {
+
+        this.parsed.length = 0;
+        this.parsed2.length = 0;
+
+        let sigs = new SmartBuffer().writeBuffer(sigfile);
+
+        // Read the header.
+        let _header = sigs.readBuffer(0x20);
+        let items = _header.readUInt32BE(0x0C);
+        let items2 = _header.readUInt32BE(0x10);
+        let rom_header_hash = sigs.readBuffer(0x10).toString('hex').toUpperCase();
+
+        if (rom_header_hash !== header) {
+            //return false;
+        }
+
+        // Parse the table.
+        for (let i = 0; i < items; i++) {
+            let s1 = sigs.readUInt32BE();
+            let o1 = sigs.readUInt32BE();
+            let s2 = sigs.readUInt32BE();
+            let o2 = sigs.readUInt32BE();
+
+            let sig = new Signature();
+            sig.offset_name = o1;
+            sig.size_name = s1;
+            sig.addr = s2;
+
+            this.parsed.push(sig);
+        }
+
+        for (let i = 0; i < items2; i++) {
+            let s1 = sigs.readUInt32BE();
+            let o1 = sigs.readUInt32BE();
+            let s2 = sigs.readUInt32BE();
+            let o2 = sigs.readUInt32BE();
+
+            let sig = new Settings();
+            sig.offset_name = o1;
+            sig.offset_addr = o2;
+            sig.size_name = s1;
+            sig.addr = s2;
+
+            this.parsed2.push(sig);
+        }
+
+        // Gather data from table pointers.
+        for (let i = 0; i < this.parsed.length; i++) {
+            sigs.readOffset = this.parsed[i].offset_name;
+            this.parsed[i].name = sigs.readString(this.parsed[i].size_name);
+        }
+
+        for (let i = 0; i < this.parsed2.length; i++) {
+            sigs.readOffset = this.parsed2[i].offset_name;
+            this.parsed2[i].name = sigs.readString(this.parsed2[i].size_name);
+        }
+
+        return true;
+    }
+
+}
+
+export class OotR_PotsanityHelper {
+
+    static hasPotsanity(): boolean {
+        return OotR_SignatureManager.SignatureLookup.has(OotR_collectible_override_flags);
+    }
+
+    static getFlagArraySize(ModLoader: IModLoaderAPI): number {
+        return ModLoader.emulator.rdramRead16(OotR_SignatureManager.SignatureLookup.get(OotR_num_override_flags)!) + OotR_FLAG_SIZE_ADD;
+    }
+
+    static getFlagBuffer(ModLoader: IModLoaderAPI): Buffer {
+        if (!this.hasPotsanity()) return Buffer.alloc(1);
+        return ModLoader.emulator.rdramReadBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, this.getFlagArraySize(ModLoader));
+    }
+
+    static setFlagBuffer(ModLoader: IModLoaderAPI, buf: Buffer): void {
+        if (!this.hasPotsanity()) return;
+        ModLoader.emulator.rdramWriteBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, buf);
+    }
+
 }
 
 export class TriforceHuntHelper {
 
     static getTriforcePieces(ModLoader: IModLoaderAPI) {
-        if (RomFlags.isOotR) {
+        if (RomFlags.isRando) {
             return ModLoader.emulator.rdramRead16(0x8011AE96);
         } else {
             return 0;
@@ -115,13 +196,13 @@ export class TriforceHuntHelper {
     }
 
     static setTriforcePieces(ModLoader: IModLoaderAPI, pieces: number) {
-        if (RomFlags.isOotR) {
+        if (RomFlags.isRando) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, pieces);
         }
     }
 
     static incrementTriforcePieces(ModLoader: IModLoaderAPI) {
-        if (RomFlags.isOotR) {
+        if (RomFlags.isRando) {
             ModLoader.emulator.rdramWrite16(0x8011AE96, ModLoader.emulator.rdramRead16(0x8011AE96) + 1);
         }
     }
@@ -148,11 +229,15 @@ OotR_BadSyncData.blacklistu32(0x35);
 export class OotRCosmeticHelper {
 
     static extractFAs(ModLoader: IModLoaderAPI, evt: { rom: Buffer }, dlist: number, target: string, offset: number = 0, offset_target: number = 0, age: AgeOrForm = AgeOrForm.ADULT) {
-        // Step 1: Extract the mirror shield from OotR.
+        // Step 0 : Make sure we're extracting the right thing.
         let tools = new Z64RomTools(ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
         let adult = tools.decompressDMAFileFromRom(evt.rom, age === AgeOrForm.ADULT ? 502 : 503);
+        if (adult.indexOf(Buffer.from("MODLOADER64")) > -1 || adult.indexOf(Buffer.from("HEYLOOKHERE")) > -1) {
+            ModLoader.logger.debug("This rom has a modified Link model in it. Cosmetic extraction failed!");
+            return;
+        }
+        // Step 1: Extract the mirror shield from OotR.
         let a = age === AgeOrForm.ADULT ? "adult" : "child";
-        //fs.writeFileSync(`./${a}.zobj`, adult);
         let op = optimize(adult, [dlist + offset]);
         let p = new ZobjPiece(op.zobj, op.oldOffs2NewOffs.get(dlist)!);
         let sb = new SmartBuffer().writeBuffer(p.piece);

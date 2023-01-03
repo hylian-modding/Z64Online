@@ -1,0 +1,25 @@
+package:
+  name: z64online-nightly
+  version: {{ environ.get('MYPKG_VERSION', '') }}
+
+source:
+  fn: Z64Online.zip
+  url: ../dist/Z64Online.zip
+
+build:
+  number: {{ environ.get('MYPKG_BUILD', '') }}
+  binary_relocation: False
+  detect_binary_files_with_prefix: False
+  noarch: generic
+  include_recipe: False
+  
+requirements:
+  run:
+    - z64lib-nightly
+    - ootr_symbols
+    - bson
+
+about:
+  home: http://modloader64.com
+  license: GPL-3
+  summary: Zelda64 Online for ML64

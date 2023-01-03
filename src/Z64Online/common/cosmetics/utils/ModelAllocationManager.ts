@@ -5,10 +5,12 @@ import { ModelObject, ModelReference } from './ModelContainer';
 import { IModelReference } from '@Z64Online/common/api/Z64API';
 import { AgeOrForm } from '@Z64Online/common/types/Types';
 import { zzstatic2 } from 'Z64Lib/API/Utilities/zzstatic2';
-import { Z64_PLAYER_PROXY } from '@Z64Online/common/types/GameAliases';
 import { Z64O_PRIVATE_EVENTS } from '@Z64Online/common/api/InternalAPI';
 
 export class ModelAllocationManager {
+
+  static singleton: ModelAllocationManager;
+
   private ModLoader: IModLoaderAPI;
   private localPlayer: ModelPlayer = new ModelPlayer("LOCAL PLAYER");
   private playerMLObjects: Map<string, INetworkPlayer> = new Map<string, INetworkPlayer>();
@@ -20,6 +22,7 @@ export class ModelAllocationManager {
   constructor(ModLoader: IModLoaderAPI) {
     this.ModLoader = ModLoader;
     this.cleanupRoutine = this.ModLoader.utils.setIntervalFrames(() => { this.doGC() }, 1200);
+    ModelAllocationManager.singleton = this;
   }
 
   doGC() {
@@ -49,7 +52,7 @@ export class ModelAllocationManager {
     });
     map.forEach((isDead: boolean, ref: IModelReference) => {
       ref.isDead = isDead;
-      if (ref.isDead) {
+      if (ref.isDead && !ref.doNotGC) {
         this.deallocateModel(ref);
       }
     });
@@ -128,8 +131,10 @@ export class ModelAllocationManager {
     let b = modelObject.zobj;
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD, b);
-      let zz = new zzstatic2();
-      zz.repoint(b, pointer);
+      if (!ref.isPlayerModel) {
+        let zz = new zzstatic2();
+        zz.repoint(b, pointer);
+      }
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.POST_OBJECT_LOAD, b);
     } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
@@ -178,37 +183,43 @@ export class ModelAllocationManager {
     if (!mp.isDead) return mp;
 
     // Player needs allocated.
-    let proxy = Buffer.alloc(Z64_PLAYER_PROXY.byteLength);
-    this.ModLoader.utils.clearBuffer(proxy);
-    Z64_PLAYER_PROXY.copy(proxy);
-    let pointer: number = this.ModLoader.gfx_heap!.malloc(proxy.byteLength);
+    let pointer: number = this.ModLoader.heap!.malloc(0x24);
     if (pointer === 0) return undefined;
-
-    mp.proxyPointer = pointer;
-    mp.proxyData = proxy;
+    defaults.forEach((ref: IModelReference, age: AgeOrForm) => {
+      this.ModLoader.emulator.rdramWrite32(pointer + (age * 4), ref.pointer);
+    });
+    mp.pointer = pointer;
     this.players.set(player.uuid, mp);
-    let zz = new zzstatic2();
-    zz.repoint(proxy, mp.proxyPointer);
-    this.ModLoader.emulator.rdramWriteBuffer(pointer, proxy);
-    this.ModLoader.logger.debug("[Model Manager]: Allocated 0x" + proxy.byteLength.toString(16) + " bytes for player " + player.nickname + " at " + pointer.toString(16) + ".");
+    this.ModLoader.logger.debug("[Model Manager]: Allocated player " + player.nickname + " at " + pointer.toString(16) + ".");
     mp.isDead = false;
     mp.isLoaded = true;
     return mp;
   }
 
+  allocateLocalPlayer() {
+    // Player needs allocated.
+    let pointer: number = this.ModLoader.heap!.malloc(0x24);
+    if (pointer === 0) return;
+
+    this.localPlayer.pointer = pointer;
+    this.ModLoader.logger.debug("[Model Manager]: Allocated local player at " + pointer.toString(16) + ".");
+    this.localPlayer.isDead = false;
+    this.localPlayer.isLoaded = true;
+  }
+
   isPlayerAllocated(player: ModelPlayer) {
-    return !player.isDead && player.proxyPointer > 0;
+    return !player.isDead && player.pointer > 0;
   }
 
   deallocatePlayer(player: INetworkPlayer) {
     if (!this.doesPlayerExist(player)) return;
     let alloc = this.getPlayer(player)!;
-    if (alloc.proxyPointer <= 0) return;
+    if (alloc.pointer <= 0) return;
 
-    this.ModLoader.gfx_heap!.free(alloc.proxyPointer);
-    alloc.proxyPointer = -1;
+    this.ModLoader.gfx_heap!.free(alloc.pointer);
+    alloc.pointer = -1;
     alloc.isLoaded = false;
-    this.ModLoader.logger.debug("[Model Manager]: Freed 0x" + alloc.proxyData.byteLength.toString(16) + " bytes from player " + player.nickname + ".");
+    this.ModLoader.logger.debug("[Model Manager]: Freed memory from player " + player.nickname + ".");
   }
 
   private _deallocatePlayerByUUID(uuid: string) {

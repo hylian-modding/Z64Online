@@ -1,3 +1,4 @@
+//@ts-ignore
 import { serialize, deserialize } from 'bson';
 import zlib from 'zlib';
 

@@ -173,11 +173,13 @@ export class ZobjTester {
                 if (this.ModLoader.ImGui.checkbox("Force Adult Size in MM", this.forceAdultSizedInMM)) {
                 }
                 if (this.ModLoader.ImGui.smallButton("Load Model")) {
+                    //@ts-ignore
                     let evt = new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), this.forceAdultSizedInMM[0] ? 0x68 : getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK);
                     bus.emit(Z64OnlineEvents.PREPROCESS_ZOBJ, evt);
                     bus.emit(Z64OnlineEvents.CHANGE_CUSTOM_MODEL, evt);
                 }
                 if (this.ModLoader.ImGui.smallButton("Dump As ZZConvert")) {
+                    //@ts-ignore
                     let evt = new Z64Online_ModelAllocation(fs.readFileSync(this.zobjs[this.current[0]]._path), this.forceAdultSizedInMM[0] ? 0x68 : getAgeOrForm(this.core), this.isOOT ? Z64LibSupportedGames.OCARINA_OF_TIME : Z64LibSupportedGames.MAJORAS_MASK);
                     if (Z64OManifestParser.isOldZZPlayas(evt.model)) {
                         let gameOverride = Z64_GAME;

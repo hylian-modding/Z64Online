@@ -3,8 +3,7 @@ import { AgeOrForm } from 'Z64Lib/API/Common/Z64API';
 
 export class ModelPlayer {
   uuid: string = "";
-  proxyPointer: number = -1;
-  proxyData!: Buffer;
+  pointer: number = -1;
   isDead: boolean = true;
   isLoaded: boolean = false;
   hasLeftGame: boolean = false;

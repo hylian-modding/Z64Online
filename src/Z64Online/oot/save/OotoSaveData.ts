@@ -9,11 +9,12 @@ import { SceneStruct } from "Z64Lib/API/Common/Z64API"
 import { ProxySide } from "modloader64_api/SidedProxy/SidedProxy";
 import { Z64O_PRIVATE_EVENTS } from "../../common/api/InternalAPI";
 import { ISaveSyncData } from "@Z64Online/common/save/ISaveSyncData";
-import { OotR_BadSyncData, TriforceHuntHelper } from "@Z64Online/oot/compat/OotR";
-import RomFlags from "@Z64Online/oot/compat/RomFlags";
+import { OotR_BadSyncData, OotR_collectible_override_flags, TriforceHuntHelper } from "@Z64Online/oot/compat/OotR";
+import RomFlags from "@Z64Online/common/types/RomFlags";
 import bitwise from 'bitwise';
 import fs from 'fs';
 import Z64Serialize from "@Z64Online/common/storage/Z64Serialize";
+import { OotR_PotsanityHelper } from '../compat/OotR';
 
 const USELESS_MASK: Array<InventoryItem> = [InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
 const ALL_MASKS: Array<InventoryItem> = [InventoryItem.KEATON_MASK, InventoryItem.SKULL_MASK, InventoryItem.SPOOKY_MASK, InventoryItem.BUNNY_HOOD, InventoryItem.MASK_OF_TRUTH, InventoryItem.GERUDO_MASK, InventoryItem.ZORA_MASK, InventoryItem.GORON_MASK];
@@ -53,7 +54,8 @@ export class OotOSaveData implements ISaveSyncData {
       "triforcePieces",
       'scarecrowsSongChildFlag',
       "scarecrowsSong",
-      'checksum'
+      'checksum',
+      OotR_collectible_override_flags
     ];
     obj = JSON.parse(JSON.stringify(this.core.save));
     obj['permSceneData'] = this.core.save.permSceneData;
@@ -62,6 +64,11 @@ export class OotOSaveData implements ISaveSyncData {
     for (let i = 0; i < OotR_BadSyncData.saveBitMask.byteLength; i++) {
       obj['permSceneData'][i] = obj['permSceneData'][i] & OotR_BadSyncData.saveBitMask[i];
     }
+
+    /**
+     * If OotR 7.0 load the potsanity flags.
+     */
+    obj[OotR_collectible_override_flags] = OotR_PotsanityHelper.getFlagBuffer(this.ModLoader);
 
     obj['eventFlags'] = this.core.save.eventFlags;
     obj['itemFlags'] = this.core.save.itemFlags;
@@ -205,6 +212,7 @@ export class OotOSaveData implements ISaveSyncData {
       if (side === ProxySide.CLIENT) {
         this.core.save.dungeonItemManager.setRawBuffer(obj.dungeon_items);
         TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
+        OotR_PotsanityHelper.setFlagBuffer(this.ModLoader, storage.collectible_override_flags);
       }
     } catch (err: any) {
       console.log(err.stack);
@@ -347,7 +355,7 @@ export class OotOSaveData implements ISaveSyncData {
           for (let j = 0; j < struct.switches.byteLength; j++) {
             if (struct.switches[j] !== cur.switches[j]) {
               cur.switches[j] |= struct.switches[j];
-              if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+              if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
                 if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 3, bitwise.integer.getBit(struct.switches[j], 3)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
                 if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
               }
@@ -373,7 +381,7 @@ export class OotOSaveData implements ISaveSyncData {
           let value = obj.eventFlags.readUInt8(i);
           if (eventFlags[i] !== value) {
             eventFlags[i] |= value;
-            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
               if (i == 2) bitwise.integer.setBit(eventFlags[i], 3, bitwise.integer.getBit(value, 3)); // Rented Horse from Ingo Flag?
               if (i == 13) bitwise.integer.setBit(eventFlags[i], 5, bitwise.integer.getBit(value, 5)); // Played Song of Storms in Kakariko Windmill Flag?
             }
@@ -392,7 +400,7 @@ export class OotOSaveData implements ISaveSyncData {
           let value = obj.infTable.readUInt8(i);
           if (infTable[i] !== value) {
             infTable[i] |= value;
-            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isOotR)) {
+            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
               if (i == 15) bitwise.integer.setBit(infTable[i], 1, bitwise.integer.getBit(value, 1)); // Hyrule Castle Gate Flag?
             }
           }
@@ -470,6 +478,9 @@ export class OotOSaveData implements ISaveSyncData {
           if (TriforceHuntHelper.getTriforcePieces(this.ModLoader) < obj.triforcePieces) {
             TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
           }
+          cur = OotR_PotsanityHelper.getFlagBuffer(this.ModLoader);
+          parseFlagChanges(obj.collectible_override_flags, cur);
+          OotR_PotsanityHelper.setFlagBuffer(this.ModLoader, cur);
           bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
         } else {
           parseFlagChanges(obj.dungeon_items, storage.dungeon_items);

@@ -5,27 +5,10 @@ import {
   AgeOrForm,
 } from 'Z64Lib/API/Common/Z64API';
 
-import { HorseData } from '../puppet/HorseData';
 import { INetworkPlayer } from 'modloader64_api/NetworkHandler';
 import { IKeyRing } from '@Z64Online/common/save/IKeyRing';
 import { Scene } from '../types/Types';
-import { IPuppetData } from '../puppet/IPuppetData';
 import { RemoteSoundPlayRequest } from '../api/Z64API';
-
-export class Z64O_PuppetPacket extends Packet {
-  data: {bundle: Buffer};
-  horse_data!: HorseData;
-
-  constructor(puppetData: IPuppetData, lobby: string) {
-    super('Z64O_PuppetPacket', 'Z64Online', lobby, false)
-    //@ts-ignore
-    this.data = puppetData;
-  }
-
-  setHorseData(horse: HorseData) {
-    this.horse_data = horse;
-  }
-}
 
 export class Z64O_ScenePacket extends Packet {
   scene: Scene;
@@ -155,17 +138,15 @@ export class Z64O_BottleUpdatePacket extends Packet {
   }
 }
 
-export class Z64_AllocateModelPacket extends Packet {
-  age: AgeOrForm;
-  hash: string;
-  ageThePlayerActuallyIs: AgeOrForm;
+export class Z64O_ModelPacket extends Packet {
 
-  constructor(age: AgeOrForm, lobby: string, hash: string, actualAge: AgeOrForm) {
-    super('Z64OnlineLib_AllocateModelPacket', 'Z64OnlineLib', lobby, true);
-    this.age = age;
-    this.hash = hash;
-    this.ageThePlayerActuallyIs = actualAge;
+  hashes: string[];
+
+  constructor(lobby: string, hashes: string[]) {
+    super("Z64O_ModelPacket", "Z64Online", lobby);
+    this.hashes = hashes;
   }
+
 }
 
 export class Z64_GiveModelPacket extends Packet {
@@ -173,7 +154,7 @@ export class Z64_GiveModelPacket extends Packet {
   target: INetworkPlayer;
 
   constructor(lobby: string, player: INetworkPlayer) {
-    super('Z64OnlineLib_GiveModelPacket', 'Z64OnlineLib', lobby, true);
+    super('Z64OnlineLib_GiveModelPacket', 'Z64Online', lobby, true);
     this.target = player;
   }
 }
@@ -183,7 +164,7 @@ export class Z64_EquipmentPakPacket extends Packet {
   age: AgeOrForm;
 
   constructor(age: AgeOrForm, lobby: string) {
-    super('Z64OnlineLib_EquipmentPakPacket', 'Z64OnlineLib', lobby, true);
+    super('Z64OnlineLib_EquipmentPakPacket', 'Z64Online', lobby, true);
     this.age = age;
   }
 }
@@ -191,24 +172,26 @@ export class Z64_EquipmentPakPacket extends Packet {
 export class Z64O_RomFlagsPacket extends Packet {
   isRando: boolean;
   isVanilla: boolean;
-  hasFastBunHood?: boolean;
-  isMultiworld?: boolean;
+  hasFastBunHood: boolean;
+  hasPotsanity: boolean;
+  potsanityFlagSize: number;
 
-  constructor(lobby: string, isRando: boolean, isVanilla: boolean, hasFastBunHood?: boolean, isMultiworld?: boolean) {
-    super('Z64O_RomFlagsPacket', 'Z64O', lobby, false);
+  constructor(lobby: string, isRando: boolean, isVanilla: boolean, hasFastBunHood: boolean, hasPotsanity: boolean, potsanityFlagSize: number) {
+    super('Z64O_RomFlagsPacket', 'Z64Online', lobby, false);
     this.isRando = isRando;
     this.hasFastBunHood = hasFastBunHood;
-    this.isMultiworld = isMultiworld;
     this.isVanilla = isVanilla;
+    this.hasPotsanity = hasPotsanity;
+    this.potsanityFlagSize = potsanityFlagSize;
   }
 }
 
-export class Z64O_ErrorPacket extends Packet{
+export class Z64O_ErrorPacket extends Packet {
 
   message: string;
 
-  constructor(msg: string, lobby: string){
-    super('Z64O_ErrorPacket', 'Z64O', lobby, false);
+  constructor(msg: string, lobby: string) {
+    super('Z64O_ErrorPacket', 'Z64Online', lobby, false);
     this.message = msg;
   }
 
@@ -218,22 +201,31 @@ export class Z64O_EmoteLoadPacket extends Packet {
   id: string;
 
   constructor(id: string, lobby: string) {
-      super('Z64O_EmoteLoadPacket', 'Z64O', lobby, true);
-      this.id = id;
+    super('Z64O_EmoteLoadPacket', 'Z64Online', lobby, true);
+    this.id = id;
   }
 }
 
 export class Z64O_EmoteRequestPacket extends Packet {
   constructor(lobby: string) {
-      super('Z64O_EmoteRequestPacket', 'Z64O', lobby, true);
+    super('Z64O_EmoteRequestPacket', 'Z64Online', lobby, true);
   }
 }
 
-export class Z64O_EmotePlayPacket extends Packet{
+export class Z64O_EmotePlayPacket extends Packet {
   req: RemoteSoundPlayRequest;
 
-  constructor(req: RemoteSoundPlayRequest, lobby: string){
-    super('Z64O_EmotePlayPacket', 'Z64O', lobby, true);
+  constructor(req: RemoteSoundPlayRequest, lobby: string) {
+    super('Z64O_EmotePlayPacket', 'Z64Online', lobby, true);
     this.req = req;
+  }
+}
+
+export class Z64O_PuppetPacket extends Packet{
+  update: Buffer;
+
+  constructor(lobby: string, update: Buffer){
+    super('Z64O_PuppetPacket', 'Z64Online', lobby, false);
+    this.update = update;
   }
 }

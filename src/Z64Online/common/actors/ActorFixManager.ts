@@ -61,16 +61,13 @@ export default class ActorFixManager {
     @EventHandler(EventsClient.ON_INJECT_FINISHED)
     onHeapReady(evt: any) {
         if (Z64_GAME === Z64LibSupportedGames.OCARINA_OF_TIME) {
-            this.OotHooks();
+            //this.OotHooks();
         } else if (Z64_GAME === Z64LibSupportedGames.MAJORAS_MASK) {
-            this.MMHooks();
+            //this.MMHooks();
         }
         let wait = (hook: ArbitraryHook, tick: number = 20) => {
             this.ModLoader.utils.setTimeoutFrames(() => {
                 hook.inject();
-                this.ModLoader.utils.setTimeoutFrames(() => {
-                    console.log(`${hook.name} ${hook.instancePointer.toString(16)}`);
-                }, 20)
             }, tick);
         };
         let i = 1;
@@ -147,7 +144,6 @@ export default class ActorFixManager {
             // Make door instance slightly bigger.
             let door: Buffer = tools.decompressActorFileFromRom(evt.rom, id);
             let door_hash: string = this.ModLoader.utils.hashBuffer(door);
-            console.log(`door hash: ${door_hash}`);
             door.writeUInt32BE(door.readUInt32BE(offset) + 0x10, offset);
             tools.recompressActorFileIntoRom(evt.rom, id, door);
         };
