@@ -94,7 +94,6 @@ void draw(void *thisx, PlayState *play)
 
 void hook(PlayState *play)
 {
-    Actor *actor = NULL;
     En_HaxBase *hax = haxPointer;
 
     u32* LinksWrappedDrawFunction = (u32*)0x8011D03C;
