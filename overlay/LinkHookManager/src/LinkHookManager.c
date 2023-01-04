@@ -5,49 +5,6 @@ extern void memset_fast_8(void *dest, u8 value, u32 length);
 
 #if TARGET_GAME == Z64GAME_OOT
 
-void draw(void *thisx, PlayState *play)
-{
-    s32 index;
-    En_HaxBase *hax = haxPointer;
-    ActorFunc fn;
-
-    if (hax == NULL)
-    {
-        return;
-    }
-
-    for (index = 0; index < HAXBASE_FUNCS_SIZE; index++)
-    {
-        fn = hax->draw_funcs[index];
-        if (fn == NULL)
-        {
-            break;
-        }
-        else
-        {
-            fn(thisx, play);
-        }
-    }
-
-    if (hax->draw != NULL)
-    {
-        hax->draw(thisx, play);
-    }
-
-    for (index = 0; index < HAXBASE_FUNCS_SIZE; index++)
-    {
-        fn = hax->draw_funcs_post[index];
-        if (fn == NULL)
-        {
-            break;
-        }
-        else
-        {
-            fn(thisx, play);
-        }
-    }
-}
-
 void update(void *thisx, PlayState *play)
 {
     s32 index;
@@ -91,45 +48,64 @@ void update(void *thisx, PlayState *play)
     }
 }
 
+void draw(void *thisx, PlayState *play)
+{
+    update(thisx, play);
+    s32 index;
+    En_HaxBase *hax = haxPointer;
+    ActorFunc fn;
+
+    if (hax == NULL)
+    {
+        return;
+    }
+
+    for (index = 0; index < HAXBASE_FUNCS_SIZE; index++)
+    {
+        fn = hax->draw_funcs[index];
+        if (fn == NULL)
+        {
+            break;
+        }
+        else
+        {
+            fn(thisx, play);
+        }
+    }
+
+    if (hax->draw != NULL)
+    {
+        hax->draw(thisx, play);
+    }
+
+    for (index = 0; index < HAXBASE_FUNCS_SIZE; index++)
+    {
+        fn = hax->draw_funcs_post[index];
+        if (fn == NULL)
+        {
+            break;
+        }
+        else
+        {
+            fn(thisx, play);
+        }
+    }
+}
+
 void hook(PlayState *play)
 {
     Actor *actor = NULL;
     En_HaxBase *hax = haxPointer;
 
-    u32* fuck = (u32*)0x8011D03C;
+    u32* LinksWrappedDrawFunction = (u32*)0x8011D03C;
 
-    if (hax->draw == 0 && *fuck > 0){
-        hax->draw = *fuck;
+    if (hax->draw == 0 && *LinksWrappedDrawFunction > 0){
+        hax->draw = *LinksWrappedDrawFunction;
     }
 
     if (hax->draw > 0){
-        *fuck = draw;
+        *LinksWrappedDrawFunction = draw;
     }
-
-/*     if (hax == NULL || isGameReady != 0 || doesLinkExist == 0)
-    {
-        return;
-    }
-
-    actor = play->actorCtx.actorLists[ACTORCAT_PLAYER].head;
-    if (actor == NULL)
-    {
-        return;
-    }
-
-    if (hax->draw == 0){
-        hax->draw = actor->draw;
-    }
-
-    if (actor->draw != draw && actor->draw > 0)
-    {
-        actor->draw = draw;
-    }
-    if (actor->update != update && actor->update > 0)
-    {
-        hax->update = actor->update;
-        actor->update = update;
-    } */
 
     hax->timer++;
 }
