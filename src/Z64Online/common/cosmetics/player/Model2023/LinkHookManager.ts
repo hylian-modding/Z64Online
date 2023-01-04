@@ -1,5 +1,5 @@
 import ArbitraryHook from '@Z64Online/common/lib/ArbitraryHook';
-import { LinkHookManager_mm, LinkHookManager_oot } from '@Z64Online/overlay/LinkHookManager';
+import { LinkHookManager_mm, LinkHookManager_oot10 } from '@Z64Online/overlay/LinkHookManager';
 import { IModLoaderAPI } from 'modloader64_api/IModLoaderAPI';
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { Z64LibSupportedGames } from 'Z64Lib/API/Utilities/Z64LibSupportedGames';
@@ -15,7 +15,7 @@ export class LinkHookManager {
     hook!: ArbitraryHook;
 
     setup(ModLoader: IModLoaderAPI, core: IZ64Main) {
-        let payload: Buffer = LinkHookManager_oot;
+        let payload: Buffer = LinkHookManager_oot10;
         if (Z64_GAME !== Z64LibSupportedGames.OCARINA_OF_TIME) payload = LinkHookManager_mm;
 
         this.hook = new ArbitraryHook("LinkHookManager", ModLoader, core, payload);

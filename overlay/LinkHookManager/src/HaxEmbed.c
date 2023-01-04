@@ -1,5 +1,5 @@
 #include "HaxEmbed.h"
-
+#if TARGET_GAME == Z64GAME_OOT
 const HaxEmbed_t embed = {
     .start = 0xDEADBEEF,
     .create = Hax_Inject,
@@ -8,3 +8,4 @@ const HaxEmbed_t embed = {
     .end = 0xBEEFDEAD
 };
 
+#endif

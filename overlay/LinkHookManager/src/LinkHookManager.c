@@ -1,9 +1,11 @@
 #include "HaxBase.h"
 #include "LinkHookManager.h"
 
-extern void memset_fast_8(void* dest, uint8_t value, uint32_t length);
+extern void memset_fast_8(void* dest, u8 value, u32 length);
 
-void draw(void* thisx, GlobalContext* globalCtx) {
+#if TARGET_GAME == Z64GAME_OOT
+
+void draw(void* thisx, PlayState* play) {
     s32 index;
     En_HaxBase* hax = haxPointer;
     ActorFunc fn;
@@ -18,12 +20,12 @@ void draw(void* thisx, GlobalContext* globalCtx) {
             break;
         }
         else {
-            fn(thisx, globalCtx);
+            fn(thisx, play);
         }
     }
 
     if (hax->draw != NULL) {
-        hax->draw(thisx, globalCtx);
+        hax->draw(thisx, play);
     }
 
     for (index = 0; index < HAXBASE_FUNCS_SIZE; index++) {
@@ -32,12 +34,12 @@ void draw(void* thisx, GlobalContext* globalCtx) {
             break;
         }
         else {
-            fn(thisx, globalCtx);
+            fn(thisx, play);
         }
     }
 }
 
-void update(void* thisx, GlobalContext* globalCtx) {
+void update(void* thisx, PlayState* play) {
     s32 index;
     En_HaxBase* hax = haxPointer;
     ActorFunc fn;
@@ -52,12 +54,12 @@ void update(void* thisx, GlobalContext* globalCtx) {
             break;
         }
         else {
-            fn(thisx, globalCtx);
+            fn(thisx, play);
         }
     }
 
     if (hax->update != NULL) {
-        hax->update(thisx, globalCtx);
+        hax->update(thisx, play);
     }
 
     for (index = 0; index < HAXBASE_FUNCS_SIZE; index++) {
@@ -66,12 +68,12 @@ void update(void* thisx, GlobalContext* globalCtx) {
             break;
         }
         else {
-            fn(thisx, globalCtx);
+            fn(thisx, play);
         }
     }
 }
 
-void hook(GlobalContext* globalCtx) {
+void hook(PlayState* play) {
     Actor* actor = NULL;
     En_HaxBase* hax = haxPointer;
 
@@ -79,16 +81,18 @@ void hook(GlobalContext* globalCtx) {
         return;
     }
 
-    actor = globalCtx->actorCtx.actorLists[ACTORCAT_PLAYER].head;
+    
+
+    actor = play->actorCtx.actorLists[ACTORCAT_PLAYER].head;
     if (actor == NULL) {
         return;
     }
 
-    if (actor->draw != draw) {
+    if (actor->draw != draw && actor->draw > 0) {
         hax->draw = actor->draw;
         actor->draw = draw;
     }
-    if (actor->update != update) {
+    if (actor->update != update && actor->update > 0) {
         hax->update = actor->update;
         actor->update = update;
     }
@@ -160,14 +164,14 @@ void LinkHooks_AddDrawHookPost(ActorFunc hook) {
     }
 }
 
-void Hax_Inject(En_HaxBase* thisx, GlobalContext* globalCtx, u32 pointer) {
+void Hax_Inject(En_HaxBase* thisx, PlayState* play, u32 pointer) {
     memset_fast_8(thisx, 0, sizeof(En_HaxBase));
     thisx->hook = hook;
     haxPointer = thisx;
 }
 
-void Hax_Destroy(En_HaxBase* thisx, GlobalContext* globalCtx, u32 pointer) {
-    Actor* actor = globalCtx->actorCtx.actorLists[ACTORCAT_PLAYER].head;
+void Hax_Destroy(En_HaxBase* thisx, PlayState* play, u32 pointer) {
+    Actor* actor = play->actorCtx.actorLists[ACTORCAT_PLAYER].head;
     actor->draw = thisx->draw;
     actor->update = thisx->update;
     memset_fast_8(thisx, 0, sizeof(En_HaxBase));
@@ -182,3 +186,4 @@ const LinkHooks_t linkHooks = {
     .draw_post = LinkHooks_AddDrawHookPost
 };
 
+#endif

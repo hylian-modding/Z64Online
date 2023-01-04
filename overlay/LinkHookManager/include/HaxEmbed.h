@@ -12,7 +12,7 @@ typedef struct{
     u32 end;
 } HaxEmbed_t;
 
-extern void Hax_Inject(En_HaxBase* thisx, GlobalContext* globalCtx, u32 pointer);
-extern void Hax_Destroy(En_HaxBase* thisx, GlobalContext* globalCtx, u32 pointer);
+extern void Hax_Inject(En_HaxBase* thisx, PlayState* play, u32 pointer);
+extern void Hax_Destroy(En_HaxBase* thisx, PlayState* play, u32 pointer);
 
 #endif /* __HAX_EMBED_H__ */

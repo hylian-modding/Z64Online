@@ -18,7 +18,7 @@ typedef struct{
 
 extern En_HaxBase* haxPointer;
 
-extern void update(void* thisx, GlobalContext* globalCtx);
-extern void draw(void* thisx, GlobalContext* globalCtx);
+extern void update(void* thisx, PlayState* play);
+extern void draw(void* thisx, PlayState* play);
 
 #endif /* __OVL_EN_HAXBASE__ */

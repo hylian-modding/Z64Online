@@ -3,7 +3,7 @@
 
 #include <libzelda64.h>
 
-typedef void (*LinkHookFunc)(struct Actor* actor, struct GlobalContext* globalCtx);
+typedef void (*LinkHookFunc)(struct Actor* actor, struct PlayState* play);
 typedef void (*AddUpdateHook)(LinkHookFunc* hook);
 typedef void (*AddDrawHook)(LinkHookFunc* hook);
 
