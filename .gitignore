@@ -91,3 +91,4 @@ ModLoader64-config-player2.json
 overlay/CustomEponaObject/bin/CustomEponaObject.ts
 *.ovl
 *.zobj
+overlay/LinkHookManager/bin/LinkHookManager.ts

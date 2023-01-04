@@ -16,6 +16,8 @@ import { NormalSkelEpona } from '@Z64Online/overlay/CustomEponaObject';
 import { EponaAnimBank } from '@Z64Online/overlay/EponaAnimBank';
 import { CDNClient } from '@Z64Online/common/cdn/CDNClient';
 import { adult, child } from '@Z64Online/overlay/LinkObjects';
+import { Z64RomTools } from 'Z64Lib/API/Utilities/Z64RomTools';
+import MipsAssembler from 'Z64Lib/API/Utilities/MipsAssembler';
 
 export default class OotGame implements IModelSystemGame {
 
@@ -49,6 +51,14 @@ export default class OotGame implements IModelSystemGame {
         manifest.repoint(ModLoader, buf, model1);
         this.adultRom = manifest.inject(ModLoader, buf, fixproxy(model1, 0), true, 0x0014);
         this.childRom = manifest.inject(ModLoader, buf, fixproxy(model1, 1), true, 0x0015);
+        // NOP this: https://github.com/zeldaret/oot/blob/master/src/overlays/actors/ovl_player_actor/z_player.c#L14391
+        // If we don't nop this we will crash when certain cutscenes are ran. Notably pulling the Master Sword from the pedestal.
+        // Technical details: Link's draw function has a seemingly pointless wrapper around it, but this command temporarily removes the wrapper.
+        // Removal of the wrapper causes us to crash for some reason I don't entirely understand, but making it stay in place seems to have no ill effect.
+        let tools = new Z64RomTools(ModLoader, Z64LibSupportedGames.OCARINA_OF_TIME);
+        let player = tools.decompressDMAFileFromRom(buf, 34);
+        MipsAssembler.assemble('nop').copy(player, 0x1FF80);
+        tools.recompressDMAFileIntoRom(buf, 34, player);
         // Link will be invisible following this code if nothing else is done.
         rom = buf;
     }
