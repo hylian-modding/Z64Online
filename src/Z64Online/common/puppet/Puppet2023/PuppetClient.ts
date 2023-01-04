@@ -154,6 +154,8 @@ export default class PuppetClient {
             let puppetPointer = puppet.pointer;
             let syncPointer = this.ModLoader.emulator.rdramRead32(puppetPointer);
             this.ModLoader.emulator.rdramWriteBuffer(syncPointer, packet.update);
+        }else{
+            this.ModLoader.logger.warn(`got puppet packet but I don't know this player: ${packet.player.nickname}`);
         }
     }
 
