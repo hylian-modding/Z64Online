@@ -114,7 +114,7 @@ export class OotR_SignatureManager {
         let rom_header_hash = sigs.readBuffer(0x10).toString('hex').toUpperCase();
 
         if (rom_header_hash !== header) {
-            //return false;
+            return false;
         }
 
         // Parse the table.
@@ -166,7 +166,7 @@ export class OotR_SignatureManager {
 export class OotR_PotsanityHelper {
 
     static hasPotsanity(): boolean {
-        return false;
+        return OotR_SignatureManager.SignatureLookup.has(OotR_collectible_override_flags);
     }
 
     static getFlagArraySize(ModLoader: IModLoaderAPI): number {
