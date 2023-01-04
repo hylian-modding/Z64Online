@@ -186,7 +186,7 @@ export class ModelManagerClient {
     }
     evt.ref.loadModel();
     if (evt.ref.pointer > 0) {
-      this.allocationManager.SetLocalPlayerModel(getAgeOrForm(this.core), evt.ref);
+      this.allocationManager.SetLocalPlayerModel(evt.age, evt.ref);
       this.triggerHandler();
 
       CDNClient.singleton.askCDN(this.allocationManager.getModel(evt.ref).zobj).then((result: boolean) => {
