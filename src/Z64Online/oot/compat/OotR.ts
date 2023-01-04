@@ -166,7 +166,7 @@ export class OotR_SignatureManager {
 export class OotR_PotsanityHelper {
 
     static hasPotsanity(): boolean {
-        return OotR_SignatureManager.SignatureLookup.has(OotR_collectible_override_flags);
+        return false;
     }
 
     static getFlagArraySize(ModLoader: IModLoaderAPI): number {
