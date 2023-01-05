@@ -92,3 +92,4 @@ overlay/CustomEponaObject/bin/CustomEponaObject.ts
 *.ovl
 *.zobj
 overlay/LinkHookManager/bin/LinkHookManager.ts
+overlay/Puppet/bin/Puppet.ts

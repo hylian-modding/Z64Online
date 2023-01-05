@@ -141,7 +141,7 @@ void PuppetSync_Update(Player *player, PlayState *play)
     {
         Lib_MemSet(&modulePointer->fakePos, 0, sizeof(Vec3f));
         Lib_MemSet(&modulePointer->fakeRot, 0, sizeof(Vec3s));
-        Player_OverrideLimbDrawGameplayDefault(play, index, &modulePointer->playerData.displayLists[index], &modulePointer->fakePos, &modulePointer->fakeRot, player);
+        //Player_OverrideLimbDrawGameplayDefault(play, index, &modulePointer->playerData.displayLists[index], &modulePointer->fakePos, &modulePointer->fakeRot, player);
     }
 #endif
 
