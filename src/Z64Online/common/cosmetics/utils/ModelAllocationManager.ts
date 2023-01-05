@@ -126,7 +126,13 @@ export class ModelAllocationManager {
     let modelObject = this.getModel(ref);
     let pointer: number = this.ModLoader.gfx_heap!.malloc(modelObject.size);
     // We're out of heap space. Abort.
-    if (pointer === 0) return undefined;
+    if (pointer === 0){
+      let loaded: number = 0;
+      this.references.forEach((ref: IModelReference)=>{
+        if (ref.isLoaded) loaded++;
+      });
+      throw new Error(`OUT OF GFX HEAP SPACE! ${this.models.size} models registered. ${loaded} loaded.`);
+    }
     ref.pointer = pointer;
     let b = modelObject.zobj;
     try {
