@@ -71,10 +71,10 @@ export class OotR_SignatureManager {
         };
 
         let zips = fs.readdirSync("./sigs");
-        
-        for (let i = 0; i < zips.length; i++){
+
+        for (let i = 0; i < zips.length; i++) {
             let z = path.resolve("./sigs", zips[i]);
-            if (path.parse(z).ext === ".zip"){
+            if (path.parse(z).ext === ".zip") {
                 process(z);
             }
         }
@@ -175,12 +175,12 @@ export class OotR_PotsanityHelper {
 
     static getFlagBuffer(ModLoader: IModLoaderAPI): Buffer {
         if (!this.hasPotsanity()) return Buffer.alloc(1);
-        return ModLoader.emulator.rdramReadBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, this.getFlagArraySize(ModLoader));
+        return ModLoader.emulator.rdramReadPtrBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, 0, this.getFlagArraySize(ModLoader));
     }
 
     static setFlagBuffer(ModLoader: IModLoaderAPI, buf: Buffer): void {
         if (!this.hasPotsanity()) return;
-        ModLoader.emulator.rdramWriteBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, buf);
+        ModLoader.emulator.rdramWritePtrBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, 0, buf);
     }
 
 }
