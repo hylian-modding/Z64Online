@@ -9,6 +9,6 @@ export interface ISaveSyncData {
     processKeyRing_OVERWRITE(settings: any, keys: IKeyRing, storage: IKeyRing, side: ProxySide): void;
     createSave(): Buffer;
     forceOverrideSave(settings: any, save: Buffer, storage: IZ64SyncSave, side: ProxySide): void;
-    mergeSave(settings: any, save: Buffer, storage: IZ64SyncSave, side: ProxySide): Promise<boolean>;
+    mergeSave(settings: any, save: Buffer, storage: IZ64SyncSave, side: ProxySide): void;
     applySave(settings: any, save: Buffer): void;
 }

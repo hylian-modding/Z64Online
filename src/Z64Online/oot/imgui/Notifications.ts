@@ -1,25 +1,23 @@
+import { IZ64Master, Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
 import { Z64OnlineEvents, Z64_SaveDataItemSet } from "@Z64Online/common/api/Z64API";
+import { HYLIAN_FONT_REF } from "@Z64Online/common/gui/HyliaFont";
+import RomFlags from "@Z64Online/common/types/RomFlags";
+import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
+import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
+import { SongFlags, SongNotes } from "Z64Lib/API/Common/Z64API";
+import { ScarecrowSongNoteStruct } from "Z64Lib/API/OoT/OOTAPI";
+import fs from 'fs';
 import { InjectCore } from "modloader64_api/CoreInjection";
 import { EventHandler, EventsClient, PrivateEventHandler } from "modloader64_api/EventHandler";
 import { IModLoaderAPI } from "modloader64_api/IModLoaderAPI";
 import { ModLoaderAPIInject } from "modloader64_api/ModLoaderAPIInjector";
-import { Command } from "Z64Lib/API/Common/ICommandBuffer";
-import { IOOTCore, ScarecrowSongNoteStruct } from "Z64Lib/API/OoT/OOTAPI";
-import { SongNotes, SongFlags } from "Z64Lib/API/Common/Z64API"
-import { onViUpdate, Postinit } from "modloader64_api/PluginLifecycle";
-import { FlipFlags, Font, Texture } from "modloader64_api/Sylvain/Gfx";
-import { rgba, xy, xywh } from "modloader64_api/Sylvain/vec";
-import fs from 'fs';
-import path from 'path';
 import { INetworkPlayer } from "modloader64_api/NetworkHandler";
-import { OotOnlineConfigCategory } from "@Z64Online/oot/OotOnline";
-import { Z64O_PRIVATE_EVENTS } from "@Z64Online/common/api/InternalAPI";
-import { SpriteMap } from "./SpriteMap";
+import { Postinit, onViUpdate } from "modloader64_api/PluginLifecycle";
 import { ParentReference } from "modloader64_api/SidedProxy/SidedProxy";
-import RomFlags from "@Z64Online/common/types/RomFlags";
-import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { IZ64Clientside } from "@Z64Online/common/storage/Z64Storage";
-import { HYLIAN_FONT_REF } from "@Z64Online/common/gui/HyliaFont";
+import { FlipFlags, Texture } from "modloader64_api/Sylvain/Gfx";
+import { rgba, xy, xywh } from "modloader64_api/Sylvain/vec";
+import path from 'path';
+import { SpriteMap } from "./SpriteMap";
 
 class Notif {
     msg: string;
@@ -52,7 +50,7 @@ export class Notifications {
     @InjectCore()
     core!: IZ64Main;
     @ParentReference()
-    parent!: IZ64Clientside;
+    parent!: IZ64Master;
     //---
     messages: Array<Notif> = [];
     curMessage: Notif | ScarecrowNotif | undefined;
@@ -70,7 +68,7 @@ export class Notifications {
     onSaveDataToggle(evt: Z64_SaveDataItemSet) {
         if (!this.resourcesLoaded) return;
         if (SpriteMap.has(evt.key) && !this.lockIncomingItems) {
-            if (this.parent.getClientStorage()!.localization.hasOwnProperty(SpriteMap.get(evt.key)!)) {
+            if (this.parent.OOT!.getClientStorage()!.localization.hasOwnProperty(SpriteMap.get(evt.key)!)) {
                 if (evt.key == "scarecrowsSongChildFlag" || evt.key == "scarecrowsSongAdultFlag") {
                     let i = 0;
                     let obj: any;
@@ -125,13 +123,13 @@ export class Notifications {
                         this.ModLoader.logger.info('A child taught Bonooru' + str);
                     }
                     else if (evt.key == "scarecrowsSongAdultFlag") {
-                        this.messages.push(new ScarecrowNotif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get("scarecrowsSong")!)!, btnNotes, this.MAX_TIMER));
+                        this.messages.push(new ScarecrowNotif(this.parent.OOT!.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get("scarecrowsSong")!)!, btnNotes, this.MAX_TIMER));
                         this.ModLoader.logger.info('Learned Scarecrow\'s Song:' + str);
                     }
                     this.ModLoader.logger.info('Visit Bonooru as a child if you\'d like to change it to something else.');
                 }
                 else if (!RomFlags.isMultiworld) {
-                    this.messages.push(new Notif(this.parent.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get(evt.key)!)!, this.MAX_TIMER));
+                    this.messages.push(new Notif(this.parent.OOT!.getClientStorage()!.localization[SpriteMap.get(evt.key)!], this.itemIcons.get(SpriteMap.get(evt.key)!)!, this.MAX_TIMER));
                 }
             }
         }

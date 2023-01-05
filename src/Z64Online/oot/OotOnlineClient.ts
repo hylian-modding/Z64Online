@@ -423,6 +423,7 @@ export default class OotOnlineClient {
             return;
         }
         if (packet.world !== this.clientStorage.world) return;
+        if (!this.clientStorage.first_time_sync) return;
         this.clientStorage.saveManager.applySave(this.clientStorage, packet.save, this.config.syncMasks);
         // Update hash.
         this.clientStorage.saveManager.createSave();

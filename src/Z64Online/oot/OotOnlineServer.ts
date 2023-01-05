@@ -27,7 +27,7 @@ export default class OotOnlineServer {
     @SidedProxy(ProxySide.SERVER, OotOnline_ServerModules)
     modules!: OotOnline_ServerModules;
 
-    constructor(){
+    constructor() {
         markIsServer();
     }
 
@@ -184,22 +184,19 @@ export default class OotOnlineServer {
         if (world.saveGameSetup) {
             // Game is running, get data.
             let resp = new Z64O_DownloadResponsePacket(packet.lobby, false);
-            Z64Serialize.serialize(world.save).then((buf: Buffer) => {
-                resp.save = buf;
-                resp.keys = world.keys;
-                this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
-            }).catch(() => { });
+            resp.save = Buffer.from(JSON.stringify(world.save));
+            resp.keys = world.keys;
+            this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         } else {
             // Game is not running, give me your data.
-            Z64Serialize.deserialize(packet.save).then((data: any) => {
-                Object.keys(data).forEach((key: string) => {
-                    let obj = data[key];
-                    world.save[key] = obj;
-                });
-                world.saveGameSetup = true;
-                let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
-                this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
+            let data = JSON.parse(packet.save.toString());
+            Object.keys(data).forEach((key: string) => {
+                let obj = data[key];
+                world.save[key] = obj;
             });
+            world.saveGameSetup = true;
+            let resp = new Z64O_DownloadResponsePacket(packet.lobby, true);
+            this.ModLoader.serverSide.sendPacketToSpecificPlayer(resp, packet.player);
         }
     }
 
@@ -222,7 +219,7 @@ export default class OotOnlineServer {
         world.save.hasFastBunHood = packet.hasFastBunHood;
         world.save.hasPotsanity = packet.hasPotsanity;
         world.save.PotsanityFlagSize = packet.potsanityFlagSize;
-        if (world.save.PotsanityFlagSize > -1){
+        if (world.save.PotsanityFlagSize > -1) {
             this.ModLoader.logger.debug(`Setting up potsanity for lobby ${packet.lobby}`);
             world.save.collectible_override_flags = Buffer.alloc(world.save.PotsanityFlagSize);
         }
@@ -242,21 +239,16 @@ export default class OotOnlineServer {
             return;
         }
         if (typeof storage.worlds[packet.player.data.world] === 'undefined') {
-            if (packet.player.data.world === undefined){
+            if (packet.player.data.world === undefined) {
                 this.ModLoader.serverSide.sendPacket(new Z64O_ErrorPacket("The server has encountered an error with your world. (world id is undefined)", packet.lobby));
                 return;
-            }else{
+            } else {
                 storage.worlds[packet.player.data.world] = new OotOnlineSave_Server();
             }
         }
         let world = storage.worlds[packet.player.data.world];
-        storage.saveManager.mergeSave(storage, packet.save, world.save, ProxySide.SERVER).then((bool: boolean) => {
-            if (bool) {
-                Z64Serialize.serialize(world.save).then((buf: Buffer) => {
-                    this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, buf, packet.player.data.world));
-                }).catch((err: string) => { });
-            }
-        });
+        storage.saveManager.mergeSave(storage, packet.save, world.save, ProxySide.SERVER);
+        this.ModLoader.serverSide.sendPacket(new Z64O_UpdateSaveDataPacket(packet.lobby, Buffer.from(JSON.stringify(world.save)), packet.player.data.world));
     }
 
     @ServerNetworkHandler('Z64O_UpdateKeyringPacket')

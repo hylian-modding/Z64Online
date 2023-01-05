@@ -175,12 +175,16 @@ export class OotR_PotsanityHelper {
 
     static getFlagBuffer(ModLoader: IModLoaderAPI): Buffer {
         if (!this.hasPotsanity()) return Buffer.alloc(1);
-        return ModLoader.emulator.rdramReadPtrBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, 0, this.getFlagArraySize(ModLoader));
+        let ptr = ModLoader.emulator.rdramRead32(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!);
+        return ModLoader.emulator.rdramReadBuffer(ptr, this.getFlagArraySize(ModLoader));
     }
 
     static setFlagBuffer(ModLoader: IModLoaderAPI, buf: Buffer): void {
         if (!this.hasPotsanity()) return;
-        ModLoader.emulator.rdramWritePtrBuffer(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!, 0, buf);
+        let ptr = ModLoader.emulator.rdramRead32(OotR_SignatureManager.SignatureLookup.get(OotR_collectible_override_flags)!);
+        if (Buffer.isBuffer(buf)){
+            ModLoader.emulator.rdramWriteBuffer(ptr, buf);
+        }
     }
 
 }

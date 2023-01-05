@@ -117,7 +117,7 @@ export class OotOSaveData implements ISaveSyncData {
 
   createSave(): Buffer {
     let obj = this.generateWrapper();
-    let buf = Z64Serialize.serializeSync(obj);
+    let buf = Buffer.from(JSON.stringify(obj));
     this.hash = this.ModLoader.utils.hashBuffer(buf);
     return buf;
   }
@@ -184,7 +184,7 @@ export class OotOSaveData implements ISaveSyncData {
   forceOverrideSave(settings: any, save: Buffer, storage: IOOTSyncSave, side: ProxySide) {
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.LOCK_ITEM_NOTIFICATIONS, {});
-      let obj: IOOTSyncSave = Z64Serialize.deserializeSync(save);
+      let obj: IOOTSyncSave = JSON.parse(save.toString());
 
       storage.death_counter = obj.death_counter;
       storage.heart_containers = obj.heart_containers;
@@ -223,280 +223,275 @@ export class OotOSaveData implements ISaveSyncData {
 
   }
 
-  mergeSave(settings: any, save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true): Promise<boolean> {
-    return new Promise((accept, reject) => {
-      Z64Serialize.deserialize(save).then((obj: IOOTSyncSave) => {
-        // Another title screen safety check.
-        if (obj.checksum === 0) {
-          return;
-        }
+  mergeSave(settings: any, save: Buffer, storage: IOOTSyncSave, side: ProxySide, syncMasks: boolean = true): void {
+    // Another title screen safety check.
+    let obj = JSON.parse(save.toString());
+    if (obj.checksum === 0) {
+      return;
+    }
 
-        if (obj.death_counter > storage.death_counter) {
-          storage.death_counter = obj.death_counter;
-        }
-        if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
-          storage.heart_containers = obj.heart_containers;
-          bus.emit(Z64OnlineEvents.GAINED_HEART_CONTAINER, {});
-        }
-        if (storage.heart_containers > 20) {
-          storage.heart_containers = 20;
-        }
-        if (obj.magic_meter_size > storage.magic_meter_size) {
-          storage.magic_meter_size = obj.magic_meter_size;
-          bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, storage.magic_meter_size);
-        }
-        if (obj.magic_beans_purchased > storage.magic_beans_purchased) {
-          storage.magic_beans_purchased = obj.magic_beans_purchased;
-        }
-        if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
-          storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
-        }
-        if (obj.poe_collector_score > storage.poe_collector_score) {
-          storage.poe_collector_score = obj.poe_collector_score;
-        }
-        this.processBoolLoop(obj.swords, storage.swords);
-        this.processBoolLoop(obj.shields, storage.shields);
-        this.processBoolLoop(obj.tunics, storage.tunics);
-        this.processBoolLoop(obj.boots, storage.boots);
-        this.processMixedLoop(obj.questStatus, storage.questStatus, []);
+    if (obj.death_counter > storage.death_counter) {
+      storage.death_counter = obj.death_counter;
+    }
+    if (obj.heart_containers > storage.heart_containers && obj.heart_containers <= 20) {
+      storage.heart_containers = obj.heart_containers;
+      bus.emit(Z64OnlineEvents.GAINED_HEART_CONTAINER, {});
+    }
+    if (storage.heart_containers > 20) {
+      storage.heart_containers = 20;
+    }
+    if (obj.magic_meter_size > storage.magic_meter_size) {
+      storage.magic_meter_size = obj.magic_meter_size;
+      bus.emit(Z64OnlineEvents.MAGIC_METER_INCREASED, storage.magic_meter_size);
+    }
+    if (obj.magic_beans_purchased > storage.magic_beans_purchased) {
+      storage.magic_beans_purchased = obj.magic_beans_purchased;
+    }
+    if (obj.inventory.magicBeansCount !== storage.inventory.magicBeansCount) {
+      storage.inventory.magicBeansCount = obj.inventory.magicBeansCount;
+    }
+    if (obj.poe_collector_score > storage.poe_collector_score) {
+      storage.poe_collector_score = obj.poe_collector_score;
+    }
+    this.processBoolLoop(obj.swords, storage.swords);
+    this.processBoolLoop(obj.shields, storage.shields);
+    this.processBoolLoop(obj.tunics, storage.tunics);
+    this.processBoolLoop(obj.boots, storage.boots);
+    this.processMixedLoop(obj.questStatus, storage.questStatus, []);
 
-        if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
-          storage.inventory.bottle_1 = obj.inventory.bottle_1;
-        }
+    if (obj.inventory.bottle_1 !== InventoryItem.NONE && storage.inventory.bottle_1 === InventoryItem.NONE) {
+      storage.inventory.bottle_1 = obj.inventory.bottle_1;
+    }
 
-        if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
-          storage.inventory.bottle_2 = obj.inventory.bottle_2;
-        }
+    if (obj.inventory.bottle_2 !== InventoryItem.NONE && storage.inventory.bottle_2 === InventoryItem.NONE) {
+      storage.inventory.bottle_2 = obj.inventory.bottle_2;
+    }
 
-        if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
-          storage.inventory.bottle_3 = obj.inventory.bottle_3;
-        }
+    if (obj.inventory.bottle_3 !== InventoryItem.NONE && storage.inventory.bottle_3 === InventoryItem.NONE) {
+      storage.inventory.bottle_3 = obj.inventory.bottle_3;
+    }
 
-        if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
-          storage.inventory.bottle_4 = obj.inventory.bottle_4;
-        }
+    if (obj.inventory.bottle_4 !== InventoryItem.NONE && storage.inventory.bottle_4 === InventoryItem.NONE) {
+      storage.inventory.bottle_4 = obj.inventory.bottle_4;
+    }
 
-        this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
+    this.processMixedLoop(obj.inventory, storage.inventory, ["bottle_1", "bottle_2", "bottle_3", "bottle_4", "childTradeItem", "adultTradeItem"]);
 
-        if (storage.questStatus.heartPieces < obj.questStatus.heartPieces && obj.questStatus.heartPieces < 4) {
-          storage.questStatus.heartPieces = obj.questStatus.heartPieces;
-          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
-        } else if (obj.questStatus.heartPieces > 3) {
-          storage.questStatus.heartPieces = 0;
-          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
-        } else if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
-          storage.questStatus.heartPieces = 0;
-          bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
-        }
+    if (storage.questStatus.heartPieces < obj.questStatus.heartPieces && obj.questStatus.heartPieces < 4) {
+      storage.questStatus.heartPieces = obj.questStatus.heartPieces;
+      bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+    } else if (obj.questStatus.heartPieces > 3) {
+      storage.questStatus.heartPieces = 0;
+      bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+    } else if (storage.questStatus.heartPieces >= 3 && obj.questStatus.heartPieces === 0) {
+      storage.questStatus.heartPieces = 0;
+      bus.emit(Z64OnlineEvents.GAINED_PIECE_OF_HEART, {});
+    }
 
-        if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
-          let shouldSync = true;
-          if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1) {
-            if (!syncMasks) {
-              shouldSync = false;
-            }
-            if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1) {
-              shouldSync = false;
-            }
-          }
-          if (shouldSync) {
-            if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
-              if (side === ProxySide.SERVER) { // Deku Scrub Theater rewards' flag check
-                if (obj.itemFlags.readUInt8(2) < 64 && obj.inventory.childTradeItem > InventoryItem.SKULL_MASK) {
-                  obj.inventory.childTradeItem = InventoryItem.SKULL_MASK;
-                } else if (obj.itemFlags.readUInt8(2) < 128 && obj.inventory.childTradeItem > InventoryItem.MASK_OF_TRUTH) {
-                  obj.inventory.childTradeItem = InventoryItem.MASK_OF_TRUTH;
-                } else if (RomFlags.hasFastBunHood) {
-                  obj.inventory.childTradeItem = InventoryItem.BUNNY_HOOD;
-                }
-              }
-              storage.inventory.childTradeItem = obj.inventory.childTradeItem;
-            }
-          }
+    if (obj.inventory.childTradeItem !== InventoryItem.SOLD_OUT) {
+      let shouldSync = true;
+      if (ALL_MASKS.indexOf(obj.inventory.childTradeItem) > -1) {
+        if (!syncMasks) {
+          shouldSync = false;
         }
+        if (USELESS_MASK.indexOf(obj.inventory.childTradeItem) > -1) {
+          shouldSync = false;
+        }
+      }
+      if (shouldSync) {
+        if (this.isGreaterThan(obj.inventory.childTradeItem, storage.inventory.childTradeItem)) {
+          if (side === ProxySide.SERVER) { // Deku Scrub Theater rewards' flag check
+            if (obj.itemFlags.readUInt8(2) < 64 && obj.inventory.childTradeItem > InventoryItem.SKULL_MASK) {
+              obj.inventory.childTradeItem = InventoryItem.SKULL_MASK;
+            } else if (obj.itemFlags.readUInt8(2) < 128 && obj.inventory.childTradeItem > InventoryItem.MASK_OF_TRUTH) {
+              obj.inventory.childTradeItem = InventoryItem.MASK_OF_TRUTH;
+            } else if (RomFlags.hasFastBunHood) {
+              obj.inventory.childTradeItem = InventoryItem.BUNNY_HOOD;
+            }
+          }
+          storage.inventory.childTradeItem = obj.inventory.childTradeItem;
+        }
+      }
+    }
 
-        if (obj.inventory.adultTradeItem !== InventoryItem.SOLD_OUT) {
-          if (this.isGreaterThan(obj.inventory.adultTradeItem, storage.inventory.adultTradeItem)) {
-            storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
-          }
-        }
+    if (obj.inventory.adultTradeItem !== InventoryItem.SOLD_OUT) {
+      if (this.isGreaterThan(obj.inventory.adultTradeItem, storage.inventory.adultTradeItem)) {
+        storage.inventory.adultTradeItem = obj.inventory.adultTradeItem;
+      }
+    }
 
-        let permSceneData = storage.permSceneData;
-        let eventFlags = storage.eventFlags;
-        let itemFlags = storage.itemFlags;
-        let infTable = storage.infTable;
-        let skulltulaFlags = storage.skulltulaFlags;
-        let scarecrowsSong = storage.scarecrowsSong;
+    let permSceneData = storage.permSceneData;
+    let eventFlags = storage.eventFlags;
+    let itemFlags = storage.itemFlags;
+    let infTable = storage.infTable;
+    let skulltulaFlags = storage.skulltulaFlags;
+    let scarecrowsSong = storage.scarecrowsSong;
 
-        let backupTriforcePieces: number | undefined;
+    let backupTriforcePieces: number | undefined;
 
-        if (side === ProxySide.CLIENT) {
-          backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
-        }
+    if (side === ProxySide.CLIENT) {
+      backupTriforcePieces = TriforceHuntHelper.getTriforcePieces(this.ModLoader);
+    }
 
-        for (let i = 0; i < obj.permSceneData.byteLength; i += 0x1C) {
-          let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
-          let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
-          for (let j = 0; j < struct.chests.byteLength; j++) {
-            if (struct.chests[j] !== cur.chests[j]) {
-              cur.chests[j] |= struct.chests[j];
-            }
-          }
-          for (let j = 0; j < struct.collectible.byteLength; j++) {
-            if (struct.collectible[j] !== cur.collectible[j]) {
-              cur.collectible[j] |= struct.collectible[j];
-            }
-          }
-          for (let j = 0; j < struct.room_clear.byteLength; j++) {
-            if (struct.room_clear[j] !== cur.room_clear[j]) {
-              cur.room_clear[j] |= struct.room_clear[j];
-            }
-          }
-          for (let j = 0; j < struct.switches.byteLength; j++) {
-            if (struct.switches[j] !== cur.switches[j]) {
-              cur.switches[j] |= struct.switches[j];
-              if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
-                if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 3, bitwise.integer.getBit(struct.switches[j], 3)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
-                if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
-              }
-            }
-          }
-          for (let j = 0; j < struct.visited_floors.byteLength; j++) {
-            if (struct.visited_floors[j] !== cur.visited_floors[j]) {
-              cur.visited_floors[j] |= struct.visited_floors[j];
-            }
-          }
-          for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
-            if (struct.visited_rooms[j] !== cur.visited_rooms[j]) {
-              cur.visited_rooms[j] |= struct.visited_rooms[j];
-            }
-          }
-          for (let j = 0; j < struct.unused.byteLength; j++) {
-            if (struct.unused[j] !== cur.unused[j]) {
-              cur.unused[j] |= struct.unused[j];
-            }
+    for (let i = 0; i < obj.permSceneData.byteLength; i += 0x1C) {
+      let struct = new SceneStruct(obj.permSceneData.slice(i, i + 0x1C));
+      let cur = new SceneStruct(permSceneData.slice(i, i + 0x1C));
+      for (let j = 0; j < struct.chests.byteLength; j++) {
+        if (struct.chests[j] !== cur.chests[j]) {
+          cur.chests[j] |= struct.chests[j];
+        }
+      }
+      for (let j = 0; j < struct.collectible.byteLength; j++) {
+        if (struct.collectible[j] !== cur.collectible[j]) {
+          cur.collectible[j] |= struct.collectible[j];
+        }
+      }
+      for (let j = 0; j < struct.room_clear.byteLength; j++) {
+        if (struct.room_clear[j] !== cur.room_clear[j]) {
+          cur.room_clear[j] |= struct.room_clear[j];
+        }
+      }
+      for (let j = 0; j < struct.switches.byteLength; j++) {
+        if (struct.switches[j] !== cur.switches[j]) {
+          cur.switches[j] |= struct.switches[j];
+          if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
+            if (i == 3 && j == 3) bitwise.integer.setBit(cur.switches[j], 3, bitwise.integer.getBit(struct.switches[j], 3)); // Forest Temple Poe Sisters' Cutscene Seen and Elevator Off Switch?
+            if (i == 5 && j == 3) cur.switches[j] = struct.switches[j]; // Water Temple Water Level Switches
           }
         }
-        for (let i = 0; i < obj.eventFlags.byteLength; i++) {
-          let value = obj.eventFlags.readUInt8(i);
-          if (eventFlags[i] !== value) {
-            eventFlags[i] |= value;
-            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
-              if (i == 2) bitwise.integer.setBit(eventFlags[i], 3, bitwise.integer.getBit(value, 3)); // Rented Horse from Ingo Flag?
-              if (i == 13) bitwise.integer.setBit(eventFlags[i], 5, bitwise.integer.getBit(value, 5)); // Played Song of Storms in Kakariko Windmill Flag?
-            }
+      }
+      for (let j = 0; j < struct.visited_floors.byteLength; j++) {
+        if (struct.visited_floors[j] !== cur.visited_floors[j]) {
+          cur.visited_floors[j] |= struct.visited_floors[j];
+        }
+      }
+      for (let j = 0; j < struct.visited_rooms.byteLength; j++) {
+        if (struct.visited_rooms[j] !== cur.visited_rooms[j]) {
+          cur.visited_rooms[j] |= struct.visited_rooms[j];
+        }
+      }
+      for (let j = 0; j < struct.unused.byteLength; j++) {
+        if (struct.unused[j] !== cur.unused[j]) {
+          cur.unused[j] |= struct.unused[j];
+        }
+      }
+    }
+    for (let i = 0; i < obj.eventFlags.byteLength; i++) {
+      let value = obj.eventFlags.readUInt8(i);
+      if (eventFlags[i] !== value) {
+        eventFlags[i] |= value;
+        if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
+          if (i == 2) bitwise.integer.setBit(eventFlags[i], 3, bitwise.integer.getBit(value, 3)); // Rented Horse from Ingo Flag?
+          if (i == 13) bitwise.integer.setBit(eventFlags[i], 5, bitwise.integer.getBit(value, 5)); // Played Song of Storms in Kakariko Windmill Flag?
+        }
+      }
+    }
+    if (obj.eventFlags[18] > storage.eventFlags[18]) {
+      bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongAdultFlag', obj.scarecrowsSong));
+    }
+    for (let i = 0; i < obj.itemFlags.byteLength; i++) {
+      let value = obj.itemFlags.readUInt8(i);
+      if (itemFlags[i] !== value) {
+        itemFlags[i] |= value;
+      }
+    }
+    for (let i = 0; i < obj.infTable.byteLength; i++) {
+      let value = obj.infTable.readUInt8(i);
+      if (infTable[i] !== value) {
+        infTable[i] |= value;
+        if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
+          if (i == 15) bitwise.integer.setBit(infTable[i], 1, bitwise.integer.getBit(value, 1)); // Hyrule Castle Gate Flag?
+        }
+      }
+    }
+    for (let i = 0; i < obj.skulltulaFlags.byteLength; i++) {
+      let value = obj.skulltulaFlags.readUInt8(i);
+      if (skulltulaFlags[i] !== value) {
+        skulltulaFlags[i] |= value;
+      }
+    }
+    if (obj.scarecrowsSongChildFlag > storage.scarecrowsSongChildFlag) {
+      storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
+      bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongChildFlag', obj.scarecrowsSong));
+    }
+    if (Object.values(obj.scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined") && !Object.values(scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined")) {
+      for (let i = 0; i < obj.scarecrowsSong.byteLength; i += 0x8) {
+        let struct = new ScarecrowSongNoteStruct(obj.scarecrowsSong.slice(i, i + 0x8));
+        let cur = new ScarecrowSongNoteStruct(scarecrowsSong.slice(i, i + 0x8));
+        for (let j = 0; j < struct.note.byteLength; j++) {
+          if (struct.note[j] !== cur.note[j]) {
+            cur.note[j] = struct.note[j];
           }
         }
-        if (obj.eventFlags[18] > storage.eventFlags[18]) {
-          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongAdultFlag', obj.scarecrowsSong));
-        }
-        for (let i = 0; i < obj.itemFlags.byteLength; i++) {
-          let value = obj.itemFlags.readUInt8(i);
-          if (itemFlags[i] !== value) {
-            itemFlags[i] |= value;
+        for (let j = 0; j < struct.unused.byteLength; j++) {
+          if (struct.unused[j] !== cur.unused[j]) {
+            cur.unused[j] = struct.unused[j];
           }
         }
-        for (let i = 0; i < obj.infTable.byteLength; i++) {
-          let value = obj.infTable.readUInt8(i);
-          if (infTable[i] !== value) {
-            infTable[i] |= value;
-            if (side === ProxySide.SERVER && (RomFlags.isVanilla || RomFlags.isRando)) {
-              if (i == 15) bitwise.integer.setBit(infTable[i], 1, bitwise.integer.getBit(value, 1)); // Hyrule Castle Gate Flag?
+        for (let j = 0; j < struct.duration.byteLength; j++) {
+          if (struct.duration[j] !== cur.duration[j]) {
+            if (j == 0 && struct.duration[j] > 0) { // Cap note/silence duration to 16 seconds?
+              struct.duration[j] = 0;
             }
+            if (j == 1 && struct.duration[j] > 16) {
+              struct.duration[j] = 16;
+            }
+            cur.duration[j] = struct.duration[j];
           }
         }
-        for (let i = 0; i < obj.skulltulaFlags.byteLength; i++) {
-          let value = obj.skulltulaFlags.readUInt8(i);
-          if (skulltulaFlags[i] !== value) {
-            skulltulaFlags[i] |= value;
+        for (let j = 0; j < struct.volume.byteLength; j++) {
+          if (struct.volume[j] !== cur.volume[j]) {
+            cur.volume[j] = struct.volume[j];
           }
         }
-        if (obj.scarecrowsSongChildFlag > storage.scarecrowsSongChildFlag) {
-          storage.scarecrowsSongChildFlag = obj.scarecrowsSongChildFlag;
-          bus.emit(Z64OnlineEvents.SAVE_DATA_ITEM_SET, new Z64_SaveDataItemSet('scarecrowsSongChildFlag', obj.scarecrowsSong));
-        }
-        if (Object.values(obj.scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined") && !Object.values(scarecrowsSong).some(v => v !== 0 && v !== null && typeof v !== "undefined")) {
-          for (let i = 0; i < obj.scarecrowsSong.byteLength; i += 0x8) {
-            let struct = new ScarecrowSongNoteStruct(obj.scarecrowsSong.slice(i, i + 0x8));
-            let cur = new ScarecrowSongNoteStruct(scarecrowsSong.slice(i, i + 0x8));
-            for (let j = 0; j < struct.note.byteLength; j++) {
-              if (struct.note[j] !== cur.note[j]) {
-                cur.note[j] = struct.note[j];
-              }
-            }
-            for (let j = 0; j < struct.unused.byteLength; j++) {
-              if (struct.unused[j] !== cur.unused[j]) {
-                cur.unused[j] = struct.unused[j];
-              }
-            }
-            for (let j = 0; j < struct.duration.byteLength; j++) {
-              if (struct.duration[j] !== cur.duration[j]) {
-                if (j == 0 && struct.duration[j] > 0) { // Cap note/silence duration to 16 seconds?
-                  struct.duration[j] = 0;
-                }
-                if (j == 1 && struct.duration[j] > 16) {
-                  struct.duration[j] = 16;
-                }
-                cur.duration[j] = struct.duration[j];
-              }
-            }
-            for (let j = 0; j < struct.volume.byteLength; j++) {
-              if (struct.volume[j] !== cur.volume[j]) {
-                cur.volume[j] = struct.volume[j];
-              }
-            }
-            for (let j = 0; j < struct.vibrato.byteLength; j++) {
-              if (struct.vibrato[j] !== cur.vibrato[j]) {
-                cur.vibrato[j] = struct.vibrato[j];
-              }
-            }
-            for (let j = 0; j < struct.pitch.byteLength; j++) {
-              if (struct.pitch[j] !== cur.pitch[j]) {
-                cur.pitch[j] = struct.pitch[j];
-              }
-            }
-            for (let j = 0; j < struct.special.byteLength; j++) {
-              if (struct.special[j] !== cur.special[j]) {
-                cur.special[j] = struct.special[j];
-              }
-            }
+        for (let j = 0; j < struct.vibrato.byteLength; j++) {
+          if (struct.vibrato[j] !== cur.vibrato[j]) {
+            cur.vibrato[j] = struct.vibrato[j];
           }
         }
+        for (let j = 0; j < struct.pitch.byteLength; j++) {
+          if (struct.pitch[j] !== cur.pitch[j]) {
+            cur.pitch[j] = struct.pitch[j];
+          }
+        }
+        for (let j = 0; j < struct.special.byteLength; j++) {
+          if (struct.special[j] !== cur.special[j]) {
+            cur.special[j] = struct.special[j];
+          }
+        }
+      }
+    }
 
-        storage.permSceneData = permSceneData;
-        storage.eventFlags = eventFlags;
-        storage.itemFlags = itemFlags;
-        storage.infTable = infTable;
-        storage.skulltulaFlags = skulltulaFlags;
-        storage.scarecrowsSong = scarecrowsSong;
+    storage.permSceneData = permSceneData;
+    storage.eventFlags = eventFlags;
+    storage.itemFlags = itemFlags;
+    storage.infTable = infTable;
+    storage.skulltulaFlags = skulltulaFlags;
+    storage.scarecrowsSong = scarecrowsSong;
 
-        if (side === ProxySide.CLIENT) {
-          let cur = this.core.save.dungeonItemManager.getRawBuffer();
-          parseFlagChanges(obj.dungeon_items, cur);
-          this.core.save.dungeonItemManager.setRawBuffer(cur);
-          TriforceHuntHelper.setTriforcePieces(this.ModLoader, backupTriforcePieces!);
-          if (TriforceHuntHelper.getTriforcePieces(this.ModLoader) < obj.triforcePieces) {
-            TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
-          }
-          cur = OotR_PotsanityHelper.getFlagBuffer(this.ModLoader);
-          parseFlagChanges(obj.collectible_override_flags, cur);
-          OotR_PotsanityHelper.setFlagBuffer(this.ModLoader, cur);
-          bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
-        } else {
-          parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
-          if (obj.triforcePieces > storage.triforcePieces) {
-            storage.triforcePieces = obj.triforcePieces;
-          }
-        }
-        accept(true);
-      }).catch(() => {
-        reject(false);
-      });
-    });
+    if (side === ProxySide.CLIENT) {
+      let cur = this.core.save.dungeonItemManager.getRawBuffer();
+      parseFlagChanges(obj.dungeon_items, cur);
+      this.core.save.dungeonItemManager.setRawBuffer(cur);
+      TriforceHuntHelper.setTriforcePieces(this.ModLoader, backupTriforcePieces!);
+      if (TriforceHuntHelper.getTriforcePieces(this.ModLoader) < obj.triforcePieces) {
+        TriforceHuntHelper.setTriforcePieces(this.ModLoader, obj.triforcePieces);
+      }
+      cur = OotR_PotsanityHelper.getFlagBuffer(this.ModLoader);
+      parseFlagChanges(obj.collectible_override_flags, cur);
+      OotR_PotsanityHelper.setFlagBuffer(this.ModLoader, cur);
+      bus.emit(Z64OnlineEvents.ON_INVENTORY_UPDATE, {});
+    } else {
+      parseFlagChanges(obj.dungeon_items, storage.dungeon_items);
+      if (obj.triforcePieces > storage.triforcePieces) {
+        storage.triforcePieces = obj.triforcePieces;
+      }
+      parseFlagChanges(obj.collectible_override_flags, storage.collectible_override_flags);
+    }
   }
 
   applySave(settings: any, save: Buffer, syncMasks: boolean = true) {
-    this.mergeSave(settings, save, this.core.save as any, ProxySide.CLIENT, syncMasks).then((bool: boolean) => { }).catch((bool: boolean) => { });
+    this.mergeSave(settings, save, this.core.save as any, ProxySide.CLIENT, syncMasks);
   }
 
 }
