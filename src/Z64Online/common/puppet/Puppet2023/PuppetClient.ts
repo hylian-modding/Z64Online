@@ -1,7 +1,7 @@
 import { openMemoryUtils3Tab } from "@Z64Online/common/compat/MemoryUtils3";
 import { LinkHookEnum, LinkHookManager } from "@Z64Online/common/cosmetics/player/Model2023/LinkHookManager";
 import ArbitraryHook from "@Z64Online/common/lib/ArbitraryHook";
-import { getCommandBuffer, getCurrentSceneID } from "@Z64Online/common/types/GameAliases";
+import { getCommandBuffer, getCurrentSceneID, isPaused, isTitleScreen } from "@Z64Online/common/types/GameAliases";
 import { Puppet_mm, Puppet_oot10 } from "@Z64Online/overlay/Puppet";
 import { IZ64Main } from 'Z64Lib/API/Common/IZ64Main';
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
@@ -140,6 +140,8 @@ export default class PuppetClient {
     @onTick()
     onTick() {
         if (this.cCode === undefined || this.cCode.instancePointer === -1) return;
+        if (isTitleScreen(this.core)) return;
+        if (isPaused(this.core)) return;
         let off = this.getOffset("ModuleInject", "playerData");
         let addr = this.cCode.instancePointer + off;
         let size = this.getSize("ModuleInject", "playerData");
@@ -154,7 +156,7 @@ export default class PuppetClient {
             let puppetPointer = puppet.pointer;
             let syncPointer = this.ModLoader.emulator.rdramRead32(puppetPointer);
             this.ModLoader.emulator.rdramWriteBuffer(syncPointer, packet.update);
-        }else{
+        } else {
             this.ModLoader.logger.warn(`got puppet packet but I don't know this player: ${packet.player.nickname}`);
         }
     }
