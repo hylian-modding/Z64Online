@@ -167,10 +167,14 @@ export class CDNClient {
                             let _zip = new zip(body);
                             let data = _zip.getEntry(packet.model_id)!.getData();
                             this.cache.set(packet.model_id, data);
-                            for (let i = 0; i < this.pendingDownloads.get(packet.model_id)!.length; i++) {
-                                this.pendingDownloads.get(packet.model_id)![i].resolve(data);
+                            if (this.pendingDownloads.has(packet.model_id)) {
+                                for (let i = 0; i < this.pendingDownloads.get(packet.model_id)!.length; i++) {
+                                    this.pendingDownloads.get(packet.model_id)![i].resolve(data);
+                                }
+                                this.pendingDownloads.delete(packet.model_id);
+                            }else{
+                                this.ModLoader.logger.warn(`Something went wrong with a cdn request ${packet.model_id}`);
                             }
-                            this.pendingDownloads.delete(packet.model_id);
                         }, 1);
                     }
                 }
