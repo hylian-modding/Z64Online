@@ -93,3 +93,4 @@ overlay/CustomEponaObject/bin/CustomEponaObject.ts
 *.zobj
 overlay/LinkHookManager/bin/LinkHookManager.ts
 overlay/Puppet/bin/Puppet.ts
+overlay/ModelSystem_Player/bin/ModelSystem_Player.ts

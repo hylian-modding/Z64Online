@@ -3,7 +3,7 @@ import { OOT_ANIM_BANK_DMA, OOT_ANIM_BANK_SIZE } from "./OotAliases";
 import { AgeOrForm, DMAIndex, Manifest } from "./Types";
 import { MMManifest } from 'Z64Lib/API/MM/ModelData/MMManfest';
 import { IZ64Main } from "Z64Lib/API/Common/IZ64Main";
-import { Z64_GAME } from "Z64Lib/src/Common/types/GameAliases";
+import { Z64_GAME, Z64_GSEGMENTS } from "Z64Lib/src/Common/types/GameAliases";
 import { Z64LibSupportedGames } from "Z64Lib/API/Utilities/Z64LibSupportedGames";
 import { IViewStruct, IZ64Core } from "Z64Lib/API/Common/Z64API";
 import { ICommandBuffer } from "Z64Lib/API/imports";
@@ -66,8 +66,8 @@ export function setupMM() {
     MM_IS_TIME = false;
 }
 
-function doNotUseThingsHereonDedi(){
-    if (ML_IS_SERVER && !ML_IS_CLIENT){
+function doNotUseThingsHereonDedi() {
+    if (ML_IS_SERVER && !ML_IS_CLIENT) {
         throw Error(`Do not use GameAlias globals on dedi! ML_IS_SERVER: ${ML_IS_SERVER}, ML_IS_CLIENT: ${ML_IS_CLIENT}.`);
     }
 }
@@ -101,15 +101,15 @@ export function markAsTimeSync(storage: MMOnlineStorageBase, bool: boolean) {
     doNotUseThingsHereonDedi();
 }
 
-export function markIsClient(){
+export function markIsClient() {
     ML_IS_CLIENT = true;
 }
 
-export function markIsServer(){
+export function markIsServer() {
     ML_IS_SERVER = true;
 }
 
-export function setSyncContext(pointer: number){
+export function setSyncContext(pointer: number) {
     ML_SYNC_CONTEXT = pointer;
     doNotUseThingsHereonDedi();
 }
@@ -174,4 +174,14 @@ export function getCurrentRoomID(core: IZ64Main) {
 
 export function getLink(core: IZ64Main) {
     return core.OOT !== undefined ? core.OOT!.link : core.MM!.link;
+}
+
+export function getSegmentBase(core: IZ64Main, segment: number) {
+    return core.OOT !== undefined ? core.OOT!.ModLoader.emulator.rdramRead32(Z64_GSEGMENTS + (segment * 4)) : core.MM!.ModLoader.emulator.rdramRead32(Z64_GSEGMENTS + (segment * 4));
+}
+
+export function SEGMENTED_TO_VIRTUAL(core: IZ64Main, addr: number){
+    let base = getSegmentBase(core, addr >> 24);
+    let offset = addr & 0x00FFFFFF;
+    return (base + offset) + 0x80000000;
 }

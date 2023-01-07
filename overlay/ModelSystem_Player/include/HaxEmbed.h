@@ -4,14 +4,14 @@
 #include <libzelda64.h>
 
 typedef struct{
-    uint32_t start;
-    uint32_t create;
-    uint32_t destroy;
-    uint32_t size;
-    uint32_t end;
+    u32 start;
+    u32 create;
+    u32 destroy;
+    u32 size;
+    u32 end;
 } HaxEmbed_t;
 
-extern void doInject(void* thisx, GlobalContext* globalCtx, uint32_t pointer);
-extern void doDestroy(void* thisx, GlobalContext* globalCtx, uint32_t pointer);
+extern void doInject(void* thisx, PlayState* play, u32 pointer);
+extern void doDestroy(void* thisx, PlayState* play, u32 pointer);
 
 #endif /* __HAX_EMBED_H__ */
