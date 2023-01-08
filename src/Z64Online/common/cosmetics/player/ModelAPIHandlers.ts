@@ -182,7 +182,7 @@ export class ModelAPIHandlers {
             return;
         }
         let e = new Z64Online_ModelAllocation(fs.readFileSync(evt), form, game);
-        e.name = path.parse(evt).name;
+        e.name = path.parse(path.parse(evt).dir).name;
         if (game === Z64LibSupportedGames.MAJORAS_MASK) {
             if (e.model.readUInt8(0x500B) === BackwardsCompat.OLD_MM_ADULT_SIZED_FLAG) {
                 //@ts-ignore
