@@ -12,10 +12,9 @@ void draw(void* thisx, PlayState* play)
     // This is the model we want Link to wear.
     // Must put pointers in a temp variable because of macro fuckery.
 
-    #ifdef GAME_OOT
+    #if TARGET_GAME == Z64GAME_OOT
         temp = haxPointer->inst->child;
         if (gSaveContext.linkAge == 0) temp = haxPointer->inst->adult;
-    #elif defined GAME_MM
     #endif
 
     if (temp == 0){
@@ -37,9 +36,9 @@ void draw(void* thisx, PlayState* play)
     temp = skel->sh.segment;
     temp = SEGMENTED_TO_VIRTUAL(temp);
     player->skelAnime.skeleton = temp;
-    #ifdef GAME_OOT
+    #if TARGET_GAME == Z64GAME_OOT
     player->skelAnime2.skeleton = temp;
-    #elif defined GAME_MM
+    #elif TARGET_GAME == Z64GAME_MM
     player->unk_284.skeleton = temp;
     // Check for Goron's second Skeleton.
     temp = 0x06005830;

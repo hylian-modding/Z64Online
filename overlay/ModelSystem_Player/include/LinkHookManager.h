@@ -18,12 +18,4 @@ typedef struct{
 
 extern const LinkHooks_t linkHooks;
 
-#if TARGET_GAME == Z64GAME_OOT
-#define GAME_OOT
-#endif
-
-#if TARGET_GAME == Z64GAME_MM
-#define GAME_MM
-#endif
-
 #endif
