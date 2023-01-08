@@ -11,4 +11,6 @@ export default interface IModelSystemGame{
 
     triggerHandler(ModLoader: IModLoaderAPI, core: any, manager: ModelManagerClient): void;
 
+    onTick(ModLoader: IModLoaderAPI, core: any, manager: ModelManagerClient);
+
 }

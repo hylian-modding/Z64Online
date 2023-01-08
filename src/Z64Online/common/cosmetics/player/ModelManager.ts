@@ -148,6 +148,13 @@ export class ModelManagerClient {
     this.ModLoader.publicBus.emit(Z64OnlineEvents.POST_LOADED_MODELS_LIST, { models: this.customModelRegistry, equipment: this.customModelFilesEquipment });
   }
 
+  wasPaused: boolean = false;
+
+  @onTick()
+  onTick(){
+    this.game.onTick(this.ModLoader, this.core, this);
+  }
+
   /**
    * Do any rom injections needed.
    * @param rom - Buffer of ROM or path to ROM.

@@ -112,7 +112,9 @@ export default class OotGame implements IModelSystemGame {
     private on_link_hook_ready(evt: { ModLoader: IModLoaderAPI, data: Buffer }) {
         LinkHookManager.inject(evt.ModLoader, this.cCode.payloadPointer, ModelSystem_Player_oot10.byteLength, evt.data, () => {
             /* Run our c function */
-            this.cCode.runCreate(0, () => { });
+            this.cCode.runCreate(0, () => {
+                evt.ModLoader.logger.debug(`[Model Sys]: ${this.cCode.instancePointer.toString(16)}`);
+            });
         });
     }
 
@@ -123,10 +125,10 @@ export default class OotGame implements IModelSystemGame {
     triggerHandler(ModLoader: IModLoaderAPI, core: any, manager: ModelManagerClient): void {
         /* Check all model display lists for stubs. If a display list is stubbed replace it with the bank */
         manager.puppetModels.forEach((ref: IModelReference, age: AgeOrForm) => {
+            let start = 0x5020;
+            let size = 256;
             if (ref.isLoaded && manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.isLoaded) {
                 if (ref.hash === manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.hash) return;
-                let start = 0x5020;
-                let size = 256;
                 let cur = 0;
                 for (let i = 0; i < size; i++) {
                     cur = start + (i * 0x8);
@@ -152,5 +154,35 @@ export default class OotGame implements IModelSystemGame {
         /* Write the array pointer to the system */
         ModLoader.emulator.rdramWrite32(this.cCode.instancePointer, manager.allocationManager.getLocalPlayerData().pointer);
     }
+
+    lastSeen: Buffer = Buffer.alloc(0x20);
+
+    onTick(ModLoader: IModLoaderAPI, core: any, manager: ModelManagerClient) {
+        if (this.cCode === undefined || this.cCode.instancePointer === -1) return;
+        let proxySegment = ModLoader.emulator.rdramRead32(this.cCode.instancePointer + 0x4);
+        if (proxySegment === 0) return;
+        let data = ModLoader.emulator.rdramReadBuffer(proxySegment + 0x5020, 0x20);
+        if (!data.equals(this.lastSeen)){
+            this.triggerHandler(ModLoader, core, manager);
+            let age = getAgeOrForm(core);
+            let start = 0x5020;
+            let size = 256;
+            let copy = ModLoader.emulator.rdramReadBuffer(manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer, start + (size * 0x8));
+            for (let i = 0; i < size; i++){
+                let cur = start + (i * 8);
+                cur += 4;
+                let c = copy.readUInt32BE(cur);
+                if (this.isSegmented(c)){
+                    c &= 0x00FFFFFF;
+                    c += manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer;
+                }
+                copy.writeUInt32BE(c, cur);
+            }
+            if (proxySegment > 0) {
+                ModLoader.emulator.rdramWriteBuffer(proxySegment, copy);
+            }
+        }
+    }
+
 
 }

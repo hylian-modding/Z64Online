@@ -11,10 +11,14 @@ typedef struct{
     /* 0x0C */ u32 goron;
     /* 0x10 */ u32 zora;
     /* 0x14 */ u32 fd;
-} En_Forms; /* 0x18 */
+    /* 0x18 */ u32 horse;
+    /* 0x20 */ u32 horseAnims;
+    /* 0x24 */ u32 navi;
+} En_Forms; /* 0x28 */
 
 typedef struct{
     /* 0x00 */ En_Forms* inst;
+    /* 0x04 */ u32 segment;
 } En_HaxBase;
 
 extern En_HaxBase* haxPointer;
