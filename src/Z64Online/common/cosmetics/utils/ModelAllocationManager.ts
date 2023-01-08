@@ -137,10 +137,8 @@ export class ModelAllocationManager {
     let b = modelObject.zobj;
     try {
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.PRE_OBJECT_LOAD, b);
-      if (!ref.isPlayerModel) {
-        let zz = new zzstatic2();
-        zz.repoint(b, pointer);
-      }
+      let zz = new zzstatic2();
+      zz.repoint(b, pointer);
       this.ModLoader.privateBus.emit(Z64O_PRIVATE_EVENTS.POST_OBJECT_LOAD, b);
     } catch (err: any) {
       this.ModLoader.logger.error(err.stack);
