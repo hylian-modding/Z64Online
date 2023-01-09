@@ -134,9 +134,6 @@ export default class OotGame implements IModelSystemGame {
                     cur = start + (i * 0x8);
                     cur += 0x4;
                     let addr = ModLoader.emulator.rdramRead32(manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer + cur);
-                    if (this.isSegmented(addr)) {
-                        addr = manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer + (addr & 0x00FFFFFF);
-                    }
                     let op = ModLoader.emulator.rdramRead32(addr);
                     if (op === 0xDF000000) {
                         // This is a stub DL.
@@ -165,21 +162,13 @@ export default class OotGame implements IModelSystemGame {
         if (!data.equals(this.lastSeen)){
             this.triggerHandler(ModLoader, core, manager);
             let age = getAgeOrForm(core);
-            let start = 0x5020;
-            let size = 256;
-            let copy = ModLoader.emulator.rdramReadBuffer(manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer, start + (size * 0x8));
-            for (let i = 0; i < size; i++){
-                let cur = start + (i * 8);
-                cur += 4;
-                let c = copy.readUInt32BE(cur);
-                if (this.isSegmented(c)){
-                    c &= 0x00FFFFFF;
-                    c += manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer;
-                }
-                copy.writeUInt32BE(c, cur);
-            }
+            let copySize: number = getAgeOrForm(core) === AgeOrForm.ADULT ? 0x37800 : 0x2CF80;
+            let copy = ModLoader.emulator.rdramReadBuffer(manager.allocationManager.getLocalPlayerData().AgesOrForms.get(age)!.pointer, copySize);
             if (proxySegment > 0) {
                 ModLoader.emulator.rdramWriteBuffer(proxySegment, copy);
+                ModLoader.rom.romWriteBuffer(this.adultRom, copy);
+                ModLoader.rom.romWriteBuffer(this.childRom, copy);
+                ModLoader.emulator.rdramWrite32(this.cCode.instancePointer + 0x4, 0);
             }
         }
     }
